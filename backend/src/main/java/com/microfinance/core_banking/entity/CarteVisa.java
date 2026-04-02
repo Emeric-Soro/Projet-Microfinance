@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -35,9 +36,9 @@ public class CarteVisa extends BaseAuditEntity {
 	// Etat actif ou inactif de la carte.
 	private Boolean statut;
 
-	@Column(name = "plafond_journalier", nullable = false)
+	@Column(name = "plafond_journalier", nullable = false, precision = 19, scale = 2)
 	// Montant maximal autorise par jour.
-	private Double plafondJournalier;
+	private BigDecimal plafondJournalier;
 
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "id_compte", nullable = false)

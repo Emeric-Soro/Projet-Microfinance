@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,9 +34,9 @@ public class Transaction extends BaseAuditEntity {
 	// Date et heure de la transaction.
 	private LocalDateTime dateHeureTransaction;
 
-	@Column(name = "montant_global", nullable = false)
+	@Column(name = "montant_global", nullable = false, precision = 19, scale = 2)
 	// Montant total de la transaction.
-	private Double montantGlobal;
+	private BigDecimal montantGlobal;
 
 	@Column(nullable = false)
 	// Frais appliques a la transaction.

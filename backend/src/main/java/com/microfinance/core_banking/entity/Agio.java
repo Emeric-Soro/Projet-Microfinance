@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -23,9 +24,9 @@ public class Agio extends BaseAuditEntity {
 	// Identifiant unique de l'agio.
 	private Integer idAgio;
 
-	@Column(nullable = false)
+	@Column(nullable = false, precision = 19, scale = 2)
 	// Montant de l'agio a prelever.
-	private Double montant;
+	private BigDecimal montant;
 
 	@Column(name = "date_calcul", nullable = false)
 	// Date de calcul de l'agio.

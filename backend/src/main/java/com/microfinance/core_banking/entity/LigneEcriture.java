@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -26,9 +28,9 @@ public class LigneEcriture extends BaseAuditEntity {
 	// Sens comptable de la ligne (debit ou credit).
 	private SensEcriture sens;
 
-	@Column(nullable = false)
+	@Column(nullable = false, precision = 19, scale = 2)
 	// Montant porte par cette ligne.
-	private Double montant;
+	private BigDecimal montant;
 
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "id_transaction", nullable = false)

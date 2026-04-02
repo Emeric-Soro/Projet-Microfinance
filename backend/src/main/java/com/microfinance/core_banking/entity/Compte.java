@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,9 +30,9 @@ public class Compte extends BaseAuditEntity {
     // Numero unique du compte.
     private String numCompte;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 19, scale = 2)
     // Solde courant du compte.
-    private Double solde;
+    private BigDecimal solde;
 
     @Column(name = "date_ouverture", nullable = false)
     // Date d'ouverture du compte.
@@ -41,13 +42,13 @@ public class Compte extends BaseAuditEntity {
     // Devise utilisee par le compte.
     private String devise;
 
-    @Column(name = "taux_interet")
+    @Column(name = "taux_interet", precision = 7, scale = 4)
     // Taux d'interet applique au compte.
-    private Double tauxInteret;
+    private BigDecimal tauxInteret;
 
-    @Column(name = "decouvert_autorise")
+    @Column(name = "decouvert_autorise", precision = 19, scale = 2)
     // Montant maximal de decouvert autorise.
-    private Double decouvertAutorise;
+    private BigDecimal decouvertAutorise;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "id_client", nullable = false)
