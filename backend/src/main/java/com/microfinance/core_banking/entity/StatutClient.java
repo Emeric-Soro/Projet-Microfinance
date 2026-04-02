@@ -23,7 +23,7 @@ public class StatutClient extends BaseAuditEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id_statut_client")
 	// Identifiant unique du statut client.
-	private Integer idStatutClient;
+	private Long idStatutClient;
 
 	@Column(name = "libelle_statut", nullable = false, length = 100)
 	// Libelle du statut applique au client.

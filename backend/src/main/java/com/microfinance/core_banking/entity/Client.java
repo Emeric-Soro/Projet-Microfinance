@@ -23,7 +23,7 @@ public class Client extends BaseAuditEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id_client")
 	// Identifiant unique du client.
-	private Integer idClient;
+	private Long idClient;
 
 	@Column(name = "code_client", nullable = false, length = 50, unique = true)
 	// Code unique du client.

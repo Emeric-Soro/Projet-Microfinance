@@ -22,7 +22,7 @@ public class RoleUtilisateur extends BaseAuditEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id_role")
 	// Identifiant unique du role.
-	private Integer idRole;
+	private Long idRole;
 
 	@Column(name = "code_role_utilisateur", nullable = false, length = 50, unique = true)
 	// Code unique du role.
