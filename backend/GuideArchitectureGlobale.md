@@ -229,6 +229,7 @@ dto.setIdClient(client.getIdClient());
 dto.setNom(client.getNom());
 // ... 20 lignes plus tard ...
 return dto;
+```
 ---
 
 ## 🚪 NIVEAU 5 : Les Controllers (L'API REST)
@@ -241,6 +242,41 @@ return dto;
     * Utilisation correcte des verbes HTTP : `@GetMapping` (Lire), `@PostMapping` (Créer), `@PutMapping` (Mettre à jour), `@DeleteMapping` (Désactiver).
     * *Exemple : `TransactionController.java`*
 
+### 🛡️ Spécifications du GlobalExceptionHandler (Le Médiateur de l'API)
+
+#### 🎯 Quel est le problème ?
+Dans une application Java classique, lorsqu'un utilisateur demande quelque chose d'impossible (ex: consulter un compte qui n'existe pas), notre code déclenche une erreur, comme `EntityNotFoundException`.
+
+Si personne n'attrape cette erreur, elle remonte jusqu'au serveur (Spring Boot). Par défaut, Spring Boot panique et renvoie au Frontend une énorme "Stack Trace" (des centaines de lignes de code Java incompréhensibles) avec un code HTTP `500 Internal Server Error`.
+* **Problème 1 (Sécurité) :** On expose la structure interne de notre code aux hackers.
+* **Problème 2 (Frontend) :** Les développeurs Web/Mobile ne peuvent pas lire ce message pour afficher une belle popup à l'utilisateur.
+
+#### 🦸‍♂️ La Solution : Le GlobalExceptionHandler
+Le `GlobalExceptionHandler` est comme le **Directeur des Relations Publiques** de la banque.
+Dès qu'une erreur explose n'importe où dans l'application, il l'intercepte *avant* qu'elle ne sorte sur Internet. Il analyse l'erreur, la calme, et la transforme en un petit message JSON standardisé, propre et sécurisé.
+
+#### ⚙️ Comment ça fonctionne techniquement ?
+Spring Boot nous offre deux "mots magiques" (Annotations) pour faire cela sans avoir à écrire des `try/catch` partout :
+
+1. **`@RestControllerAdvice` (L'Écouteur Global) :**
+   On place cette annotation sur notre classe. Elle dit à Spring : *"Surveille tous les Controllers en permanence. Si l'un d'eux crashe, envoie-moi l'erreur."*
+
+2. **`@ExceptionHandler(NomDeLerreur.class)` (Le Traducteur) :**
+   À l'intérieur de notre classe, on crée des méthodes spécifiques. Par exemple : *"Si tu attrapes une `EntityNotFoundException`, renvoie un code `404 Not Found` avec le message 'Donnée introuvable'."*
+
+#### 📦 La Structure Standard de notre Erreur
+Pour que le Frontend sache exactement à quoi s'attendre quand une erreur survient, nous n'allons pas renvoyer de simples chaînes de caractères. Nous allons créer une petite valise (un DTO) spécialement pour les erreurs : le `ErrorResponseDTO`.
+
+Chaque fois qu'une erreur se produit, notre API renverra toujours ce format exact :
+```json
+{
+  "timestamp": "2026-04-11T14:30:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Client introuvable: 999",
+  "path": "/api/v1/clients/999"
+}
+```
 ---
 
 ## 🔄 Résumé d'une action complète (Ex: Faire un Virement)

@@ -5,6 +5,8 @@ import com.microfinance.core_banking.entity.StatutClient;
 import com.microfinance.core_banking.repository.client.ClientRepository;
 import com.microfinance.core_banking.repository.client.StatutClientRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,5 +72,11 @@ public class ClientServiceImpl implements ClientService {
     public Client obtenirDetailsClient(Long idClient) {
         return clientRepository.findById(idClient)
                 .orElseThrow(() -> new EntityNotFoundException("Client introuvable: " + idClient));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Client> listerClients(Pageable pageable) {
+        return clientRepository.findAll(pageable);
     }
 }

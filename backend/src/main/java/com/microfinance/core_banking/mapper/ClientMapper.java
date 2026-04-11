@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.mapper;
 
+import com.microfinance.core_banking.dto.request.client.CreationClientRequestDTO;
 import com.microfinance.core_banking.dto.response.client.ClientResponseDTO;
 import com.microfinance.core_banking.entity.Client;
 import org.mapstruct.Mapper;
@@ -15,4 +16,11 @@ public interface ClientMapper {
     @Mapping(source = "statutClient.libelleStatut", target = "statut")
     ClientResponseDTO toResponseDTO(Client client);
 
+    // MapStruct va copier les champs du DTO vers l'Entité.
+    // On ignore les champs techniques car c'est le Service ou la Base de données qui les génèrent !
+    @Mapping(target = "idClient", ignore = true)
+    @Mapping(target = "codeClient", ignore = true)
+    @Mapping(target = "statutClient", ignore = true)
+    @Mapping(target = "dateInscription", ignore = true)
+    Client toEntity(CreationClientRequestDTO dto);
 }
