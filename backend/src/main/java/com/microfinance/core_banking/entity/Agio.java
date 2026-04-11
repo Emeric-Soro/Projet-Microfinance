@@ -22,7 +22,7 @@ public class Agio extends BaseAuditEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id_agio")
 	// Identifiant unique de l'agio.
-	private Integer idAgio;
+	private Long idAgio;
 
 	@Column(nullable = false, precision = 19, scale = 2)
 	// Montant de l'agio a prelever.

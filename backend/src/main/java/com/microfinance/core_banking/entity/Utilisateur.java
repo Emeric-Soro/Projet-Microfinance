@@ -21,9 +21,10 @@ import java.util.Set;
 public class Utilisateur extends BaseAuditEntity {
 
 	@Id
-	@Column(name = "id_user", length = 50)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id_user")
 	// Identifiant technique de l'utilisateur.
-	private String idUser;
+	private Long idUser;
 
 	@Column(nullable = false, length = 100, unique = true)
 	// Nom de connexion de l'utilisateur.
@@ -48,6 +49,6 @@ public class Utilisateur extends BaseAuditEntity {
 	private Set<RoleUtilisateur> roles = new HashSet<>();
 
 	@OneToMany(mappedBy = "utilisateur")
-	// Transactions creees par l'utilisateur.
+	// Transaction creees par l'utilisateur.
 	private List<Transaction> transactions = new ArrayList<>();
 }

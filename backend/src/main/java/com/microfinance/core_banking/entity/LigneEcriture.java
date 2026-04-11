@@ -14,14 +14,14 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Entity
 @Table(name = "ligne_ecriture")
-// Detail comptable d'une transaction (debit ou credit).
+// Detail comptable d'une Transaction (debit ou credit).
 public class LigneEcriture extends BaseAuditEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id_ligne")
 	// Identifiant unique de la ligne d'ecriture.
-	private Integer idLigne;
+	private Long idLigne;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 20)

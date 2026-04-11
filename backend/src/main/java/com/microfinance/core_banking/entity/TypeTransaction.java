@@ -22,7 +22,7 @@ public class TypeTransaction extends BaseAuditEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id_type_transaction")
 	// Identifiant unique du type de transaction.
-	private Integer idTypeTransaction;
+	private Long idTypeTransaction;
 
 	@Column(name = "code_type_transaction", nullable = false, length = 50, unique = true)
 	// Code unique du type de transaction.
@@ -33,6 +33,6 @@ public class TypeTransaction extends BaseAuditEntity {
 	private String libelle;
 
 	@OneToMany(mappedBy = "typeTransaction")
-	// Transactions rattachees a ce type.
+	// Transaction rattachees a ce type.
 	private List<Transaction> transactions = new ArrayList<>();
 }

@@ -22,7 +22,7 @@ public class StatutEnvoi extends BaseAuditEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id_statut_envoi")
 	// Identifiant unique du statut d'envoi.
-	private Integer idStatutEnvoi;
+	private Long idStatutEnvoi;
 
 	@Column(name = "code_statut_envoi", nullable = false, length = 50, unique = true)
 	// Code unique du statut d'envoi.

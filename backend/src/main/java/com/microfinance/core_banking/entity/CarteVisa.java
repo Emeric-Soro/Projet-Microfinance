@@ -22,7 +22,7 @@ public class CarteVisa extends BaseAuditEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id_carte")
 	// Identifiant unique de la carte.
-	private Integer idCarte;
+	private Long idCarte;
 
 	@Column(name = "numero_carte", nullable = false, length = 40, unique = true)
 	// Numero unique de la carte.

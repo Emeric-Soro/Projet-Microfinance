@@ -24,7 +24,7 @@ public class Compte extends BaseAuditEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_compte")
     // Identifiant unique du compte.
-    private Integer idCompte;
+    private Long idCompte;
 
     @Column(name = "num_compte", nullable = false, length = 50, unique = true)
     // Numero unique du compte.

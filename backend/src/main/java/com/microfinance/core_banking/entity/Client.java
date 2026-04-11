@@ -45,11 +45,11 @@ public class Client extends BaseAuditEntity {
 	// Adresse principale du client.
 	private String adresse;
 
-	@Column(length = 30)
+	@Column(length = 30, unique = true)
 	// Numero de telephone du client.
 	private String telephone;
 
-	@Column(length = 150)
+	@Column(length = 150, unique = true)
 	// Adresse email du client.
 	private String email;
 

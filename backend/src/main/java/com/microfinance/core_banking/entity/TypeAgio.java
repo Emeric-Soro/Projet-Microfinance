@@ -22,7 +22,7 @@ public class TypeAgio extends BaseAuditEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id_type_agio")
 	// Identifiant unique du type d'agio.
-	private Integer idTypeAgio;
+	private Long idTypeAgio;
 
 	@Column(name = "code_type_agio", nullable = false, length = 50, unique = true)
 	// Code unique du type d'agio.

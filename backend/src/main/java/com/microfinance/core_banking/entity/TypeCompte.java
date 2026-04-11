@@ -22,7 +22,7 @@ public class TypeCompte extends BaseAuditEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id_type_compte")
 	// Identifiant unique du type de compte.
-	private Integer idTypeCompte;
+	private Long idTypeCompte;
 
 	@Column(nullable = false, length = 100)
 	// Libelle du type de compte.

@@ -16,7 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "transaction")
+@Table(name = "bank_transaction")
 // Entite representant une transaction effectuee sur un ou plusieurs comptes.
 public class Transaction extends BaseAuditEntity {
 
@@ -24,7 +24,7 @@ public class Transaction extends BaseAuditEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id_transaction")
 	// Identifiant unique de la transaction.
-	private Integer idTransaction;
+	private Long idTransaction;
 
 	@Column(name = "reference_unique", nullable = false, length = 80, unique = true)
 	// Reference unique metier de la transaction.
@@ -40,7 +40,7 @@ public class Transaction extends BaseAuditEntity {
 
 	@Column(nullable = false)
 	// Frais appliques a la transaction.
-	private Integer frais;
+	private BigDecimal frais;
 
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "id_user", nullable = false)

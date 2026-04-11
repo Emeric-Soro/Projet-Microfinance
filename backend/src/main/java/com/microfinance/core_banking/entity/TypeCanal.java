@@ -22,7 +22,7 @@ public class TypeCanal extends BaseAuditEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id_canal")
 	// Identifiant unique du canal.
-	private Integer idCanal;
+	private Long idCanal;
 
 	@Column(name = "code_canal", nullable = false, length = 50, unique = true)
 	// Code unique du canal.

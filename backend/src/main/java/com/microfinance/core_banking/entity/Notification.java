@@ -21,7 +21,7 @@ public class Notification extends BaseAuditEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id_notif")
 	// Identifiant unique de la notification.
-	private Integer idNotif;
+	private Long idNotif;
 
 	@Column(nullable = false, length = 500)
 	// Contenu textuel du message a envoyer.

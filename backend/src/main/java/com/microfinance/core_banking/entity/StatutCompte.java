@@ -21,7 +21,7 @@ public class StatutCompte extends BaseAuditEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id_statut_compte")
 	// Identifiant unique du statut de compte.
-	private Integer idStatutCompte;
+	private Long idStatutCompte;
 
 	@Column(name = "libelle_statut", nullable = false, length = 100)
 	// Libelle du statut du compte.
