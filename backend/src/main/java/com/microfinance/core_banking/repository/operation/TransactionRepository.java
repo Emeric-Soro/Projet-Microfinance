@@ -31,6 +31,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     // Liste paginee des transactions selon une plage de montant.
     Page<Transaction> findByMontantGlobalBetween(BigDecimal montantMin, BigDecimal montantMax, Pageable pageable);
 
+    // Historique pagine des transactions impactant un numero de compte donne.
+    Page<Transaction> findByLignesEcriture_Compte_NumCompte(String numCompte, Pageable pageable);
+
     // Liste paginee des transactions creees entre deux dates.
     Page<Transaction> findByCreatedAtBetween(LocalDateTime dateDebut, LocalDateTime dateFin, Pageable pageable);
 }

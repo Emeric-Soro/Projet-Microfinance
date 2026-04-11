@@ -44,6 +44,81 @@ Le flux de la donnée va toujours dans ce sens (de l'extérieur vers la base de 
     * Un Service ne doit **jamais** manipuler des requêtes HTTP ou des JSON. Il ne parle qu'en Java pur.
     * *Exemple : `TransactionService.java`*
 
+# 🧠 Spécifications de la Couche Service (Règles Métiers)
+
+## 🎯 Philosophie de la Couche Service
+La couche **Service** est le cerveau de la banque. C'est ici, et **uniquement ici**, que résident les règles de gestion (calculs, vérifications, interdictions).
+* **Règle absolue :** Un Service ne doit jamais faire confiance au Frontend. Il doit toujours revérifier les données (ex: vérifier que le solde est suffisant avant un retrait, même si le bouton de retrait était grisé sur le site web).
+* **Transactionnel :** Les méthodes qui modifient plusieurs tables en même temps doivent obligatoirement porter l'annotation `@Transactional`.
+
+
+### 👤 MODULE 1 : CLIENT (Gestion des identités et accès)
+
+#### `ClientService`
+**Rôle :** Gérer le cycle de vie physique et légal du client (KYC - Know Your Customer).
+* **Méthodes clés :**
+  * `creerClient(...)` : Vérifie que l'email et le téléphone ne sont pas déjà pris, attribue le statut "NOUVEAU" par défaut, et sauvegarde.
+  * `modifierStatutClient(Long idClient, String nouveauStatut)` : Permet de bloquer ou d'activer un client (ex: suite à une fraude).
+  * `obtenirDetailsClient(Long idClient)` : Renvoie les informations complètes du client.
+
+#### `UtilisateurService`
+**Rôle :** Gérer les accès numériques (E-banking, Panel Admin) et la sécurité.
+* **Méthodes clés :**
+  * `creerCompteWeb(Long idClient, String motDePasse)` : Hache le mot de passe (BCrypt) et crée l'accès Web/Mobile pour un client existant.
+  * `authentifier(String login, String motDePasseBrut)` : Vérifie les identifiants pour la connexion (Spring Security).
+  * `assignerRole(Long idUser, String codeRole)` : Donne des droits (ex: passer un utilisateur en "GUICHETIER").
+
+  
+### 🏦 MODULE 2 : COMPTE (Core Banking)
+
+#### `CompteService`
+**Rôle :** Gérer l'ouverture, la fermeture et la consultation des comptes bancaires.
+* **Méthodes clés :**
+  * `ouvrirCompte(Long idClient, String codeTypeCompte)` : Génère un numéro de compte (RIB) unique aléatoire, met le solde à 0.00, et le relie au client.
+  * `consulterSolde(String numCompte)` : Renvoie le solde actuel (très utilisé par l'application mobile).
+  * `changerDecouvertAutorise(String numCompte, BigDecimal nouveauPlafond)` : Modifie la limite de découvert d'un client.
+  * `cloturerCompte(String numCompte)` : Vérifie que le solde est exactement à 0 avant de changer le statut du compte en "FERME".
+
+#### `CarteVisaService`
+**Rôle :** Gérer le cycle de vie des moyens de paiement physiques.
+* **Méthodes clés :**
+  * `commanderCarte(String numCompte)` : Génère un numéro de carte à 16 chiffres, une date d'expiration (J+3 ans), et un CVV haché.
+  * `faireOpposition(String numeroCarte)` : Désactive instantanément une carte en cas de perte/vol.
+
+
+### 💸 MODULE 3 : OPERATION (Le cœur transactionnel)
+
+#### `TransactionService`
+**Rôle :** Le moteur financier. Gère les flux d'argent stricts de la BCEAO.
+* **Méthodes clés (Toutes doivent être `@Transactional`) :**
+  * `faireDepot(String numCompte, BigDecimal montant)` : Vérifie que le montant est > 0. Ajoute le montant au solde du compte. Crée 1 `Transaction` et 1 `LigneEcriture` (CREDIT).
+  * `faireRetrait(String numCompte, BigDecimal montant)` : Vérifie que `(Solde + DecouvertAutorise) >= montant`. Soustrait le solde. Crée 1 `Transaction` et 1 `LigneEcriture` (DEBIT).
+  * `faireVirement(String compteSource, String compteDest, BigDecimal montant)` :
+    1. Vérifie les fonds du compte source.
+    2. Débite le compte source (DEBIT).
+    3. Crédite le compte destinataire (CREDIT).
+    4. Crée la `Transaction` globale.
+  * `historiqueOperations(String numCompte, Pageable pageable)` : Renvoie le relevé de compte paginé.
+
+  
+### 📊 MODULE 4 : TARIFICATION (Moteur de facturation)
+
+#### `AgioService`
+**Rôle :** Calculer et prélever les frais bancaires (souvent appelé par des tâches automatiques "Batch").
+* **Méthodes clés :**
+  * `calculerFraisTenueCompteMensuel()` : Tâche qui tourne le 1er du mois, identifie tous les comptes actifs, et génère un "Agio" en attente de prélèvement.
+  * `calculerPenaliteDecouvert(String numCompte)` : Calcule les intérêts si le compte est resté en négatif.
+  * `executerPrelevementsEnAttente()` : Prend tous les agios non prélevés, force un retrait sur les comptes correspondants via le `TransactionService`, et marque l'agio comme "Prélevé".
+
+
+### 📱 MODULE 5 : COMMUNICATION (Alertes et E-Banking)
+
+#### `NotificationService`
+**Rôle :** Informer le client en temps réel des actions sur son compte.
+* **Méthodes clés :**
+  * `envoyerAlerteVirement(String numCompte, BigDecimal montant)` : Génère le texte "Vous avez reçu un virement de X FCFA" et l'enregistre en base.
+  * `envoyerAlerteConnexionSuspecte(Long idClient)` : Sécurité E-banking.
+  * *Note : Dans une vraie banque, ce service appellerait une API externe (comme Twilio ou Orange SMS) pour envoyer le vrai SMS sur le téléphone du client.*
 ---
 
 ## 💼 NIVEAU 4 : Les DTOs & Mappers (Les Valises de Transport)
@@ -55,6 +130,105 @@ Le flux de la donnée va toujours dans ce sens (de l'extérieur vers la base de 
     * Les noms doivent être explicites : `ClientResponseDTO` (ce qu'on envoie) ou `VirementRequestDTO` (ce qu'on reçoit).
     * Les Mappers servent à convertir : `Entité ➔ DTO` ou `DTO ➔ Entité`. (Nous utiliserons *MapStruct* ou des méthodes manuelles).
 
+# 🧳 Spécifications de la Couche DTO (Data Transfer Objects)
+
+## 🎯 Philosophie de la Couche DTO
+Les DTOs sont les "valises" qui voyagent entre l'extérieur (Web/Mobile) et l'intérieur (le Serveur).
+* **Sécurité :** On ne renvoie jamais de mot de passe, de CVV de carte bancaire, ou d'ID technique inutile.
+* **Validation :** Les `RequestDTO` (entrées) doivent avoir des annotations de validation stricte (`@NotBlank`, `@Positive`, etc.) pour bloquer les mauvaises données avant même qu'elles n'atteignent le Service.
+* **Formatage :** Les `ResponseDTO` (sorties) transforment les objets complexes en chaînes de caractères simples (Ex: au lieu de renvoyer l'objet `TypeCompte` entier, on renvoie juste `String typeCompte = "COURANT"`).
+
+---
+
+## 👤 MODULE 1 : CLIENT
+
+### 📥 Requêtes (Entrantes)
+* **`CreationClientRequestDTO`** :
+  * *Comportement :* Reçoit les données brutes tapées par le client dans le formulaire d'inscription.
+  * *Champs :* `nom`, `prenom`, `dateNaissance`, `email` (validé avec `@Email`), `telephone`, `adresse`. (Note : Pas d'ID, ni de Code Client, car c'est le serveur qui les génère).
+* **`CreationUtilisateurRequestDTO`** :
+  * *Comportement :* Reçoit la demande de création d'accès Web.
+  * *Champs :* `idClient`, `motDePasseBrut`.
+* **`LoginRequestDTO`** :
+  * *Comportement :* Utilisé pour la page de connexion.
+  * *Champs :* `login`, `motDePasse`.
+
+### 📤 Réponses (Sortantes)
+* **`ClientResponseDTO`** :
+  * *Comportement :* Renvoie le profil du client pour son tableau de bord.
+  * *Champs :* `idClient`, `codeClient`, `nomComplet` (fusion de nom et prénom), `email`, `telephone`, `statut` (ex: "ACTIF").
+
+---
+
+## 🏦 MODULE 2 : COMPTE
+
+### 📥 Requêtes (Entrantes)
+* **`OuvertureCompteRequestDTO`** :
+  * *Comportement :* Demande d'ouverture d'un nouveau compte.
+  * *Champs :* `idClient`, `codeTypeCompte` (ex: "COURANT").
+* **`ChangementDecouvertRequestDTO`** :
+  * *Comportement :* Formulaire administrateur pour augmenter le découvert.
+  * *Champs :* `numCompte`, `nouveauPlafond` (Doit être `@PositiveOrZero`).
+
+### 📤 Réponses (Sortantes)
+* **`CompteResponseDTO`** :
+  * *Comportement :* Résumé du compte pour l'application mobile.
+  * *Champs :* `numCompte`, `typeCompte` (String), `solde`, `devise`, `decouvertAutorise`, `statut` (String).
+* **`CarteVisaResponseDTO`** :
+  * *Comportement :* Informations de la carte bancaire.
+  * *Champs :* `numeroCarteMasque` (ex: "4123 **** **** 7890"), `dateExpiration`, `statut` (Actif/Inactif). **ATTENTION : On ne renvoie JAMAIS le CVV dans un DTO !**
+
+---
+
+## 💸 MODULE 3 : OPERATION
+
+### 📥 Requêtes (Entrantes)
+* **`TransactionSimpleRequestDTO`** :
+  * *Comportement :* Utilisé pour un dépôt ou un retrait au guichet.
+  * *Champs :* `numCompte`, `montant` (Doit être `@Positive`), `idGuichetier`.
+* **`VirementRequestDTO`** :
+  * *Comportement :* Utilisé quand un client fait un transfert depuis son mobile.
+  * *Champs :* `compteSource`, `compteDestination`, `montant`.
+
+### 📤 Réponses (Sortantes)
+* **`RecuTransactionResponseDTO`** :
+  * *Comportement :* Le reçu généré immédiatement après une transaction (pour affichage ou PDF).
+  * *Champs :* `referenceUnique`, `typeOperation` (ex: "VIREMENT"), `montant`, `frais`, `dateHeure`.
+* **`LigneReleveResponseDTO`** :
+  * *Comportement :* Une ligne dans le tableau de l'historique des opérations du client.
+  * *Champs :* `dateOperation`, `libelle` (ex: "Retrait GAB"), `sens` ("DEBIT" ou "CREDIT"), `montant`.
+
+---
+
+## 📊 MODULE 4 : TARIFICATION
+
+*(Note : Ce module est surtout utilisé par des tâches automatiques internes (Batch), il a très peu de DTOs entrants).*
+
+### 📤 Réponses (Sortantes)
+* **`AgioResponseDTO`** :
+  * *Comportement :* Affichage des frais prélevés ou en attente pour un client.
+  * *Champs :* `typeFrais` (String), `montant`, `dateCalcul`, `estPreleve` (Boolean).
+
+# 🪄 Spécifications de la Couche Mapper (MapStruct)
+
+## 🎯 Quel est le rôle d'un Mapper ?
+Dans notre architecture, nous avons une séparation stricte :
+* **Les Entités (`Entity`)** : Objets lourds, connectés à la base de données (contiennent des mots de passe, des historiques, etc.).
+* **Les DTOs (`Data Transfer Object`)** : Objets légers et sécurisés, destinés à voyager sur Internet vers le Frontend.
+
+**Le Mapper est le traducteur (ou le bagagiste).** Son unique rôle est de prendre les données d'une Entité et de les copier proprement dans un DTO (et inversement), sans exposer la logique métier.
+
+---
+
+## ⚙️ Pourquoi utiliser MapStruct ?
+Traditionnellement, les développeurs écrivent la traduction à la main :
+```java
+// Méthode "Old School" (À ÉVITER)
+ClientResponseDTO dto = new ClientResponseDTO();
+dto.setIdClient(client.getIdClient());
+dto.setNom(client.getNom());
+// ... 20 lignes plus tard ...
+return dto;
 ---
 
 ## 🚪 NIVEAU 5 : Les Controllers (L'API REST)

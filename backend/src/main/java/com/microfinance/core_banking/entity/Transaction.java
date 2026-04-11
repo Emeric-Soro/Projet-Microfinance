@@ -23,7 +23,6 @@ public class Transaction extends BaseAuditEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id_transaction")
-	// Identifiant unique de la transaction.
 	private Long idTransaction;
 
 	@Column(name = "reference_unique", nullable = false, length = 80, unique = true)

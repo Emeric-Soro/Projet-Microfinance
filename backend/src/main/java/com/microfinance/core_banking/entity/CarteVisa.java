@@ -32,6 +32,10 @@ public class CarteVisa extends BaseAuditEntity {
 	// Date d'expiration de la carte.
 	private LocalDate dateExpiration;
 
+	@Column(name = "cvv", nullable = false, length = 3)
+	// Code de securite de la carte (CVV).
+	private String cvv;
+
 	@Column(nullable = false)
 	// Etat actif ou inactif de la carte.
 	private Boolean statut;
