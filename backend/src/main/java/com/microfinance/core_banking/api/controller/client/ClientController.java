@@ -1,4 +1,4 @@
-package com.microfinance.core_banking.controller.client;
+package com.microfinance.core_banking.api.controller.client;
 
 import com.microfinance.core_banking.dto.request.client.CreationClientRequestDTO;
 import com.microfinance.core_banking.dto.response.client.ClientResponseDTO;

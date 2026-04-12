@@ -11,6 +11,8 @@ import org.mapstruct.Mapping;
 public interface OperationMapper {
 
     @Mapping(source = "typeTransaction.libelle", target = "typeOperation")
+    @Mapping(source = "montantGlobal", target = "montant")
+    @Mapping(source = "dateHeureTransaction", target = "dateHeure")
     RecuTransactionResponseDTO toRecuResponseDTO(Transaction transaction);
 
     // Pour un relevé de compte, la ligne va chercher les infos dans la Transaction globale

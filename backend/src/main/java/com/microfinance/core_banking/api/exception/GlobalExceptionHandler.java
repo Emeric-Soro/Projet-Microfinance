@@ -1,4 +1,4 @@
-package com.microfinance.core_banking.exception;
+package com.microfinance.core_banking.api.exception;
 
 import com.microfinance.core_banking.dto.response.common.ErrorResponseDTO;
 import jakarta.persistence.EntityNotFoundException;
