@@ -10,6 +10,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.concurrent.ThreadLocalRandom;
+
 @Service
 public class ClientServiceImpl implements ClientService {
 
@@ -27,18 +30,17 @@ public class ClientServiceImpl implements ClientService {
         if (client == null) {
             throw new IllegalArgumentException("Le client ne peut pas etre null");
         }
-        if (client.getCodeClient() == null || client.getCodeClient().isBlank()) {
-            throw new IllegalArgumentException("Le code client est obligatoire");
-        }
-        if (clientRepository.existsByCodeClient(client.getCodeClient())) {
-            throw new IllegalArgumentException("Code client deja utilise");
-        }
         if (client.getEmail() != null && clientRepository.existsByEmail(client.getEmail())) {
             throw new IllegalArgumentException("Email deja utilise");
         }
         if (client.getTelephone() != null && clientRepository.existsByTelephone(client.getTelephone())) {
             throw new IllegalArgumentException("Telephone deja utilise");
         }
+
+        // Le code client est gere par le backend pour eviter de l'imposer au formulaire d'inscription.
+        client.setCodeClient(genererCodeClientUnique());
+        // Date d'inscription renseignee automatiquement a la creation.
+        client.setDateInscription(LocalDate.now());
 
         // Récupération stricte : Si "NOUVEAU" n'est pas dans la base, l'application bloque (Sécurité !)
         StatutClient statutParDefaut = statutClientRepository.findByLibelleStatutIgnoreCase("NOUVEAU")
@@ -47,6 +49,20 @@ public class ClientServiceImpl implements ClientService {
         client.setStatutClient(statutParDefaut);
 
         return clientRepository.save(client);
+    }
+
+    // Genere un identifiant metier lisible de type CLI-YYYYMMDD-XXXX et verifie l'unicite.
+    private String genererCodeClientUnique() {
+        String prefixeDate = LocalDate.now().toString().replace("-", "");
+        for (int tentative = 0; tentative < 20; tentative++) {
+            // Genere un suffixe sur 4 chiffres pour limiter les collisions.
+            int suffixe = ThreadLocalRandom.current().nextInt(1000, 10000);
+            String code = "CLI-" + prefixeDate + "-" + suffixe;
+            if (!clientRepository.existsByCodeClient(code)) {
+                return code;
+            }
+        }
+        throw new IllegalStateException("Impossible de generer un code client unique");
     }
 
     @Override

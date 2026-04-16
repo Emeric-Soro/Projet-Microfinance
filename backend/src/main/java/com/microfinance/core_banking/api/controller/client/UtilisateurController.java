@@ -1,10 +1,12 @@
 package com.microfinance.core_banking.api.controller.client;
 
+import com.microfinance.core_banking.config.JwtService;
 import com.microfinance.core_banking.dto.request.client.CreationUtilisateurRequestDTO;
 import com.microfinance.core_banking.dto.request.client.LoginRequestDTO;
+import com.microfinance.core_banking.dto.response.client.AuthenticationResponseDTO;
 import com.microfinance.core_banking.dto.response.client.UtilisateurResponseDTO;
-import com.microfinance.core_banking.entity.RoleUtilisateur;
 import com.microfinance.core_banking.entity.Utilisateur;
+import com.microfinance.core_banking.mapper.UtilisateurMapper;
 import com.microfinance.core_banking.service.client.UtilisateurService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,6 +15,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -20,9 +26,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import com.microfinance.core_banking.mapper.UtilisateurMapper;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/utilisateurs")
@@ -31,10 +34,19 @@ public class UtilisateurController {
 
     private final UtilisateurService utilisateurService;
     private final UtilisateurMapper utilisateurMapper;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
-    public UtilisateurController(UtilisateurService utilisateurService, UtilisateurMapper utilisateurMapper) {
+    public UtilisateurController(
+            UtilisateurService utilisateurService,
+            UtilisateurMapper utilisateurMapper,
+            AuthenticationManager authenticationManager,
+            JwtService jwtService
+    ) {
         this.utilisateurService = utilisateurService;
         this.utilisateurMapper = utilisateurMapper;
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
     }
 
     @Operation(
@@ -60,7 +72,7 @@ public class UtilisateurController {
 
     @Operation(
             summary = "Authentifier un utilisateur",
-            description = "Verifie les identifiants login/mot de passe"
+            description = "Valide les identifiants via AuthenticationManager puis retourne un JWT"
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Authentification reussie"),
@@ -68,13 +80,25 @@ public class UtilisateurController {
             @ApiResponse(responseCode = "400", description = "Donnees de connexion invalides")
     })
     @PostMapping("/login")
-    public ResponseEntity<UtilisateurResponseDTO> authentifier(
+    public ResponseEntity<AuthenticationResponseDTO> authentifier(
             @Valid @RequestBody LoginRequestDTO requestDTO
     ) {
-        // Retourne 401 si le login ou le mot de passe ne correspondent pas.
-        return utilisateurService.authentifier(requestDTO.getLogin(), requestDTO.getMotDePasse())
-                .map(utilisateur -> ResponseEntity.ok(utilisateurMapper.toResponseDTO(utilisateur)))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+        // Delegue la verification login/mot de passe a Spring Security.
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(requestDTO.getLogin(), requestDTO.getMotDePasse())
+        );
+
+        // Le principal authentifie est ensuite utilise pour emettre le JWT.
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String token = jwtService.generateToken(userDetails);
+
+        // Retourne le token et le profil utilisateur associe dans la meme reponse.
+        Utilisateur utilisateur = (Utilisateur) userDetails;
+        AuthenticationResponseDTO responseDTO = new AuthenticationResponseDTO(
+                token,
+                utilisateurMapper.toResponseDTO(utilisateur)
+        );
+        return ResponseEntity.ok(responseDTO);
     }
 
     @Operation(

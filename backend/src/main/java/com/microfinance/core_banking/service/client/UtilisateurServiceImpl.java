@@ -7,13 +7,10 @@ import com.microfinance.core_banking.repository.client.ClientRepository;
 import com.microfinance.core_banking.repository.client.RoleUtilisateurRepository;
 import com.microfinance.core_banking.repository.client.UtilisateurRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.util.Optional;
 
 @Service
@@ -22,15 +19,19 @@ public class UtilisateurServiceImpl implements UtilisateurService {
     private final UtilisateurRepository utilisateurRepository;
     private final ClientRepository clientRepository;
     private final RoleUtilisateurRepository roleUtilisateurRepository;
+    // Encodeur centralise fourni par ApplicationConfig (BCrypt).
+    private final PasswordEncoder passwordEncoder;
 
     public UtilisateurServiceImpl(
             UtilisateurRepository utilisateurRepository,
             ClientRepository clientRepository,
-            RoleUtilisateurRepository roleUtilisateurRepository
+            RoleUtilisateurRepository roleUtilisateurRepository,
+            PasswordEncoder passwordEncoder
     ) {
         this.utilisateurRepository = utilisateurRepository;
         this.clientRepository = clientRepository;
         this.roleUtilisateurRepository = roleUtilisateurRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -54,7 +55,8 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         Utilisateur utilisateur = new Utilisateur();
         utilisateur.setClient(client);
         utilisateur.setLogin(login);
-        utilisateur.setPassword(hashPassword(motDePasse));
+        // Le mot de passe est encode avant stockage pour ne jamais persister de secret en clair.
+        utilisateur.setPassword(passwordEncoder.encode(motDePasse));
 
         return utilisateurRepository.save(utilisateur);
     }
@@ -67,7 +69,8 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         }
 
         return utilisateurRepository.findByLogin(login)
-                .filter(u -> u.getPassword().equals(hashPassword(motDePasseBrut)));
+                // Compare le mot de passe brut avec le hash stocke via l'encodeur Spring Security.
+                .filter(u -> passwordEncoder.matches(motDePasseBrut, u.getPassword()));
     }
 
     @Override
@@ -93,16 +96,5 @@ public class UtilisateurServiceImpl implements UtilisateurService {
             return client.getEmail().trim().toLowerCase();
         }
         return client.getCodeClient().trim().toLowerCase();
-    }
-
-    // TODO: remplacer par BCrypt avec Spring Security lors de l'integration du module securite.
-    private String hashPassword(String motDePasse) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(motDePasse.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Algorithme de hash indisponible", e);
-        }
     }
 }

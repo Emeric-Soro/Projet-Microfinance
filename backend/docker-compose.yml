@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  oracledb:
+    image: gvenzl/oracle-xe:21-slim
+    container_name: core_banking_oracle
+    environment:
+      - ORACLE_PASSWORD=oracle_admin_pass # Mot de passe du super admin (SYS)
+      - APP_USER=core_banking_user        # Utilisateur de notre application
+      - APP_PASSWORD=core_banking_pass    # Mot de passe de notre application
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle_data:/opt/oracle/oradata   # C'est ÇA qui rend la base non-volatile !
+
+volumes:
+  oracle_data:
