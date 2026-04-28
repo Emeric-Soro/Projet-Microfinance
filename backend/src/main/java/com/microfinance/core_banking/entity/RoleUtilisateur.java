@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -15,6 +17,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Entity
 @Table(name = "role_utilisateur")
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 // Entite representant un role de securite utilisateur.
 public class RoleUtilisateur extends BaseAuditEntity {
 
