@@ -1,17 +1,62 @@
-version: '3.8'
-
 services:
   oracledb:
     image: gvenzl/oracle-xe:21-slim
     container_name: core_banking_oracle
     environment:
-      - ORACLE_PASSWORD=oracle_admin_pass # Mot de passe du super admin (SYS)
-      - APP_USER=core_banking_user        # Utilisateur de notre application
-      - APP_PASSWORD=core_banking_pass    # Mot de passe de notre application
+      - ORACLE_PASSWORD=${ORACLE_PASSWORD}
+      - APP_USER=${DB_USERNAME}
+      - APP_USER_PASSWORD=${DB_PASSWORD}
     ports:
       - "1521:1521"
     volumes:
-      - oracle_data:/opt/oracle/oradata   # C'est ÇA qui rend la base non-volatile !
+      - oracle_data:/opt/oracle/oradata
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: core_banking_backend
+    depends_on:
+      - oracledb
+    environment:
+      - DB_URL=jdbc:oracle:thin:@oracledb:1521/XEPDB1
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS}
+      - APP_CORS_ALLOWED_ORIGINS=${APP_CORS_ALLOWED_ORIGINS}
+      - APP_RATE_LIMIT_CACHE_MAX_ENTRIES=${APP_RATE_LIMIT_CACHE_MAX_ENTRIES:-10000}
+      - APP_RATE_LIMIT_CACHE_TTL=${APP_RATE_LIMIT_CACHE_TTL:-30m}
+      - APP_RATE_LIMIT_CLIENT_SIGNUP_MAX_REQUESTS=${APP_RATE_LIMIT_CLIENT_SIGNUP_MAX_REQUESTS:-5}
+      - APP_RATE_LIMIT_CLIENT_SIGNUP_WINDOW=${APP_RATE_LIMIT_CLIENT_SIGNUP_WINDOW:-1m}
+      - APP_RATE_LIMIT_USER_SIGNUP_MAX_REQUESTS=${APP_RATE_LIMIT_USER_SIGNUP_MAX_REQUESTS:-3}
+      - APP_RATE_LIMIT_USER_SIGNUP_WINDOW=${APP_RATE_LIMIT_USER_SIGNUP_WINDOW:-1m}
+      - APP_RATE_LIMIT_LOGIN_MAX_REQUESTS=${APP_RATE_LIMIT_LOGIN_MAX_REQUESTS:-10}
+      - APP_RATE_LIMIT_LOGIN_WINDOW=${APP_RATE_LIMIT_LOGIN_WINDOW:-1m}
+      - SPRING_DOCKER_COMPOSE_ENABLED=false
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    restart: unless-stopped
+
+  cloudbeaver:
+    image: dbeaver/cloudbeaver:${CLOUDBEAVER_IMAGE_TAG:-26.0.2}
+    container_name: core_banking_cloudbeaver
+    depends_on:
+      - oracledb
+    environment:
+      - CB_SERVER_NAME=${CLOUDBEAVER_SERVER_NAME}
+      - CB_SERVER_URL=${CLOUDBEAVER_SERVER_URL}
+      - CB_ADMIN_NAME=${CLOUDBEAVER_ADMIN_NAME}
+      - CB_ADMIN_PASSWORD=${CLOUDBEAVER_ADMIN_PASSWORD}
+    entrypoint: ["sh", "/opt/cloudbeaver/conf/bootstrap.sh"]
+    ports:
+      - "${CLOUDBEAVER_PORT:-8978}:8978"
+    volumes:
+      - ./cloudbeaver/initial-data-sources.conf:/opt/cloudbeaver/conf/initial-data-sources.conf:ro
+      - ./cloudbeaver/bootstrap.sh:/opt/cloudbeaver/conf/bootstrap.sh:ro
+      - cloudbeaver_workspace:/opt/cloudbeaver/workspace
+    restart: unless-stopped
 
 volumes:
   oracle_data:
+  cloudbeaver_workspace:

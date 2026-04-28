@@ -18,6 +18,11 @@ public interface CompteRepository extends JpaRepository<Compte, Long> {
 	Optional<Compte> findByNumCompte(String numCompte);
 	// Verification rapide de si un compte existe par numero.
 	boolean existsByNumCompte(String numCompte);
+	// Verification rapide de si un compte appartient bien a un client donne.
+	boolean existsByNumCompteAndClient_IdClient(String numCompte, Long idClient);
+
+	// Nombre de comptes deja ouverts pour un client.
+	long countByClient_IdClient(Long idClient);
 
 	// Liste paginee des comptes d'un client.
 	Page<Compte> findByClient_IdClient(Long idClient, Pageable pageable);

@@ -13,6 +13,7 @@ public interface OperationMapper {
     @Mapping(source = "typeTransaction.libelle", target = "typeOperation")
     @Mapping(source = "montantGlobal", target = "montant")
     @Mapping(source = "dateHeureTransaction", target = "dateHeure")
+    @Mapping(target = "statutOperation", expression = "java(transaction.getStatutOperation() == null ? null : transaction.getStatutOperation().name())")
     RecuTransactionResponseDTO toRecuResponseDTO(Transaction transaction);
 
     // Pour un relevé de compte, la ligne va chercher les infos dans la Transaction globale

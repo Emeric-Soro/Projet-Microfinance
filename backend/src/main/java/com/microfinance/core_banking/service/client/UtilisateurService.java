@@ -2,13 +2,17 @@ package com.microfinance.core_banking.service.client;
 
 import com.microfinance.core_banking.entity.Utilisateur;
 
-import java.util.Optional;
+import java.time.LocalDate;
 
 public interface UtilisateurService {
 
-    Utilisateur creerCompteWeb(Long idClient, String motDePasse);
+    Utilisateur creerCompteWeb(String codeClient, String email, LocalDate dateNaissance, String motDePasse);
 
-    Optional<Utilisateur> authentifier(String login, String motDePasseBrut);
+    AuthenticationWorkflowResult authentifier(String login, String motDePasseBrut);
+
+    Utilisateur verifierSecondFacteur(String login, String challengeId, String codeOtp);
 
     Utilisateur assignerRole(Long idUser, String codeRole);
+
+    Utilisateur changerActivation(Long idUser, boolean actif);
 }

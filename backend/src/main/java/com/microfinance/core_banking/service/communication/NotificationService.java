@@ -9,4 +9,6 @@ public interface NotificationService {
     Notification envoyerAlerteVirement(String numCompte, BigDecimal montant);
 
     Notification envoyerAlerteConnexionSuspecte(Long idClient);
+
+    Notification envoyerCodeAuthentification(Long idClient, String codeOtp);
 }

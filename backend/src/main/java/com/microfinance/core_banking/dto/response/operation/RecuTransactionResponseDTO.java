@@ -19,4 +19,7 @@ public class RecuTransactionResponseDTO {
     private BigDecimal montant;
     private BigDecimal frais;
     private LocalDateTime dateHeure;
+    private String statutOperation;
+    private Boolean validationSuperviseurRequise;
+    private LocalDateTime dateExecution;
 }

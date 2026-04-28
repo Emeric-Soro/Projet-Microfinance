@@ -11,6 +11,10 @@ public interface UtilisateurMapper {
 
     // On va chercher l'ID du client à l'intérieur de l'objet Client
     @Mapping(source = "client.idClient", target = "idClient")
+    @Mapping(source = "actif", target = "actif")
+    @Mapping(target = "compteNonVerrouille", expression = "java(utilisateur.isAccountNonLocked())")
+    @Mapping(source = "identifiantsExpirentLe", target = "identifiantsExpirentLe")
+    @Mapping(source = "secondFacteurActive", target = "secondFacteurActive")
     UtilisateurResponseDTO toResponseDTO(Utilisateur utilisateur);
 
     // Astuce MapStruct : En ajoutant cette méthode, MapStruct va comprendre tout seul
