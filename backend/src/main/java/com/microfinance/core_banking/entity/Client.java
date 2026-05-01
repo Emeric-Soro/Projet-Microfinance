@@ -131,17 +131,9 @@ public class Client extends BaseAuditEntity {
 
 	// --- Champs KYC Microfinance ---
 
-	@Column(name = "numero_piece_identite", length = 50)
-	// Numero de la piece d'identite officielle.
-	private String numeroPieceIdentite;
-
-	@Column(name = "type_piece_identite", length = 30)
-	// Type de piece d'identite (CNI, PASSEPORT, CARTE_CONSULAIRE).
-	private String typePieceIdentite;
-
-	@Column(length = 150)
-	// Profession ou activite principale du client.
-	private String profession;
+	// NOTE: champs KYC redondants supprimés (numero/type/profession déjà déclarés plus haut).
+	// Les informations KYC complémentaires sont conservées via les champs existants
+	// (typePieceIdentite, numeroPieceIdentite et profession déclarés plus haut).
 
 	@Column(name = "revenu_mensuel", precision = 19, scale = 2)
 	// Revenu mensuel estime du client en FCFA.

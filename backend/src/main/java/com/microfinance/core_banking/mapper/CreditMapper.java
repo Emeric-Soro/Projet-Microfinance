@@ -22,7 +22,7 @@ public interface CreditMapper {
 	@Mapping(target = "codeProduit", source = "produitCredit.codeProduit")
 	@Mapping(target = "libelleProduit", source = "produitCredit.libelle")
 	@Mapping(target = "statutDemande", expression = "java(demande.getStatutDemande().name())")
-	@Mapping(target = "nomAgentCredit", expression = "java(demande.getAgentCredit() != null ? (demande.getAgentCredit().getNomUtilisateur() != null ? demande.getAgentCredit().getNomUtilisateur() : demande.getAgentCredit().getLogin()) : null)")
+	@Mapping(target = "nomAgentCredit", expression = "java(demande.getAgentCredit() != null ? demande.getAgentCredit().getUsername() : null)")
 	DemandeCreditResponseDTO toDemandeCreditResponseDTO(DemandeCredit demande);
 
 	// --- Credit ---

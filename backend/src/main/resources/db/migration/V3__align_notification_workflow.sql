@@ -40,32 +40,32 @@ BEGIN
     WHERE table_name = 'STATUT_ENVOI';
 
     IF v_count > 0 THEN
-        INSERT INTO statut_envoi (code_statut_envoi, libelle, created_at, updated_at)
-        SELECT 'EN_ATTENTE', 'En attente', SYSTIMESTAMP, SYSTIMESTAMP
-        FROM dual
-        WHERE NOT EXISTS (
-            SELECT 1
-            FROM statut_envoi
-            WHERE code_statut_envoi = 'EN_ATTENTE'
-        );
+        EXECUTE IMMEDIATE q'[
+            MERGE INTO statut_envoi cible
+            USING (SELECT 'EN_ATTENTE' AS code_statut_envoi, 'En attente' AS libelle FROM dual) src
+            ON (cible.code_statut_envoi = src.code_statut_envoi)
+            WHEN NOT MATCHED THEN
+                INSERT (code_statut_envoi, libelle, created_at, updated_at)
+                VALUES (src.code_statut_envoi, src.libelle, SYSTIMESTAMP, SYSTIMESTAMP)
+        ]';
 
-        INSERT INTO statut_envoi (code_statut_envoi, libelle, created_at, updated_at)
-        SELECT 'ENVOYE', 'Envoye', SYSTIMESTAMP, SYSTIMESTAMP
-        FROM dual
-        WHERE NOT EXISTS (
-            SELECT 1
-            FROM statut_envoi
-            WHERE code_statut_envoi = 'ENVOYE'
-        );
+        EXECUTE IMMEDIATE q'[
+            MERGE INTO statut_envoi cible
+            USING (SELECT 'ENVOYE' AS code_statut_envoi, 'Envoye' AS libelle FROM dual) src
+            ON (cible.code_statut_envoi = src.code_statut_envoi)
+            WHEN NOT MATCHED THEN
+                INSERT (code_statut_envoi, libelle, created_at, updated_at)
+                VALUES (src.code_statut_envoi, src.libelle, SYSTIMESTAMP, SYSTIMESTAMP)
+        ]';
 
-        INSERT INTO statut_envoi (code_statut_envoi, libelle, created_at, updated_at)
-        SELECT 'ECHEC', 'Echec', SYSTIMESTAMP, SYSTIMESTAMP
-        FROM dual
-        WHERE NOT EXISTS (
-            SELECT 1
-            FROM statut_envoi
-            WHERE code_statut_envoi = 'ECHEC'
-        );
+        EXECUTE IMMEDIATE q'[
+            MERGE INTO statut_envoi cible
+            USING (SELECT 'ECHEC' AS code_statut_envoi, 'Echec' AS libelle FROM dual) src
+            ON (cible.code_statut_envoi = src.code_statut_envoi)
+            WHEN NOT MATCHED THEN
+                INSERT (code_statut_envoi, libelle, created_at, updated_at)
+                VALUES (src.code_statut_envoi, src.libelle, SYSTIMESTAMP, SYSTIMESTAMP)
+        ]';
     END IF;
 END;
 /
@@ -79,14 +79,14 @@ BEGIN
     WHERE table_name = 'TYPE_CANAL';
 
     IF v_count > 0 THEN
-        INSERT INTO type_canal (code_canal, libelle, created_at, updated_at)
-        SELECT 'SMS', 'SMS', SYSTIMESTAMP, SYSTIMESTAMP
-        FROM dual
-        WHERE NOT EXISTS (
-            SELECT 1
-            FROM type_canal
-            WHERE code_canal = 'SMS'
-        );
+        EXECUTE IMMEDIATE q'[
+            MERGE INTO type_canal cible
+            USING (SELECT 'SMS' AS code_canal, 'SMS' AS libelle FROM dual) src
+            ON (cible.code_canal = src.code_canal)
+            WHEN NOT MATCHED THEN
+                INSERT (code_canal, libelle, created_at, updated_at)
+                VALUES (src.code_canal, src.libelle, SYSTIMESTAMP, SYSTIMESTAMP)
+        ]';
     END IF;
 END;
 /

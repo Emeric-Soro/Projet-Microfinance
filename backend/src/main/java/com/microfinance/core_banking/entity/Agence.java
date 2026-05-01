@@ -45,10 +45,6 @@ public class Agence extends BaseAuditEntity {
 	private Boolean estActive = true;
 
 	@OneToMany(mappedBy = "agence")
-	// Utilisateurs rattaches a cette agence.
-	private List<Utilisateur> utilisateurs = new ArrayList<>();
-
-	@OneToMany(mappedBy = "agence")
 	// Comptes geres par cette agence.
 	private List<Compte> comptes = new ArrayList<>();
 }

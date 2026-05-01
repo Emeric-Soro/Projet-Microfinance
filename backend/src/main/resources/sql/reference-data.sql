@@ -1,7 +1,7 @@
 -- ============================================================
 -- DONNEES DE REFERENCE MICROFINANCE
--- Ce fichier est execute automatiquement par Spring Boot
--- au demarrage si spring.sql.init.mode=always
+-- Ce fichier est execute explicitement apres l'initialisation Hibernate
+-- pour conserver les MERGE idempotents sans bloquer Flyway.
 -- ============================================================
 
 -- ============================================================
@@ -263,7 +263,7 @@ WHEN NOT MATCHED THEN INSERT (code_statut_envoi, libelle, created_at, updated_at
 VALUES ('EN_ATTENTE', 'En attente', SYSTIMESTAMP, SYSTIMESTAMP);
 
 MERGE INTO statut_envoi se
-USING (SELECT 'ECHOUE' AS code_statut_envoi FROM dual) src
+USING (SELECT 'ECHEC' AS code_statut_envoi FROM dual) src
 ON (se.code_statut_envoi = src.code_statut_envoi)
 WHEN NOT MATCHED THEN INSERT (code_statut_envoi, libelle, created_at, updated_at)
-VALUES ('ECHOUE', 'Echoue', SYSTIMESTAMP, SYSTIMESTAMP);
+VALUES ('ECHEC', 'Echec', SYSTIMESTAMP, SYSTIMESTAMP);

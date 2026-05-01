@@ -126,6 +126,14 @@ public class Utilisateur extends BaseAuditEntity implements UserDetails {
 	}
 
 	@Override
+	// Retourne le mot de passe encode de cet utilisateur (implémentation explicite
+	// pour garantir la compatibilité lors de la compilation lorsque Lombok n'est
+	// pas pris en compte par certains toolchains de compilation dans des conteneurs).
+	public String getPassword() {
+		return password;
+	}
+
+	@Override
 	// Le compte applicatif peut expirer a une date fixee.
 	public boolean isAccountNonExpired() {
 		return compteExpireLe == null || compteExpireLe.isAfter(LocalDateTime.now());
