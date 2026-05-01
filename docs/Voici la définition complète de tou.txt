@@ -1,0 +1,784 @@
+Voici la **définition complète de tous les écrans du projet MicroFin Core Banking**, en couvrant :
+
+1. **application web opérateur** ;
+2. **portail client web** ;
+3. **application mobile client** ;
+4. **application mobile agent terrain** ;
+5. **USSD** ;
+6. **dashboard agent banking** ;
+7. **portail développeur Open Banking** ;
+8. **console communication, SMS, WhatsApp, chatbot** ;
+9. **interfaces techniques et administratives**.
+
+Le dossier technique existant prévoit déjà un inventaire initial des écrans pour le dashboard opérateur, le portail e-banking et l’application mobile . Les documents complémentaires indiquent aussi que l’application mobile actuelle doit être étendue vers une vraie application native, une application agent terrain, un serveur USSD, un dashboard agent banking, un portail API et une console de communication . L’inventaire ci-dessous reprend donc l’existant, puis l’étend pour couvrir tous les modules du PRD.
+
+# 1. Principes généraux d’interface à respecter
+
+## 1.1 Architecture des interfaces
+
+Toutes les interfaces doivent être construites autour d’une logique commune :
+
+| Élément           | Règle                                                                                                                |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Identité visuelle | Couleurs MicroFin, interface sobre, bancaire, claire, professionnelle.                                               |
+| Navigation        | Menus par rôle, aucune fonction visible si l’utilisateur n’a pas les droits.                                         |
+| Sécurité          | Authentification forte sur les actions sensibles.                                                                    |
+| Traçabilité       | Toute action importante doit afficher l’utilisateur, l’agence, la date métier et le statut.                          |
+| Maker-Checker     | Toute action sensible passe par une file de validation.                                                              |
+| Recherche         | Chaque grand module doit avoir recherche, filtres, tri, pagination et export.                                        |
+| Consultation      | Chaque entité importante doit avoir une fiche détaillée.                                                             |
+| Historique        | Chaque fiche doit afficher les événements, modifications et validations.                                             |
+| Documents         | Les documents générés doivent être consultables, téléchargeables et archivés.                                        |
+| Responsive        | Les écrans web doivent être utilisables sur ordinateur et tablette.                                                  |
+| Mobile            | Les applications mobiles doivent privilégier les actions rapides, les cartes synthétiques et les formulaires courts. |
+
+## 1.2 Structure commune des écrans web internes
+
+Chaque écran web opérateur doit avoir :
+
+| Zone             | Contenu                                                               |
+| ---------------- | --------------------------------------------------------------------- |
+| Sidebar gauche   | Modules accessibles selon le rôle.                                    |
+| Topbar           | Recherche globale, notifications, profil, agence active, date métier. |
+| Fil d’Ariane     | Position de l’utilisateur dans le module.                             |
+| Titre de page    | Nom de l’écran et description courte.                                 |
+| Zone actions     | Boutons principaux : créer, exporter, imprimer, valider, rejeter.     |
+| Zone filtres     | Filtres par agence, statut, date, produit, utilisateur, montant.      |
+| Zone données     | Tableau, cartes, graphique ou formulaire.                             |
+| Panneau latéral  | Détail rapide, historique, validation ou commentaires.                |
+| Pied fonctionnel | Pagination, total, date de dernière mise à jour.                      |
+
+## 1.3 Structure commune des écrans mobiles
+
+L’application mobile client doit respecter la navigation déjà prévue par le dossier technique : **Accueil, Comptes, Opérations, Notifications, Plus** .
+
+| Zone              | Contenu                                                    |
+| ----------------- | ---------------------------------------------------------- |
+| Header            | Nom du client, avatar, icône notification.                 |
+| Corps             | Carte principale, actions rapides, listes courtes.         |
+| Bottom navigation | Accueil, Comptes, Opérations, Notifications, Plus.         |
+| Action principale | Bouton flottant pour virement, dépôt, paiement ou demande. |
+| Sécurité          | Code PIN, biométrie, OTP selon le niveau de risque.        |
+
+---
+
+# 2. Application web opérateur
+
+## 2.1 Authentification et accès interne
+
+| Code        | Écran                         | Route                         | Rôles                          | Description                                                                                                                                                                                                                                  |
+| ----------- | ----------------------------- | ----------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| WEB-AUTH-01 | Connexion opérateur           | `/login`                      | Tous les utilisateurs internes | Saisie identifiant, mot de passe, message d’erreur, compteur de tentatives, lien mot de passe oublié. L’écran initial du dossier prévoit déjà logo, champ identifiant, mot de passe, bouton de connexion, erreur et compteur de tentatives . |
+| WEB-AUTH-02 | Vérification second facteur   | `/login/verification`         | Utilisateurs sensibles         | Saisie OTP ou validation forte pour administrateur, gérant, chef de caisse, conformité.                                                                                                                                                      |
+| WEB-AUTH-03 | Mot de passe oublié           | `/mot-de-passe-oublie`        | Tous                           | Demande de réinitialisation avec identifiant, canal de vérification et confirmation.                                                                                                                                                         |
+| WEB-AUTH-04 | Réinitialisation mot de passe | `/mot-de-passe/reinitialiser` | Tous                           | Définition d’un nouveau mot de passe conforme à la politique de sécurité.                                                                                                                                                                    |
+| WEB-AUTH-05 | Mot de passe expiré           | `/mot-de-passe/expire`        | Tous                           | Forçage du changement de mot de passe après expiration.                                                                                                                                                                                      |
+| WEB-AUTH-06 | Compte verrouillé             | `/compte-verrouille`          | Tous                           | Information de blocage, motif et procédure interne.                                                                                                                                                                                          |
+| WEB-AUTH-07 | Sélection agence active       | `/selection-agence`           | Utilisateurs multi-agences     | Choix de l’agence ou du périmètre de travail après connexion.                                                                                                                                                                                |
+| WEB-AUTH-08 | Session expirée               | `/session-expiree`            | Tous                           | Message de session expirée avec retour sécurisé à la connexion.                                                                                                                                                                              |
+
+## 2.2 Tableau de bord principal
+
+Le dashboard existant prévoit déjà cartes indicateurs, graphique d’activité, répartition des comptes, opérations récentes, alertes et ratios prudentiels .
+
+| Code        | Écran                      | Route                     | Rôles                        | Description                                                               |
+| ----------- | -------------------------- | ------------------------- | ---------------------------- | ------------------------------------------------------------------------- |
+| WEB-DASH-01 | Tableau de bord général    | `/`                       | Tous                         | Vue globale selon rôle : clients, dépôts, crédits, opérations, alertes.   |
+| WEB-DASH-02 | Tableau de bord agence     | `/dashboard/agence`       | Gérant, chef agence          | Indicateurs de l’agence : caisse, clients, crédits, recouvrement, dépôts. |
+| WEB-DASH-03 | Tableau de bord siège      | `/dashboard/siege`        | Direction, administrateur    | Consolidation réseau : agences, encours, liquidité, rentabilité, risques. |
+| WEB-DASH-04 | Tableau de bord caissier   | `/dashboard/caisse`       | Caissier                     | Session caisse, solde théorique, opérations du jour, alertes plafond.     |
+| WEB-DASH-05 | Tableau de bord crédit     | `/dashboard/credit`       | Agent crédit, comité, gérant | Demandes en cours, crédits actifs, impayés, portefeuille à risque.        |
+| WEB-DASH-06 | Tableau de bord conformité | `/dashboard/conformite`   | Conformité, audit            | Alertes LBC/FT, clients à risque, sanctions, PPE, dossiers ouverts.       |
+| WEB-DASH-07 | Tableau de bord comptable  | `/dashboard/comptabilite` | Comptable, finance           | Journaux, écritures non validées, équilibre débit-crédit, clôtures.       |
+| WEB-DASH-08 | Tableau de bord direction  | `/dashboard/direction`    | Direction générale           | Performance globale, rentabilité, risque, liquidité, croissance.          |
+
+## 2.3 Navigation, notifications et recherche globale
+
+| Code       | Écran                      | Route                 | Rôles             | Description                                                          |
+| ---------- | -------------------------- | --------------------- | ----------------- | -------------------------------------------------------------------- |
+| WEB-NAV-01 | Recherche globale          | `/recherche`          | Tous selon droits | Recherche clients, comptes, opérations, crédits, agences, écritures. |
+| WEB-NAV-02 | Centre de notifications    | `/notifications`      | Tous              | Notifications système, validations, alertes, messages internes.      |
+| WEB-NAV-03 | Détail notification        | `/notifications/{id}` | Tous              | Lecture complète, statut lu/non lu, action associée.                 |
+| WEB-NAV-04 | Profil utilisateur interne | `/mon-profil`         | Tous              | Informations personnelles, rôle, agence, sessions, préférences.      |
+| WEB-NAV-05 | Préférences utilisateur    | `/preferences`        | Tous              | Thème, langue, densité d’affichage, notifications.                   |
+| WEB-NAV-06 | Aide interne               | `/aide`               | Tous              | Documentation rapide par module.                                     |
+
+---
+
+# 3. Gestion des clients et KYC
+
+Le projet actuel possède déjà des écrans de liste client, création client et fiche client . Ces écrans doivent être étendus pour intégrer KYC, conformité, documents, historique et scoring.
+
+| Code       | Écran                         | Route                                   | Rôles                            | Description                                                                     |
+| ---------- | ----------------------------- | --------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------- |
+| WEB-CLI-01 | Liste des clients             | `/clients`                              | Gestionnaire, gérant, admin      | Tableau paginé : photo, nom, téléphone, pièce, agence, statut, risque, actions. |
+| WEB-CLI-02 | Recherche avancée client      | `/clients/recherche-avancee`            | Gestionnaire, conformité         | Recherche multicritère : identité, téléphone, compte, pièce, agence, risque.    |
+| WEB-CLI-03 | Création client physique      | `/clients/nouveau/physique`             | Gestionnaire                     | Assistant de création : identité, contact, activité, pièces, KYC, validation.   |
+| WEB-CLI-04 | Création client moral         | `/clients/nouveau/moral`                | Gestionnaire                     | Création entreprise, mandataires, bénéficiaires effectifs, documents légaux.    |
+| WEB-CLI-05 | Fiche client                  | `/clients/{id}`                         | Gestionnaire, gérant, conformité | Vue 360 : identité, comptes, crédits, opérations, alertes, documents.           |
+| WEB-CLI-06 | Modification client           | `/clients/{id}/modifier`                | Gestionnaire                     | Modification contrôlée, soumise à validation si données sensibles.              |
+| WEB-CLI-07 | Dossier KYC                   | `/clients/{id}/kyc`                     | Gestionnaire, conformité         | Niveau KYC, pièces, statut, vérifications, expiration, complétude.              |
+| WEB-CLI-08 | Upload pièces KYC             | `/clients/{id}/documents/ajouter`       | Gestionnaire                     | Ajout pièce d’identité, justificatif domicile, photo, signature.                |
+| WEB-CLI-09 | Consultation documents client | `/clients/{id}/documents`               | Gestionnaire, conformité         | Liste des pièces et documents générés.                                          |
+| WEB-CLI-10 | Bénéficiaires effectifs       | `/clients/{id}/beneficiaires-effectifs` | Conformité                       | Gestion des bénéficiaires effectifs pour personnes morales.                     |
+| WEB-CLI-11 | Mandataires client            | `/clients/{id}/mandataires`             | Gestionnaire                     | Ajout, retrait, habilitations et plafonds des mandataires.                      |
+| WEB-CLI-12 | Contacts client               | `/clients/{id}/contacts`                | Gestionnaire                     | Téléphones, emails, adresses, personnes à contacter.                            |
+| WEB-CLI-13 | Profil risque client          | `/clients/{id}/risque`                  | Conformité, crédit               | Score risque, facteurs de risque, historique d’évolution.                       |
+| WEB-CLI-14 | Screening sanctions           | `/clients/{id}/screening`               | Conformité                       | Résultat de filtrage sanctions, PPE, listes internes.                           |
+| WEB-CLI-15 | Historique client             | `/clients/{id}/historique`              | Gestionnaire, audit              | Historique des modifications, connexions, opérations et validations.            |
+| WEB-CLI-16 | Suspension client             | `/clients/{id}/suspension`              | Gérant, conformité               | Suspension motivée avec impact comptes et services digitaux.                    |
+| WEB-CLI-17 | Réactivation client           | `/clients/{id}/reactivation`            | Gérant, conformité               | Réactivation après justification et validation.                                 |
+| WEB-CLI-18 | Archivage client              | `/clients/{id}/archivage`               | Admin                            | Archivage contrôlé si aucun contrat actif.                                      |
+| WEB-CLI-19 | Fusion doublons client        | `/clients/fusion-doublons`              | Admin, conformité                | Détection et fusion contrôlée des doublons.                                     |
+| WEB-CLI-20 | Export données client         | `/clients/{id}/export`                  | Admin, conformité                | Export dossier complet client.                                                  |
+
+---
+
+# 4. Gestion des comptes
+
+| Code       | Écran                 | Route                              | Rôles                          | Description                                                           |
+| ---------- | --------------------- | ---------------------------------- | ------------------------------ | --------------------------------------------------------------------- |
+| WEB-CPT-01 | Liste des comptes     | `/comptes`                         | Gestionnaire, gérant, caissier | Tableau des comptes : numéro, client, type, solde, statut, agence.    |
+| WEB-CPT-02 | Ouverture de compte   | `/comptes/nouveau`                 | Gestionnaire                   | Choix client, produit, agence, dépôt initial, paramètres, validation. |
+| WEB-CPT-03 | Fiche compte          | `/comptes/{id}`                    | Gestionnaire, caissier         | Solde comptable, disponible, mouvements, restrictions, alertes.       |
+| WEB-CPT-04 | Historique compte     | `/comptes/{id}/historique`         | Gestionnaire, client interne   | Liste des opérations avec filtres, export, reçu.                      |
+| WEB-CPT-05 | Relevé compte         | `/comptes/{id}/releve`             | Gestionnaire                   | Génération relevé PDF, CSV, période personnalisée.                    |
+| WEB-CPT-06 | Blocage compte        | `/comptes/{id}/blocage`            | Gérant, conformité             | Blocage total ou partiel avec motif.                                  |
+| WEB-CPT-07 | Déblocage compte      | `/comptes/{id}/deblocage`          | Gérant, conformité             | Levée de restriction.                                                 |
+| WEB-CPT-08 | Opposition compte     | `/comptes/{id}/opposition`         | Gérant, conformité             | Opposition administrative, judiciaire ou client.                      |
+| WEB-CPT-09 | Changement de produit | `/comptes/{id}/changement-produit` | Gestionnaire, gérant           | Migration du compte vers un autre produit autorisé.                   |
+| WEB-CPT-10 | Paramètres compte     | `/comptes/{id}/parametres`         | Gestionnaire, gérant           | Solde minimum, découvert, frais, plafonds, restrictions.              |
+| WEB-CPT-11 | Comptes dormants      | `/comptes/dormants`                | Gestionnaire, conformité       | Détection et suivi des comptes sans mouvement.                        |
+| WEB-CPT-12 | Clôture compte        | `/comptes/{id}/cloture`            | Gérant, admin                  | Vérification solde, restrictions, crédits, frais, validation.         |
+| WEB-CPT-13 | Comptes à valider     | `/comptes/a-valider`               | Gérant                         | Liste des ouvertures, modifications et clôtures en attente.           |
+| WEB-CPT-14 | Comptes par agence    | `/comptes/par-agence`              | Gérant, siège                  | Synthèse des comptes par agence et type.                              |
+
+---
+
+# 5. Opérations de guichet
+
+Le dossier initial prévoit trois écrans principaux : versement, retrait et virement, avec contrôles de solde, plafond, compte actif et validation superviseur si seuil dépassé .
+
+| Code       | Écran                 | Route                         | Rôles                  | Description                                                          |
+| ---------- | --------------------- | ----------------------------- | ---------------------- | -------------------------------------------------------------------- |
+| WEB-OPS-01 | Versement espèces     | `/operations/versement`       | Caissier               | Recherche compte, montant, billetage optionnel, frais, reçu.         |
+| WEB-OPS-02 | Retrait espèces       | `/operations/retrait`         | Caissier               | Contrôle solde, plafond, statut compte, caisse, validation si seuil. |
+| WEB-OPS-03 | Virement interne      | `/operations/virement`        | Caissier, gestionnaire | Compte source, destination, montant, motif, validation ACID.         |
+| WEB-OPS-04 | Opération déplacée    | `/operations/deplacees`       | Caissier               | Dépôt, retrait ou virement dans une agence différente.               |
+| WEB-OPS-05 | Historique opérations | `/operations/historique`      | Tous selon droits      | Tableau filtrable de toutes les opérations.                          |
+| WEB-OPS-06 | Détail opération      | `/operations/{id}`            | Tous selon droits      | Montant, compte, client, caisse, écriture, reçu, statut.             |
+| WEB-OPS-07 | Reçu opération        | `/operations/{id}/recu`       | Caissier               | Reçu imprimable et téléchargeable.                                   |
+| WEB-OPS-08 | Annulation opération  | `/operations/{id}/annulation` | Admin, gérant          | Annulation par contrepassation, jamais suppression physique.         |
+| WEB-OPS-09 | Validation opération  | `/operations/validations`     | Gérant                 | Liste opérations en attente de validation.                           |
+| WEB-OPS-10 | Forçage superviseur   | `/operations/forcage`         | Chef caisse, gérant    | Validation exceptionnelle avec motif et authentification forte.      |
+| WEB-OPS-11 | Opérations suspectes  | `/operations/suspectes`       | Conformité             | Opérations déclenchées par règles LBC/FT.                            |
+| WEB-OPS-12 | Journal guichet       | `/operations/journal-guichet` | Caissier, chef caisse  | Journal des opérations par caisse et par utilisateur.                |
+
+---
+
+# 6. Multi-agences et réseau
+
+| Code       | Écran                       | Route                              | Rôles                | Description                                              |
+| ---------- | --------------------------- | ---------------------------------- | -------------------- | -------------------------------------------------------- |
+| WEB-AGC-01 | Liste des régions           | `/reseau/regions`                  | Admin, siège         | Régions, zones, directions régionales.                   |
+| WEB-AGC-02 | Création région             | `/reseau/regions/nouveau`          | Admin                | Formulaire de création d’une région.                     |
+| WEB-AGC-03 | Liste des agences           | `/reseau/agences`                  | Admin, siège         | Liste agences, statut, région, gérant, activité.         |
+| WEB-AGC-04 | Fiche agence                | `/reseau/agences/{id}`             | Admin, siège, gérant | Informations, personnel, guichets, comptes, indicateurs. |
+| WEB-AGC-05 | Création agence             | `/reseau/agences/nouveau`          | Admin                | Création complète avec code agence, région, adresse.     |
+| WEB-AGC-06 | Paramètres agence           | `/reseau/agences/{id}/parametres`  | Admin, gérant        | Plafonds, horaires, jours ouvrés, règles locales.        |
+| WEB-AGC-07 | Personnel agence            | `/reseau/agences/{id}/personnel`   | Admin, gérant        | Liste des utilisateurs affectés.                         |
+| WEB-AGC-08 | Mutation personnel          | `/reseau/mutations`                | Admin, RH            | Mutation d’un agent entre agences.                       |
+| WEB-AGC-09 | Guichets agence             | `/reseau/agences/{id}/guichets`    | Gérant, chef caisse  | Liste guichets, statut, caissier affecté.                |
+| WEB-AGC-10 | Création guichet            | `/reseau/guichets/nouveau`         | Gérant               | Création ou activation d’un guichet.                     |
+| WEB-AGC-11 | Opérations inter-agences    | `/reseau/operations-inter-agences` | Gérant, comptable    | Suivi des opérations déplacées.                          |
+| WEB-AGC-12 | Rapprochement inter-agences | `/reseau/rapprochements`           | Comptable            | Rapprochement des comptes de liaison.                    |
+| WEB-AGC-13 | Performance agences         | `/reseau/performance`              | Direction            | Comparaison activité, rentabilité, risque par agence.    |
+
+---
+
+# 7. Comptabilité bancaire
+
+Les écrans comptables attendus incluent plan comptable, opérations diverses, journaux, grand livre, balance, bilan, résultat, clôtures, lettrage et extourne .
+
+| Code          | Écran                     | Route                                       | Rôles                  | Description                                            |
+| ------------- | ------------------------- | ------------------------------------------- | ---------------------- | ------------------------------------------------------ |
+| WEB-COMPTA-01 | Plan comptable            | `/comptabilite/plan-comptable`              | Comptable, admin       | Arborescence des classes, comptes et sous-comptes.     |
+| WEB-COMPTA-02 | Création compte comptable | `/comptabilite/plan-comptable/nouveau`      | Comptable              | Ajout compte, nature, classe, sens, rattachement.      |
+| WEB-COMPTA-03 | Journaux comptables       | `/comptabilite/journaux`                    | Comptable              | Journaux caisse, crédit, épargne, opérations diverses. |
+| WEB-COMPTA-04 | Saisie opération diverse  | `/comptabilite/operations-diverses/nouveau` | Comptable              | Saisie manuelle débit/crédit avec pièce justificative. |
+| WEB-COMPTA-05 | Brouillard de caisse      | `/comptabilite/brouillard-caisse`           | Comptable, chef caisse | Écritures provisoires de caisse.                       |
+| WEB-COMPTA-06 | Journal des opérations    | `/comptabilite/journal-operations`          | Comptable              | Écritures par journal, date, agence, utilisateur.      |
+| WEB-COMPTA-07 | Grand livre               | `/comptabilite/grand-livre`                 | Comptable, audit       | Historique complet par compte comptable.               |
+| WEB-COMPTA-08 | Balance générale          | `/comptabilite/balance-generale`            | Comptable, direction   | Soldes débiteurs et créditeurs, contrôle d’équilibre.  |
+| WEB-COMPTA-09 | Balance âgée              | `/comptabilite/balance-agee`                | Comptable, crédit      | Créances par ancienneté.                               |
+| WEB-COMPTA-10 | Bilan                     | `/comptabilite/bilan`                       | Comptable, direction   | Actif, passif, capitaux propres.                       |
+| WEB-COMPTA-11 | Compte de résultat        | `/comptabilite/compte-resultat`             | Comptable, direction   | Produits, charges, résultat net.                       |
+| WEB-COMPTA-12 | Flux de trésorerie        | `/comptabilite/flux-tresorerie`             | Comptable, direction   | Entrées et sorties de trésorerie.                      |
+| WEB-COMPTA-13 | Schémas comptables        | `/comptabilite/schemas`                     | Comptable, admin       | Paramétrage automatique des écritures.                 |
+| WEB-COMPTA-14 | Test schéma comptable     | `/comptabilite/schemas/test`                | Comptable              | Simulation des écritures générées.                     |
+| WEB-COMPTA-15 | Lettrage                  | `/comptabilite/lettrage`                    | Comptable              | Lettrage manuel, automatique, partiel.                 |
+| WEB-COMPTA-16 | Extourne                  | `/comptabilite/extourne`                    | Comptable, gérant      | Contrepassation d’une écriture.                        |
+| WEB-COMPTA-17 | Clôture journalière       | `/comptabilite/cloture/journaliere`         | Comptable, gérant      | Assistant de fin de journée comptable.                 |
+| WEB-COMPTA-18 | Clôture mensuelle         | `/comptabilite/cloture/mensuelle`           | Comptable              | Intérêts, frais, provisions, balance mensuelle.        |
+| WEB-COMPTA-19 | Clôture annuelle          | `/comptabilite/cloture/annuelle`            | Comptable, direction   | Inventaire, résultat, bilan, report à nouveau.         |
+| WEB-COMPTA-20 | Exercices comptables      | `/comptabilite/exercices`                   | Comptable, admin       | Ouverture, fermeture, verrouillage d’exercice.         |
+| WEB-COMPTA-21 | Pièces comptables         | `/comptabilite/pieces`                      | Comptable              | Consultation des pièces et justificatifs.              |
+| WEB-COMPTA-22 | Contrôles comptables      | `/comptabilite/controles`                   | Comptable, audit       | Déséquilibres, écritures orphelines, anomalies.        |
+
+---
+
+# 8. Crédit et engagements
+
+| Code        | Écran                   | Route                                       | Rôles                   | Description                                              |
+| ----------- | ----------------------- | ------------------------------------------- | ----------------------- | -------------------------------------------------------- |
+| WEB-CRED-01 | Tableau de bord crédit  | `/credits/dashboard`                        | Crédit, gérant          | Portefeuille, demandes, décaissements, impayés, PAR.     |
+| WEB-CRED-02 | Produits de crédit      | `/credits/produits`                         | Admin crédit            | Catalogue crédit : taux, durée, frais, garanties.        |
+| WEB-CRED-03 | Simulation crédit       | `/credits/simulation`                       | Agent crédit            | Simulation montant, durée, échéance, coût total.         |
+| WEB-CRED-04 | Nouvelle demande crédit | `/credits/demandes/nouveau`                 | Agent crédit            | Création dossier, client, montant, objet, garanties.     |
+| WEB-CRED-05 | Liste demandes crédit   | `/credits/demandes`                         | Crédit, gérant          | Demandes par statut : brouillon, analyse, comité, rejet. |
+| WEB-CRED-06 | Fiche demande crédit    | `/credits/demandes/{id}`                    | Crédit, comité          | Dossier complet, client, analyse, pièces, score.         |
+| WEB-CRED-07 | Pièces dossier crédit   | `/credits/demandes/{id}/pieces`             | Agent crédit            | Upload et contrôle des documents.                        |
+| WEB-CRED-08 | Analyse crédit          | `/credits/demandes/{id}/analyse`            | Analyste crédit         | Revenus, charges, capacité, historique, BIC.             |
+| WEB-CRED-09 | Scoring crédit          | `/credits/demandes/{id}/scoring`            | Analyste crédit         | Score automatique, critères et justification.            |
+| WEB-CRED-10 | Garanties crédit        | `/credits/demandes/{id}/garanties`          | Agent crédit            | Saisie garanties, valeur, décote, pièces.                |
+| WEB-CRED-11 | Comité crédit           | `/credits/comite`                           | Comité crédit           | Dossiers soumis, votes, avis, procès-verbal.             |
+| WEB-CRED-12 | Décision crédit         | `/credits/demandes/{id}/decision`           | Comité, gérant          | Accord, rejet, ajournement, conditions suspensives.      |
+| WEB-CRED-13 | Contrat crédit          | `/credits/{id}/contrat`                     | Crédit                  | Génération et consultation du contrat.                   |
+| WEB-CRED-14 | Déblocage crédit        | `/credits/{id}/deblocage`                   | Crédit, comptable       | Décaissement après validation.                           |
+| WEB-CRED-15 | Liste crédits actifs    | `/credits`                                  | Crédit, gérant          | Crédits en cours, soldés, restructurés, impayés.         |
+| WEB-CRED-16 | Fiche crédit            | `/credits/{id}`                             | Crédit, gérant          | Contrat, échéancier, remboursements, garanties.          |
+| WEB-CRED-17 | Échéancier crédit       | `/credits/{id}/echeancier`                  | Crédit, client interne  | Tableau capital, intérêt, assurance, pénalité.           |
+| WEB-CRED-18 | Remboursement crédit    | `/credits/{id}/remboursement`               | Caissier, crédit        | Paiement échéance, ventilation, reçu.                    |
+| WEB-CRED-19 | Remboursement anticipé  | `/credits/{id}/remboursement-anticipe`      | Crédit, gérant          | Calcul solde, pénalités, clôture partielle ou totale.    |
+| WEB-CRED-20 | Report échéance         | `/credits/{id}/report-echeance`             | Crédit, gérant          | Demande, justification, impact échéancier.               |
+| WEB-CRED-21 | Restructuration crédit  | `/credits/{id}/restructuration`             | Crédit, comité          | Nouvelle durée, nouveau taux, nouvel échéancier.         |
+| WEB-CRED-22 | Impayés crédit          | `/credits/impayes`                          | Crédit, recouvrement    | Retards par ancienneté, client, agent, agence.           |
+| WEB-CRED-23 | Relance impayé          | `/credits/impayes/{id}/relance`             | Recouvrement            | SMS, appel, visite, courrier.                            |
+| WEB-CRED-24 | Dossier recouvrement    | `/credits/recouvrement/{id}`                | Recouvrement            | Actions, promesses, contentieux.                         |
+| WEB-CRED-25 | Contentieux             | `/credits/contentieux`                      | Juridique, recouvrement | Dossiers transmis au contentieux.                        |
+| WEB-CRED-26 | Provisions crédit       | `/credits/provisions`                       | Comptable, risque       | Calcul et suivi des provisions.                          |
+| WEB-CRED-27 | Passage en perte        | `/credits/{id}/passage-perte`               | Direction, comptable    | Radiation contrôlée du crédit.                           |
+| WEB-CRED-28 | Groupes solidaires      | `/credits/groupes-solidaires`               | Crédit                  | Liste groupes, membres, cycles.                          |
+| WEB-CRED-29 | Fiche groupe solidaire  | `/credits/groupes-solidaires/{id}`          | Crédit                  | Membres, crédits, cotisations, remboursements.           |
+| WEB-CRED-30 | Collecte de groupe      | `/credits/groupes-solidaires/{id}/collecte` | Agent terrain, crédit   | Enregistrement remboursements collectifs.                |
+| WEB-CRED-31 | Reporting crédit        | `/credits/reporting`                        | Crédit, direction       | Encours, PAR, taux remboursement, production.            |
+
+---
+
+# 9. Épargne avancée, dépôt à terme et tontine
+
+Le module épargne avancée prévoit catalogue, dépôt à terme, suivi des dépôts, barème, intérêts, épargne programmée, tontine et reporting .
+
+| Code       | Écran                       | Route                                | Rôles                | Description                                       |
+| ---------- | --------------------------- | ------------------------------------ | -------------------- | ------------------------------------------------- |
+| WEB-EPG-01 | Catalogue produits épargne  | `/epargne/produits`                  | Admin produit        | Produits, taux, solde minimum, frais, conditions. |
+| WEB-EPG-02 | Création produit épargne    | `/epargne/produits/nouveau`          | Admin produit        | Paramétrage complet d’un produit.                 |
+| WEB-EPG-03 | Souscription DAT            | `/epargne/dat/nouveau`               | Gestionnaire         | Simulation, durée, taux, montant, compte source.  |
+| WEB-EPG-04 | Suivi DAT                   | `/epargne/dat`                       | Gestionnaire         | DAT actifs, échus, renouvelés, clôturés.          |
+| WEB-EPG-05 | Fiche DAT                   | `/epargne/dat/{id}`                  | Gestionnaire         | Détails, intérêts, échéance, pénalités.           |
+| WEB-EPG-06 | Retrait anticipé DAT        | `/epargne/dat/{id}/retrait-anticipe` | Gérant               | Calcul pénalité, validation.                      |
+| WEB-EPG-07 | Barème taux DAT             | `/epargne/dat/baremes`               | Admin produit        | Taux par durée et montant.                        |
+| WEB-EPG-08 | Calcul intérêts épargne     | `/epargne/interets/calcul`           | Comptable            | Lancement calcul, simulation, validation.         |
+| WEB-EPG-09 | Historique calcul intérêts  | `/epargne/interets/historique`       | Comptable            | Résultats par période.                            |
+| WEB-EPG-10 | Épargne programmée          | `/epargne/programmee`                | Gestionnaire         | Liste plans d’épargne automatique.                |
+| WEB-EPG-11 | Création épargne programmée | `/epargne/programmee/nouveau`        | Gestionnaire         | Montant, fréquence, compte source, durée.         |
+| WEB-EPG-12 | Épargne obligatoire crédit  | `/epargne/obligatoire-credit`        | Crédit, gestionnaire | Épargne bloquée liée aux crédits.                 |
+| WEB-EPG-13 | Tontines                    | `/tontines`                          | Gestionnaire         | Liste tontines, groupes, tours.                   |
+| WEB-EPG-14 | Création tontine            | `/tontines/nouveau`                  | Gestionnaire         | Paramètres, membres, mise, fréquence.             |
+| WEB-EPG-15 | Fiche tontine               | `/tontines/{id}`                     | Gestionnaire         | Membres, tours, cotisations, bénéficiaires.       |
+| WEB-EPG-16 | Cotisations tontine         | `/tontines/{id}/cotisations`         | Gestionnaire         | Suivi paiements et retards.                       |
+| WEB-EPG-17 | Reporting épargne           | `/epargne/reporting`                 | Direction            | Encours par produit, évolution, top épargnants.   |
+
+---
+
+# 10. Caisses, coffres et fin de journée
+
+La gestion des caisses doit intégrer ouverture, fermeture, billetage, écarts, approvisionnement, délestage et fin de journée .
+
+| Code          | Écran                           | Route                               | Rôles                 | Description                                        |
+| ------------- | ------------------------------- | ----------------------------------- | --------------------- | -------------------------------------------------- |
+| WEB-CAISSE-01 | Tableau de bord caisse          | `/caisses/dashboard`                | Caissier, chef caisse | Session ouverte, solde théorique, opérations.      |
+| WEB-CAISSE-02 | Liste des caisses               | `/caisses`                          | Chef caisse, gérant   | Caisses, statuts, affectations, soldes.            |
+| WEB-CAISSE-03 | Création caisse                 | `/caisses/nouveau`                  | Gérant                | Création caisse physique ou logique.               |
+| WEB-CAISSE-04 | Ouverture caisse                | `/caisses/ouverture`                | Caissier              | Confirmation solde d’ouverture, billetage initial. |
+| WEB-CAISSE-05 | Fermeture caisse                | `/caisses/fermeture`                | Caissier              | Billetage final, comparaison solde théorique/réel. |
+| WEB-CAISSE-06 | Billetage caisse                | `/caisses/{id}/billetage`           | Caissier              | Saisie par coupures.                               |
+| WEB-CAISSE-07 | Écarts caisse                   | `/caisses/ecarts`                   | Chef caisse, audit    | Liste manquants, excédents, justifications.        |
+| WEB-CAISSE-08 | Validation écart caisse         | `/caisses/ecarts/{id}/validation`   | Gérant                | Approbation, rejet, affectation comptable.         |
+| WEB-CAISSE-09 | Approvisionnement caisse        | `/coffres/approvisionnement-caisse` | Chef caisse           | Transfert coffre vers caisse.                      |
+| WEB-CAISSE-10 | Délestage caisse                | `/coffres/delestage-caisse`         | Chef caisse           | Transfert caisse vers coffre.                      |
+| WEB-CAISSE-11 | Transfert inter-caisses         | `/caisses/transfert`                | Chef caisse           | Transfert entre deux caisses.                      |
+| WEB-CAISSE-12 | Coffres                         | `/coffres`                          | Gérant, chef caisse   | Liste des coffres et soldes.                       |
+| WEB-CAISSE-13 | Fiche coffre                    | `/coffres/{id}`                     | Gérant                | Mouvements, billetage, historique.                 |
+| WEB-CAISSE-14 | Billetage coffre                | `/coffres/{id}/billetage`           | Chef caisse           | Saisie physique du coffre.                         |
+| WEB-CAISSE-15 | Arrêté caisse                   | `/caisses/arrete`                   | Chef caisse           | Synthèse de fin de journée par caisse.             |
+| WEB-CAISSE-16 | Traitement fin de journée       | `/fin-journee`                      | Comptable, gérant     | Assistant End of Day.                              |
+| WEB-CAISSE-17 | Suivi traitement fin de journée | `/fin-journee/suivi`                | Comptable             | Étapes, erreurs, reprise, statut.                  |
+| WEB-CAISSE-18 | Historique fin de journée       | `/fin-journee/historique`           | Comptable, audit      | Traitements passés, logs, rapports.                |
+
+---
+
+# 11. Chèques, compensation, monétique et moyens de paiement
+
+| Code       | Écran                          | Route                                         | Rôles                   | Description                                     |
+| ---------- | ------------------------------ | --------------------------------------------- | ----------------------- | ----------------------------------------------- |
+| WEB-PAY-01 | Remise de chèques              | `/paiements/cheques/remises/nouveau`          | Guichet, back-office    | Saisie chèques déposés.                         |
+| WEB-PAY-02 | Liste remises chèques          | `/paiements/cheques/remises`                  | Back-office             | Remises en attente, validées, rejetées.         |
+| WEB-PAY-03 | Détail remise chèque           | `/paiements/cheques/remises/{id}`             | Back-office             | Chèques, banque tirée, statut, dates de valeur. |
+| WEB-PAY-04 | Commande chéquier              | `/paiements/chequiers/commandes`              | Gestionnaire            | Demande et suivi chéquier.                      |
+| WEB-PAY-05 | Attribution chéquier           | `/paiements/chequiers/attribution`            | Back-office             | Attribution des numéros au client.              |
+| WEB-PAY-06 | Opposition chèque              | `/paiements/cheques/opposition`               | Gérant                  | Opposition chèque ou chéquier.                  |
+| WEB-PAY-07 | Incidents chèques              | `/paiements/cheques/incidents`                | Conformité, back-office | Chèques sans provision, rejets.                 |
+| WEB-PAY-08 | Sessions compensation          | `/paiements/compensation/sessions`            | Back-office, comptable  | Sessions SICA-UEMOA.                            |
+| WEB-PAY-09 | Import fichier compensation    | `/paiements/compensation/import`              | Back-office             | Import fichier reçu.                            |
+| WEB-PAY-10 | Export fichier compensation    | `/paiements/compensation/export`              | Back-office             | Génération fichier à envoyer.                   |
+| WEB-PAY-11 | Rapprochement compensation     | `/paiements/compensation/rapprochement`       | Comptable               | Matching opérations et retours.                 |
+| WEB-PAY-12 | Virements interbancaires       | `/paiements/virements-interbancaires`         | Back-office             | Liste virements entrants et sortants.           |
+| WEB-PAY-13 | Nouveau virement interbancaire | `/paiements/virements-interbancaires/nouveau` | Back-office             | Saisie ordre de virement.                       |
+| WEB-PAY-14 | Virements RTGS                 | `/paiements/rtgs`                             | Comptable, direction    | Gros montants STAR-UEMOA.                       |
+| WEB-PAY-15 | Cartes client                  | `/monetique/cartes`                           | Back-office monétique   | Liste cartes, statuts, comptes liés.            |
+| WEB-PAY-16 | Fiche carte                    | `/monetique/cartes/{id}`                      | Back-office             | Plafonds, statut, transactions, opposition.     |
+| WEB-PAY-17 | Opposition carte               | `/monetique/cartes/{id}/opposition`           | Back-office, gérant     | Blocage carte.                                  |
+| WEB-PAY-18 | Transactions monétiques        | `/monetique/transactions`                     | Back-office, comptable  | Retraits, paiements, commissions.               |
+| WEB-PAY-19 | Litiges monétiques             | `/monetique/litiges`                          | Back-office             | Contestations, chargebacks.                     |
+| WEB-PAY-20 | Rapprochement monétique        | `/monetique/rapprochement`                    | Comptable               | Rapprochement réseau carte.                     |
+| WEB-PAY-21 | Guichets automatiques          | `/monetique/gab`                              | Monétique               | Liste GAB, statut, solde, incidents.            |
+| WEB-PAY-22 | Approvisionnement GAB          | `/monetique/gab/{id}/approvisionnement`       | Monétique, caisse       | Rechargement d’un GAB.                          |
+| WEB-PAY-23 | Mobile Money                   | `/mobile-money/transactions`                  | Back-office             | Dépôts, retraits, remboursements, callbacks.    |
+| WEB-PAY-24 | Rapprochement Mobile Money     | `/mobile-money/rapprochement`                 | Comptable               | Matching opérateurs et core banking.            |
+| WEB-PAY-25 | Paiement factures              | `/services/factures`                          | Back-office             | Eau, électricité, internet, téléphone.          |
+| WEB-PAY-26 | Recharge téléphonique          | `/services/recharges`                         | Back-office             | Achat crédit téléphonique.                      |
+
+---
+
+# 12. Maker-Checker et validations
+
+Le workflow Maker-Checker doit enregistrer l’action en attente sans appliquer immédiatement les données métier, puis permettre au checker d’approuver, rejeter ou renvoyer pour correction .
+
+| Code       | Écran                    | Route                          | Rôles           | Description                                  |
+| ---------- | ------------------------ | ------------------------------ | --------------- | -------------------------------------------- |
+| WEB-VAL-01 | File des validations     | `/validations`                 | Gérant, checker | Liste actions en attente.                    |
+| WEB-VAL-02 | Détail action en attente | `/validations/{id}`            | Checker         | Données avant/après, auteur, agence, motif.  |
+| WEB-VAL-03 | Approbation action       | `/validations/{id}/approuver`  | Checker         | Approbation avec commentaire.                |
+| WEB-VAL-04 | Rejet action             | `/validations/{id}/rejeter`    | Checker         | Rejet avec motif obligatoire.                |
+| WEB-VAL-05 | Renvoi correction        | `/validations/{id}/correction` | Checker         | Retour au maker pour modification.           |
+| WEB-VAL-06 | Historique validations   | `/validations/historique`      | Audit, gérant   | Toutes les décisions.                        |
+| WEB-VAL-07 | Plafonds validation      | `/validations/plafonds`        | Admin           | Paramètres des seuils par rôle et opération. |
+| WEB-VAL-08 | Règles validation        | `/validations/regles`          | Admin           | Nombre de validateurs, circuit, escalade.    |
+| WEB-VAL-09 | Forçages superviseur     | `/validations/forcages`        | Audit, admin    | Liste des validations exceptionnelles.       |
+| WEB-VAL-10 | Mes actions soumises     | `/validations/mes-demandes`    | Tous            | Suivi des actions créées par l’utilisateur.  |
+
+---
+
+# 13. Conformité, LBC/FT, BIC et fiscalité
+
+| Code        | Écran                            | Route                              | Rôles                 | Description                                 |
+| ----------- | -------------------------------- | ---------------------------------- | --------------------- | ------------------------------------------- |
+| WEB-CONF-01 | Tableau de bord conformité       | `/conformite/dashboard`            | Conformité, direction | Alertes, risque, dossiers, sanctions.       |
+| WEB-CONF-02 | Alertes LBC/FT                   | `/conformite/alertes`              | Conformité            | Liste alertes par gravité et statut.        |
+| WEB-CONF-03 | Détail alerte                    | `/conformite/alertes/{id}`         | Conformité            | Client, opérations, règles déclenchées.     |
+| WEB-CONF-04 | Dossier investigation            | `/conformite/investigations/{id}`  | Conformité            | Analyse, documents, commentaires, décision. |
+| WEB-CONF-05 | Déclaration soupçon              | `/conformite/declarations-soupcon` | Conformité            | Préparation déclaration CENTIF.             |
+| WEB-CONF-06 | Screening sanctions              | `/conformite/sanctions`            | Conformité            | Recherche client ou masse sur listes.       |
+| WEB-CONF-07 | Résultats screening              | `/conformite/sanctions/resultats`  | Conformité            | Matchs potentiels, statut de résolution.    |
+| WEB-CONF-08 | Personnes politiquement exposées | `/conformite/ppe`                  | Conformité            | Liste et suivi clients PPE.                 |
+| WEB-CONF-09 | Profil risque client             | `/conformite/profils-risque`       | Conformité            | Scores, catégories, revues périodiques.     |
+| WEB-CONF-10 | Interrogation BIC                | `/conformite/bic/interrogation`    | Crédit, conformité    | Consultation historique crédit externe.     |
+| WEB-CONF-11 | Déclarations BIC                 | `/conformite/bic/declarations`     | Crédit, conformité    | Transmission encours crédit.                |
+| WEB-CONF-12 | Incidents de paiement            | `/conformite/incidents-paiement`   | Conformité            | Incidents chèque, carte, crédit.            |
+| WEB-CONF-13 | Taxes                            | `/fiscalite/taxes`                 | Comptable             | Paramètres TVA, TOF, IRC.                   |
+| WEB-CONF-14 | Calcul fiscalité                 | `/fiscalite/calculs`               | Comptable             | Taxes calculées par opération.              |
+| WEB-CONF-15 | Déclarations fiscales            | `/fiscalite/declarations`          | Comptable             | États fiscaux périodiques.                  |
+| WEB-CONF-16 | Accès inspecteur                 | `/conformite/inspecteurs`          | Admin                 | Création accès lecture seule pour contrôle. |
+
+---
+
+# 14. Reporting réglementaire et décisionnel
+
+| Code       | Écran                           | Route                          | Rôles                 | Description                                 |
+| ---------- | ------------------------------- | ------------------------------ | --------------------- | ------------------------------------------- |
+| WEB-RPT-01 | Centre des rapports             | `/rapports`                    | Tous selon droits     | Liste rapports disponibles par domaine.     |
+| WEB-RPT-02 | Rapports comptables             | `/rapports/comptables`         | Comptable             | Balance, bilan, résultat, grand livre.      |
+| WEB-RPT-03 | Rapports BCEAO                  | `/rapports/bceao`              | Comptable, conformité | États réglementaires périodiques.           |
+| WEB-RPT-04 | Ratios prudentiels              | `/rapports/ratios-prudentiels` | Direction, risque     | Solvabilité, liquidité, concentration.      |
+| WEB-RPT-05 | Rapports crédit                 | `/rapports/credit`             | Crédit, direction     | Production, encours, impayés, recouvrement. |
+| WEB-RPT-06 | Rapports épargne                | `/rapports/epargne`            | Direction             | Encours, collecte, produits.                |
+| WEB-RPT-07 | Rapports caisse                 | `/rapports/caisse`             | Chef caisse           | Arrêtés, écarts, mouvements espèces.        |
+| WEB-RPT-08 | Rapports agence                 | `/rapports/agences`            | Direction             | Performance par agence et région.           |
+| WEB-RPT-09 | Rapports conformité             | `/rapports/conformite`         | Conformité            | Alertes, déclarations, clients à risque.    |
+| WEB-RPT-10 | Générateur rapport personnalisé | `/rapports/personnalise`       | Direction, admin      | Construction de rapports filtrés.           |
+| WEB-RPT-11 | Exports générés                 | `/rapports/exports`            | Tous selon droits     | Historique PDF, Excel, CSV.                 |
+| WEB-RPT-12 | Abonnements rapports            | `/rapports/abonnements`        | Admin, direction      | Envoi automatique par email.                |
+
+---
+
+# 15. Gestion des risques et ALM
+
+Le module risques doit couvrir risque crédit, liquidité, taux, opérationnel, concentration, conformité et stress tests, comme indiqué dans les documents de gap analysis .
+
+| Code        | Écran                    | Route                              | Rôles             | Description                           |
+| ----------- | ------------------------ | ---------------------------------- | ----------------- | ------------------------------------- |
+| WEB-RISK-01 | Dashboard risques        | `/risques/dashboard`               | Risque, direction | Vue globale des risques.              |
+| WEB-RISK-02 | Risque crédit            | `/risques/credit`                  | Risque, crédit    | PAR, impayés, concentration.          |
+| WEB-RISK-03 | Provisionnement          | `/risques/provisions`              | Risque, comptable | Calcul, validation, reprise.          |
+| WEB-RISK-04 | Gap liquidité            | `/risques/liquidite/gap`           | Risque, direction | Échéances actifs/passifs.             |
+| WEB-RISK-05 | Stress tests             | `/risques/stress-tests`            | Risque            | Simulation scénarios.                 |
+| WEB-RISK-06 | Résultats stress test    | `/risques/stress-tests/{id}`       | Risque            | Impact liquidité, crédit, résultat.   |
+| WEB-RISK-07 | Cartographie risques     | `/risques/cartographie`            | Risque, audit     | Matrice probabilité/impact.           |
+| WEB-RISK-08 | Incidents opérationnels  | `/risques/incidents-operationnels` | Risque, audit     | Fraudes, erreurs, pertes, pannes.     |
+| WEB-RISK-09 | Plan action risque       | `/risques/actions-correctives`     | Risque            | Mesures de réduction du risque.       |
+| WEB-RISK-10 | Gestion actif-passif     | `/risques/alm`                     | Risque, direction | Maturités, taux, devises.             |
+| WEB-RISK-11 | Plan continuité activité | `/risques/pca`                     | Risque, IT        | Procédures de continuité.             |
+| WEB-RISK-12 | Plan reprise activité    | `/risques/pra`                     | Risque, IT        | Procédures de reprise après incident. |
+
+---
+
+# 16. Ressources humaines, paie, immobilisations, achats et budget
+
+Le module support prévoit dossier employé, congés, paie, organigramme, immobilisations, amortissements, inventaire, fournisseurs, bons de commande et suivi budgétaire .
+
+| Code         | Écran                    | Route                             | Rôles                | Description                                      |
+| ------------ | ------------------------ | --------------------------------- | -------------------- | ------------------------------------------------ |
+| WEB-RH-01    | Liste employés           | `/rh/employes`                    | RH, admin            | Employés, agence, poste, statut.                 |
+| WEB-RH-02    | Dossier employé          | `/rh/employes/{id}`               | RH                   | Informations, contrat, historique, affectations. |
+| WEB-RH-03    | Création employé         | `/rh/employes/nouveau`            | RH                   | Dossier administratif complet.                   |
+| WEB-RH-04    | Organigramme             | `/rh/organigramme`                | RH, direction        | Hiérarchie interactive.                          |
+| WEB-RH-05    | Congés                   | `/rh/conges`                      | RH, managers         | Demandes, soldes, validations.                   |
+| WEB-RH-06    | Pointages                | `/rh/pointages`                   | RH                   | Présences, absences, retards.                    |
+| WEB-RH-07    | Évaluations              | `/rh/evaluations`                 | RH, managers         | Objectifs, notes, commentaires.                  |
+| WEB-RH-08    | Formations               | `/rh/formations`                  | RH                   | Sessions, participants, certificats.             |
+| WEB-PAIE-01  | Bulletins paie           | `/paie/bulletins`                 | RH, comptable        | Génération, consultation, impression.            |
+| WEB-PAIE-02  | Paramètres paie          | `/paie/parametres`                | RH, comptable        | Primes, retenues, cotisations.                   |
+| WEB-PAIE-03  | Virements paie           | `/paie/virements`                 | Comptable            | Génération des virements salaires.               |
+| WEB-IMMO-01  | Registre immobilisations | `/immobilisations`                | Comptable            | Liste biens, valeur, statut, agence.             |
+| WEB-IMMO-02  | Fiche immobilisation     | `/immobilisations/{id}`           | Comptable            | Détail bien, acquisition, amortissement.         |
+| WEB-IMMO-03  | Plan amortissement       | `/immobilisations/amortissements` | Comptable            | Dotations, VNC, périodes.                        |
+| WEB-IMMO-04  | Inventaire physique      | `/immobilisations/inventaire`     | Comptable, audit     | Pointage QR Code ou code interne.                |
+| WEB-ACHAT-01 | Fournisseurs             | `/achats/fournisseurs`            | Achats, comptable    | Fichier fournisseurs.                            |
+| WEB-ACHAT-02 | Demandes achat           | `/achats/demandes`                | Tous selon droits    | Besoins internes, validation.                    |
+| WEB-ACHAT-03 | Bons commande            | `/achats/bons-commande`           | Achats               | Commandes, approbation, suivi.                   |
+| WEB-ACHAT-04 | Réceptions               | `/achats/receptions`              | Achats               | Réception et contrôle livraison.                 |
+| WEB-ACHAT-05 | Factures fournisseurs    | `/achats/factures`                | Comptable            | Rapprochement commande, réception, facture.      |
+| WEB-BUD-01   | Budget prévisionnel      | `/budget/previsionnel`            | Direction, comptable | Budget par agence, rubrique, centre coût.        |
+| WEB-BUD-02   | Suivi budgétaire         | `/budget/suivi`                   | Direction            | Réalisé contre budget, alertes.                  |
+| WEB-BUD-03   | Alertes budget           | `/budget/alertes`                 | Direction            | Dépassements et seuils.                          |
+
+---
+
+# 17. Administration, sécurité et système
+
+| Code       | Écran                    | Route                           | Rôles           | Description                                      |
+| ---------- | ------------------------ | ------------------------------- | --------------- | ------------------------------------------------ |
+| WEB-ADM-01 | Utilisateurs             | `/admin/utilisateurs`           | Admin           | Liste utilisateurs internes.                     |
+| WEB-ADM-02 | Création utilisateur     | `/admin/utilisateurs/nouveau`   | Admin           | Compte, rôle, agence, statut.                    |
+| WEB-ADM-03 | Fiche utilisateur        | `/admin/utilisateurs/{id}`      | Admin           | Rôle, permissions, sessions, historique.         |
+| WEB-ADM-04 | Rôles                    | `/admin/roles`                  | Admin           | Gestion rôles internes.                          |
+| WEB-ADM-05 | Permissions              | `/admin/permissions`            | Admin           | Habilitations fines par action.                  |
+| WEB-ADM-06 | Politiques mot de passe  | `/admin/securite/mots-de-passe` | Admin sécurité  | Complexité, expiration, historique.              |
+| WEB-ADM-07 | Sessions actives         | `/admin/securite/sessions`      | Admin sécurité  | Sessions internes et révocation.                 |
+| WEB-ADM-08 | Tentatives connexion     | `/admin/securite/tentatives`    | Admin sécurité  | Échecs, blocages, IP.                            |
+| WEB-ADM-09 | Journal audit            | `/admin/audit`                  | Admin, audit    | Journal non modifiable des actions.              |
+| WEB-ADM-10 | Détail événement audit   | `/admin/audit/{id}`             | Audit           | Avant/après, utilisateur, agence, IP.            |
+| WEB-ADM-11 | Paramètres système       | `/admin/parametres-systeme`     | Admin           | Paramètres globaux.                              |
+| WEB-ADM-12 | Paramètres produits      | `/admin/parametres-produits`    | Admin produit   | Produits, frais, taux.                           |
+| WEB-ADM-13 | Paramètres notifications | `/admin/notifications`          | Admin           | SMS, email, push, modèles.                       |
+| WEB-ADM-14 | Tâches planifiées        | `/admin/taches-planifiees`      | Admin technique | Batchs, statut, historique.                      |
+| WEB-ADM-15 | Sauvegardes              | `/admin/sauvegardes`            | Admin technique | Sauvegarde manuelle, historique.                 |
+| WEB-ADM-16 | Santé système            | `/admin/sante-systeme`          | Admin technique | API, base, files, services externes.             |
+| WEB-ADM-17 | Logs techniques          | `/admin/logs`                   | Admin technique | Logs filtrés, erreurs, corrélation.              |
+| WEB-ADM-18 | Gestion versions         | `/admin/versions`               | Admin technique | Version application, migrations, modules actifs. |
+
+---
+
+# 18. Portail client web e-banking
+
+Le portail client existant prévoit connexion OTP, activation première connexion, accueil, comptes, virements, historique, documents et profil .
+
+| Code   | Écran                         | Route                                   | Description                                                 |
+| ------ | ----------------------------- | --------------------------------------- | ----------------------------------------------------------- |
+| EBK-01 | Connexion client              | `/ebanking/login`                       | Numéro de compte, mot de passe, étape OTP.                  |
+| EBK-02 | Activation première connexion | `/ebanking/activation`                  | Vérification compte, téléphone, OTP, création mot de passe. |
+| EBK-03 | Mot de passe oublié           | `/ebanking/mot-de-passe-oublie`         | Réinitialisation sécurisée.                                 |
+| EBK-04 | Accueil client                | `/ebanking/accueil`                     | Solde global, comptes, dernières opérations, alertes.       |
+| EBK-05 | Mes comptes                   | `/ebanking/comptes`                     | Liste comptes avec solde disponible et comptable.           |
+| EBK-06 | Détail compte                 | `/ebanking/comptes/{id}`                | Solde, historique, relevés, restrictions.                   |
+| EBK-07 | Virement interne              | `/ebanking/virements/interne`           | Virement vers compte MicroFin avec OTP.                     |
+| EBK-08 | Virement entre mes comptes    | `/ebanking/virements/propres-comptes`   | Transfert entre comptes du client.                          |
+| EBK-09 | Bénéficiaires                 | `/ebanking/beneficiaires`               | Gestion bénéficiaires enregistrés.                          |
+| EBK-10 | Historique opérations         | `/ebanking/historique`                  | Filtres, recherche, export PDF ou CSV.                      |
+| EBK-11 | Documents                     | `/ebanking/documents`                   | Relevés, contrats, attestations.                            |
+| EBK-12 | Demande attestation solde     | `/ebanking/documents/attestation-solde` | Génération à la demande.                                    |
+| EBK-13 | Mes crédits                   | `/ebanking/credits`                     | Crédits actifs, échéances, solde restant.                   |
+| EBK-14 | Détail crédit                 | `/ebanking/credits/{id}`                | Échéancier, remboursements, prochaines échéances.           |
+| EBK-15 | Demande de crédit             | `/ebanking/credits/demande`             | Formulaire simplifié de demande.                            |
+| EBK-16 | Remboursement crédit          | `/ebanking/credits/remboursement`       | Paiement d’échéance depuis compte.                          |
+| EBK-17 | Mes cartes                    | `/ebanking/cartes`                      | Cartes, statuts, plafonds.                                  |
+| EBK-18 | Détail carte                  | `/ebanking/cartes/{id}`                 | Blocage, déblocage, opposition, historique.                 |
+| EBK-19 | Paiement facture              | `/ebanking/factures`                    | Eau, électricité, internet, téléphone.                      |
+| EBK-20 | Recharge téléphone            | `/ebanking/recharges`                   | Achat crédit téléphonique.                                  |
+| EBK-21 | Notifications client          | `/ebanking/notifications`               | Opérations, sécurité, messages institutionnels.             |
+| EBK-22 | Réclamations                  | `/ebanking/reclamations`                | Création et suivi de ticket.                                |
+| EBK-23 | Profil client                 | `/ebanking/profil`                      | Coordonnées, informations personnelles.                     |
+| EBK-24 | Sécurité client               | `/ebanking/securite`                    | Mot de passe, sessions, appareils, OTP.                     |
+| EBK-25 | Paramètres                    | `/ebanking/parametres`                  | Langue, notifications, préférences.                         |
+| EBK-26 | Aide et FAQ                   | `/ebanking/aide`                        | Assistance client.                                          |
+
+---
+
+# 19. Application mobile client
+
+Le dossier technique prévoit déjà les écrans mobiles principaux : splash screen, connexion, accueil, comptes, détail compte, virement, historique, notifications, profil, sécurité, carte, localisation agences, paramètres et pages d’erreur . L’extension digitale ajoute paiement de factures, recharge, demande de crédit, modification des plafonds, opposition et gestion des appareils .
+
+## 19.1 Authentification mobile
+
+| Code   | Écran                | Navigation         | Description                                                 |
+| ------ | -------------------- | ------------------ | ----------------------------------------------------------- |
+| MOB-01 | Splash screen        | Ouverture          | Logo animé, vérification session, redirection.              |
+| MOB-02 | Onboarding           | Première ouverture | Présentation services : compte, virement, crédit, sécurité. |
+| MOB-03 | Connexion            | Auth               | Numéro client, mot de passe, biométrie.                     |
+| MOB-04 | Vérification OTP     | Auth               | Code reçu par SMS.                                          |
+| MOB-05 | Création PIN         | Auth               | PIN local pour accès rapide.                                |
+| MOB-06 | Activation biométrie | Auth               | Empreinte ou reconnaissance faciale.                        |
+| MOB-07 | Appareil non reconnu | Sécurité           | Vérification supplémentaire.                                |
+| MOB-08 | Session expirée      | Sécurité           | Reconnexion sécurisée.                                      |
+| MOB-09 | Mot de passe oublié  | Auth               | Réinitialisation.                                           |
+
+## 19.2 Accueil et comptes
+
+| Code   | Écran               | Navigation     | Description                                       |
+| ------ | ------------------- | -------------- | ------------------------------------------------- |
+| MOB-10 | Accueil             | Onglet Accueil | Solde global, actions rapides, carrousel comptes. |
+| MOB-11 | Résumé financier    | Accueil        | Dépôts, crédits, prochaine échéance.              |
+| MOB-12 | Mes comptes         | Onglet Comptes | Cartes des comptes par type.                      |
+| MOB-13 | Détail compte       | Comptes        | Solde, sparkline, opérations récentes.            |
+| MOB-14 | Historique compte   | Comptes        | Filtres, recherche, pull-to-refresh.              |
+| MOB-15 | Relevé mobile       | Comptes        | Génération PDF et partage.                        |
+| MOB-16 | Restrictions compte | Comptes        | Blocages, oppositions, solde minimum.             |
+
+## 19.3 Opérations mobiles
+
+| Code   | Écran                         | Navigation        | Description                                   |
+| ------ | ----------------------------- | ----------------- | --------------------------------------------- |
+| MOB-17 | Hub opérations                | Onglet Opérations | Virement, facture, recharge, crédit, carte.   |
+| MOB-18 | Virement vers mes comptes     | Opérations        | Compte source, compte destination, montant.   |
+| MOB-19 | Virement vers client MicroFin | Opérations        | Numéro compte bénéficiaire, vérification nom. |
+| MOB-20 | Virement interbancaire        | Opérations        | Banque, compte, titulaire, montant.           |
+| MOB-21 | Bénéficiaires favoris         | Opérations        | Liste, ajout, suppression.                    |
+| MOB-22 | Récapitulatif virement        | Opérations        | Confirmation avant OTP.                       |
+| MOB-23 | Confirmation OTP virement     | Opérations        | Validation forte.                             |
+| MOB-24 | Reçu opération                | Opérations        | Reçu, partage, téléchargement.                |
+| MOB-25 | Paiement facture              | Opérations        | Fournisseur, référence facture, montant.      |
+| MOB-26 | Recharge téléphonique         | Opérations        | Numéro, opérateur, montant.                   |
+| MOB-27 | QR paiement                   | Opérations        | Scanner QR Code marchand.                     |
+| MOB-28 | QR réception                  | Opérations        | Générer QR Code pour recevoir fonds.          |
+
+## 19.4 Crédit mobile
+
+| Code   | Écran                | Navigation         | Description                                      |
+| ------ | -------------------- | ------------------ | ------------------------------------------------ |
+| MOB-29 | Mes crédits          | Plus ou Opérations | Liste crédits actifs.                            |
+| MOB-30 | Détail crédit        | Crédits            | Solde restant, échéancier, statut.               |
+| MOB-31 | Échéancier mobile    | Crédits            | Échéances payées, à venir, en retard.            |
+| MOB-32 | Rembourser crédit    | Crédits            | Paiement depuis compte ou wallet.                |
+| MOB-33 | Simulation crédit    | Crédits            | Montant, durée, échéance estimée.                |
+| MOB-34 | Demande crédit       | Crédits            | Formulaire mobile simplifié.                     |
+| MOB-35 | Upload pièces crédit | Crédits            | Photo pièce, document, justificatif.             |
+| MOB-36 | Suivi demande crédit | Crédits            | Statut : reçu, analyse, comité, accepté, rejeté. |
+
+## 19.5 Cartes et sécurité
+
+| Code   | Écran                   | Navigation | Description                             |
+| ------ | ----------------------- | ---------- | --------------------------------------- |
+| MOB-37 | Mes cartes              | Plus       | Visuel carte, statut, actions.          |
+| MOB-38 | Détail carte            | Cartes     | Plafonds, transactions, expiration.     |
+| MOB-39 | Bloquer carte           | Cartes     | Blocage temporaire.                     |
+| MOB-40 | Opposition carte        | Cartes     | Opposition définitive avec motif.       |
+| MOB-41 | Modifier plafonds carte | Cartes     | Demande de modification.                |
+| MOB-42 | Sécurité                | Plus       | Mot de passe, PIN, biométrie, sessions. |
+| MOB-43 | Appareils autorisés     | Sécurité   | Liste téléphones connectés.             |
+| MOB-44 | Sessions actives        | Sécurité   | Déconnexion à distance.                 |
+| MOB-45 | Changement mot de passe | Sécurité   | Ancien et nouveau mot de passe.         |
+| MOB-46 | Changement PIN          | Sécurité   | PIN local.                              |
+
+## 19.6 Communication, agences et paramètres
+
+| Code   | Écran                         | Navigation           | Description                              |
+| ------ | ----------------------------- | -------------------- | ---------------------------------------- |
+| MOB-47 | Notifications                 | Onglet Notifications | Opérations, sécurité, crédit, marketing. |
+| MOB-48 | Détail notification           | Notifications        | Message complet et action associée.      |
+| MOB-49 | Messagerie support            | Plus                 | Chat ou ticket client.                   |
+| MOB-50 | Mes réclamations              | Plus                 | Suivi tickets.                           |
+| MOB-51 | Nouvelle réclamation          | Plus                 | Type, description, pièce jointe.         |
+| MOB-52 | Localisation agences          | Plus                 | Carte, agences proches, horaires.        |
+| MOB-53 | Détail agence                 | Plus                 | Adresse, téléphone, services.            |
+| MOB-54 | Profil                        | Plus                 | Identité, contact, photo.                |
+| MOB-55 | Paramètres                    | Plus                 | Langue, thème, taille texte.             |
+| MOB-56 | Aide et FAQ                   | Plus                 | Questions fréquentes.                    |
+| MOB-57 | Conditions et confidentialité | Plus                 | Documents légaux.                        |
+| MOB-58 | Pages hors connexion          | Technique            | Mode sans internet.                      |
+| MOB-59 | Erreur serveur                | Technique            | Message et relance.                      |
+| MOB-60 | Maintenance                   | Technique            | Indisponibilité contrôlée.               |
+
+---
+
+# 20. Application mobile agent terrain
+
+Les agents terrain doivent pouvoir enrôler des clients, collecter des remboursements, consulter leur portefeuille, saisir les visites de recouvrement et fonctionner hors ligne avec synchronisation ultérieure .
+
+| Code | Écran | Description |
+|---|---|
+| AGT-01 | Splash agent | Chargement application agent. |
+| AGT-02 | Connexion agent | Identifiant, mot de passe, appareil autorisé. |
+| AGT-03 | Synchronisation initiale | Téléchargement portefeuille, clients, paramètres. |
+| AGT-04 | Accueil agent | Objectifs, clients à visiter, collectes prévues. |
+| AGT-05 | Portefeuille assigné | Liste clients et crédits affectés à l’agent. |
+| AGT-06 | Recherche client terrain | Recherche hors ligne par nom, téléphone, compte. |
+| AGT-07 | Fiche client terrain | Identité, comptes, crédits, historique. |
+| AGT-08 | Enrôlement client | KYC mobile, photo, pièce, signature. |
+| AGT-09 | Capture pièce identité | Photo recto-verso, contrôle lisibilité. |
+| AGT-10 | Capture photo client | Photo de profil. |
+| AGT-11 | Signature numérique | Signature tactile. |
+| AGT-12 | Création compte simplifiée | Ouverture compte terrain sous validation. |
+| AGT-13 | Collecte dépôt | Dépôt client en zone terrain. |
+| AGT-14 | Collecte remboursement crédit | Paiement échéance terrain. |
+| AGT-15 | Collecte groupe solidaire | Remboursement collectif. |
+| AGT-16 | Reçu mobile | Reçu numérique et partage SMS. |
+| AGT-17 | Visite recouvrement | Compte rendu visite, promesse de paiement. |
+| AGT-18 | Géolocalisation visite | Position GPS de la visite. |
+| AGT-19 | Demande crédit terrain | Saisie demande simplifiée. |
+| AGT-20 | Upload pièces crédit | Photos justificatifs. |
+| AGT-21 | Agenda terrain | Liste visites prévues. |
+| AGT-22 | Notifications agent | Alertes, affectations, validations. |
+| AGT-23 | Mode hors ligne | Données locales non synchronisées. |
+| AGT-24 | File de synchronisation | Éléments en attente d’envoi. |
+| AGT-25 | Résultat synchronisation | Succès, conflits, erreurs. |
+| AGT-26 | Profil agent | Informations, agence, zone. |
+| AGT-27 | Sécurité agent | PIN, biométrie, appareil autorisé. |
+| AGT-28 | Paramètres agent | Langue, synchronisation, stockage. |
+
+---
+
+# 21. USSD
+
+Le canal USSD doit couvrir solde, mini-relevé, virement, paiement échéance, recharge, blocage carte et contact agence .
+
+| Code    | Écran USSD                | Description                               |
+| ------- | ------------------------- | ----------------------------------------- |
+| USSD-01 | Menu accueil              | Bienvenue MicroFin, liste des choix.      |
+| USSD-02 | Saisie PIN                | Authentification par PIN USSD.            |
+| USSD-03 | Consulter solde           | Affichage solde disponible.               |
+| USSD-04 | Choix compte              | Sélection du compte si plusieurs comptes. |
+| USSD-05 | Mini-relevé               | Cinq dernières opérations.                |
+| USSD-06 | Virement MicroFin         | Saisie compte bénéficiaire.               |
+| USSD-07 | Confirmation bénéficiaire | Nom bénéficiaire masqué partiellement.    |
+| USSD-08 | Saisie montant virement   | Montant à transférer.                     |
+| USSD-09 | Confirmation virement     | Récapitulatif et PIN.                     |
+| USSD-10 | Paiement échéance crédit  | Choix crédit et montant.                  |
+| USSD-11 | Recharge téléphone        | Opérateur, numéro, montant.               |
+| USSD-12 | Blocage carte             | Choix carte et confirmation.              |
+| USSD-13 | Contacter agence          | Affichage agence, téléphone, horaires.    |
+| USSD-14 | Changer PIN               | Ancien PIN, nouveau PIN.                  |
+| USSD-15 | Erreur solde insuffisant  | Message d’échec.                          |
+| USSD-16 | Session expirée           | Retour menu principal.                    |
+| USSD-17 | Confirmation succès       | Référence opération.                      |
+
+---
+
+# 22. Dashboard Agent Banking
+
+| Code   | Écran                         | Route                              | Description                                   |
+| ------ | ----------------------------- | ---------------------------------- | --------------------------------------------- |
+| ABK-01 | Tableau de bord agent banking | `/agent-banking/dashboard`         | Activité agents, float, commissions, alertes. |
+| ABK-02 | Liste agents                  | `/agent-banking/agents`            | Agents, statut, localisation, float.          |
+| ABK-03 | Création agent                | `/agent-banking/agents/nouveau`    | Informations agent, contrat, zone.            |
+| ABK-04 | Fiche agent                   | `/agent-banking/agents/{id}`       | Profil, transactions, float, commissions.     |
+| ABK-05 | Approvisionnement float       | `/agent-banking/agents/{id}/float` | Ajout ou retrait de float.                    |
+| ABK-06 | Transactions agents           | `/agent-banking/transactions`      | Dépôts, retraits, ouverture compte.           |
+| ABK-07 | Commissions agents            | `/agent-banking/commissions`       | Calcul et paiement commissions.               |
+| ABK-08 | Rapprochement agents          | `/agent-banking/rapprochement`     | Contrôle float contre transactions.           |
+| ABK-09 | Incidents agents              | `/agent-banking/incidents`         | Fraude, litiges, écart float.                 |
+| ABK-10 | Carte agents                  | `/agent-banking/carte`             | Localisation géographique des agents.         |
+| ABK-11 | Performance agents            | `/agent-banking/performance`       | Classement, volumes, rentabilité.             |
+
+---
+
+# 23. Portail développeur Open Banking
+
+| Code   | Écran                      | Route                          | Description                       |
+| ------ | -------------------------- | ------------------------------ | --------------------------------- |
+| DEV-01 | Accueil développeur        | `/developers`                  | Présentation API MicroFin.        |
+| DEV-02 | Connexion partenaire       | `/developers/login`            | Authentification partenaire.      |
+| DEV-03 | Tableau de bord partenaire | `/developers/dashboard`        | Applications, clés, consommation. |
+| DEV-04 | Applications partenaires   | `/developers/applications`     | Liste applications déclarées.     |
+| DEV-05 | Création application       | `/developers/applications/new` | Nom, usage, URL callback.         |
+| DEV-06 | Clés API                   | `/developers/api-keys`         | Génération, révocation, rotation. |
+| DEV-07 | Documentation API          | `/developers/docs`             | Endpoints, paramètres, erreurs.   |
+| DEV-08 | Sandbox                    | `/developers/sandbox`          | Tests avec données fictives.      |
+| DEV-09 | Webhooks                   | `/developers/webhooks`         | Configuration événements.         |
+| DEV-10 | Logs API                   | `/developers/logs`             | Historique appels, erreurs.       |
+| DEV-11 | Quotas                     | `/developers/quotas`           | Limites par application.          |
+| DEV-12 | Consentements clients      | `/developers/consentements`    | Suivi autorisations.              |
+| DEV-13 | Support développeur        | `/developers/support`          | Tickets techniques.               |
+
+---
+
+# 24. Console communication, SMS, WhatsApp et chatbot
+
+Les canaux digitaux doivent inclure SMS transactionnels, SMS marketing, email, WhatsApp Business, notifications in-app et chatbot .
+
+| Code   | Écran                 | Route                                        | Description                           |
+| ------ | --------------------- | -------------------------------------------- | ------------------------------------- |
+| COM-01 | Centre communication  | `/communication/dashboard`                   | Synthèse SMS, email, WhatsApp, push.  |
+| COM-02 | Modèles messages      | `/communication/modeles`                     | Templates SMS, email, push.           |
+| COM-03 | Campagnes SMS         | `/communication/campagnes-sms`               | Liste campagnes.                      |
+| COM-04 | Création campagne SMS | `/communication/campagnes-sms/nouveau`       | Ciblage clients, message, validation. |
+| COM-05 | Statistiques campagne | `/communication/campagnes/{id}/statistiques` | Envoyés, reçus, erreurs.              |
+| COM-06 | Notifications push    | `/communication/push`                        | Création notifications in-app.        |
+| COM-07 | Emails                | `/communication/emails`                      | Envois institutionnels et relevés.    |
+| COM-08 | WhatsApp Business     | `/communication/whatsapp`                    | Messages et conversations.            |
+| COM-09 | Chatbot configuration | `/communication/chatbot`                     | Arbre de décision, FAQ, réponses.     |
+| COM-10 | Conversations chatbot | `/communication/chatbot/conversations`       | Historique échanges.                  |
+| COM-11 | Tickets support       | `/communication/tickets`                     | Réclamations clients.                 |
+| COM-12 | Détail ticket         | `/communication/tickets/{id}`                | Conversation, statut, résolution.     |
+
+---
+
+# 25. Écrans transverses obligatoires
+
+| Code   | Écran                            | Description                                            |
+| ------ | -------------------------------- | ------------------------------------------------------ |
+| SYS-01 | Page 403 accès refusé            | Utilisateur non autorisé.                              |
+| SYS-02 | Page 404 introuvable             | Route ou ressource inexistante.                        |
+| SYS-03 | Page 500 erreur serveur          | Erreur interne contrôlée.                              |
+| SYS-04 | Page maintenance                 | Application momentanément indisponible.                |
+| SYS-05 | Page chargement                  | Chargement des données.                                |
+| SYS-06 | Page aucune donnée               | Aucun résultat trouvé.                                 |
+| SYS-07 | Confirmation suppression logique | Confirmation d’archivage, pas de suppression physique. |
+| SYS-08 | Modal validation OTP             | Saisie OTP sur action sensible.                        |
+| SYS-09 | Modal confirmation action        | Confirmation avant action irréversible.                |
+| SYS-10 | Drawer historique                | Historique d’une entité.                               |
+| SYS-11 | Drawer commentaires              | Commentaires de validation.                            |
+| SYS-12 | Viewer document                  | Consultation PDF, image, contrat.                      |
+| SYS-13 | Upload fichier                   | Dépôt de pièce justificative.                          |
+| SYS-14 | Export données                   | Choix format PDF, Excel, CSV.                          |
+| SYS-15 | Impression                       | Prévisualisation reçu, rapport ou contrat.             |
+
+---
+
+# 26. Récapitulatif global
+
+| Bloc applicatif                  | Nombre d’écrans définis |
+| -------------------------------- | ----------------------: |
+| Application web opérateur        |                     247 |
+| Portail client web e-banking     |                      26 |
+| Application mobile client        |                      60 |
+| Application mobile agent terrain |                      28 |
+| USSD                             |                      17 |
+| Dashboard agent banking          |                      11 |
+| Portail développeur Open Banking |                      13 |
+| Console communication            |                      12 |
+| Écrans transverses               |                      15 |
+
+**Total général : 429 écrans et interfaces.**
+
+La structure finale doit être pensée comme un système unique : les écrans web internes pilotent le cœur bancaire, les écrans clients exposent uniquement les services autorisés, les applications mobiles simplifient les parcours, et les écrans d’administration garantissent la sécurité, l’audit, la conformité et la supervision globale.

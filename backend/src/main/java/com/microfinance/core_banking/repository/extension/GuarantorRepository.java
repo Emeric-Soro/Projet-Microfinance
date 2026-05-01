@@ -1,0 +1,10 @@
+package com.microfinance.core_banking.repository.extension;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import com.microfinance.core_banking.entity.Guarantor;
+
+/**
+ * Repository for Guarantor entities.
+ */
+public interface GuarantorRepository extends JpaRepository<Guarantor, Long> {
+}
