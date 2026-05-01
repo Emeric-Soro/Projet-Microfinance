@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -17,4 +19,19 @@ public class ClientResponseDTO {
     private String email;
     private String telephone;
     private String statut;
+    private LocalDate dateNaissance;
+    private String adresse;
+    private String profession;
+    private String typePieceIdentite;
+    private String numeroPieceIdentiteMasque;
+    private LocalDate dateExpirationPieceIdentite;
+    private String photoIdentiteUrl;
+    private String justificatifDomicileUrl;
+    private String justificatifRevenusUrl;
+    private String paysNationalite;
+    private String paysResidence;
+    private Boolean pep;
+    private String niveauRisque;
+    private String statutKyc;
+    private Boolean kycComplet;
 }

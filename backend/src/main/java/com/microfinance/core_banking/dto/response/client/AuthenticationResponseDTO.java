@@ -12,4 +12,8 @@ import lombok.Setter;
 public class AuthenticationResponseDTO {
     private String token;
     private UtilisateurResponseDTO utilisateur;
+    private AuthenticationStepStatus statutAuthentification;
+    private Boolean otpRequis;
+    private String challengeId;
+    private String message;
 }

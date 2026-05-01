@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.config;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,6 +23,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final JwtTokenBlacklistService jwtTokenBlacklistService;
 
     @Override
     protected void doFilterInternal(
@@ -40,26 +42,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // Extrait la valeur brute du JWT (sans le prefixe "Bearer ").
         final String jwt = authHeader.substring(7);
-        final String username = jwtService.extractUsername(jwt);
-
-        // N'authentifie que si un username est present et qu'aucune auth n'existe deja dans le contexte.
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-            // Verifie la signature + expiration du token avant de creer l'authentification Spring Security.
-            if (jwtService.isTokenValid(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-
-                // Attache les details de la requete HTTP courante (ip, session, etc.) au token d'authentification.
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                // Place l'utilisateur authentifie dans le SecurityContext pour le reste de la requete.
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+        try {
+            if (jwtTokenBlacklistService.isBlacklisted(jwt)) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token JWT revoque");
+                return;
             }
+
+            final String username = jwtService.extractUsername(jwt);
+
+            // N'authentifie que si un username est present et qu'aucune auth n'existe deja dans le contexte.
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+                // Verifie la signature + expiration du token avant de creer l'authentification Spring Security.
+                if (jwtService.isTokenValid(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+
+                    // Attache les details de la requete HTTP courante (ip, session, etc.) au token d'authentification.
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                    // Place l'utilisateur authentifie dans le SecurityContext pour le reste de la requete.
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            }
+        } catch (JwtException | IllegalArgumentException ex) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token JWT invalide");
+            return;
         }
 
         // Continue toujours la chaine de filtres (endpoint suivant / autre filtre).

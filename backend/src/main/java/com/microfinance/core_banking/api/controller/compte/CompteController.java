@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.api.controller.compte;
 
+import com.microfinance.core_banking.audit.AuditLog;
 import com.microfinance.core_banking.dto.request.compte.ChangementDecouvertRequestDTO;
 import com.microfinance.core_banking.dto.request.compte.OuvertureCompteRequestDTO;
 import com.microfinance.core_banking.dto.response.compte.CompteResponseDTO;
@@ -14,6 +15,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,20 +43,26 @@ public class CompteController {
 
 	@Operation(
 			summary = "Ouvrir un compte",
-			description = "Ouvre un nouveau compte pour un client donne"
+			description = "Ouvre un nouveau compte pour un client KYC valide avec depot initial"
 	)
 	@ApiResponses({
 			@ApiResponse(responseCode = "201", description = "Compte ouvert avec succes"),
 			@ApiResponse(responseCode = "400", description = "Donnees invalides"),
 			@ApiResponse(responseCode = "404", description = "Client introuvable"),
 			@ApiResponse(responseCode = "409", description = "Conflit metier")
-	})
-	@PostMapping
+    })
+    @PostMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @AuditLog(action = "ACCOUNT_OPEN", resource = "COMPTE")
 	public ResponseEntity<CompteResponseDTO> ouvrirCompte(
 			@Valid @RequestBody OuvertureCompteRequestDTO requestDTO
 	) {
 		// Cree un compte et retourne ses informations principales.
-		Compte compte = compteService.ouvrirCompte(requestDTO.getIdClient(), requestDTO.getCodeTypeCompte());
+		Compte compte = compteService.ouvrirCompte(
+				requestDTO.getIdClient(),
+				requestDTO.getCodeTypeCompte(),
+				requestDTO.getDepotInitial()
+		);
 		return ResponseEntity.status(HttpStatus.CREATED).body(toCompteResponse(compte));
 	}
 
@@ -64,9 +73,10 @@ public class CompteController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Solde retourne avec succes"),
 			@ApiResponse(responseCode = "404", description = "Compte introuvable")
-	})
-	@GetMapping("/{numCompte}/solde")
-	public ResponseEntity<BigDecimal> consulterSolde(@PathVariable String numCompte) {
+    })
+    @GetMapping("/{numCompte}/solde")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER') or (hasAuthority('CLIENT') and @accountAccessSecurity.canAccessAccount(authentication, #numCompte))")
+    public ResponseEntity<BigDecimal> consulterSolde(@PathVariable String numCompte, Authentication authentication) {
 		// Lit le solde courant sans modifier l'etat du compte.
 		BigDecimal solde = compteService.consulterSolde(numCompte);
 		return ResponseEntity.ok(solde);
@@ -80,9 +90,11 @@ public class CompteController {
 			@ApiResponse(responseCode = "200", description = "Decouvert mis a jour avec succes"),
 			@ApiResponse(responseCode = "400", description = "Donnees invalides"),
 			@ApiResponse(responseCode = "404", description = "Compte introuvable")
-	})
-	@PutMapping("/decouvert")
-	public ResponseEntity<CompteResponseDTO> changerDecouvertAutorise(
+    })
+    @PutMapping("/decouvert")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @AuditLog(action = "ACCOUNT_OVERDRAFT_UPDATE", resource = "COMPTE")
+    public ResponseEntity<CompteResponseDTO> changerDecouvertAutorise(
 			@Valid @RequestBody ChangementDecouvertRequestDTO requestDTO
 	) {
 		// Applique un nouveau plafond de decouvert sur le compte cible.
@@ -101,9 +113,11 @@ public class CompteController {
 			@ApiResponse(responseCode = "200", description = "Compte cloture avec succes"),
 			@ApiResponse(responseCode = "404", description = "Compte introuvable"),
 			@ApiResponse(responseCode = "409", description = "Compte non cloturable")
-	})
-	@PutMapping("/{numCompte}/cloture")
-	public ResponseEntity<CompteResponseDTO> cloturerCompte(@PathVariable String numCompte) {
+    })
+    @PutMapping("/{numCompte}/cloture")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @AuditLog(action = "ACCOUNT_CLOSE", resource = "COMPTE")
+    public ResponseEntity<CompteResponseDTO> cloturerCompte(@PathVariable String numCompte) {
 		// Marque le compte comme ferme via l'historique des statuts.
 		Compte compte = compteService.cloturerCompte(numCompte);
 		return ResponseEntity.ok(toCompteResponse(compte));

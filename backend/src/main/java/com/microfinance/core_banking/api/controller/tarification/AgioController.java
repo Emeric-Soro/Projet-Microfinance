@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.api.controller.tarification;
 
+import com.microfinance.core_banking.audit.AuditLog;
 import com.microfinance.core_banking.dto.response.tarification.AgioResponseDTO;
 import com.microfinance.core_banking.entity.Agio;
 import com.microfinance.core_banking.mapper.TarificationMapper;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -36,9 +38,11 @@ public class AgioController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Frais calcules avec succes"),
 			@ApiResponse(responseCode = "409", description = "Conflit metier ou parametrage manquant")
-	})
-	@PostMapping("/frais-tenue/mensuel")
-	public ResponseEntity<List<AgioResponseDTO>> calculerFraisTenueCompteMensuel() {
+    })
+    @PostMapping("/frais-tenue/mensuel")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @AuditLog(action = "AGIO_MONTHLY_FEES_CALC", resource = "AGIO")
+    public ResponseEntity<List<AgioResponseDTO>> calculerFraisTenueCompteMensuel() {
 		// Lance le calcul batch des frais mensuels.
 		List<AgioResponseDTO> resultats = agioService.calculerFraisTenueCompteMensuel().stream()
 				.map(tarificationMapper::toAgioResponseDTO)
@@ -54,9 +58,11 @@ public class AgioController {
 			@ApiResponse(responseCode = "200", description = "Penalite calculee ou deja existante"),
 			@ApiResponse(responseCode = "204", description = "Aucune penalite a appliquer"),
 			@ApiResponse(responseCode = "404", description = "Compte introuvable")
-	})
-	@PostMapping("/penalite-decouvert")
-	public ResponseEntity<AgioResponseDTO> calculerPenaliteDecouvert(@RequestParam String numCompte) {
+    })
+    @PostMapping("/penalite-decouvert")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @AuditLog(action = "AGIO_OVERDRAFT_PENALTY_CALC", resource = "AGIO")
+    public ResponseEntity<AgioResponseDTO> calculerPenaliteDecouvert(@RequestParam String numCompte) {
 		// Retourne 204 si le compte n'est pas en decouvert.
 		return agioService.calculerPenaliteDecouvert(numCompte)
 				.map(tarificationMapper::toAgioResponseDTO)
@@ -72,9 +78,11 @@ public class AgioController {
 			@ApiResponse(responseCode = "200", description = "Prelevements executes"),
 			@ApiResponse(responseCode = "400", description = "Parametres invalides"),
 			@ApiResponse(responseCode = "404", description = "Utilisateur systeme introuvable")
-	})
-	@PostMapping("/prelevements")
-	public ResponseEntity<List<AgioResponseDTO>> executerPrelevementsEnAttente(@RequestParam Long idUserSysteme) {
+    })
+    @PostMapping("/prelevements")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @AuditLog(action = "AGIO_PENDING_DEBIT", resource = "AGIO")
+    public ResponseEntity<List<AgioResponseDTO>> executerPrelevementsEnAttente(@RequestParam Long idUserSysteme) {
 		// Tente le prelevement de chaque agio non preleve.
 		List<Agio> preleves = agioService.executerPrelevementsEnAttente(idUserSysteme);
 		List<AgioResponseDTO> response = preleves.stream()

@@ -21,7 +21,10 @@ public class CarteVisaServiceImpl implements CarteVisaService {
     // Remplacement obligatoire par SecureRandom pour la cryptographie financière
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public CarteVisaServiceImpl(CarteVisaRepository carteVisaRepository, CompteRepository compteRepository) {
+    public CarteVisaServiceImpl(
+            CarteVisaRepository carteVisaRepository,
+            CompteRepository compteRepository
+    ) {
         this.carteVisaRepository = carteVisaRepository;
         this.compteRepository = compteRepository;
     }
@@ -35,10 +38,10 @@ public class CarteVisaServiceImpl implements CarteVisaService {
         CarteVisa carte = new CarteVisa();
         carte.setCompte(compte);
         carte.setNumeroCarte(genererNumeroCarteUnique());
-        carte.setCvv(genererCvv()); // Ajout du CVV
         carte.setDateExpiration(LocalDate.now().plusYears(3));
         carte.setStatut(Boolean.TRUE);
         carte.setPlafondJournalier(new BigDecimal("500000.00")); // Plafond standard par défaut
+        // Le CVV n'est volontairement ni genere ni persiste dans ce domaine applicatif.
 
         return carteVisaRepository.save(carte);
     }
@@ -72,9 +75,4 @@ public class CarteVisaServiceImpl implements CarteVisaService {
         return numero;
     }
 
-    private String genererCvv() {
-        // Génère un nombre à 3 chiffres (entre 100 et 999)
-        int cvv = 100 + secureRandom.nextInt(900);
-        return String.valueOf(cvv);
-    }
 }

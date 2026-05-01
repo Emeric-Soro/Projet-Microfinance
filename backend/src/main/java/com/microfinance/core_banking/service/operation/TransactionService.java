@@ -15,5 +15,9 @@ public interface TransactionService {
 
     Transaction faireVirement(String compteSource, String compteDest, BigDecimal montant, Long idUser);
 
+    Transaction approuverTransaction(String referenceUnique, Long idSuperviseur);
+
+    Transaction rejeterTransaction(String referenceUnique, Long idSuperviseur, String motif);
+
     Page<LigneEcriture> historiqueOperations(String numCompte, Pageable pageable);
 }

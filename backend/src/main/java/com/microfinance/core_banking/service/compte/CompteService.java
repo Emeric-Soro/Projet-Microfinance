@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 
 public interface CompteService {
 
-    Compte ouvrirCompte(Long idClient, String codeTypeCompte);
+    Compte ouvrirCompte(Long idClient, String codeTypeCompte, BigDecimal depotInitial);
 
     BigDecimal consulterSolde(String numCompte);
 

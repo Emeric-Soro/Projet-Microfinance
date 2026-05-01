@@ -13,6 +13,7 @@ import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Service
@@ -31,13 +32,27 @@ public class JwtService {
 
     // 2. Générer un badge pour un utilisateur
     public String generateToken(UserDetails userDetails) {
-        return buildToken(new HashMap<>(), userDetails, jwtExpiration);
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("jti", UUID.randomUUID().toString());
+        return buildToken(extraClaims, userDetails, jwtExpiration);
     }
 
     // 3. Vérifier si le badge appartient bien à cet utilisateur et n'est pas périmé
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+    }
+
+    public String extractJti(String token) {
+        String jti = extractClaim(token, claims -> claims.get("jti", String.class));
+        if (jti == null || jti.isBlank()) {
+            throw new IllegalArgumentException("Token JWT sans identifiant jti");
+        }
+        return jti;
+    }
+
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
     }
 
     // --- Méthodes privées de cuisine interne (Cryptographie) ---
@@ -54,10 +69,6 @@ public class JwtService {
 
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
-    }
-
-    private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {

@@ -1,6 +1,9 @@
 package com.microfinance.core_banking.api.controller.client;
 
+import com.microfinance.core_banking.audit.AuditLog;
 import com.microfinance.core_banking.dto.request.client.CreationClientRequestDTO;
+import com.microfinance.core_banking.dto.request.client.DecisionKycClientRequestDTO;
+import com.microfinance.core_banking.dto.request.client.MiseAJourKycClientRequestDTO;
 import com.microfinance.core_banking.dto.response.client.ClientResponseDTO;
 import com.microfinance.core_banking.entity.Client;
 import com.microfinance.core_banking.mapper.ClientMapper;
@@ -15,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,6 +51,7 @@ public class ClientController {
             @ApiResponse(responseCode = "409", description = "Conflit metier (email, telephone ou code deja utilise)")
     })
     @PostMapping
+    @AuditLog(action = "CLIENT_CREATE", resource = "CLIENT")
     public ResponseEntity<ClientResponseDTO> creerClient(@Valid @RequestBody CreationClientRequestDTO requestDTO) {
         Client client = clientMapper.toEntity(requestDTO);
         Client clientCree = clientService.creerClient(client);
@@ -62,6 +67,7 @@ public class ClientController {
             @ApiResponse(responseCode = "400", description = "Parametres de pagination invalides")
     })
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
     public ResponseEntity<Page<ClientResponseDTO>> listerClients(@ParameterObject Pageable pageable) {
         Page<ClientResponseDTO> pageClients = clientService.listerClients(pageable)
                 .map(clientMapper::toResponseDTO);
@@ -77,6 +83,7 @@ public class ClientController {
             @ApiResponse(responseCode = "404", description = "Client introuvable")
     })
     @GetMapping("/{idClient}")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
     public ResponseEntity<ClientResponseDTO> obtenirDetailsClient(@PathVariable Long idClient) {
         Client client = clientService.obtenirDetailsClient(idClient);
         return ResponseEntity.ok(clientMapper.toResponseDTO(client));
@@ -92,11 +99,53 @@ public class ClientController {
             @ApiResponse(responseCode = "404", description = "Client introuvable")
     })
     @PutMapping("/{idClient}/statut")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @AuditLog(action = "CLIENT_STATUS_UPDATE", resource = "CLIENT")
     public ResponseEntity<ClientResponseDTO> modifierStatutClient(
             @PathVariable Long idClient,
             @RequestParam String nouveauStatut
     ) {
         Client client = clientService.modifierStatutClient(idClient, nouveauStatut);
+        return ResponseEntity.ok(clientMapper.toResponseDTO(client));
+    }
+
+    @Operation(
+            summary = "Soumettre ou mettre a jour le KYC",
+            description = "Enregistre les pieces d'identite, justificatifs et informations conformite d'un client"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dossier KYC mis a jour"),
+            @ApiResponse(responseCode = "400", description = "Donnees KYC invalides"),
+            @ApiResponse(responseCode = "404", description = "Client introuvable")
+    })
+    @PutMapping("/{idClient}/kyc")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @AuditLog(action = "CLIENT_KYC_UPDATE", resource = "CLIENT")
+    public ResponseEntity<ClientResponseDTO> mettreAJourKyc(
+            @PathVariable Long idClient,
+            @Valid @RequestBody MiseAJourKycClientRequestDTO requestDTO
+    ) {
+        Client client = clientService.mettreAJourKyc(idClient, requestDTO);
+        return ResponseEntity.ok(clientMapper.toResponseDTO(client));
+    }
+
+    @Operation(
+            summary = "Traiter un dossier KYC",
+            description = "Valide, retourne en revision ou rejette un dossier KYC avec niveau de risque"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Decision KYC enregistree"),
+            @ApiResponse(responseCode = "400", description = "Decision KYC invalide"),
+            @ApiResponse(responseCode = "404", description = "Client introuvable")
+    })
+    @PutMapping("/{idClient}/kyc/decision")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR')")
+    @AuditLog(action = "CLIENT_KYC_DECISION", resource = "CLIENT")
+    public ResponseEntity<ClientResponseDTO> traiterDossierKyc(
+            @PathVariable Long idClient,
+            @Valid @RequestBody DecisionKycClientRequestDTO requestDTO
+    ) {
+        Client client = clientService.traiterDossierKyc(idClient, requestDTO);
         return ResponseEntity.ok(clientMapper.toResponseDTO(client));
     }
 }

@@ -27,9 +27,13 @@ public class Notification extends BaseAuditEntity {
 	// Contenu textuel du message a envoyer.
 	private String message;
 
-	@Column(name = "date_envoi", nullable = false)
-	// Date d'envoi de la notification.
+	@Column(name = "date_envoi")
+	// Date d'envoi effectif de la notification lorsqu'elle a abouti.
 	private LocalDate dateEnvoi;
+
+	@Column(name = "erreur_envoi", length = 500)
+	// Motif du dernier echec d'envoi si la notification n'a pas abouti.
+	private String erreurEnvoi;
 
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "id_canal", nullable = false)

@@ -12,6 +12,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -23,24 +25,26 @@ import java.util.Optional;
 @Service
 public class AgioServiceImpl implements AgioService {
 
-    private static final BigDecimal FRAIS_TENUE_MENSUEL = new BigDecimal("1000.00");
-    private static final BigDecimal TAUX_PENALITE_DECOUVERT = new BigDecimal("0.05");
+    private static final Logger log = LoggerFactory.getLogger(AgioServiceImpl.class);
 
     private final AgioRepository agioRepository;
     private final TypeAgioRepository typeAgioRepository;
     private final CompteRepository compteRepository;
     private final TransactionService transactionService;
+    private final TarificationParametreService tarificationParametreService;
 
     public AgioServiceImpl(
             AgioRepository agioRepository,
             TypeAgioRepository typeAgioRepository,
             CompteRepository compteRepository,
-            TransactionService transactionService
+            TransactionService transactionService,
+            TarificationParametreService tarificationParametreService
     ) {
         this.agioRepository = agioRepository;
         this.typeAgioRepository = typeAgioRepository;
         this.compteRepository = compteRepository;
         this.transactionService = transactionService;
+        this.tarificationParametreService = tarificationParametreService;
     }
 
     @Override
@@ -48,6 +52,7 @@ public class AgioServiceImpl implements AgioService {
     public List<Agio> calculerFraisTenueCompteMensuel() {
         TypeAgio typeTenueCompte = chargerTypeAgioStrict("FRAIS_TENUE");
         LocalDate dateCalcul = LocalDate.now();
+        BigDecimal fraisTenueMensuel = tarificationParametreService.lireValeurDecimale("AGIO_FRAIS_TENUE_MENSUEL");
         List<Agio> resultats = new ArrayList<>();
 
         // Traitement par lots (Batch) : On charge les comptes par pages de 500 pour ne pas saturer la RAM
@@ -71,7 +76,7 @@ public class AgioServiceImpl implements AgioService {
                 agio.setCompte(compte);
                 agio.setTypeAgio(typeTenueCompte);
                 agio.setDateCalcul(dateCalcul);
-                agio.setMontant(FRAIS_TENUE_MENSUEL);
+                agio.setMontant(fraisTenueMensuel);
                 agio.setEstPreleve(Boolean.FALSE);
                 resultats.add(agioRepository.save(agio));
             }
@@ -93,6 +98,7 @@ public class AgioServiceImpl implements AgioService {
 
         TypeAgio typePenalite = chargerTypeAgioStrict("PENALITE_DECOUVERT");
         LocalDate dateCalcul = LocalDate.now();
+        BigDecimal tauxPenaliteDecouvert = tarificationParametreService.lireValeurDecimale("AGIO_TAUX_PENALITE_DECOUVERT");
 
         if (agioRepository.existsByCompte_IdCompteAndTypeAgio_IdTypeAgioAndDateCalcul(
                 compte.getIdCompte(),
@@ -107,7 +113,7 @@ public class AgioServiceImpl implements AgioService {
         }
 
         BigDecimal montantPenalite = compte.getSolde().abs()
-                .multiply(TAUX_PENALITE_DECOUVERT)
+                .multiply(tauxPenaliteDecouvert)
                 .setScale(2, RoundingMode.HALF_UP);
 
         Agio agio = new Agio();
@@ -133,9 +139,7 @@ public class AgioServiceImpl implements AgioService {
                 agio.setEstPreleve(Boolean.TRUE);
                 preleves.add(agioRepository.save(agio));
             } catch (IllegalStateException e) {
-                // Si le client n'a pas assez d'argent, l'erreur est attrapée ici.
-                // On ignore ce client pour le moment, l'agio reste "estPreleve = false"
-                // et on continue la boucle pour les autres clients !
+                log.warn("Prelevement agio impossible pour le compte {}: {}", agio.getCompte().getNumCompte(), e.getMessage());
             }
         }
         return preleves;
