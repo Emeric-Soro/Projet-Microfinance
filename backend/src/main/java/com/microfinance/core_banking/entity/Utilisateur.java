@@ -39,10 +39,23 @@ public class Utilisateur extends BaseAuditEntity implements UserDetails {
 	// Mot de passe de l'utilisateur.
 	private String password;
 
-	@OneToOne(optional = false)
-	@JoinColumn(name = "id_client", nullable = false, unique = true)
-	// Client associe a cet utilisateur.
+	@Column(name = "nom_utilisateur", length = 100)
+	// Nom de l'utilisateur interne (employe sans fiche client).
+	private String nomUtilisateur;
+
+	@Column(name = "prenom_utilisateur", length = 100)
+	// Prenom de l'utilisateur interne.
+	private String prenomUtilisateur;
+
+	@OneToOne
+	@JoinColumn(name = "id_client", unique = true)
+	// Client associe a cet utilisateur (nullable pour les employes internes).
 	private Client client;
+
+	@ManyToOne
+	@JoinColumn(name = "id_agence")
+	// Agence de rattachement de l'employe.
+	private Agence agence;
 
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(

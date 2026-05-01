@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +58,30 @@ public class Client extends BaseAuditEntity {
 	// Date d'inscription du client.
 	private LocalDate dateInscription;
 
+	// --- Champs KYC Microfinance ---
+
+	@Column(name = "numero_piece_identite", length = 50)
+	// Numero de la piece d'identite officielle.
+	private String numeroPieceIdentite;
+
+	@Column(name = "type_piece_identite", length = 30)
+	// Type de piece d'identite (CNI, PASSEPORT, CARTE_CONSULAIRE).
+	private String typePieceIdentite;
+
+	@Column(length = 150)
+	// Profession ou activite principale du client.
+	private String profession;
+
+	@Column(name = "revenu_mensuel", precision = 19, scale = 2)
+	// Revenu mensuel estime du client en FCFA.
+	private BigDecimal revenuMensuel;
+
+	@Column(name = "secteur_activite", length = 100)
+	// Secteur d'activite (commerce, agriculture, artisanat, etc.).
+	private String secteurActivite;
+
+	// --- Relations ---
+
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "id_statut_client", nullable = false)
 	// Statut courant du client.
@@ -73,4 +98,12 @@ public class Client extends BaseAuditEntity {
 	@OneToMany(mappedBy = "client")
 	// Comptes appartenant a ce client.
 	private List<Compte> comptes = new ArrayList<>();
+
+	@OneToMany(mappedBy = "client")
+	// Demandes de credit soumises par ce client.
+	private List<DemandeCredit> demandesCredit = new ArrayList<>();
+
+	@OneToMany(mappedBy = "client")
+	// Credits actifs de ce client.
+	private List<Credit> credits = new ArrayList<>();
 }

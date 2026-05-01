@@ -7,7 +7,7 @@ services:
     environment:
       - ORACLE_PASSWORD=oracle_admin_pass # Mot de passe du super admin (SYS)
       - APP_USER=core_banking_user        # Utilisateur de notre application
-      - APP_PASSWORD=core_banking_pass    # Mot de passe de notre application
+      - APP_USER_PASSWORD=core_banking_pass    # Mot de passe de notre application
     ports:
       - "1521:1521"
     volumes:

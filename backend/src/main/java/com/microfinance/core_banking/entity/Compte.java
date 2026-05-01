@@ -76,5 +76,15 @@ public class Compte extends BaseAuditEntity {
     // Lignes d'ecriture impactant ce compte.
     private List<LigneEcriture> lignesEcriture = new ArrayList<>();
 
+    @ManyToOne
+    @JoinColumn(name = "id_agence")
+    // Agence de gestion du compte.
+    private Agence agence;
+
+    @ManyToOne
+    @JoinColumn(name = "id_produit_epargne")
+    // Produit d'epargne associe (nullable, uniquement pour les comptes epargne).
+    private ProduitEpargne produitEpargne;
+
 
 }
