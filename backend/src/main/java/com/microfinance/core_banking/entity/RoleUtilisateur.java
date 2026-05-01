@@ -38,4 +38,12 @@ public class RoleUtilisateur extends BaseAuditEntity {
 	@ManyToMany(mappedBy = "roles")
 	// Utilisateurs possedant ce role.
 	private Set<Utilisateur> utilisateurs = new HashSet<>();
+
+	@ManyToMany
+	@JoinTable(
+			name = "role_permission_securite",
+			joinColumns = @JoinColumn(name = "id_role"),
+			inverseJoinColumns = @JoinColumn(name = "id_permission")
+	)
+	private Set<PermissionSecurite> permissions = new HashSet<>();
 }

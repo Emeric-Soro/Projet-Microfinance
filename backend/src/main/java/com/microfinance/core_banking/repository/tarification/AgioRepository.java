@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -45,4 +46,6 @@ public interface AgioRepository extends JpaRepository<Agio, Long> {
 
 	// Liste paginee des agios crees entre deux dates.
 	Page<Agio> findByCreatedAtBetween(LocalDateTime dateDebut, LocalDateTime dateFin, Pageable pageable);
+
+	List<Agio> findByDateCalculBetween(LocalDate dateDebut, LocalDate dateFin);
 }

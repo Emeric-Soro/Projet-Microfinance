@@ -11,9 +11,12 @@ import com.microfinance.core_banking.entity.TypeTransaction;
 import com.microfinance.core_banking.entity.Utilisateur;
 import com.microfinance.core_banking.repository.client.UtilisateurRepository;
 import com.microfinance.core_banking.repository.compte.CompteRepository;
+import com.microfinance.core_banking.repository.extension.SessionCaisseRepository;
 import com.microfinance.core_banking.repository.operation.LigneEcritureRepository;
 import com.microfinance.core_banking.repository.operation.TransactionRepository;
 import com.microfinance.core_banking.repository.operation.TypeTransactionRepository;
+import com.microfinance.core_banking.service.extension.ComptabiliteExtensionService;
+import com.microfinance.core_banking.service.extension.ConformiteExtensionService;
 import com.microfinance.core_banking.service.communication.event.VirementEffectueEvent;
 import com.microfinance.core_banking.service.operation.fees.TransactionFeeCalculator;
 import jakarta.persistence.EntityNotFoundException;
@@ -38,9 +41,12 @@ public class TransactionServiceImpl implements TransactionService {
     private final TypeTransactionRepository typeTransactionRepository;
     private final CompteRepository compteRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final SessionCaisseRepository sessionCaisseRepository;
     private final TransactionFeeCalculator transactionFeeCalculator;
     private final ApplicationEventPublisher eventPublisher;
     private final TransactionWorkflowProperties transactionWorkflowProperties;
+    private final ConformiteExtensionService conformiteExtensionService;
+    private final ComptabiliteExtensionService comptabiliteExtensionService;
 
     public TransactionServiceImpl(
             TransactionRepository transactionRepository,
@@ -48,27 +54,34 @@ public class TransactionServiceImpl implements TransactionService {
             TypeTransactionRepository typeTransactionRepository,
             CompteRepository compteRepository,
             UtilisateurRepository utilisateurRepository,
+            SessionCaisseRepository sessionCaisseRepository,
             TransactionFeeCalculator transactionFeeCalculator,
             ApplicationEventPublisher eventPublisher,
-            TransactionWorkflowProperties transactionWorkflowProperties
+            TransactionWorkflowProperties transactionWorkflowProperties,
+            ConformiteExtensionService conformiteExtensionService,
+            ComptabiliteExtensionService comptabiliteExtensionService
     ) {
         this.transactionRepository = transactionRepository;
         this.ligneEcritureRepository = ligneEcritureRepository;
         this.typeTransactionRepository = typeTransactionRepository;
         this.compteRepository = compteRepository;
         this.utilisateurRepository = utilisateurRepository;
+        this.sessionCaisseRepository = sessionCaisseRepository;
         this.transactionFeeCalculator = transactionFeeCalculator;
         this.eventPublisher = eventPublisher;
         this.transactionWorkflowProperties = transactionWorkflowProperties;
+        this.conformiteExtensionService = conformiteExtensionService;
+        this.comptabiliteExtensionService = comptabiliteExtensionService;
     }
 
     @Override
     @Transactional
-    public Transaction faireDepot(String numCompte, BigDecimal montant, Long idUser) {
+    public Transaction faireDepot(String numCompte, BigDecimal montant, Long idUser, Long idSessionCaisse) {
         validerMontantPositif(montant);
 
         Compte compte = chargerCompte(numCompte);
         Utilisateur utilisateur = chargerUtilisateur(idUser);
+        var sessionCaisse = chargerSessionCaisseOuverte(idSessionCaisse, utilisateur.getIdUser());
         TypeTransaction typeDepot = chargerTypeStrict("DEPOT");
         BigDecimal frais = transactionFeeCalculator.calculerFrais(typeDepot.getCodeTypeTransaction(), montant);
         BigDecimal montantNet = montant.subtract(frais);
@@ -83,7 +96,10 @@ public class TransactionServiceImpl implements TransactionService {
                 frais,
                 null,
                 compte,
-                necessiteValidationSuperviseur(montant)
+                necessiteValidationSuperviseur(montant),
+                sessionCaisse,
+                "DEPOT_CASH",
+                null
         );
 
         if (Boolean.TRUE.equals(transaction.getValidationSuperviseurRequise())) {
@@ -95,11 +111,12 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
-    public Transaction faireRetrait(String numCompte, BigDecimal montant, Long idUser) {
+    public Transaction faireRetrait(String numCompte, BigDecimal montant, Long idUser, Long idSessionCaisse) {
         validerMontantPositif(montant);
 
         Compte compte = chargerCompte(numCompte);
         Utilisateur utilisateur = chargerUtilisateur(idUser);
+        var sessionCaisse = chargerSessionCaisseOuverte(idSessionCaisse, utilisateur.getIdUser());
         TypeTransaction typeRetrait = chargerTypeStrict("RETRAIT");
         BigDecimal frais = transactionFeeCalculator.calculerFrais(typeRetrait.getCodeTypeTransaction(), montant);
 
@@ -110,7 +127,10 @@ public class TransactionServiceImpl implements TransactionService {
                 frais,
                 compte,
                 null,
-                necessiteValidationSuperviseur(montant)
+                necessiteValidationSuperviseur(montant),
+                sessionCaisse,
+                "RETRAIT_CASH",
+                null
         );
 
         if (Boolean.TRUE.equals(transaction.getValidationSuperviseurRequise())) {
@@ -141,13 +161,62 @@ public class TransactionServiceImpl implements TransactionService {
                 frais,
                 source,
                 destination,
-                necessiteValidationSuperviseur(montant)
+                necessiteValidationSuperviseur(montant),
+                null,
+                "VIREMENT_INTERNE",
+                null
         );
 
         if (Boolean.TRUE.equals(transaction.getValidationSuperviseurRequise())) {
             return transaction;
         }
 
+        return executerTransaction(transaction);
+    }
+
+    @Override
+    @Transactional
+    public Transaction posterDepotSysteme(String numCompte, BigDecimal montant, BigDecimal frais, Long idUser, String referenceExterne, String codeOperationMetier) {
+        validerMontantPositif(montant);
+        Compte compte = chargerCompte(numCompte);
+        Utilisateur utilisateur = chargerUtilisateur(idUser);
+        TypeTransaction typeDepot = chargerTypeStrict("DEPOT");
+
+        Transaction transaction = creerTransaction(
+                utilisateur,
+                typeDepot,
+                montant,
+                frais == null ? BigDecimal.ZERO : frais,
+                null,
+                compte,
+                false,
+                null,
+                codeOperationMetier,
+                referenceExterne
+        );
+        return executerTransaction(transaction);
+    }
+
+    @Override
+    @Transactional
+    public Transaction posterRetraitSysteme(String numCompte, BigDecimal montant, BigDecimal frais, Long idUser, String referenceExterne, String codeOperationMetier) {
+        validerMontantPositif(montant);
+        Compte compte = chargerCompte(numCompte);
+        Utilisateur utilisateur = chargerUtilisateur(idUser);
+        TypeTransaction typeRetrait = chargerTypeStrict("RETRAIT");
+
+        Transaction transaction = creerTransaction(
+                utilisateur,
+                typeRetrait,
+                montant,
+                frais == null ? BigDecimal.ZERO : frais,
+                compte,
+                null,
+                false,
+                null,
+                codeOperationMetier,
+                referenceExterne
+        );
         return executerTransaction(transaction);
     }
 
@@ -221,10 +290,15 @@ public class TransactionServiceImpl implements TransactionService {
             BigDecimal frais,
             Compte compteSource,
             Compte compteDestination,
-            boolean validationSuperviseurRequise
+            boolean validationSuperviseurRequise,
+            com.microfinance.core_banking.entity.SessionCaisse sessionCaisse,
+            String codeOperationMetier,
+            String referenceExterne
     ) {
         Transaction transaction = new Transaction();
-        transaction.setReferenceUnique("TX-" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase());
+        transaction.setReferenceUnique(referenceExterne == null || referenceExterne.isBlank()
+                ? "TX-" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase()
+                : referenceExterne.trim());
         transaction.setDateHeureTransaction(LocalDateTime.now());
         transaction.setMontantGlobal(montant);
         transaction.setFrais(frais);
@@ -232,11 +306,16 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setTypeTransaction(type);
         transaction.setCompteSource(compteSource);
         transaction.setCompteDestination(compteDestination);
+        transaction.setCodeOperationMetier(codeOperationMetier);
         transaction.setValidationSuperviseurRequise(validationSuperviseurRequise);
         transaction.setStatutOperation(StatutOperation.EN_ATTENTE);
         transaction.setDateValidation(null);
         transaction.setDateExecution(null);
         transaction.setMotifRejet(null);
+        transaction.setSessionCaisse(sessionCaisse);
+        transaction.setAgenceOperation(sessionCaisse != null
+                ? sessionCaisse.getCaisse().getAgence()
+                : utilisateur.getAgenceActive());
         return transactionRepository.save(transaction);
     }
 
@@ -247,6 +326,10 @@ public class TransactionServiceImpl implements TransactionService {
         if (transaction.getStatutOperation() == StatutOperation.EXECUTEE) {
             return transaction;
         }
+
+        // Valide le schema comptable en amont pour garantir qu'aucun solde n'est modifie
+        // si l'operation ne peut pas produire une piece equilibree.
+        comptabiliteExtensionService.verifierTransactionComptable(transaction);
 
         String codeType = transaction.getTypeTransaction().getCodeTypeTransaction();
         if ("DEPOT".equalsIgnoreCase(codeType)) {
@@ -261,7 +344,10 @@ public class TransactionServiceImpl implements TransactionService {
 
         transaction.setStatutOperation(StatutOperation.EXECUTEE);
         transaction.setDateExecution(LocalDateTime.now());
-        return transactionRepository.save(transaction);
+        Transaction transactionExecutee = transactionRepository.save(transaction);
+        comptabiliteExtensionService.comptabiliserTransaction(transactionExecutee);
+        conformiteExtensionService.analyserTransaction(transactionExecutee);
+        return transactionExecutee;
     }
 
     private void executerDepot(Transaction transaction) {
@@ -273,6 +359,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         compte.setSolde(compte.getSolde().add(montantNet));
         compteRepository.save(compte);
+        mettreAJourSoldeSession(transaction, transaction.getMontantGlobal());
 
         creerLigne(transaction, compte, SensEcriture.CREDIT, transaction.getMontantGlobal());
         if (transaction.getFrais().compareTo(BigDecimal.ZERO) > 0) {
@@ -291,6 +378,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         compte.setSolde(compte.getSolde().subtract(montantTotal));
         compteRepository.save(compte);
+        mettreAJourSoldeSession(transaction, transaction.getMontantGlobal().negate());
 
         creerLigne(transaction, compte, SensEcriture.DEBIT, transaction.getMontantGlobal());
         if (transaction.getFrais().compareTo(BigDecimal.ZERO) > 0) {
@@ -329,6 +417,21 @@ public class TransactionServiceImpl implements TransactionService {
                 .orElseThrow(() -> new EntityNotFoundException("Compte introuvable : " + compte.getIdCompte()));
     }
 
+    private com.microfinance.core_banking.entity.SessionCaisse chargerSessionCaisseOuverte(Long idSessionCaisse, Long idUtilisateur) {
+        if (idSessionCaisse == null) {
+            throw new IllegalArgumentException("Une session de caisse ouverte est obligatoire pour les operations cash");
+        }
+        com.microfinance.core_banking.entity.SessionCaisse session = sessionCaisseRepository.findById(idSessionCaisse)
+                .orElseThrow(() -> new EntityNotFoundException("Session de caisse introuvable : " + idSessionCaisse));
+        if (!"OUVERTE".equalsIgnoreCase(session.getStatut()) || session.getDateFermeture() != null) {
+            throw new IllegalStateException("La session de caisse doit etre ouverte");
+        }
+        if (session.getUtilisateur() == null || session.getUtilisateur().getIdUser() == null || !session.getUtilisateur().getIdUser().equals(idUtilisateur)) {
+            throw new IllegalStateException("La session de caisse ne correspond pas a l'utilisateur authentifie");
+        }
+        return session;
+    }
+
     private void verifierFondsDisponibles(Compte compte, BigDecimal montantTotal, String messageErreur) {
         BigDecimal fondsDisponibles = fondsDisponibles(compte);
         if (fondsDisponibles.compareTo(montantTotal) < 0) {
@@ -355,7 +458,14 @@ public class TransactionServiceImpl implements TransactionService {
                 .map(RoleUtilisateur::getCodeRoleUtilisateur)
                 .map(String::toUpperCase)
                 .anyMatch(ROLES_SUPERVISION::contains);
-        if (!roleValide) {
+        boolean permissionValide = superviseur.getRoles().stream()
+                .flatMap(role -> role.getPermissions().stream())
+                .filter(permission -> Boolean.TRUE.equals(permission.getActif()))
+                .map(permission -> permission.getCodePermission())
+                .filter(code -> code != null && !code.isBlank())
+                .map(String::toUpperCase)
+                .anyMatch("VALIDATION_DECIDE"::equals);
+        if (!roleValide && !permissionValide) {
             throw new IllegalStateException("L'utilisateur choisi n'a pas les droits de supervision requis");
         }
         if (initiateur != null && initiateur.getIdUser() != null && initiateur.getIdUser().equals(superviseur.getIdUser())) {
@@ -374,5 +484,16 @@ public class TransactionServiceImpl implements TransactionService {
         ligne.setSens(sens);
         ligne.setMontant(montant);
         ligneEcritureRepository.save(ligne);
+    }
+
+    private void mettreAJourSoldeSession(Transaction transaction, BigDecimal variationEspeces) {
+        if (transaction.getSessionCaisse() == null || variationEspeces == null) {
+            return;
+        }
+        var session = sessionCaisseRepository.findById(transaction.getSessionCaisse().getIdSessionCaisse())
+                .orElseThrow(() -> new EntityNotFoundException("Session de caisse introuvable"));
+        BigDecimal soldeActuel = session.getSoldeTheoriqueFermeture() == null ? session.getSoldeOuverture() : session.getSoldeTheoriqueFermeture();
+        session.setSoldeTheoriqueFermeture(soldeActuel.add(variationEspeces));
+        sessionCaisseRepository.save(session);
     }
 }

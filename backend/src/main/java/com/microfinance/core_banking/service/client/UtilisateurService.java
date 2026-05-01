@@ -14,5 +14,9 @@ public interface UtilisateurService {
 
     Utilisateur assignerRole(Long idUser, String codeRole);
 
+    Utilisateur revoquerRole(Long idUser, String codeRole);
+
     Utilisateur changerActivation(Long idUser, boolean actif);
+
+    Utilisateur changerMotDePasse(Long idUser, String motDePasseActuel, String nouveauMotDePasse, String motif);
 }

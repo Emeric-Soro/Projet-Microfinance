@@ -2,12 +2,15 @@ package com.microfinance.core_banking.service.client;
 
 import com.microfinance.core_banking.config.AuthSecurityProperties;
 import com.microfinance.core_banking.entity.Client;
+import com.microfinance.core_banking.entity.HistoriqueMotDePasseUtilisateur;
 import com.microfinance.core_banking.entity.RoleUtilisateur;
 import com.microfinance.core_banking.entity.Utilisateur;
 import com.microfinance.core_banking.repository.client.ClientRepository;
+import com.microfinance.core_banking.repository.client.HistoriqueMotDePasseUtilisateurRepository;
 import com.microfinance.core_banking.repository.client.RoleUtilisateurRepository;
 import com.microfinance.core_banking.repository.client.UtilisateurRepository;
 import com.microfinance.core_banking.service.communication.NotificationService;
+import com.microfinance.core_banking.service.security.AuthenticatedUserService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.authentication.AccountExpiredException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -21,32 +24,39 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class UtilisateurServiceImpl implements UtilisateurService {
 
     private final UtilisateurRepository utilisateurRepository;
     private final ClientRepository clientRepository;
+    private final HistoriqueMotDePasseUtilisateurRepository historiqueMotDePasseUtilisateurRepository;
     private final RoleUtilisateurRepository roleUtilisateurRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthSecurityProperties authSecurityProperties;
     private final NotificationService notificationService;
+    private final AuthenticatedUserService authenticatedUserService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public UtilisateurServiceImpl(
             UtilisateurRepository utilisateurRepository,
             ClientRepository clientRepository,
+            HistoriqueMotDePasseUtilisateurRepository historiqueMotDePasseUtilisateurRepository,
             RoleUtilisateurRepository roleUtilisateurRepository,
             PasswordEncoder passwordEncoder,
             AuthSecurityProperties authSecurityProperties,
-            NotificationService notificationService
+            NotificationService notificationService,
+            AuthenticatedUserService authenticatedUserService
     ) {
         this.utilisateurRepository = utilisateurRepository;
         this.clientRepository = clientRepository;
+        this.historiqueMotDePasseUtilisateurRepository = historiqueMotDePasseUtilisateurRepository;
         this.roleUtilisateurRepository = roleUtilisateurRepository;
         this.passwordEncoder = passwordEncoder;
         this.authSecurityProperties = authSecurityProperties;
         this.notificationService = notificationService;
+        this.authenticatedUserService = authenticatedUserService;
     }
 
     @Override
@@ -208,6 +218,23 @@ public class UtilisateurServiceImpl implements UtilisateurService {
 
     @Override
     @Transactional
+    public Utilisateur revoquerRole(Long idUser, String codeRole) {
+        Utilisateur utilisateur = utilisateurRepository.findById(idUser)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur introuvable: " + idUser));
+
+        if (codeRole == null || codeRole.isBlank()) {
+            throw new IllegalArgumentException("Le code role est obligatoire");
+        }
+
+        RoleUtilisateur role = roleUtilisateurRepository.findByCodeRoleUtilisateur(codeRole)
+                .orElseThrow(() -> new IllegalArgumentException("Le rôle '" + codeRole + "' n'existe pas."));
+
+        utilisateur.getRoles().remove(role);
+        return utilisateurRepository.save(utilisateur);
+    }
+
+    @Override
+    @Transactional
     public Utilisateur changerActivation(Long idUser, boolean actif) {
         Utilisateur utilisateur = utilisateurRepository.findById(idUser)
                 .orElseThrow(() -> new EntityNotFoundException("Utilisateur introuvable: " + idUser));
@@ -219,6 +246,57 @@ public class UtilisateurServiceImpl implements UtilisateurService {
             utilisateur.setOtpExpireLe(null);
             utilisateur.setOtpTentativesRestantes(0);
         }
+        return utilisateurRepository.save(utilisateur);
+    }
+
+    @Override
+    @Transactional
+    public Utilisateur changerMotDePasse(Long idUser, String motDePasseActuel, String nouveauMotDePasse, String motif) {
+        Utilisateur acteur = authenticatedUserService.getCurrentUserOrThrow();
+        Utilisateur utilisateur = utilisateurRepository.findById(idUser)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur introuvable: " + idUser));
+
+        boolean selfService = acteur.getIdUser() != null && acteur.getIdUser().equals(utilisateur.getIdUser());
+        boolean administrateur = acteur.getRoles().stream()
+                .map(RoleUtilisateur::getCodeRoleUtilisateur)
+                .map(String::toUpperCase)
+                .anyMatch(role -> role.equals("ADMIN") || role.equals("SUPERVISEUR"));
+
+        if (!selfService && !administrateur) {
+            throw new IllegalStateException("Seul l'utilisateur lui-meme ou un administrateur peut changer ce mot de passe");
+        }
+
+        if (nouveauMotDePasse == null || nouveauMotDePasse.isBlank()) {
+            throw new IllegalArgumentException("Le nouveau mot de passe est obligatoire");
+        }
+        if (!respectePolitiqueMotDePasse(nouveauMotDePasse)) {
+            throw new IllegalArgumentException("Le nouveau mot de passe doit contenir une majuscule, une minuscule, un chiffre et un caractere special");
+        }
+
+        if (selfService) {
+            if (motDePasseActuel == null || motDePasseActuel.isBlank()) {
+                throw new IllegalArgumentException("Le mot de passe actuel est obligatoire");
+            }
+            if (!passwordEncoder.matches(motDePasseActuel, utilisateur.getPassword())) {
+                throw new BadCredentialsException("Le mot de passe actuel est invalide");
+            }
+        }
+
+        interdireReutilisationMotDePasse(utilisateur, nouveauMotDePasse);
+        archiverMotDePasseCourant(utilisateur, motif);
+
+        LocalDateTime maintenant = LocalDateTime.now();
+        utilisateur.setPassword(passwordEncoder.encode(nouveauMotDePasse));
+        utilisateur.setMotDePasseModifieLe(maintenant);
+        utilisateur.setIdentifiantsExpirentLe(maintenant.plusDays(authSecurityProperties.getCredentialsValidityDays()));
+        utilisateur.setNombreEchecsConnexion(0);
+        utilisateur.setDernierEchecConnexion(null);
+        utilisateur.setCompteVerrouilleJusquAu(null);
+        utilisateur.setOtpChallengeId(null);
+        utilisateur.setOtpHash(null);
+        utilisateur.setOtpExpireLe(null);
+        utilisateur.setOtpTentativesRestantes(0);
+
         return utilisateurRepository.save(utilisateur);
     }
 
@@ -281,6 +359,37 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         utilisateur.setNombreEchecsConnexion(0);
         utilisateur.setDernierEchecConnexion(null);
         utilisateur.setCompteVerrouilleJusquAu(null);
+    }
+
+    private void interdireReutilisationMotDePasse(Utilisateur utilisateur, String nouveauMotDePasse) {
+        if (passwordEncoder.matches(nouveauMotDePasse, utilisateur.getPassword())) {
+            throw new IllegalArgumentException("Le nouveau mot de passe doit etre different du mot de passe courant");
+        }
+
+        int profondeurHistorique = Math.max(authSecurityProperties.getPasswordHistoryDepth(), 1);
+        List<HistoriqueMotDePasseUtilisateur> historiques = historiqueMotDePasseUtilisateurRepository
+                .findByUtilisateur_IdUserOrderByDateChangementDesc(utilisateur.getIdUser());
+
+        historiques.stream()
+                .limit(profondeurHistorique)
+                .filter(historique -> passwordEncoder.matches(nouveauMotDePasse, historique.getHashMotDePasse()))
+                .findFirst()
+                .ifPresent(historique -> {
+                    throw new IllegalArgumentException("Le nouveau mot de passe ne peut pas reutiliser un mot de passe recent");
+                });
+    }
+
+    private void archiverMotDePasseCourant(Utilisateur utilisateur, String motif) {
+        HistoriqueMotDePasseUtilisateur historique = new HistoriqueMotDePasseUtilisateur();
+        historique.setUtilisateur(utilisateur);
+        historique.setHashMotDePasse(utilisateur.getPassword());
+        historique.setDateChangement(LocalDateTime.now());
+        historique.setMotif((motif == null || motif.isBlank()) ? "CHANGEMENT_MOT_DE_PASSE" : motif.trim());
+        historiqueMotDePasseUtilisateurRepository.save(historique);
+    }
+
+    private boolean respectePolitiqueMotDePasse(String motDePasse) {
+        return motDePasse.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z\\d]).{8,100}$");
     }
 
     private String genererLogin(Client client) {

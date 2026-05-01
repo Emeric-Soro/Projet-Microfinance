@@ -2,6 +2,7 @@ package com.microfinance.core_banking.service.operation;
 
 import com.microfinance.core_banking.config.TransactionWorkflowProperties;
 import com.microfinance.core_banking.entity.Compte;
+import com.microfinance.core_banking.entity.PermissionSecurite;
 import com.microfinance.core_banking.entity.RoleUtilisateur;
 import com.microfinance.core_banking.entity.StatutOperation;
 import com.microfinance.core_banking.entity.Transaction;
@@ -9,9 +10,12 @@ import com.microfinance.core_banking.entity.TypeTransaction;
 import com.microfinance.core_banking.entity.Utilisateur;
 import com.microfinance.core_banking.repository.client.UtilisateurRepository;
 import com.microfinance.core_banking.repository.compte.CompteRepository;
+import com.microfinance.core_banking.repository.extension.SessionCaisseRepository;
 import com.microfinance.core_banking.repository.operation.LigneEcritureRepository;
 import com.microfinance.core_banking.repository.operation.TransactionRepository;
 import com.microfinance.core_banking.repository.operation.TypeTransactionRepository;
+import com.microfinance.core_banking.service.extension.ComptabiliteExtensionService;
+import com.microfinance.core_banking.service.extension.ConformiteExtensionService;
 import com.microfinance.core_banking.service.communication.event.VirementEffectueEvent;
 import com.microfinance.core_banking.service.operation.fees.TransactionFeeCalculator;
 import org.junit.jupiter.api.Test;
@@ -51,6 +55,8 @@ class TransactionServiceImplTest {
 
     @Mock
     private UtilisateurRepository utilisateurRepository;
+    @Mock
+    private SessionCaisseRepository sessionCaisseRepository;
 
     @Mock
     private TransactionFeeCalculator transactionFeeCalculator;
@@ -60,6 +66,10 @@ class TransactionServiceImplTest {
 
     @Mock
     private TransactionWorkflowProperties transactionWorkflowProperties;
+    @Mock
+    private ConformiteExtensionService conformiteExtensionService;
+    @Mock
+    private ComptabiliteExtensionService comptabiliteExtensionService;
 
     @InjectMocks
     private TransactionServiceImpl transactionService;
@@ -127,6 +137,39 @@ class TransactionServiceImplTest {
         verify(eventPublisher).publishEvent(ArgumentMatchers.any(VirementEffectueEvent.class));
     }
 
+    @Test
+    void shouldAllowApprovalWhenValidatorHasDecisionPermissionWithoutSupervisionRole() {
+        Compte sourceStocke = buildCompte(1L, "CPT-SRC", new BigDecimal("1000000.00"));
+        Compte destinationStocke = buildCompte(2L, "CPT-DST", new BigDecimal("10000.00"));
+        Utilisateur initiateur = buildUtilisateur(10L, "GUICHETIER");
+        Utilisateur validateur = buildUtilisateurWithPermission(20L, "ANALYSTE", "VALIDATION_DECIDE");
+        TypeTransaction typeTransaction = buildType("VIREMENT");
+
+        Transaction transaction = new Transaction();
+        transaction.setReferenceUnique("TX-REF-002");
+        transaction.setDateHeureTransaction(LocalDateTime.now());
+        transaction.setMontantGlobal(new BigDecimal("100000.00"));
+        transaction.setFrais(BigDecimal.ZERO);
+        transaction.setUtilisateur(initiateur);
+        transaction.setTypeTransaction(typeTransaction);
+        transaction.setCompteSource(sourceStocke);
+        transaction.setCompteDestination(destinationStocke);
+        transaction.setStatutOperation(StatutOperation.EN_ATTENTE);
+        transaction.setValidationSuperviseurRequise(true);
+
+        when(transactionRepository.findByReferenceUnique("TX-REF-002")).thenReturn(Optional.of(transaction));
+        when(utilisateurRepository.findById(20L)).thenReturn(Optional.of(validateur));
+        when(compteRepository.findById(1L)).thenReturn(Optional.of(sourceStocke));
+        when(compteRepository.findById(2L)).thenReturn(Optional.of(destinationStocke));
+        when(compteRepository.save(any(Compte.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Transaction resultat = transactionService.approuverTransaction("TX-REF-002", 20L);
+
+        assertThat(resultat.getStatutOperation()).isEqualTo(StatutOperation.EXECUTEE);
+        assertThat(resultat.getUtilisateurValidation()).isEqualTo(validateur);
+    }
+
     private Compte buildCompte(Long idCompte, String numCompte, BigDecimal solde) {
         Compte compte = new Compte();
         compte.setIdCompte(idCompte);
@@ -139,6 +182,21 @@ class TransactionServiceImplTest {
     private Utilisateur buildUtilisateur(Long idUser, String roleCode) {
         RoleUtilisateur roleUtilisateur = new RoleUtilisateur();
         roleUtilisateur.setCodeRoleUtilisateur(roleCode);
+
+        Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setIdUser(idUser);
+        utilisateur.setRoles(Set.of(roleUtilisateur));
+        return utilisateur;
+    }
+
+    private Utilisateur buildUtilisateurWithPermission(Long idUser, String roleCode, String permissionCode) {
+        PermissionSecurite permission = new PermissionSecurite();
+        permission.setCodePermission(permissionCode);
+        permission.setActif(true);
+
+        RoleUtilisateur roleUtilisateur = new RoleUtilisateur();
+        roleUtilisateur.setCodeRoleUtilisateur(roleCode);
+        roleUtilisateur.setPermissions(Set.of(permission));
 
         Utilisateur utilisateur = new Utilisateur();
         utilisateur.setIdUser(idUser);

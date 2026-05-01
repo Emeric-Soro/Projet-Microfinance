@@ -27,4 +27,7 @@ public class TransactionSimpleRequestDTO {
 
     @NotNull(message = "L'id guichetier est obligatoire")
     private Long idGuichetier;
+
+    @NotNull(message = "L'id de session de caisse est obligatoire")
+    private Long idSessionCaisse;
 }

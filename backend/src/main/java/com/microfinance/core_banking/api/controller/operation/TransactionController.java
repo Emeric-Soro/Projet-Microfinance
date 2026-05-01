@@ -69,7 +69,8 @@ public class TransactionController {
         Transaction transaction = transactionService.faireDepot(
                 requestDTO.getNumCompte(),
                 requestDTO.getMontant(),
-                utilisateurAuthentifie.getIdUser()
+                utilisateurAuthentifie.getIdUser(),
+                requestDTO.getIdSessionCaisse()
         );
         return construireReponseTransaction(transaction);
     }
@@ -97,7 +98,8 @@ public class TransactionController {
         Transaction transaction = transactionService.faireRetrait(
                 requestDTO.getNumCompte(),
                 requestDTO.getMontant(),
-                utilisateurAuthentifie.getIdUser()
+                utilisateurAuthentifie.getIdUser(),
+                requestDTO.getIdSessionCaisse()
         );
         return construireReponseTransaction(transaction);
     }

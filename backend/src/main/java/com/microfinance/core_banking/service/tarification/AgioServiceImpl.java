@@ -135,7 +135,14 @@ public class AgioServiceImpl implements AgioService {
         for (Agio agio : page.getContent()) {
             try {
                 // On tente de prélever
-                transactionService.faireRetrait(agio.getCompte().getNumCompte(), agio.getMontant(), idUserSysteme);
+                transactionService.posterRetraitSysteme(
+                        agio.getCompte().getNumCompte(),
+                        agio.getMontant(),
+                        BigDecimal.ZERO,
+                        idUserSysteme,
+                        "AGIO-" + agio.getIdAgio(),
+                        "AGIO_PRELEVEMENT"
+                );
                 agio.setEstPreleve(Boolean.TRUE);
                 preleves.add(agioRepository.save(agio));
             } catch (IllegalStateException e) {

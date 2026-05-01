@@ -21,6 +21,9 @@ public interface CompteRepository extends JpaRepository<Compte, Long> {
 	// Verification rapide de si un compte appartient bien a un client donne.
 	boolean existsByNumCompteAndClient_IdClient(String numCompte, Long idClient);
 
+	// Recherche d'un compte sous contrainte d'agence.
+	Optional<Compte> findByNumCompteAndAgence_IdAgence(String numCompte, Long idAgence);
+
 	// Nombre de comptes deja ouverts pour un client.
 	long countByClient_IdClient(Long idClient);
 

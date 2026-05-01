@@ -34,4 +34,7 @@ public class AuthSecurityProperties {
 
     @Positive
     private int maxOtpAttempts = 3;
+
+    @Positive
+    private int passwordHistoryDepth = 5;
 }

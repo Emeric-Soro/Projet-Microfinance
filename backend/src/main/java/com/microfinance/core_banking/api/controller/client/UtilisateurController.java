@@ -4,6 +4,7 @@ import com.microfinance.core_banking.audit.AuditLog;
 import com.microfinance.core_banking.config.JwtService;
 import com.microfinance.core_banking.config.JwtTokenBlacklistService;
 import com.microfinance.core_banking.dto.request.client.ActivationUtilisateurRequestDTO;
+import com.microfinance.core_banking.dto.request.client.ChangementMotDePasseRequestDTO;
 import com.microfinance.core_banking.dto.request.client.CreationUtilisateurRequestDTO;
 import com.microfinance.core_banking.dto.request.client.LoginRequestDTO;
 import com.microfinance.core_banking.dto.request.client.VerificationOtpRequestDTO;
@@ -26,6 +27,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -146,6 +148,26 @@ public class UtilisateurController {
     }
 
     @Operation(
+            summary = "Revoquer un role",
+            description = "Retire un role metier a un utilisateur"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Role revoque avec succes"),
+            @ApiResponse(responseCode = "400", description = "Code role invalide"),
+            @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
+    })
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @DeleteMapping("/{idUser}/roles")
+    @AuditLog(action = "USER_REVOKE_ROLE", resource = "UTILISATEUR")
+    public ResponseEntity<UtilisateurResponseDTO> revoquerRole(
+            @PathVariable Long idUser,
+            @RequestParam String codeRole
+    ) {
+        Utilisateur utilisateur = utilisateurService.revoquerRole(idUser, codeRole);
+        return ResponseEntity.ok(utilisateurMapper.toResponseDTO(utilisateur));
+    }
+
+    @Operation(
             summary = "Activer ou desactiver un utilisateur",
             description = "Active ou desactive explicitement l'acces numerique d'un utilisateur"
     )
@@ -182,6 +204,33 @@ public class UtilisateurController {
         String token = authHeader.substring(7);
         jwtTokenBlacklistService.blacklist(token);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+            summary = "Changer le mot de passe d'un utilisateur",
+            description = "Applique la politique de mot de passe, interdit la reutilisation recente et reinitialise les etats de verrouillage et OTP"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Mot de passe mis a jour"),
+            @ApiResponse(responseCode = "400", description = "Mot de passe invalide ou reutilise"),
+            @ApiResponse(responseCode = "401", description = "Mot de passe actuel invalide"),
+            @ApiResponse(responseCode = "403", description = "Acces refuse"),
+            @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
+    })
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("/{idUser}/mot-de-passe")
+    @AuditLog(action = "USER_PASSWORD_CHANGE", resource = "UTILISATEUR")
+    public ResponseEntity<UtilisateurResponseDTO> changerMotDePasse(
+            @PathVariable Long idUser,
+            @Valid @RequestBody ChangementMotDePasseRequestDTO requestDTO
+    ) {
+        Utilisateur utilisateur = utilisateurService.changerMotDePasse(
+                idUser,
+                requestDTO.getMotDePasseActuel(),
+                requestDTO.getNouveauMotDePasse(),
+                requestDTO.getMotif()
+        );
+        return ResponseEntity.ok(utilisateurMapper.toResponseDTO(utilisateur));
     }
 
     private AuthenticationResponseDTO construireReponseOtp(AuthenticationWorkflowResult resultat) {

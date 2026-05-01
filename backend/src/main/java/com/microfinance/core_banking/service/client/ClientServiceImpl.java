@@ -8,6 +8,8 @@ import com.microfinance.core_banking.entity.StatutClient;
 import com.microfinance.core_banking.entity.StatutKycClient;
 import com.microfinance.core_banking.repository.client.ClientRepository;
 import com.microfinance.core_banking.repository.client.StatutClientRepository;
+import com.microfinance.core_banking.service.extension.ConformiteExtensionService;
+import com.microfinance.core_banking.service.security.AuthenticatedUserService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,10 +24,19 @@ public class ClientServiceImpl implements ClientService {
 
     private final ClientRepository clientRepository;
     private final StatutClientRepository statutClientRepository;
+    private final AuthenticatedUserService authenticatedUserService;
+    private final ConformiteExtensionService conformiteExtensionService;
 
-    public ClientServiceImpl(ClientRepository clientRepository, StatutClientRepository statutClientRepository) {
+    public ClientServiceImpl(
+            ClientRepository clientRepository,
+            StatutClientRepository statutClientRepository,
+            AuthenticatedUserService authenticatedUserService,
+            ConformiteExtensionService conformiteExtensionService
+    ) {
         this.clientRepository = clientRepository;
         this.statutClientRepository = statutClientRepository;
+        this.authenticatedUserService = authenticatedUserService;
+        this.conformiteExtensionService = conformiteExtensionService;
     }
 
     @Override
@@ -47,6 +58,11 @@ public class ClientServiceImpl implements ClientService {
         client.setPep(Boolean.TRUE.equals(client.getPep()));
         client.setNiveauRisque(NiveauRisqueClient.FAIBLE);
         initialiserWorkflowKyc(client);
+        if (client.getAgence() == null) {
+            client.setAgence(authenticatedUserService.getCurrentUserOptional()
+                    .map(user -> user.getAgenceActive())
+                    .orElse(null));
+        }
 
         StatutClient statutParDefaut = statutClientRepository.findByLibelleStatutIgnoreCase("NOUVEAU")
                 .orElseThrow(() -> new IllegalStateException("Erreur critique : Le statut 'NOUVEAU' n'est pas paramétré en base."));
@@ -114,20 +130,38 @@ public class ClientServiceImpl implements ClientService {
             client.setStatutClient(chargerStatutStrict("BLOQUE"));
         }
 
-        return clientRepository.save(client);
+        Client saved = clientRepository.save(client);
+        conformiteExtensionService.analyserClient(saved, "KYC_REVIEW");
+        return saved;
     }
 
     @Override
     @Transactional(readOnly = true)
     public Client obtenirDetailsClient(Long idClient) {
-        return clientRepository.findById(idClient)
+        Client client = clientRepository.findById(idClient)
                 .orElseThrow(() -> new EntityNotFoundException("Client introuvable: " + idClient));
+        verifierPerimetreAgence(client);
+        return client;
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<Client> listerClients(Pageable pageable) {
+        if (!authenticatedUserService.hasGlobalScope()) {
+            Long idAgence = authenticatedUserService.getCurrentAgencyId();
+            if (idAgence == null) {
+                return Page.empty(pageable);
+            }
+            return clientRepository.findByAgence_IdAgence(idAgence, pageable);
+        }
         return clientRepository.findAll(pageable);
+    }
+
+    private void verifierPerimetreAgence(Client client) {
+        if (client == null || client.getAgence() == null) {
+            return;
+        }
+        authenticatedUserService.assertAgencyAccess(client.getAgence().getIdAgence());
     }
 
     private String genererCodeClientUnique() {

@@ -9,11 +9,15 @@ import java.math.BigDecimal;
 
 public interface TransactionService {
 
-    Transaction faireDepot(String numCompte, BigDecimal montant, Long idUser);
+    Transaction faireDepot(String numCompte, BigDecimal montant, Long idUser, Long idSessionCaisse);
 
-    Transaction faireRetrait(String numCompte, BigDecimal montant, Long idUser);
+    Transaction faireRetrait(String numCompte, BigDecimal montant, Long idUser, Long idSessionCaisse);
 
     Transaction faireVirement(String compteSource, String compteDest, BigDecimal montant, Long idUser);
+
+    Transaction posterDepotSysteme(String numCompte, BigDecimal montant, BigDecimal frais, Long idUser, String referenceExterne, String codeOperationMetier);
+
+    Transaction posterRetraitSysteme(String numCompte, BigDecimal montant, BigDecimal frais, Long idUser, String referenceExterne, String codeOperationMetier);
 
     Transaction approuverTransaction(String referenceUnique, Long idSuperviseur);
 

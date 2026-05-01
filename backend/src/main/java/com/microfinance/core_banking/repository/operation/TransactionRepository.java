@@ -1,6 +1,7 @@
 package com.microfinance.core_banking.repository.operation;
 
 import com.microfinance.core_banking.entity.Transaction;
+import com.microfinance.core_banking.entity.StatutOperation;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -36,4 +38,12 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     // Liste paginee des transactions creees entre deux dates.
     Page<Transaction> findByCreatedAtBetween(LocalDateTime dateDebut, LocalDateTime dateFin, Pageable pageable);
+
+    long countBySessionCaisse_IdSessionCaisseAndStatutOperation(Long idSessionCaisse, StatutOperation statutOperation);
+
+    long countByStatutOperation(StatutOperation statutOperation);
+
+    List<Transaction> findByDateExecutionBetween(LocalDateTime dateDebut, LocalDateTime dateFin);
+
+    List<Transaction> findByDateHeureTransactionBetweenOrderByDateHeureTransactionAsc(LocalDateTime dateDebut, LocalDateTime dateFin);
 }

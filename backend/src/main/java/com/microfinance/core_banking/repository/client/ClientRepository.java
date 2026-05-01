@@ -45,4 +45,7 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
     // Liste paginée des clients inscrits entre deux dates.
     Page<Client> findByCreatedAtBetween(LocalDateTime dateDebut, LocalDateTime dateFin, Pageable pageable);
 
+    // Liste paginee des clients rattaches a une agence.
+    Page<Client> findByAgence_IdAgence(Long idAgence, Pageable pageable);
+
 }

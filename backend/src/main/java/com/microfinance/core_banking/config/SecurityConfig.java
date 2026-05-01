@@ -21,6 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final PublicApiRateLimitingFilter publicApiRateLimitingFilter;
+    private final RequestCorrelationFilter requestCorrelationFilter;
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
 
@@ -47,6 +48,7 @@ public class SecurityConfig {
                 // On dit à Spring de ne pas créer de session serveur (STATELESS) car on utilise des tokens
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
+                .addFilterBefore(requestCorrelationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(publicApiRateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 // On place notre Vigile JWT AVANT le filtre de vérification par défaut de Spring
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

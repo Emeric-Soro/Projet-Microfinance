@@ -60,6 +60,11 @@ public class Compte extends BaseAuditEntity {
     // Type associe a ce compte.
     private TypeCompte typeCompte;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_agence")
+    // Agence a laquelle le compte est rattache.
+    private Agence agence;
+
     @OneToMany(mappedBy = "compte")
     // Historique des statuts du compte.
     private List<StatutCompte> statutsCompte = new ArrayList<>();

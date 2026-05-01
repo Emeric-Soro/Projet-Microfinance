@@ -2,12 +2,16 @@ package com.microfinance.core_banking.service.client;
 
 import com.microfinance.core_banking.config.AuthSecurityProperties;
 import com.microfinance.core_banking.entity.Client;
+import com.microfinance.core_banking.entity.HistoriqueMotDePasseUtilisateur;
+import com.microfinance.core_banking.entity.RoleUtilisateur;
 import com.microfinance.core_banking.entity.StatutClient;
 import com.microfinance.core_banking.entity.Utilisateur;
 import com.microfinance.core_banking.repository.client.ClientRepository;
+import com.microfinance.core_banking.repository.client.HistoriqueMotDePasseUtilisateurRepository;
 import com.microfinance.core_banking.repository.client.RoleUtilisateurRepository;
 import com.microfinance.core_banking.repository.client.UtilisateurRepository;
 import com.microfinance.core_banking.service.communication.NotificationService;
+import com.microfinance.core_banking.service.security.AuthenticatedUserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,7 +27,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -43,6 +49,9 @@ class UtilisateurServiceImplTest {
     private ClientRepository clientRepository;
 
     @Mock
+    private HistoriqueMotDePasseUtilisateurRepository historiqueMotDePasseUtilisateurRepository;
+
+    @Mock
     private RoleUtilisateurRepository roleUtilisateurRepository;
 
     @Mock
@@ -53,6 +62,9 @@ class UtilisateurServiceImplTest {
 
     @Mock
     private NotificationService notificationService;
+
+    @Mock
+    private AuthenticatedUserService authenticatedUserService;
 
     @InjectMocks
     private UtilisateurServiceImpl utilisateurService;
@@ -65,6 +77,7 @@ class UtilisateurServiceImplTest {
         when(authSecurityProperties.getOtpValidity()).thenReturn(Duration.ofMinutes(5));
         when(authSecurityProperties.getOtpLength()).thenReturn(6);
         when(authSecurityProperties.getMaxOtpAttempts()).thenReturn(3);
+        when(authSecurityProperties.getPasswordHistoryDepth()).thenReturn(5);
     }
 
     @Test
@@ -152,6 +165,86 @@ class UtilisateurServiceImplTest {
         assertThat(resultat.getDerniereConnexionReussie()).isNotNull();
     }
 
+    @Test
+    void shouldChangeOwnPasswordAndArchivePreviousHash() {
+        Utilisateur utilisateur = buildUtilisateur();
+
+        when(authenticatedUserService.getCurrentUserOrThrow()).thenReturn(utilisateur);
+        when(utilisateurRepository.findById(11L)).thenReturn(Optional.of(utilisateur));
+        when(passwordEncoder.matches("MotDePasse1!", "hash")).thenReturn(true);
+        when(passwordEncoder.matches("NouveauMot2@", "hash")).thenReturn(false);
+        when(historiqueMotDePasseUtilisateurRepository.findByUtilisateur_IdUserOrderByDateChangementDesc(11L))
+                .thenReturn(List.of());
+        when(passwordEncoder.encode("NouveauMot2@")).thenReturn("new-hash");
+        when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Utilisateur resultat = utilisateurService.changerMotDePasse(
+                11L,
+                "MotDePasse1!",
+                "NouveauMot2@",
+                "Rotation periodique"
+        );
+
+        ArgumentCaptor<HistoriqueMotDePasseUtilisateur> historiqueCaptor = ArgumentCaptor.forClass(HistoriqueMotDePasseUtilisateur.class);
+        verify(historiqueMotDePasseUtilisateurRepository).save(historiqueCaptor.capture());
+
+        assertThat(historiqueCaptor.getValue().getHashMotDePasse()).isEqualTo("hash");
+        assertThat(resultat.getPassword()).isEqualTo("new-hash");
+        assertThat(resultat.getNombreEchecsConnexion()).isZero();
+        assertThat(resultat.getOtpHash()).isNull();
+    }
+
+    @Test
+    void shouldRejectPasswordReuseFromRecentHistory() {
+        Utilisateur utilisateur = buildUtilisateur();
+
+        HistoriqueMotDePasseUtilisateur historique = new HistoriqueMotDePasseUtilisateur();
+        historique.setHashMotDePasse("old-hash");
+
+        when(authenticatedUserService.getCurrentUserOrThrow()).thenReturn(utilisateur);
+        when(utilisateurRepository.findById(11L)).thenReturn(Optional.of(utilisateur));
+        when(passwordEncoder.matches("MotDePasse1!", "hash")).thenReturn(true);
+        when(passwordEncoder.matches("AncienMot3#", "hash")).thenReturn(false);
+        when(historiqueMotDePasseUtilisateurRepository.findByUtilisateur_IdUserOrderByDateChangementDesc(11L))
+                .thenReturn(List.of(historique));
+        when(passwordEncoder.matches("AncienMot3#", "old-hash")).thenReturn(true);
+
+        assertThatThrownBy(() -> utilisateurService.changerMotDePasse(
+                11L,
+                "MotDePasse1!",
+                "AncienMot3#",
+                "Tentative de reutilisation"
+        ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Le nouveau mot de passe ne peut pas reutiliser un mot de passe recent");
+    }
+
+    @Test
+    void shouldAllowAdminToResetAnotherUserPasswordWithoutCurrentPassword() {
+        Utilisateur administrateur = buildUtilisateur();
+        administrateur.setIdUser(99L);
+        administrateur.setRoles(Set.of(buildRole("ADMIN")));
+
+        Utilisateur cible = buildUtilisateur();
+
+        when(authenticatedUserService.getCurrentUserOrThrow()).thenReturn(administrateur);
+        when(utilisateurRepository.findById(11L)).thenReturn(Optional.of(cible));
+        when(passwordEncoder.matches("AdminReset4$", "hash")).thenReturn(false);
+        when(historiqueMotDePasseUtilisateurRepository.findByUtilisateur_IdUserOrderByDateChangementDesc(11L))
+                .thenReturn(List.of());
+        when(passwordEncoder.encode("AdminReset4$")).thenReturn("reset-hash");
+        when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Utilisateur resultat = utilisateurService.changerMotDePasse(
+                11L,
+                null,
+                "AdminReset4$",
+                "Reset superviseur"
+        );
+
+        assertThat(resultat.getPassword()).isEqualTo("reset-hash");
+    }
+
     private Client buildClient() {
         StatutClient statutClient = new StatutClient();
         statutClient.setLibelleStatut("ACTIF");
@@ -177,6 +270,14 @@ class UtilisateurServiceImplTest {
         utilisateur.setMotDePasseModifieLe(LocalDateTime.now().minusDays(1));
         utilisateur.setIdentifiantsExpirentLe(LocalDateTime.now().plusDays(30));
         utilisateur.setNombreEchecsConnexion(0);
+        utilisateur.setRoles(Set.of(buildRole("CLIENT")));
         return utilisateur;
+    }
+
+    private RoleUtilisateur buildRole(String codeRole) {
+        RoleUtilisateur role = new RoleUtilisateur();
+        role.setCodeRoleUtilisateur(codeRole);
+        role.setIntituleRole(codeRole);
+        return role;
     }
 }

@@ -97,6 +97,11 @@ public class Utilisateur extends BaseAuditEntity implements UserDetails {
 	// Client associe a cet utilisateur.
 	private Client client;
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "id_agence_active")
+	// Agence active utilisee pour le cloisonnement et le contexte metier.
+	private Agence agenceActive;
+
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(
 			name = "utilisateur_role",
@@ -113,10 +118,16 @@ public class Utilisateur extends BaseAuditEntity implements UserDetails {
 	@Override
 	// Transforme les roles metier en autorites Spring Security.
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return roles.stream()
-				.map(RoleUtilisateur::getCodeRoleUtilisateur)
-				.map(SimpleGrantedAuthority::new)
-				.collect(Collectors.toSet());
+		Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+		roles.forEach(role -> {
+			authorities.add(new SimpleGrantedAuthority(role.getCodeRoleUtilisateur()));
+			role.getPermissions().stream()
+					.filter(permission -> Boolean.TRUE.equals(permission.getActif()))
+					.map(PermissionSecurite::getCodePermission)
+					.map(SimpleGrantedAuthority::new)
+					.forEach(authorities::add);
+		});
+		return authorities;
 	}
 
 	@Override
