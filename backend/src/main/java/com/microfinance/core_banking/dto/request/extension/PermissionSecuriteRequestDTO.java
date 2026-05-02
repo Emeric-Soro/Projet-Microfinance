@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.util.Map;
+
 @Data
 public class PermissionSecuriteRequestDTO {
 
@@ -26,4 +28,15 @@ public class PermissionSecuriteRequestDTO {
 
     @Size(max = 500, message = "Le commentaire maker ne doit pas depasser 500 caracteres")
     private String commentaireMaker;
+
+    public static PermissionSecuriteRequestDTO fromMap(Map<String, Object> payload) {
+        PermissionSecuriteRequestDTO dto = new PermissionSecuriteRequestDTO();
+        dto.setCodePermission(payload.get("codePermission") == null ? null : payload.get("codePermission").toString().trim().toUpperCase());
+        dto.setLibellePermission(payload.get("libellePermission") == null ? null : payload.get("libellePermission").toString().trim());
+        dto.setModuleCode(payload.get("moduleCode") == null ? null : payload.get("moduleCode").toString().trim().toUpperCase());
+        dto.setDescriptionPermission(payload.get("descriptionPermission") == null ? null : payload.get("descriptionPermission").toString().trim());
+        dto.setActif(payload.get("actif") == null ? Boolean.TRUE : Boolean.parseBoolean(payload.get("actif").toString()));
+        dto.setCommentaireMaker(payload.get("commentaireMaker") == null ? null : payload.get("commentaireMaker").toString().trim());
+        return dto;
+    }
 }

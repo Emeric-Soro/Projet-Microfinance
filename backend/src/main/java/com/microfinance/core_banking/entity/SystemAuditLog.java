@@ -63,7 +63,8 @@ public class SystemAuditLog {
     @Column(name = "status", nullable = false)
     private String status;
 
-    @Column(name = "error_details", columnDefinition = "TEXT")
+    @Lob
+    @Column(name = "error_details", columnDefinition = "CLOB")
     private String errorDetails;
 
     @Column(name = "reason", length = 500)

@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.service.extension;
 
+import com.microfinance.core_banking.dto.request.extension.PermissionSecuriteRequestDTO;
 import com.microfinance.core_banking.entity.ActionEnAttente;
 import com.microfinance.core_banking.entity.PermissionSecurite;
 import com.microfinance.core_banking.entity.RoleUtilisateur;
@@ -24,9 +25,9 @@ public interface PermissionSecuriteService {
 
     ActionEnAttente soumettreRevocationRole(Long idRole, Long idPermission, String commentaireMaker);
 
-    PermissionSecurite appliquerCreation(java.util.Map<String, Object> payload);
+    PermissionSecurite appliquerCreation(PermissionSecuriteRequestDTO dto);
 
-    PermissionSecurite appliquerMiseAJour(Long idPermission, java.util.Map<String, Object> payload);
+    PermissionSecurite appliquerMiseAJour(Long idPermission, PermissionSecuriteRequestDTO dto);
 
     void appliquerSuppression(Long idPermission);
 

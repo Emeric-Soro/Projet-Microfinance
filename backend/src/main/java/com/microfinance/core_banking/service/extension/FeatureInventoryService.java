@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.service.extension;
 
+import com.microfinance.core_banking.dto.response.extension.FeatureInventoryResponseDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
@@ -9,7 +10,7 @@ import java.util.Map;
 @Service
 public class FeatureInventoryService {
 
-    public Map<String, Object> buildInventory() {
+    public FeatureInventoryResponseDTO buildInventory() {
         Map<String, Object> inventory = new LinkedHashMap<>();
         inventory.put("fonctionnalitesExistantes", List.of(
                 "Gestion des clients et du KYC de base",
@@ -45,6 +46,8 @@ public class FeatureInventoryService {
                 Map.entry("supportEntreprise", "minimal"),
                 Map.entry("digitalOpenBanking", "partiel")
         ));
-        return inventory;
+        FeatureInventoryResponseDTO response = new FeatureInventoryResponseDTO();
+        response.setFeatures(inventory);
+        return response;
     }
 }

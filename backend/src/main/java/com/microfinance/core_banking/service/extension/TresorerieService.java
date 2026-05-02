@@ -1,5 +1,11 @@
 package com.microfinance.core_banking.service.extension;
 
+import com.microfinance.core_banking.dto.request.extension.ApprovisionnerCaisseServiceRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerCaisseServiceRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerCoffreServiceRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.DelesterCaisseServiceRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.FermerSessionServiceRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.OuvrirSessionServiceRequestDTO;
 import com.microfinance.core_banking.entity.Agence;
 import com.microfinance.core_banking.entity.ApprovisionnementCaisse;
 import com.microfinance.core_banking.entity.Caisse;
@@ -28,7 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -76,19 +81,19 @@ public class TresorerieService {
     }
 
     @Transactional
-    public Caisse creerCaisse(Map<String, Object> payload) {
-        Agence agence = agenceRepository.findById(Long.valueOf(required(payload, "idAgence")))
+    public Caisse creerCaisse(CreerCaisseServiceRequestDTO dto) {
+        Agence agence = agenceRepository.findById(Long.valueOf(dto.getIdAgence()))
                 .orElseThrow(() -> new EntityNotFoundException("Agence introuvable"));
         authenticatedUserService.assertAgencyAccess(agence.getIdAgence());
 
         Caisse caisse = new Caisse();
-        caisse.setCodeCaisse(required(payload, "codeCaisse"));
-        caisse.setLibelle(required(payload, "libelle"));
+        caisse.setCodeCaisse(dto.getCodeCaisse());
+        caisse.setLibelle(dto.getLibelle());
         caisse.setAgence(agence);
-        caisse.setStatut(defaulted(payload, "statut", "ACTIVE"));
-        caisse.setSoldeTheorique(decimalOrZero(payload, "soldeTheorique"));
-        if (payload.get("idGuichet") != null) {
-            Guichet guichet = guichetRepository.findById(Long.valueOf(payload.get("idGuichet").toString()))
+        caisse.setStatut(dto.getStatut());
+        caisse.setSoldeTheorique(dto.getSoldeTheorique());
+        if (dto.getIdGuichet() != null) {
+            Guichet guichet = guichetRepository.findById(Long.valueOf(dto.getIdGuichet()))
                     .orElseThrow(() -> new EntityNotFoundException("Guichet introuvable"));
             caisse.setGuichet(guichet);
         }
@@ -96,25 +101,25 @@ public class TresorerieService {
     }
 
     @Transactional
-    public Coffre creerCoffre(Map<String, Object> payload) {
-        Agence agence = agenceRepository.findById(Long.valueOf(required(payload, "idAgence")))
+    public Coffre creerCoffre(CreerCoffreServiceRequestDTO dto) {
+        Agence agence = agenceRepository.findById(Long.valueOf(dto.getIdAgence()))
                 .orElseThrow(() -> new EntityNotFoundException("Agence introuvable"));
         authenticatedUserService.assertAgencyAccess(agence.getIdAgence());
 
         Coffre coffre = new Coffre();
-        coffre.setCodeCoffre(required(payload, "codeCoffre"));
-        coffre.setLibelle(required(payload, "libelle"));
+        coffre.setCodeCoffre(dto.getCodeCoffre());
+        coffre.setLibelle(dto.getLibelle());
         coffre.setAgence(agence);
-        coffre.setStatut(defaulted(payload, "statut", "ACTIF"));
-        coffre.setSoldeTheorique(decimalOrZero(payload, "soldeTheorique"));
+        coffre.setStatut(dto.getStatut());
+        coffre.setSoldeTheorique(dto.getSoldeTheorique());
         return coffreRepository.save(coffre);
     }
 
     @Transactional
-    public SessionCaisse ouvrirSession(Map<String, Object> payload) {
-        Caisse caisse = caisseRepository.findById(Long.valueOf(required(payload, "idCaisse")))
+    public SessionCaisse ouvrirSession(OuvrirSessionServiceRequestDTO dto) {
+        Caisse caisse = caisseRepository.findById(Long.valueOf(dto.getIdCaisse()))
                 .orElseThrow(() -> new EntityNotFoundException("Caisse introuvable"));
-        Utilisateur utilisateur = utilisateurRepository.findById(Long.valueOf(required(payload, "idUtilisateur")))
+        Utilisateur utilisateur = utilisateurRepository.findById(Long.valueOf(dto.getIdUtilisateur()))
                 .orElseThrow(() -> new EntityNotFoundException("Utilisateur introuvable"));
         authenticatedUserService.assertAgencyAccess(caisse.getAgence().getIdAgence());
 
@@ -122,14 +127,26 @@ public class TresorerieService {
         session.setCaisse(caisse);
         session.setUtilisateur(utilisateur);
         session.setDateOuverture(LocalDateTime.now());
-        session.setSoldeOuverture(decimal(payload, "soldeOuverture"));
+        session.setSoldeOuverture(dto.getSoldeOuverture());
         session.setSoldeTheoriqueFermeture(session.getSoldeOuverture());
         session.setStatut("OUVERTE");
-        return sessionCaisseRepository.save(session);
+        session = sessionCaisseRepository.save(session);
+
+        comptabiliteExtensionService.comptabiliserMouvementTresorerie(
+                "OUVERTURE_CAISSE",
+                "SESSION-OPEN-" + session.getIdSessionCaisse(),
+                "Ouverture session caisse " + caisse.getCodeCaisse() + " - solde: " + dto.getSoldeOuverture(),
+                dto.getSoldeOuverture(),
+                caisse.getCodeCaisse(),
+                caisse.getLibelle(),
+                null,
+                null
+        );
+        return session;
     }
 
     @Transactional
-    public SessionCaisse fermerSession(Long idSession, Map<String, Object> payload) {
+    public SessionCaisse fermerSession(Long idSession, FermerSessionServiceRequestDTO dto) {
         SessionCaisse session = sessionCaisseRepository.findById(idSession)
                 .orElseThrow(() -> new EntityNotFoundException("Session de caisse introuvable"));
         authenticatedUserService.assertAgencyAccess(session.getCaisse().getAgence().getIdAgence());
@@ -137,14 +154,14 @@ public class TresorerieService {
             throw new IllegalStateException("Impossible de fermer la session tant que des operations cash sont en attente");
         }
 
-        BigDecimal soldePhysique = decimal(payload, "soldePhysiqueFermeture");
+        BigDecimal soldePhysique = dto.getSoldePhysiqueFermeture();
         session.setDateFermeture(LocalDateTime.now());
         session.setSoldePhysiqueFermeture(soldePhysique);
-        session.setSoldeTheoriqueFermeture(payload.get("soldeTheoriqueFermeture") == null
+        session.setSoldeTheoriqueFermeture(dto.getSoldeTheoriqueFermeture() == null
                 ? session.getSoldeTheoriqueFermeture()
-                : decimal(payload, "soldeTheoriqueFermeture"));
+                : dto.getSoldeTheoriqueFermeture());
         session.setEcart(soldePhysique.subtract(session.getSoldeTheoriqueFermeture()));
-        session.setCommentaire((String) payload.get("commentaire"));
+        session.setCommentaire(dto.getCommentaire());
         if (session.getEcart() != null
                 && session.getEcart().compareTo(BigDecimal.ZERO) != 0
                 && (session.getCommentaire() == null || session.getCommentaire().isBlank())) {
@@ -155,17 +172,48 @@ public class TresorerieService {
         Caisse caisse = session.getCaisse();
         caisse.setSoldeTheorique(session.getSoldeTheoriqueFermeture());
         caisseRepository.save(caisse);
+
+        comptabiliteExtensionService.comptabiliserMouvementTresorerie(
+                "FERMETURE_CAISSE",
+                "SESSION-CLOSE-" + session.getIdSessionCaisse(),
+                "Fermeture session caisse " + caisse.getCodeCaisse() + " - solde theorique: " + session.getSoldeTheoriqueFermeture(),
+                session.getSoldeTheoriqueFermeture(),
+                caisse.getCodeCaisse(),
+                caisse.getLibelle(),
+                null,
+                null
+        );
+
+        if (session.getEcart() != null && session.getEcart().compareTo(BigDecimal.ZERO) != 0) {
+            String codeOperation = session.getEcart().compareTo(BigDecimal.ZERO) > 0
+                    ? "ECART_CAISSE_EXCEDENT"
+                    : "ECART_CAISSE_DEFICIT";
+            String libelle = session.getEcart().compareTo(BigDecimal.ZERO) > 0
+                    ? "Excedent de caisse session " + caisse.getCodeCaisse() + " - montant: " + session.getEcart().abs()
+                    : "Deficit de caisse session " + caisse.getCodeCaisse() + " - montant: " + session.getEcart().abs();
+            comptabiliteExtensionService.comptabiliserMouvementTresorerie(
+                    codeOperation,
+                    "SESSION-GAP-" + session.getIdSessionCaisse(),
+                    libelle,
+                    session.getEcart().abs(),
+                    caisse.getCodeCaisse(),
+                    caisse.getLibelle(),
+                    null,
+                    null
+            );
+        }
+
         return sessionCaisseRepository.save(session);
     }
 
     @Transactional
-    public ApprovisionnementCaisse approvisionnerCaisse(Map<String, Object> payload) {
-        Coffre coffre = coffreRepository.findById(Long.valueOf(required(payload, "idCoffre")))
+    public ApprovisionnementCaisse approvisionnerCaisse(ApprovisionnerCaisseServiceRequestDTO dto) {
+        Coffre coffre = coffreRepository.findById(Long.valueOf(dto.getIdCoffre()))
                 .orElseThrow(() -> new EntityNotFoundException("Coffre introuvable"));
-        Caisse caisse = caisseRepository.findById(Long.valueOf(required(payload, "idCaisse")))
+        Caisse caisse = caisseRepository.findById(Long.valueOf(dto.getIdCaisse()))
                 .orElseThrow(() -> new EntityNotFoundException("Caisse introuvable"));
         verifierMemeAgence(coffre, caisse);
-        BigDecimal montant = decimal(payload, "montant");
+        BigDecimal montant = dto.getMontant();
         if (coffre.getSoldeTheorique().compareTo(montant) < 0) {
             throw new IllegalStateException("Solde coffre insuffisant pour approvisionner la caisse");
         }
@@ -174,7 +222,7 @@ public class TresorerieService {
         approvisionnement.setCoffre(coffre);
         approvisionnement.setCaisse(caisse);
         approvisionnement.setMontant(montant);
-        approvisionnement.setReferenceOperation(defaulted(payload, "referenceOperation", "APP-" + randomSuffix()));
+        approvisionnement.setReferenceOperation(dto.getReferenceOperation() == null ? "APP-" + randomSuffix() : dto.getReferenceOperation());
 
         coffre.setSoldeTheorique(coffre.getSoldeTheorique().subtract(montant));
         caisse.setSoldeTheorique(caisse.getSoldeTheorique().add(montant));
@@ -185,7 +233,7 @@ public class TresorerieService {
         mouvementCoffre.setTypeMouvement("APPROVISIONNEMENT_CAISSE");
         mouvementCoffre.setMontant(montant);
         mouvementCoffre.setReferenceMouvement(approvisionnement.getReferenceOperation());
-        mouvementCoffre.setCommentaire((String) payload.get("commentaire"));
+        mouvementCoffre.setCommentaire(dto.getCommentaire());
 
         coffreRepository.save(coffre);
         caisseRepository.save(caisse);
@@ -204,13 +252,13 @@ public class TresorerieService {
     }
 
     @Transactional
-    public DelestageCaisse delesterCaisse(Map<String, Object> payload) {
-        Coffre coffre = coffreRepository.findById(Long.valueOf(required(payload, "idCoffre")))
+    public DelestageCaisse delesterCaisse(DelesterCaisseServiceRequestDTO dto) {
+        Coffre coffre = coffreRepository.findById(Long.valueOf(dto.getIdCoffre()))
                 .orElseThrow(() -> new EntityNotFoundException("Coffre introuvable"));
-        Caisse caisse = caisseRepository.findById(Long.valueOf(required(payload, "idCaisse")))
+        Caisse caisse = caisseRepository.findById(Long.valueOf(dto.getIdCaisse()))
                 .orElseThrow(() -> new EntityNotFoundException("Caisse introuvable"));
         verifierMemeAgence(coffre, caisse);
-        BigDecimal montant = decimal(payload, "montant");
+        BigDecimal montant = dto.getMontant();
         if (caisse.getSoldeTheorique().compareTo(montant) < 0) {
             throw new IllegalStateException("Solde caisse insuffisant pour le delestage");
         }
@@ -219,7 +267,7 @@ public class TresorerieService {
         delestage.setCoffre(coffre);
         delestage.setCaisse(caisse);
         delestage.setMontant(montant);
-        delestage.setReferenceOperation(defaulted(payload, "referenceOperation", "DEL-" + randomSuffix()));
+        delestage.setReferenceOperation(dto.getReferenceOperation() == null ? "DEL-" + randomSuffix() : dto.getReferenceOperation());
 
         caisse.setSoldeTheorique(caisse.getSoldeTheorique().subtract(montant));
         coffre.setSoldeTheorique(coffre.getSoldeTheorique().add(montant));
@@ -230,7 +278,7 @@ public class TresorerieService {
         mouvementCoffre.setTypeMouvement("DELESTAGE_CAISSE");
         mouvementCoffre.setMontant(montant);
         mouvementCoffre.setReferenceMouvement(delestage.getReferenceOperation());
-        mouvementCoffre.setCommentaire((String) payload.get("commentaire"));
+        mouvementCoffre.setCommentaire(dto.getCommentaire());
 
         caisseRepository.save(caisse);
         coffreRepository.save(coffre);
@@ -285,27 +333,6 @@ public class TresorerieService {
                 .orElseThrow(() -> new EntityNotFoundException("Coffre introuvable"));
         authenticatedUserService.assertAgencyAccess(coffre.getAgence().getIdAgence());
         return mouvementCoffreRepository.findByCoffre_IdCoffreOrderByCreatedAtDesc(idCoffre);
-    }
-
-    private String required(Map<String, Object> payload, String key) {
-        Object value = payload.get(key);
-        if (value == null || value.toString().isBlank()) {
-            throw new IllegalArgumentException("Le champ '" + key + "' est obligatoire");
-        }
-        return value.toString().trim();
-    }
-
-    private BigDecimal decimal(Map<String, Object> payload, String key) {
-        return new BigDecimal(required(payload, key));
-    }
-
-    private BigDecimal decimalOrZero(Map<String, Object> payload, String key) {
-        return payload.get(key) == null ? BigDecimal.ZERO : new BigDecimal(payload.get(key).toString());
-    }
-
-    private String defaulted(Map<String, Object> payload, String key, String defaultValue) {
-        Object value = payload.get(key);
-        return value == null || value.toString().isBlank() ? defaultValue : value.toString().trim();
     }
 
     private void verifierMemeAgence(Coffre coffre, Caisse caisse) {

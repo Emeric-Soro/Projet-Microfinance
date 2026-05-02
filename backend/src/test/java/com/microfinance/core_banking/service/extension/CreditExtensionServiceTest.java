@@ -1,5 +1,11 @@
 package com.microfinance.core_banking.service.extension;
 
+import com.microfinance.core_banking.dto.request.extension.CalculerProvisionsRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.DebloquerCreditRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.DetecterImpayesRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.PassagePerteCreditRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.ReportEcheanceCreditRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.RestructurationCreditRequestDTO;
 import com.microfinance.core_banking.entity.Client;
 import com.microfinance.core_banking.entity.Credit;
 import com.microfinance.core_banking.entity.DemandeCredit;
@@ -30,11 +36,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -107,7 +114,9 @@ class CreditExtensionServiceTest {
         });
         when(echeanceCreditRepository.save(any(EcheanceCredit.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        creditExtensionService.debloquerCredit(5L, Map.of("numCompteDestination", "CPT-DEST"));
+        DebloquerCreditRequestDTO dto = new DebloquerCreditRequestDTO();
+        dto.setNumCompteDestination("CPT-DEST");
+        creditExtensionService.debloquerCredit(5L, dto);
 
         ArgumentCaptor<EcheanceCredit> captor = ArgumentCaptor.forClass(EcheanceCredit.class);
         verify(echeanceCreditRepository, org.mockito.Mockito.times(12)).save(captor.capture());
@@ -141,7 +150,9 @@ class CreditExtensionServiceTest {
         when(echeanceCreditRepository.save(any(EcheanceCredit.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(authenticatedUserService.hasGlobalScope()).thenReturn(true);
 
-        creditExtensionService.detecterImpayes(Map.of("dateArrete", LocalDate.now().toString()));
+        DetecterImpayesRequestDTO dto = new DetecterImpayesRequestDTO();
+        dto.setDateArrete(LocalDate.now());
+        creditExtensionService.detecterImpayes(dto);
 
         assertThat(impaye.getStatut()).isEqualTo("CLOTURE");
         assertThat(echeance.getStatut()).isEqualTo("REGLEE");
@@ -168,10 +179,89 @@ class CreditExtensionServiceTest {
         when(provisionCreditRepository.save(any(ProvisionCredit.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(authenticatedUserService.hasGlobalScope()).thenReturn(true);
 
-        List<ProvisionCredit> resultats = creditExtensionService.calculerProvisions(Map.of("dateCalcul", "2026-05-01"));
+        CalculerProvisionsRequestDTO dto = new CalculerProvisionsRequestDTO();
+        dto.setDateCalcul(LocalDate.of(2026, 5, 1));
+        List<ProvisionCredit> resultats = creditExtensionService.calculerProvisions(dto);
 
         assertThat(resultats).hasSize(1);
         assertThat(resultats.get(0).getIdProvisionCredit()).isEqualTo(8L);
         verify(comptabiliteExtensionService).comptabiliserProvisionCredit(provisionExistante);
+    }
+
+    @Test
+    void restructurerCredit_regenereLesEcheancesFutures() {
+        Client client = new Client();
+        client.setIdClient(42L);
+
+        Credit credit = new Credit();
+        credit.setIdCredit(12L);
+        credit.setClient(client);
+        credit.setTauxAnnuel(new BigDecimal("12"));
+        credit.setCapitalRestantDu(new BigDecimal("12000"));
+        credit.setMensualite(new BigDecimal("1200"));
+        credit.setDateDeblocage(LocalDateTime.now().minusMonths(3));
+        credit.setDateProchaineEcheance(LocalDate.now().plusMonths(1));
+
+        EcheanceCredit future = new EcheanceCredit();
+        future.setNumeroEcheance(4);
+        future.setCapitalPaye(BigDecimal.ZERO);
+        future.setInteretPaye(BigDecimal.ZERO);
+        future.setAssurancePayee(BigDecimal.ZERO);
+
+        when(creditRepository.findById(12L)).thenReturn(Optional.of(credit));
+        when(creditRepository.save(any(Credit.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(echeanceCreditRepository.findByCredit_IdCreditOrderByNumeroEcheanceAsc(12L)).thenReturn(List.of(future));
+        when(echeanceCreditRepository.save(any(EcheanceCredit.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        RestructurationCreditRequestDTO dto = new RestructurationCreditRequestDTO(12L, 6, new BigDecimal("10"), "amenagement");
+        Credit resultat = creditExtensionService.restructurerCredit(12L, dto);
+
+        assertThat(resultat.getStatut()).isEqualTo("RESTRUCTURE");
+        verify(echeanceCreditRepository).delete(future);
+    }
+
+    @Test
+    void passerEnPerte_refuseUnCreditSansRetardSuffisant() {
+        Credit credit = new Credit();
+        credit.setIdCredit(14L);
+        credit.setClient(new Client());
+
+        ImpayeCredit impaye = new ImpayeCredit();
+        impaye.setJoursRetard(90);
+
+        when(creditRepository.findById(14L)).thenReturn(Optional.of(credit));
+        when(impayeCreditRepository.findByCredit_IdCreditAndStatutIgnoreCaseOrderByJoursRetardDesc(14L, "OUVERT")).thenReturn(List.of(impaye));
+
+        assertThatThrownBy(() -> creditExtensionService.passerEnPerte(14L, new PassagePerteCreditRequestDTO(14L, "test")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("180 jours");
+    }
+
+    @Test
+    void reporterEcheance_metAJourLaDateEtLeStatut() {
+        Client client = new Client();
+        client.setIdClient(55L);
+
+        Credit credit = new Credit();
+        credit.setIdCredit(15L);
+        credit.setClient(client);
+
+        EcheanceCredit echeance = new EcheanceCredit();
+        echeance.setIdEcheanceCredit(99L);
+        echeance.setCredit(credit);
+        echeance.setDateEcheance(LocalDate.of(2026, 5, 10));
+        echeance.setStatut("A_ECHOIR");
+
+        when(creditRepository.findById(15L)).thenReturn(Optional.of(credit));
+        when(echeanceCreditRepository.findById(99L)).thenReturn(Optional.of(echeance));
+        when(echeanceCreditRepository.save(any(EcheanceCredit.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(echeanceCreditRepository.findByCredit_IdCreditOrderByDateEcheanceAsc(15L)).thenReturn(List.of(echeance));
+        when(creditRepository.save(any(Credit.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ReportEcheanceCreditRequestDTO dto = new ReportEcheanceCreditRequestDTO(15L, 99L, LocalDate.of(2026, 6, 10), "report");
+        EcheanceCredit resultat = creditExtensionService.reporterEcheance(15L, 99L, dto);
+
+        assertThat(resultat.getStatut()).isEqualTo("REPORTEE");
+        assertThat(resultat.getDateEcheance()).isEqualTo(LocalDate.of(2026, 6, 10));
     }
 }

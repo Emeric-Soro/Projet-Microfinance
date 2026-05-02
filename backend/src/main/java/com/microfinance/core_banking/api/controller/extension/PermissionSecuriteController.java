@@ -39,7 +39,7 @@ public class PermissionSecuriteController {
 
     @GetMapping
     @Operation(summary = "Lister les permissions")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERVISEUR', 'SECURITY_PERMISSION_VIEW')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_PERMISSION_VIEW)")
     public ResponseEntity<List<PermissionSecuriteResponseDTO>> lister(
             @RequestParam(required = false) String moduleCode,
             @RequestParam(required = false) Boolean actif
@@ -49,21 +49,21 @@ public class PermissionSecuriteController {
 
     @GetMapping("/{idPermission}")
     @Operation(summary = "Consulter une permission")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERVISEUR', 'SECURITY_PERMISSION_VIEW')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_PERMISSION_VIEW)")
     public ResponseEntity<PermissionSecuriteResponseDTO> detail(@PathVariable Long idPermission) {
         return ResponseEntity.ok(permissionSecuriteMapper.toDto(permissionSecuriteService.getById(idPermission)));
     }
 
     @GetMapping("/roles/{idRole}")
     @Operation(summary = "Lister les permissions d'un role")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERVISEUR', 'SECURITY_PERMISSION_VIEW')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_PERMISSION_VIEW)")
     public ResponseEntity<List<PermissionSecuriteResponseDTO>> listerPermissionsRole(@PathVariable Long idRole) {
         return ResponseEntity.ok(permissionSecuriteMapper.toDtoList(permissionSecuriteService.listerPermissionsRole(idRole)));
     }
 
     @PostMapping
     @Operation(summary = "Soumettre la creation d'une permission")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'SECURITY_PERMISSION_MANAGE')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_PERMISSION_MANAGE)")
     @AuditLog(action = "SECURITY_PERMISSION_CREATE_SUBMIT", resource = "PERMISSION_SECURITE")
     public ResponseEntity<PendingActionResponseDTO> creer(@Valid @RequestBody PermissionSecuriteRequestDTO requestDTO) {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(pendingActionMapper.toDto(permissionSecuriteService.soumettreCreation(
@@ -78,7 +78,7 @@ public class PermissionSecuriteController {
 
     @PutMapping("/{idPermission}")
     @Operation(summary = "Soumettre la mise a jour d'une permission")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'SECURITY_PERMISSION_MANAGE')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_PERMISSION_MANAGE)")
     @AuditLog(action = "SECURITY_PERMISSION_UPDATE_SUBMIT", resource = "PERMISSION_SECURITE")
     public ResponseEntity<PendingActionResponseDTO> mettreAJour(
             @PathVariable Long idPermission,
@@ -97,7 +97,7 @@ public class PermissionSecuriteController {
 
     @DeleteMapping("/{idPermission}")
     @Operation(summary = "Soumettre la suppression d'une permission")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'SECURITY_PERMISSION_MANAGE')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_PERMISSION_MANAGE)")
     @AuditLog(action = "SECURITY_PERMISSION_DELETE_SUBMIT", resource = "PERMISSION_SECURITE")
     public ResponseEntity<PendingActionResponseDTO> supprimer(
             @PathVariable Long idPermission,
@@ -112,7 +112,7 @@ public class PermissionSecuriteController {
 
     @PostMapping("/roles/{idRole}/{idPermission}")
     @Operation(summary = "Soumettre l'affectation d'une permission a un role")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'SECURITY_PERMISSION_MANAGE')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_PERMISSION_MANAGE)")
     @AuditLog(action = "SECURITY_ROLE_PERMISSION_ASSIGN_SUBMIT", resource = "ROLE_PERMISSION")
     public ResponseEntity<PendingActionResponseDTO> affecterRole(
             @PathVariable Long idRole,
@@ -129,7 +129,7 @@ public class PermissionSecuriteController {
 
     @DeleteMapping("/roles/{idRole}/{idPermission}")
     @Operation(summary = "Soumettre la revocation d'une permission d'un role")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'SECURITY_PERMISSION_MANAGE')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_PERMISSION_MANAGE)")
     @AuditLog(action = "SECURITY_ROLE_PERMISSION_REVOKE_SUBMIT", resource = "ROLE_PERMISSION")
     public ResponseEntity<PendingActionResponseDTO> revoquerRole(
             @PathVariable Long idRole,

@@ -36,6 +36,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.microfinance.core_banking.dto.request.extension.OperationDeplaceeRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.ValiderMutationRequestDTO;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -118,10 +120,10 @@ class OrganisationServiceTest {
         when(employeRepository.save(any(Employe.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(mutationPersonnelRepository.save(any(MutationPersonnel.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("decision", "APPROUVEE");
-        payload.put("idValidateur", 99L);
-        payload.put("commentaireValidation", "Mutation approuvee");
+        ValiderMutationRequestDTO payload = new ValiderMutationRequestDTO();
+        payload.setDecision("APPROUVEE");
+        payload.setIdValidateur(99L);
+        payload.setCommentaireValidation("Mutation approuvee");
 
         MutationPersonnel resultat = organisationService.validerMutationPersonnel(55L, payload);
 
@@ -152,7 +154,7 @@ class OrganisationServiceTest {
 
         IllegalArgumentException erreur = assertThrows(
                 IllegalArgumentException.class,
-                () -> organisationService.validerMutationPersonnel(66L, Map.of("decision", "A_REVOIR"))
+                () -> organisationService.validerMutationPersonnel(66L, new ValiderMutationRequestDTO("A_REVOIR", null, null))
         );
 
         assertEquals("Decision de mutation non supportee: A_REVOIR", erreur.getMessage());
@@ -187,16 +189,12 @@ class OrganisationServiceTest {
         });
         when(commissionInterAgenceRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        when(clientRepository.findAll()).thenReturn(List.of());
-        when(compteRepository.findAll()).thenReturn(List.of());
-        when(creditRepository.findAll()).thenReturn(List.of());
-
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("idTransaction", 91L);
-        payload.put("idAgenceOrigine", 1L);
-        payload.put("idAgenceOperante", 2L);
-        payload.put("tauxCommission", new BigDecimal("2.5"));
-        payload.put("idCompteComptable", 7L);
+        OperationDeplaceeRequestDTO payload = new OperationDeplaceeRequestDTO();
+        payload.setIdTransaction(91L);
+        payload.setIdAgenceOrigine(1L);
+        payload.setIdAgenceOperante(2L);
+        payload.setTauxCommission(new BigDecimal("2.5"));
+        payload.setIdCompteComptable(7L);
 
         OperationDeplacee resultat = organisationService.enregistrerOperationDeplacee(payload);
 

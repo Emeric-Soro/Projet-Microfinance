@@ -1,5 +1,12 @@
 package com.microfinance.core_banking.service.extension;
 
+import com.microfinance.core_banking.dto.request.extension.ChangerStatutOrdreServiceRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.ChangerStatutTransactionMobileMoneyRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerLotCompensationServiceRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerOperateurServiceRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerOrdrePaiementServiceRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerTransactionMobileMoneyServiceRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerWalletServiceRequestDTO;
 import com.microfinance.core_banking.entity.Client;
 import com.microfinance.core_banking.entity.Compte;
 import com.microfinance.core_banking.entity.LotCompensation;
@@ -62,22 +69,22 @@ public class PaiementExterneService {
     }
 
     @Transactional
-    public OperateurMobileMoney creerOperateur(Map<String, Object> payload) {
+    public OperateurMobileMoney creerOperateur(CreerOperateurServiceRequestDTO dto) {
         OperateurMobileMoney operateur = new OperateurMobileMoney();
-        operateur.setCodeOperateur(required(payload, "codeOperateur"));
-        operateur.setNomOperateur(required(payload, "nomOperateur"));
-        operateur.setStatut(defaulted(payload, "statut", "ACTIF"));
+        operateur.setCodeOperateur(dto.getCodeOperateur());
+        operateur.setNomOperateur(dto.getNomOperateur());
+        operateur.setStatut(dto.getStatut());
         return operateurMobileMoneyRepository.save(operateur);
     }
 
     @Transactional
-    public WalletClient creerWallet(Map<String, Object> payload) {
-        Client client = clientRepository.findById(Long.valueOf(required(payload, "idClient")))
+    public WalletClient creerWallet(CreerWalletServiceRequestDTO dto) {
+        Client client = clientRepository.findById(Long.valueOf(dto.getIdClient()))
                 .orElseThrow(() -> new EntityNotFoundException("Client introuvable"));
         verifierPerimetreClient(client);
-        OperateurMobileMoney operateur = operateurMobileMoneyRepository.findById(Long.valueOf(required(payload, "idOperateurMobileMoney")))
+        OperateurMobileMoney operateur = operateurMobileMoneyRepository.findById(Long.valueOf(dto.getIdOperateurMobileMoney()))
                 .orElseThrow(() -> new EntityNotFoundException("Operateur mobile money introuvable"));
-        Compte compte = compteRepository.findById(Long.valueOf(required(payload, "idCompte")))
+        Compte compte = compteRepository.findById(Long.valueOf(dto.getIdCompte()))
                 .orElseThrow(() -> new EntityNotFoundException("Compte introuvable"));
         if (compte.getClient() == null || !compte.getClient().getIdClient().equals(client.getIdClient())) {
             throw new IllegalStateException("Le compte support du wallet doit appartenir au client");
@@ -86,79 +93,75 @@ public class PaiementExterneService {
         walletClient.setClient(client);
         walletClient.setOperateurMobileMoney(operateur);
         walletClient.setCompte(compte);
-        walletClient.setNumeroWallet(required(payload, "numeroWallet"));
-        walletClient.setStatut(defaulted(payload, "statut", "ACTIF"));
+        walletClient.setNumeroWallet(dto.getNumeroWallet());
+        walletClient.setStatut(dto.getStatut());
         return walletClientRepository.save(walletClient);
     }
 
     @Transactional
-    public TransactionMobileMoney enregistrerTransactionMobileMoney(Map<String, Object> payload) {
-        String referenceTransaction = defaulted(payload, "referenceTransaction", "MM-" + randomSuffix());
+    public TransactionMobileMoney enregistrerTransactionMobileMoney(CreerTransactionMobileMoneyServiceRequestDTO dto) {
+        String referenceTransaction = dto.getReferenceTransaction() == null ? "MM-" + randomSuffix() : dto.getReferenceTransaction();
         TransactionMobileMoney existante = transactionMobileMoneyRepository.findByReferenceTransaction(referenceTransaction).orElse(null);
         if (existante != null) {
             return existante;
         }
 
-        WalletClient wallet = walletClientRepository.findById(Long.valueOf(required(payload, "idWalletClient")))
+        WalletClient wallet = walletClientRepository.findById(Long.valueOf(dto.getIdWalletClient()))
                 .orElseThrow(() -> new EntityNotFoundException("Wallet client introuvable"));
         verifierPerimetreClient(wallet.getClient());
 
-        String typeTransaction = required(payload, "typeTransaction").toUpperCase();
-        BigDecimal montant = decimal(payload, "montant");
-        BigDecimal frais = decimalOrZero(payload, "frais");
-        validerTypeTransactionMobileMoney(typeTransaction);
+        validerTypeTransactionMobileMoney(dto.getTypeTransaction());
 
         TransactionMobileMoney transactionMobileMoney = new TransactionMobileMoney();
         transactionMobileMoney.setReferenceTransaction(referenceTransaction);
         transactionMobileMoney.setWalletClient(wallet);
-        transactionMobileMoney.setTypeTransaction(typeTransaction);
-        transactionMobileMoney.setMontant(montant);
-        transactionMobileMoney.setFrais(frais);
-        transactionMobileMoney.setStatut(defaulted(payload, "statut", "INITIEE").toUpperCase());
+        transactionMobileMoney.setTypeTransaction(dto.getTypeTransaction());
+        transactionMobileMoney.setMontant(dto.getMontant());
+        transactionMobileMoney.setFrais(dto.getFrais());
+        transactionMobileMoney.setStatut(dto.getStatut());
         return transactionMobileMoneyRepository.save(transactionMobileMoney);
     }
 
     @Transactional
-    public TransactionMobileMoney changerStatutTransactionMobileMoney(Long idTransactionMobileMoney, Map<String, Object> payload) {
+    public TransactionMobileMoney changerStatutTransactionMobileMoney(Long idTransactionMobileMoney, ChangerStatutTransactionMobileMoneyRequestDTO dto) {
         TransactionMobileMoney transactionMobileMoney = transactionMobileMoneyRepository.findById(idTransactionMobileMoney)
                 .orElseThrow(() -> new EntityNotFoundException("Transaction mobile money introuvable"));
         verifierPerimetreClient(transactionMobileMoney.getWalletClient().getClient());
 
-        String nouveauStatut = required(payload, "statut").toUpperCase();
-        transitionnerStatutMobileMoney(transactionMobileMoney, nouveauStatut);
+        transitionnerStatutMobileMoney(transactionMobileMoney, dto.getStatut());
         return transactionMobileMoneyRepository.save(transactionMobileMoney);
     }
 
     @Transactional
-    public LotCompensation creerLotCompensation(Map<String, Object> payload) {
+    public LotCompensation creerLotCompensation(CreerLotCompensationServiceRequestDTO dto) {
         LotCompensation lot = new LotCompensation();
-        lot.setReferenceLot(defaulted(payload, "referenceLot", "LOT-" + randomSuffix()));
-        lot.setTypeLot(required(payload, "typeLot"));
-        lot.setStatut(defaulted(payload, "statut", "INITIE"));
-        lot.setDateTraitement(payload.get("dateTraitement") == null ? null : LocalDateTime.parse(payload.get("dateTraitement").toString()));
-        lot.setCommentaire((String) payload.get("commentaire"));
+        lot.setReferenceLot(dto.getReferenceLot() == null ? "LOT-" + randomSuffix() : dto.getReferenceLot());
+        lot.setTypeLot(dto.getTypeLot());
+        lot.setStatut(dto.getStatut());
+        lot.setDateTraitement(dto.getDateTraitement() == null ? null : LocalDateTime.parse(dto.getDateTraitement()));
+        lot.setCommentaire(dto.getCommentaire());
         return lotCompensationRepository.save(lot);
     }
 
     @Transactional
-    public OrdrePaiementExterne initierOrdrePaiement(Map<String, Object> payload) {
-        Compte compte = compteRepository.findById(Long.valueOf(required(payload, "idCompte")))
+    public OrdrePaiementExterne initierOrdrePaiement(CreerOrdrePaiementServiceRequestDTO dto) {
+        Compte compte = compteRepository.findById(Long.valueOf(dto.getIdCompte()))
                 .orElseThrow(() -> new EntityNotFoundException("Compte introuvable"));
         verifierPerimetreClient(compte.getClient());
 
         OrdrePaiementExterne ordre = new OrdrePaiementExterne();
-        ordre.setReferenceOrdre(defaulted(payload, "referenceOrdre", "PEX-" + randomSuffix()));
-        ordre.setTypeFlux(required(payload, "typeFlux").toUpperCase());
-        ordre.setSens(defaulted(payload, "sens", "DEBIT_CLIENT").toUpperCase());
-        ordre.setMontant(decimal(payload, "montant"));
-        ordre.setFrais(decimalOrZero(payload, "frais"));
+        ordre.setReferenceOrdre(dto.getReferenceOrdre() == null ? "PEX-" + randomSuffix() : dto.getReferenceOrdre());
+        ordre.setTypeFlux(dto.getTypeFlux());
+        ordre.setSens(dto.getSens());
+        ordre.setMontant(dto.getMontant());
+        ordre.setFrais(dto.getFrais());
         ordre.setCompte(compte);
-        ordre.setReferenceExterne(optionalString(payload, "referenceExterne"));
-        ordre.setDestinationDetail(optionalString(payload, "destinationDetail"));
-        ordre.setDateInitiation(payload.get("dateInitiation") == null ? LocalDateTime.now() : LocalDateTime.parse(payload.get("dateInitiation").toString()));
-        ordre.setStatut(defaulted(payload, "statut", "INITIE"));
-        if (payload.get("idLotCompensation") != null) {
-            LotCompensation lot = lotCompensationRepository.findById(Long.valueOf(payload.get("idLotCompensation").toString()))
+        ordre.setReferenceExterne(dto.getReferenceExterne());
+        ordre.setDestinationDetail(dto.getDestinationDetail());
+        ordre.setDateInitiation(dto.getDateInitiation() == null ? LocalDateTime.now() : LocalDateTime.parse(dto.getDateInitiation()));
+        ordre.setStatut(dto.getStatut());
+        if (dto.getIdLotCompensation() != null) {
+            LotCompensation lot = lotCompensationRepository.findById(Long.valueOf(dto.getIdLotCompensation()))
                     .orElseThrow(() -> new EntityNotFoundException("Lot de compensation introuvable"));
             ordre.setLotCompensation(lot);
         }
@@ -166,14 +169,14 @@ public class PaiementExterneService {
     }
 
     @Transactional
-    public OrdrePaiementExterne changerStatutOrdre(Long idOrdre, Map<String, Object> payload) {
+    public OrdrePaiementExterne changerStatutOrdre(Long idOrdre, ChangerStatutOrdreServiceRequestDTO dto) {
         OrdrePaiementExterne ordre = ordrePaiementExterneRepository.findById(idOrdre)
                 .orElseThrow(() -> new EntityNotFoundException("Ordre de paiement externe introuvable"));
         verifierPerimetreClient(ordre.getCompte().getClient());
-        String nouveauStatut = required(payload, "statut").toUpperCase();
+        String nouveauStatut = dto.getStatut();
 
         if (("REGLE".equals(nouveauStatut) || "COMPENSE".equals(nouveauStatut)) && ordre.getReferenceTransactionInterne() == null) {
-            appliquerReglementOrdre(ordre, payload);
+            appliquerReglementOrdre(ordre);
         }
 
         if ("RAPPROCHE".equals(nouveauStatut)) {
@@ -182,8 +185,8 @@ public class PaiementExterneService {
             }
             ordre.setDateRapprochement(LocalDateTime.now());
         }
-        if (payload.get("idLotCompensation") != null) {
-            LotCompensation lot = lotCompensationRepository.findById(Long.valueOf(payload.get("idLotCompensation").toString()))
+        if (dto.getIdLotCompensation() != null) {
+            LotCompensation lot = lotCompensationRepository.findById(Long.valueOf(dto.getIdLotCompensation()))
                     .orElseThrow(() -> new EntityNotFoundException("Lot de compensation introuvable"));
             ordre.setLotCompensation(lot);
         }
@@ -209,7 +212,7 @@ public class PaiementExterneService {
                 continue;
             }
             if (ordre.getReferenceTransactionInterne() == null) {
-                appliquerReglementOrdre(ordre, Map.of());
+                appliquerReglementOrdre(ordre);
                 ordrePaiementExterneRepository.save(ordre);
                 ordresCompenses++;
             }
@@ -338,10 +341,8 @@ public class PaiementExterneService {
         transactionMobileMoney.setReferenceTransactionInterne(transactionInterne.getReferenceUnique());
     }
 
-    private void appliquerReglementOrdre(OrdrePaiementExterne ordre, Map<String, Object> payload) {
-        Long idUtilisateurOperateur = payload.get("idUtilisateurOperateur") == null
-                ? authenticatedUserService.getCurrentUserOrThrow().getIdUser()
-                : Long.valueOf(payload.get("idUtilisateurOperateur").toString());
+    private void appliquerReglementOrdre(OrdrePaiementExterne ordre) {
+        Long idUtilisateurOperateur = authenticatedUserService.getCurrentUserOrThrow().getIdUser();
         String operationCode = operationCodePourOrdre(ordre.getTypeFlux());
         var transactionInterne = "CREDIT_CLIENT".equalsIgnoreCase(ordre.getSens())
                 ? transactionService.posterDepotSysteme(ordre.getCompte().getNumCompte(), ordre.getMontant(), ordre.getFrais(), idUtilisateurOperateur, ordre.getReferenceOrdre(), operationCode)
@@ -358,32 +359,6 @@ public class PaiementExterneService {
             return;
         }
         authenticatedUserService.assertAgencyAccess(client.getAgence().getIdAgence());
-    }
-
-    private String required(Map<String, Object> payload, String key) {
-        Object value = payload.get(key);
-        if (value == null || value.toString().isBlank()) {
-            throw new IllegalArgumentException("Le champ '" + key + "' est obligatoire");
-        }
-        return value.toString().trim();
-    }
-
-    private String defaulted(Map<String, Object> payload, String key, String defaultValue) {
-        Object value = payload.get(key);
-        return value == null || value.toString().isBlank() ? defaultValue : value.toString().trim();
-    }
-
-    private String optionalString(Map<String, Object> payload, String key) {
-        Object value = payload.get(key);
-        return value == null || value.toString().isBlank() ? null : value.toString().trim();
-    }
-
-    private BigDecimal decimal(Map<String, Object> payload, String key) {
-        return new BigDecimal(required(payload, key));
-    }
-
-    private BigDecimal decimalOrZero(Map<String, Object> payload, String key) {
-        return payload.get(key) == null ? BigDecimal.ZERO : new BigDecimal(payload.get(key).toString());
     }
 
     private String randomSuffix() {

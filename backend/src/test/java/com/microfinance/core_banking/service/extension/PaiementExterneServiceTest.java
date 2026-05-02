@@ -1,5 +1,7 @@
 package com.microfinance.core_banking.service.extension;
 
+import com.microfinance.core_banking.dto.request.extension.ChangerStatutTransactionMobileMoneyRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerTransactionMobileMoneyServiceRequestDTO;
 import com.microfinance.core_banking.entity.Client;
 import com.microfinance.core_banking.entity.Compte;
 import com.microfinance.core_banking.entity.OperateurMobileMoney;
@@ -64,13 +66,15 @@ class PaiementExterneServiceTest {
         when(walletClientRepository.findById(1L)).thenReturn(Optional.of(wallet));
         when(transactionMobileMoneyRepository.save(any(TransactionMobileMoney.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        TransactionMobileMoney resultat = paiementExterneService.enregistrerTransactionMobileMoney(Map.of(
+        CreerTransactionMobileMoneyServiceRequestDTO dto = CreerTransactionMobileMoneyServiceRequestDTO.fromMap(Map.of(
                 "referenceTransaction", "MM-001",
-                "idWalletClient", 1L,
+                "idWalletClient", "1",
                 "typeTransaction", "CASH_IN",
                 "montant", "10000",
                 "frais", "250"
         ));
+
+        TransactionMobileMoney resultat = paiementExterneService.enregistrerTransactionMobileMoney(dto);
 
         assertThat(resultat.getStatut()).isEqualTo("INITIEE");
         assertThat(resultat.getReferenceTransactionInterne()).isNull();
@@ -100,7 +104,8 @@ class PaiementExterneServiceTest {
         when(transactionService.posterRetraitSysteme(any(), any(), any(), any(), any(), any())).thenReturn(transactionInterne);
         when(transactionMobileMoneyRepository.save(any(TransactionMobileMoney.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        TransactionMobileMoney resultat = paiementExterneService.changerStatutTransactionMobileMoney(5L, Map.of("statut", "REGLEE"));
+        ChangerStatutTransactionMobileMoneyRequestDTO dto = ChangerStatutTransactionMobileMoneyRequestDTO.fromMap(Map.of("statut", "REGLEE"));
+        TransactionMobileMoney resultat = paiementExterneService.changerStatutTransactionMobileMoney(5L, dto);
 
         assertThat(resultat.getStatut()).isEqualTo("REGLEE");
         assertThat(resultat.getReferenceTransactionInterne()).isEqualTo("TX-INT-01");

@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.service.extension;
 
+import com.microfinance.core_banking.dto.request.extension.ValiderActionRequestDTO;
 import com.microfinance.core_banking.entity.ActionEnAttente;
 import com.microfinance.core_banking.entity.RoleUtilisateur;
 import com.microfinance.core_banking.entity.Utilisateur;
@@ -52,11 +53,12 @@ class ValidationExtensionServiceTest {
         when(authenticatedUserService.hasAnyRoleOrPermission(any(String[].class), any(String[].class))).thenReturn(true);
         when(actionEnAttenteRepository.save(any(ActionEnAttente.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        ActionEnAttente resultat = validationExtensionService.validerAction(10L, Map.of(
+        ValiderActionRequestDTO dto = ValiderActionRequestDTO.fromMap(Map.of(
                 "statut", "REJETEE",
-                "commentaireChecker", "Motif documente",
-                "idChecker", 999L
+                "commentaireChecker", "Motif documente"
         ));
+
+        ActionEnAttente resultat = validationExtensionService.validerAction(10L, dto);
 
         assertThat(resultat.getChecker()).isEqualTo(checker);
         assertThat(resultat.getStatut()).isEqualTo("REJETEE");
@@ -74,7 +76,8 @@ class ValidationExtensionServiceTest {
         when(authenticatedUserService.getCurrentUserOrThrow()).thenReturn(maker);
         when(authenticatedUserService.hasAnyRoleOrPermission(any(String[].class), any(String[].class))).thenReturn(true);
 
-        assertThrows(IllegalStateException.class, () -> validationExtensionService.validerAction(10L, Map.of("statut", "APPROUVEE")));
+        ValiderActionRequestDTO dto = ValiderActionRequestDTO.fromMap(Map.of("statut", "APPROUVEE"));
+        assertThrows(IllegalStateException.class, () -> validationExtensionService.validerAction(10L, dto));
         verify(pendingActionExecutionService, never()).execute(any());
     }
 
@@ -90,7 +93,8 @@ class ValidationExtensionServiceTest {
         when(actionEnAttenteRepository.findById(10L)).thenReturn(Optional.of(action));
         when(authenticatedUserService.getCurrentUserOrThrow()).thenReturn(checker);
 
-        assertThrows(IllegalStateException.class, () -> validationExtensionService.validerAction(10L, Map.of("statut", "REJETEE")));
+        ValiderActionRequestDTO dto = ValiderActionRequestDTO.fromMap(Map.of("statut", "REJETEE"));
+        assertThrows(IllegalStateException.class, () -> validationExtensionService.validerAction(10L, dto));
         verify(pendingActionExecutionService, never()).execute(any());
     }
 
@@ -107,7 +111,8 @@ class ValidationExtensionServiceTest {
         when(authenticatedUserService.getCurrentUserOrThrow()).thenReturn(checker);
         when(authenticatedUserService.hasAnyRoleOrPermission(any(String[].class), any(String[].class))).thenReturn(true);
 
-        assertThrows(IllegalArgumentException.class, () -> validationExtensionService.validerAction(10L, Map.of("statut", "REJETEE")));
+        ValiderActionRequestDTO dto = ValiderActionRequestDTO.fromMap(Map.of("statut", "REJETEE"));
+        assertThrows(IllegalArgumentException.class, () -> validationExtensionService.validerAction(10L, dto));
         verify(pendingActionExecutionService, never()).execute(any());
     }
 
@@ -125,10 +130,12 @@ class ValidationExtensionServiceTest {
         when(authenticatedUserService.hasAnyRoleOrPermission(any(String[].class), any(String[].class))).thenReturn(true);
         when(actionEnAttenteRepository.save(any(ActionEnAttente.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        ActionEnAttente resultat = validationExtensionService.validerAction(10L, Map.of(
+        ValiderActionRequestDTO dto = ValiderActionRequestDTO.fromMap(Map.of(
                 "statut", "CORRECTION_DEMANDEE",
                 "commentaireChecker", "Piece justificative incomplete"
         ));
+
+        ActionEnAttente resultat = validationExtensionService.validerAction(10L, dto);
 
         assertThat(resultat.getChecker()).isEqualTo(checker);
         assertThat(resultat.getStatut()).isEqualTo("CORRECTION_DEMANDEE");

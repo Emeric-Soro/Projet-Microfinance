@@ -8,6 +8,7 @@ import com.microfinance.core_banking.entity.StatutClient;
 import com.microfinance.core_banking.entity.StatutKycClient;
 import com.microfinance.core_banking.repository.client.ClientRepository;
 import com.microfinance.core_banking.repository.client.StatutClientRepository;
+import com.microfinance.core_banking.service.extension.AmlService;
 import com.microfinance.core_banking.service.extension.ConformiteExtensionService;
 import com.microfinance.core_banking.service.security.AuthenticatedUserService;
 import jakarta.persistence.EntityNotFoundException;
@@ -26,17 +27,20 @@ public class ClientServiceImpl implements ClientService {
     private final StatutClientRepository statutClientRepository;
     private final AuthenticatedUserService authenticatedUserService;
     private final ConformiteExtensionService conformiteExtensionService;
+    private final AmlService amlService;
 
     public ClientServiceImpl(
             ClientRepository clientRepository,
             StatutClientRepository statutClientRepository,
             AuthenticatedUserService authenticatedUserService,
-            ConformiteExtensionService conformiteExtensionService
+            ConformiteExtensionService conformiteExtensionService,
+            AmlService amlService
     ) {
         this.clientRepository = clientRepository;
         this.statutClientRepository = statutClientRepository;
         this.authenticatedUserService = authenticatedUserService;
         this.conformiteExtensionService = conformiteExtensionService;
+        this.amlService = amlService;
     }
 
     @Override
@@ -68,7 +72,10 @@ public class ClientServiceImpl implements ClientService {
                 .orElseThrow(() -> new IllegalStateException("Erreur critique : Le statut 'NOUVEAU' n'est pas paramétré en base."));
 
         client.setStatutClient(statutParDefaut);
-        return clientRepository.save(client);
+        Client clientSauvegarde = clientRepository.save(client);
+        // Lancer le screening AML automatique apres creation
+        amlService.screenerClient(clientSauvegarde);
+        return clientSauvegarde;
     }
 
     @Override

@@ -1,8 +1,11 @@
 package com.microfinance.core_banking.api.controller.extension;
 
 import com.microfinance.core_banking.audit.AuditLog;
-import com.microfinance.core_banking.entity.ActionEnAttente;
+import com.microfinance.core_banking.dto.request.extension.CreerActionRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.ValiderActionRequestDTO;
+import com.microfinance.core_banking.dto.response.extension.ActionEnAttenteResponseDTO;
 import com.microfinance.core_banking.service.extension.ValidationExtensionService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,9 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/validations")
@@ -29,36 +30,32 @@ public class ValidationExtensionController {
     }
 
     @PostMapping("/actions-en-attente")
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','GUICHETIER','VALIDATION_VIEW')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_VALIDATION_VIEW)")
     @AuditLog(action = "PENDING_ACTION_CREATE", resource = "ACTION_EN_ATTENTE")
-    public ResponseEntity<Map<String, Object>> creerAction(@RequestBody Map<String, Object> payload) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(toActionMap(validationExtensionService.creerAction(payload)));
+    public ResponseEntity<ActionEnAttenteResponseDTO> creerAction(@Valid @RequestBody CreerActionRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(toActionDto(validationExtensionService.creerAction(dto)));
     }
 
     @PutMapping("/actions-en-attente/{idAction}/decision")
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','VALIDATION_DECIDE')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_VALIDATION_DECIDE)")
     @AuditLog(action = "PENDING_ACTION_DECISION", resource = "ACTION_EN_ATTENTE")
-    public ResponseEntity<Map<String, Object>> validerAction(@PathVariable Long idAction, @RequestBody Map<String, Object> payload) {
-        return ResponseEntity.ok(toActionMap(validationExtensionService.validerAction(idAction, payload)));
+    public ResponseEntity<ActionEnAttenteResponseDTO> validerAction(@PathVariable Long idAction, @Valid @RequestBody ValiderActionRequestDTO dto) {
+        return ResponseEntity.ok(toActionDto(validationExtensionService.validerAction(idAction, dto)));
     }
 
     @GetMapping("/actions-en-attente")
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','GUICHETIER','VALIDATION_VIEW')")
-    public ResponseEntity<List<Map<String, Object>>> listerActions() {
-        return ResponseEntity.ok(validationExtensionService.listerActions().stream().map(this::toActionMap).toList());
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_VALIDATION_VIEW)")
+    public ResponseEntity<List<ActionEnAttenteResponseDTO>> listerActions() {
+        return ResponseEntity.ok(validationExtensionService.listerActions().stream().map(this::toActionDto).toList());
     }
 
-    private Map<String, Object> toActionMap(ActionEnAttente action) {
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("idActionEnAttente", action.getIdActionEnAttente());
-        response.put("typeAction", action.getTypeAction());
-        response.put("ressource", action.getRessource());
-        response.put("referenceRessource", action.getReferenceRessource());
-        response.put("statut", action.getStatut());
-        response.put("maker", action.getMaker().getIdUser());
-        response.put("checker", action.getChecker() == null ? null : action.getChecker().getIdUser());
-        response.put("referenceRessource", action.getReferenceRessource());
-        response.put("dateValidation", action.getDateValidation());
-        return response;
+    private ActionEnAttenteResponseDTO toActionDto(com.microfinance.core_banking.entity.ActionEnAttente action) {
+        ActionEnAttenteResponseDTO dto = new ActionEnAttenteResponseDTO();
+        dto.setIdActionEnAttente(action.getIdActionEnAttente());
+        dto.setTypeAction(action.getTypeAction());
+        dto.setRessource(action.getRessource());
+        dto.setReferenceRessource(action.getReferenceRessource());
+        dto.setStatut(action.getStatut());
+        return dto;
     }
 }

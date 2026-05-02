@@ -23,7 +23,7 @@ public class Beneficiary {
     @Column(name = "beneficiary_name", nullable = false)
     private String beneficiaryName;
 
-    @Column(name = "share", precision = 5, scale = 4)
+    @Column(name = "share_ratio", precision = 5, scale = 4)
     private BigDecimal share;
 
     public Long getId() { return id; }

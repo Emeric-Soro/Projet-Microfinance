@@ -37,7 +37,7 @@ public class JournalEntryController {
             @ApiResponse(responseCode = "409", description = "Conflit métier")
     })
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<JournalEntryResponseDTO> creerJournalEntry(
             @Valid @RequestBody JournalEntryRequestDTO requestDTO) {
         JournalEntryResponseDTO response = journalEntryService.create(requestDTO);
@@ -53,7 +53,7 @@ public class JournalEntryController {
             @ApiResponse(responseCode = "400", description = "Paramètres invalides")
     })
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<Page<JournalEntryResponseDTO>> listerJournalEntries(@ParameterObject Pageable pageable) {
         Page<JournalEntryResponseDTO> page = journalEntryService.getAll(pageable);
         return ResponseEntity.ok(page);
@@ -68,7 +68,7 @@ public class JournalEntryController {
             @ApiResponse(responseCode = "404", description = "JournalEntry introuvable")
     })
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<JournalEntryResponseDTO> obtenirDetailsJournalEntry(@PathVariable Long id) {
         JournalEntryResponseDTO response = journalEntryService.getById(id);
         return ResponseEntity.ok(response);
@@ -84,7 +84,7 @@ public class JournalEntryController {
             @ApiResponse(responseCode = "404", description = "JournalEntry introuvable")
     })
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<JournalEntryResponseDTO> mettreAJourJournalEntry(
             @PathVariable Long id,
             @Valid @RequestBody JournalEntryRequestDTO requestDTO) {
@@ -101,7 +101,7 @@ public class JournalEntryController {
             @ApiResponse(responseCode = "404", description = "JournalEntry introuvable")
     })
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<Void> supprimerJournalEntry(@PathVariable Long id) {
         journalEntryService.delete(id);
         return ResponseEntity.noContent().build();

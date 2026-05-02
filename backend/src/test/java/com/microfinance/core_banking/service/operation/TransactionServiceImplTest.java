@@ -2,6 +2,7 @@ package com.microfinance.core_banking.service.operation;
 
 import com.microfinance.core_banking.config.TransactionWorkflowProperties;
 import com.microfinance.core_banking.entity.Compte;
+import com.microfinance.core_banking.entity.LigneEcritureComptable;
 import com.microfinance.core_banking.entity.PermissionSecurite;
 import com.microfinance.core_banking.entity.RoleUtilisateur;
 import com.microfinance.core_banking.entity.StatutOperation;
@@ -10,6 +11,7 @@ import com.microfinance.core_banking.entity.TypeTransaction;
 import com.microfinance.core_banking.entity.Utilisateur;
 import com.microfinance.core_banking.repository.client.UtilisateurRepository;
 import com.microfinance.core_banking.repository.compte.CompteRepository;
+import com.microfinance.core_banking.repository.extension.LigneEcritureComptableRepository;
 import com.microfinance.core_banking.repository.extension.SessionCaisseRepository;
 import com.microfinance.core_banking.repository.operation.LigneEcritureRepository;
 import com.microfinance.core_banking.repository.operation.TransactionRepository;
@@ -28,6 +30,7 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -57,6 +60,9 @@ class TransactionServiceImplTest {
     private UtilisateurRepository utilisateurRepository;
     @Mock
     private SessionCaisseRepository sessionCaisseRepository;
+
+    @Mock
+    private LigneEcritureComptableRepository ligneEcritureComptableRepository;
 
     @Mock
     private TransactionFeeCalculator transactionFeeCalculator;
@@ -122,7 +128,7 @@ class TransactionServiceImplTest {
         when(utilisateurRepository.findById(20L)).thenReturn(Optional.of(superviseur));
         when(compteRepository.findById(1L)).thenReturn(Optional.of(sourceStocke));
         when(compteRepository.findById(2L)).thenReturn(Optional.of(destinationStocke));
-        when(compteRepository.save(any(Compte.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(ligneEcritureComptableRepository.findByReferenceAuxiliaire("CPT-SRC")).thenReturn(List.of(ligneComptable("CREDIT", "1000000.00")));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Transaction resultat = transactionService.approuverTransaction("TX-REF-001", 20L);
@@ -131,8 +137,6 @@ class TransactionServiceImplTest {
         assertThat(resultat.getUtilisateurValidation()).isEqualTo(superviseur);
         assertThat(resultat.getDateValidation()).isNotNull();
         assertThat(resultat.getDateExecution()).isNotNull();
-        assertThat(sourceStocke.getSolde()).isEqualByComparingTo("400000.00");
-        assertThat(destinationStocke.getSolde()).isEqualByComparingTo("610000.00");
         verify(ligneEcritureRepository, times(2)).save(ArgumentMatchers.any());
         verify(eventPublisher).publishEvent(ArgumentMatchers.any(VirementEffectueEvent.class));
     }
@@ -161,13 +165,73 @@ class TransactionServiceImplTest {
         when(utilisateurRepository.findById(20L)).thenReturn(Optional.of(validateur));
         when(compteRepository.findById(1L)).thenReturn(Optional.of(sourceStocke));
         when(compteRepository.findById(2L)).thenReturn(Optional.of(destinationStocke));
-        when(compteRepository.save(any(Compte.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(ligneEcritureComptableRepository.findByReferenceAuxiliaire("CPT-SRC")).thenReturn(List.of(ligneComptable("CREDIT", "1000000.00")));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Transaction resultat = transactionService.approuverTransaction("TX-REF-002", 20L);
 
         assertThat(resultat.getStatutOperation()).isEqualTo(StatutOperation.EXECUTEE);
         assertThat(resultat.getUtilisateurValidation()).isEqualTo(validateur);
+    }
+
+    @Test
+    void shouldCancelPendingTransactionUsingSupervisorWorkflow() {
+        Utilisateur initiateur = buildUtilisateur(10L, "GUICHETIER");
+        Utilisateur superviseur = buildUtilisateur(20L, "SUPERVISEUR");
+        TypeTransaction typeTransaction = buildType("DEPOT");
+
+        Transaction transaction = new Transaction();
+        transaction.setReferenceUnique("TX-PENDING-01");
+        transaction.setDateHeureTransaction(LocalDateTime.now());
+        transaction.setMontantGlobal(new BigDecimal("50000.00"));
+        transaction.setFrais(BigDecimal.ZERO);
+        transaction.setUtilisateur(initiateur);
+        transaction.setTypeTransaction(typeTransaction);
+        transaction.setStatutOperation(StatutOperation.EN_ATTENTE);
+        transaction.setValidationSuperviseurRequise(true);
+
+        when(transactionRepository.findByReferenceUnique("TX-PENDING-01")).thenReturn(Optional.of(transaction));
+        when(utilisateurRepository.findById(20L)).thenReturn(Optional.of(superviseur));
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Transaction resultat = transactionService.annulerTransaction("TX-PENDING-01", 20L, "annulation");
+
+        assertThat(resultat.getStatutOperation()).isEqualTo(StatutOperation.REJETEE);
+        assertThat(resultat.getMotifRejet()).isEqualTo("annulation");
+    }
+
+    @Test
+    void shouldCreateReversalTransactionForExecutedDeposit() {
+        Compte destination = buildCompte(2L, "CPT-DST", new BigDecimal("10000.00"));
+        Utilisateur initiateur = buildUtilisateur(10L, "GUICHETIER");
+        Utilisateur superviseur = buildUtilisateur(20L, "SUPERVISEUR");
+        TypeTransaction typeDepot = buildType("DEPOT");
+        TypeTransaction typeRetrait = buildType("RETRAIT");
+
+        Transaction transaction = new Transaction();
+        transaction.setReferenceUnique("TX-EXEC-01");
+        transaction.setDateHeureTransaction(LocalDateTime.now());
+        transaction.setMontantGlobal(new BigDecimal("50000.00"));
+        transaction.setFrais(BigDecimal.ZERO);
+        transaction.setUtilisateur(initiateur);
+        transaction.setTypeTransaction(typeDepot);
+        transaction.setCompteDestination(destination);
+        transaction.setCodeOperationMetier("DEPOT_CASH");
+        transaction.setStatutOperation(StatutOperation.EXECUTEE);
+
+        when(transactionRepository.findByReferenceUnique("TX-EXEC-01")).thenReturn(Optional.of(transaction));
+        when(transactionRepository.existsByReferenceUnique("EXT-TX-EXEC-01")).thenReturn(false);
+        when(utilisateurRepository.findById(20L)).thenReturn(Optional.of(superviseur));
+        when(compteRepository.findByNumCompte("CPT-DST")).thenReturn(Optional.of(destination));
+        when(compteRepository.findById(2L)).thenReturn(Optional.of(destination));
+        when(typeTransactionRepository.findByCodeTypeTransaction("RETRAIT")).thenReturn(Optional.of(typeRetrait));
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(ligneEcritureComptableRepository.findByReferenceAuxiliaire("CPT-DST")).thenReturn(List.of(ligneComptable("CREDIT", "90000.00")));
+
+        Transaction resultat = transactionService.extournerTransaction("TX-EXEC-01", 20L, "extourne");
+
+        assertThat(resultat.getReferenceUnique()).isEqualTo("EXT-TX-EXEC-01");
+        assertThat(resultat.getStatutOperation()).isEqualTo(StatutOperation.EXECUTEE);
     }
 
     private Compte buildCompte(Long idCompte, String numCompte, BigDecimal solde) {
@@ -209,5 +273,12 @@ class TransactionServiceImplTest {
         typeTransaction.setCodeTypeTransaction(code);
         typeTransaction.setLibelle(code);
         return typeTransaction;
+    }
+
+    private LigneEcritureComptable ligneComptable(String sens, String montant) {
+        LigneEcritureComptable ligne = new LigneEcritureComptable();
+        ligne.setSens(sens);
+        ligne.setMontant(new BigDecimal(montant));
+        return ligne;
     }
 }

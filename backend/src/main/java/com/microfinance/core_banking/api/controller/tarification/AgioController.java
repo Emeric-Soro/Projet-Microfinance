@@ -40,7 +40,7 @@ public class AgioController {
 			@ApiResponse(responseCode = "409", description = "Conflit metier ou parametrage manquant")
     })
     @PostMapping("/frais-tenue/mensuel")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN)")
     @AuditLog(action = "AGIO_MONTHLY_FEES_CALC", resource = "AGIO")
     public ResponseEntity<List<AgioResponseDTO>> calculerFraisTenueCompteMensuel() {
 		// Lance le calcul batch des frais mensuels.
@@ -60,7 +60,7 @@ public class AgioController {
 			@ApiResponse(responseCode = "404", description = "Compte introuvable")
     })
     @PostMapping("/penalite-decouvert")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN)")
     @AuditLog(action = "AGIO_OVERDRAFT_PENALTY_CALC", resource = "AGIO")
     public ResponseEntity<AgioResponseDTO> calculerPenaliteDecouvert(@RequestParam String numCompte) {
 		// Retourne 204 si le compte n'est pas en decouvert.
@@ -80,7 +80,7 @@ public class AgioController {
 			@ApiResponse(responseCode = "404", description = "Utilisateur systeme introuvable")
     })
     @PostMapping("/prelevements")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN)")
     @AuditLog(action = "AGIO_PENDING_DEBIT", resource = "AGIO")
     public ResponseEntity<List<AgioResponseDTO>> executerPrelevementsEnAttente(@RequestParam Long idUserSysteme) {
 		// Tente le prelevement de chaque agio non preleve.

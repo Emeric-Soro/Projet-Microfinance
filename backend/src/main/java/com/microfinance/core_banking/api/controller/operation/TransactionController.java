@@ -1,16 +1,20 @@
 package com.microfinance.core_banking.api.controller.operation;
 
 import com.microfinance.core_banking.audit.AuditLog;
+import com.microfinance.core_banking.dto.request.operation.ActionTransactionRequestDTO;
 import com.microfinance.core_banking.dto.request.operation.TransactionSimpleRequestDTO;
 import com.microfinance.core_banking.dto.request.operation.ValidationTransactionRequestDTO;
 import com.microfinance.core_banking.dto.request.operation.VirementRequestDTO;
 import com.microfinance.core_banking.dto.response.operation.LigneReleveResponseDTO;
 import com.microfinance.core_banking.dto.response.operation.RecuTransactionResponseDTO;
+import com.microfinance.core_banking.dto.response.extension.ActionEnAttenteResponseDTO;
+import com.microfinance.core_banking.entity.ActionEnAttente;
 import com.microfinance.core_banking.entity.LigneEcriture;
 import com.microfinance.core_banking.entity.StatutOperation;
 import com.microfinance.core_banking.entity.Transaction;
 import com.microfinance.core_banking.entity.Utilisateur;
 import com.microfinance.core_banking.mapper.OperationMapper;
+import com.microfinance.core_banking.service.extension.PendingActionSubmissionService;
 import com.microfinance.core_banking.service.operation.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -40,10 +44,12 @@ public class TransactionController {
 
     private final TransactionService transactionService;
     private final OperationMapper operationMapper;
+    private final PendingActionSubmissionService pendingActionSubmissionService;
 
-    public TransactionController(TransactionService transactionService, OperationMapper operationMapper) {
+    public TransactionController(TransactionService transactionService, OperationMapper operationMapper, PendingActionSubmissionService pendingActionSubmissionService) {
         this.transactionService = transactionService;
         this.operationMapper = operationMapper;
+        this.pendingActionSubmissionService = pendingActionSubmissionService;
     }
 
     @Operation(
@@ -58,7 +64,7 @@ public class TransactionController {
             @ApiResponse(responseCode = "409", description = "Conflit metier")
     })
     @PostMapping("/depot")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     @AuditLog(action = "TRANSACTION_DEPOSIT", resource = "TRANSACTION")
     public ResponseEntity<RecuTransactionResponseDTO> faireDepot(
             @Valid @RequestBody TransactionSimpleRequestDTO requestDTO,
@@ -87,7 +93,7 @@ public class TransactionController {
             @ApiResponse(responseCode = "409", description = "Fonds insuffisants ou conflit metier")
     })
     @PostMapping("/retrait")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     @AuditLog(action = "TRANSACTION_WITHDRAWAL", resource = "TRANSACTION")
     public ResponseEntity<RecuTransactionResponseDTO> faireRetrait(
             @Valid @RequestBody TransactionSimpleRequestDTO requestDTO,
@@ -116,7 +122,7 @@ public class TransactionController {
             @ApiResponse(responseCode = "409", description = "Fonds insuffisants ou conflit metier")
     })
     @PostMapping("/virement")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     @AuditLog(action = "TRANSACTION_TRANSFER", resource = "TRANSACTION")
     public ResponseEntity<RecuTransactionResponseDTO> faireVirement(
             @Valid @RequestBody VirementRequestDTO requestDTO,
@@ -144,7 +150,7 @@ public class TransactionController {
             @ApiResponse(responseCode = "409", description = "Workflow de validation incompatible")
     })
     @PutMapping("/{referenceUnique}/approbation")
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR)")
     @AuditLog(action = "TRANSACTION_APPROVAL", resource = "TRANSACTION")
     public ResponseEntity<RecuTransactionResponseDTO> approuverTransaction(
             @PathVariable String referenceUnique,
@@ -167,7 +173,7 @@ public class TransactionController {
             @ApiResponse(responseCode = "409", description = "Workflow de validation incompatible")
     })
     @PutMapping("/{referenceUnique}/rejet")
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR)")
     @AuditLog(action = "TRANSACTION_REJECTION", resource = "TRANSACTION")
     public ResponseEntity<RecuTransactionResponseDTO> rejeterTransaction(
             @PathVariable String referenceUnique,
@@ -185,6 +191,46 @@ public class TransactionController {
     }
 
     @Operation(
+            summary = "Soumettre une annulation d'operation",
+            description = "Soumet une demande d'annulation d'operation pour approbation"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "202", description = "Annulation soumise en attente de validation"),
+            @ApiResponse(responseCode = "404", description = "Transaction introuvable"),
+            @ApiResponse(responseCode = "409", description = "Transaction non annulable")
+    })
+    @PutMapping("/{referenceUnique}/annulation/soumettre")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR)")
+    @AuditLog(action = "TRANSACTION_CANCEL_SUBMIT", resource = "TRANSACTION")
+    public ResponseEntity<ActionEnAttenteResponseDTO> soumettreAnnulation(
+            @PathVariable String referenceUnique,
+            @Valid @RequestBody ActionTransactionRequestDTO requestDTO
+    ) {
+        ActionEnAttente action = pendingActionSubmissionService.submit("ANNULATION_OPERATION", "TRANSACTION", referenceUnique, requestDTO, "Annulation d'operation soumise");
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
+    }
+
+    @Operation(
+            summary = "Soumettre un extourne d'operation",
+            description = "Soumet une demande d'extourne d'operation pour approbation"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "202", description = "Extourne soumis en attente de validation"),
+            @ApiResponse(responseCode = "404", description = "Transaction introuvable"),
+            @ApiResponse(responseCode = "409", description = "Transaction non extournable")
+    })
+    @PutMapping("/{referenceUnique}/extourne/soumettre")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR)")
+    @AuditLog(action = "TRANSACTION_REVERSAL_SUBMIT", resource = "TRANSACTION")
+    public ResponseEntity<ActionEnAttenteResponseDTO> soumettreExtourne(
+            @PathVariable String referenceUnique,
+            @Valid @RequestBody ActionTransactionRequestDTO requestDTO
+    ) {
+        ActionEnAttente action = pendingActionSubmissionService.submit("EXTOURNE_OPERATION", "TRANSACTION", referenceUnique, requestDTO, "Extourne d'operation soumise");
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
+    }
+
+    @Operation(
             summary = "Consulter l'historique d'un compte",
             description = "Retourne les lignes d'ecriture paginees associees a un compte"
     )
@@ -194,7 +240,7 @@ public class TransactionController {
             @ApiResponse(responseCode = "404", description = "Compte introuvable")
     })
     @GetMapping("/comptes/{numCompte}/historique")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER') or (hasAuthority('CLIENT') and @accountAccessSecurity.canAccessAccount(authentication, #numCompte))")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER) or (hasAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_CLIENT) and @accountAccessSecurity.canAccessAccount(authentication, #numCompte))")
     public ResponseEntity<Page<LigneReleveResponseDTO>> consulterHistorique(
             @PathVariable String numCompte,
             @ParameterObject Pageable pageable
@@ -222,5 +268,15 @@ public class TransactionController {
         if (idRequete == null || idAuthentifie == null || !idRequete.equals(idAuthentifie)) {
             throw new IllegalArgumentException("L'identifiant " + roleMetier + " doit correspondre a l'utilisateur authentifie");
         }
+    }
+
+    private ActionEnAttenteResponseDTO toActionDto(ActionEnAttente action) {
+        ActionEnAttenteResponseDTO dto = new ActionEnAttenteResponseDTO();
+        dto.setIdActionEnAttente(action.getIdActionEnAttente());
+        dto.setTypeAction(action.getTypeAction());
+        dto.setRessource(action.getRessource());
+        dto.setReferenceRessource(action.getReferenceRessource());
+        dto.setStatut(action.getStatut());
+        return dto;
     }
 }

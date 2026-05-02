@@ -1,5 +1,8 @@
 package com.microfinance.core_banking.service.extension;
 
+import com.microfinance.core_banking.dto.request.extension.TesterSchemaComptableRequestDTO;
+import com.microfinance.core_banking.dto.response.extension.ControlesComptablesResponseDTO;
+import com.microfinance.core_banking.dto.response.extension.SchemaTestResponseDTO;
 import com.microfinance.core_banking.entity.ClasseComptable;
 import com.microfinance.core_banking.entity.EcritureComptable;
 import com.microfinance.core_banking.entity.JournalComptable;
@@ -31,7 +34,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -101,18 +103,17 @@ class ComptabiliteExtensionServiceTest {
         schema.setJournalCode("CAI");
         when(schemaComptableRepository.findByCodeOperation(anyString())).thenReturn(Optional.of(schema));
 
-        Map<String, Object> resultat = comptabiliteExtensionService.testerSchemaComptable(
-                Map.of(
-                        "codeOperation", "DEPOT_CASH",
-                        "montant", new BigDecimal("1000.00"),
-                        "frais", new BigDecimal("25.00")
-                )
-        );
+        TesterSchemaComptableRequestDTO request = new TesterSchemaComptableRequestDTO();
+        request.setCodeOperation("DEPOT_CASH");
+        request.setMontant(new BigDecimal("1000.00"));
+        request.setFrais(new BigDecimal("25.00"));
 
-        assertEquals(0, new BigDecimal("1025.00").compareTo((BigDecimal) resultat.get("totalDebit")));
-        assertEquals(0, new BigDecimal("1025.00").compareTo((BigDecimal) resultat.get("totalCredit")));
-        assertTrue((Boolean) resultat.get("equilibree"));
-        assertEquals(3, ((List<?>) resultat.get("lignes")).size());
+        SchemaTestResponseDTO resultat = comptabiliteExtensionService.testerSchemaComptable(request);
+
+        assertEquals(0, new BigDecimal("1025.00").compareTo(resultat.getTotalDebit()));
+        assertEquals(0, new BigDecimal("1025.00").compareTo(resultat.getTotalCredit()));
+        assertTrue(resultat.getEquilibree());
+        assertEquals(3, resultat.getLignes().size());
     }
 
     @Test
@@ -149,15 +150,13 @@ class ComptabiliteExtensionServiceTest {
         when(ligneEcritureComptableRepository.findByEcritureComptable_DateComptableBetween(debut, fin))
                 .thenReturn(List.of(ligneDebit1, ligneCredit1, ligneDebit2));
 
-        Map<String, Object> resultat = comptabiliteExtensionService.controlesComptables(debut, fin);
+        ControlesComptablesResponseDTO resultat = comptabiliteExtensionService.controlesComptables(debut, fin);
 
-        assertEquals(2, resultat.get("totalEcritures"));
-        assertEquals(3, resultat.get("totalLignes"));
-        assertFalse((Boolean) resultat.get("equilibreGlobal"));
-        assertEquals(0, resultat.get("ecrituresSansLignes"));
-        List<?> desequilibres = (List<?>) resultat.get("ecrituresDesequilibrees");
-        assertEquals(1, desequilibres.size());
-        Map<?, ?> anomalie = (Map<?, ?>) desequilibres.get(0);
-        assertEquals("PC-2", anomalie.get("referencePiece"));
+        assertEquals(2, resultat.getTotalEcritures());
+        assertEquals(3, resultat.getTotalLignes());
+        assertFalse(resultat.getEquilibreGlobal());
+        assertEquals(0, resultat.getEcrituresSansLignes());
+        assertEquals(1, resultat.getEcrituresDesequilibrees().size());
+        assertEquals("PC-2", resultat.getEcrituresDesequilibrees().get(0).getReferencePiece());
     }
 }

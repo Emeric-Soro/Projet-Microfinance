@@ -30,7 +30,7 @@ public class TarificationParametreController {
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Cache invalide avec succes")
     })
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN)")
     @PostMapping("/cache/refresh")
     @AuditLog(action = "TARIFF_CACHE_REFRESH", resource = "TARIFICATION_PARAMETRE")
     public ResponseEntity<Void> rafraichirCache() {

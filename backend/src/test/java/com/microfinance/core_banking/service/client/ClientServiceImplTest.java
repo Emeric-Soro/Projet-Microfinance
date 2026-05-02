@@ -8,6 +8,9 @@ import com.microfinance.core_banking.entity.StatutKycClient;
 import com.microfinance.core_banking.entity.TypePieceIdentite;
 import com.microfinance.core_banking.repository.client.ClientRepository;
 import com.microfinance.core_banking.repository.client.StatutClientRepository;
+import com.microfinance.core_banking.service.security.AuthenticatedUserService;
+import com.microfinance.core_banking.service.extension.ConformiteExtensionService;
+import com.microfinance.core_banking.service.extension.AmlService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,6 +34,15 @@ class ClientServiceImplTest {
 
     @Mock
     private StatutClientRepository statutClientRepository;
+
+    @Mock
+    private AuthenticatedUserService authenticatedUserService;
+
+    @Mock
+    private ConformiteExtensionService conformiteExtensionService;
+
+    @Mock
+    private AmlService amlService;
 
     @InjectMocks
     private ClientServiceImpl clientService;

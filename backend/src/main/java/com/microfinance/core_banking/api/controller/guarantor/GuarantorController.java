@@ -44,7 +44,7 @@ public class GuarantorController {
             @ApiResponse(responseCode = "409", description = "Conflit métier")
     })
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<GuarantorResponseDTO> creerGuarantor(
             @Valid @RequestBody GuarantorRequestDTO requestDTO) {
         GuarantorResponseDTO response = guarantorService.create(requestDTO);
@@ -60,7 +60,7 @@ public class GuarantorController {
             @ApiResponse(responseCode = "400", description = "Paramètres de pagination invalides")
     })
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<Page<GuarantorResponseDTO>> listerGuarantors(@ParameterObject Pageable pageable) {
         Page<GuarantorResponseDTO> page = guarantorService.getAll(pageable);
         return ResponseEntity.ok(page);
@@ -75,7 +75,7 @@ public class GuarantorController {
             @ApiResponse(responseCode = "404", description = "Guarantor introuvable")
     })
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<GuarantorResponseDTO> obtenirDetailsGuarantor(@PathVariable Long id) {
         GuarantorResponseDTO response = guarantorService.getById(id);
         return ResponseEntity.ok(response);
@@ -91,7 +91,7 @@ public class GuarantorController {
             @ApiResponse(responseCode = "404", description = "Guarantor introuvable")
     })
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<GuarantorResponseDTO> mettreAJourGuarantor(
             @PathVariable Long id,
             @Valid @RequestBody GuarantorRequestDTO requestDTO) {
@@ -108,7 +108,7 @@ public class GuarantorController {
             @ApiResponse(responseCode = "404", description = "Guarantor introuvable")
     })
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<Void> supprimerGuarantor(@PathVariable Long id) {
         guarantorService.delete(id);
         return ResponseEntity.noContent().build();

@@ -44,7 +44,7 @@ public class BeneficiaryController {
             @ApiResponse(responseCode = "409", description = "Conflit métier")
     })
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<BeneficiaryResponseDTO> creerBeneficiaire(
             @Valid @RequestBody BeneficiaryRequestDTO requestDTO) {
         BeneficiaryResponseDTO response = beneficiaryService.create(requestDTO);
@@ -60,7 +60,7 @@ public class BeneficiaryController {
             @ApiResponse(responseCode = "400", description = "Paramètres de pagination invalides")
     })
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<Page<BeneficiaryResponseDTO>> listerBeneficiaires(@ParameterObject Pageable pageable) {
         Page<BeneficiaryResponseDTO> page = beneficiaryService.getAll(pageable);
         return ResponseEntity.ok(page);
@@ -75,7 +75,7 @@ public class BeneficiaryController {
             @ApiResponse(responseCode = "404", description = "Beneficiary introuvable")
     })
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<BeneficiaryResponseDTO> obtenirDetailsBeneficiaire(@PathVariable Long id) {
         BeneficiaryResponseDTO response = beneficiaryService.getById(id);
         return ResponseEntity.ok(response);
@@ -91,7 +91,7 @@ public class BeneficiaryController {
             @ApiResponse(responseCode = "404", description = "Beneficiary introuvable")
     })
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<BeneficiaryResponseDTO> mettreAJourBeneficiaire(
             @PathVariable Long id,
             @Valid @RequestBody BeneficiaryRequestDTO requestDTO) {
@@ -108,7 +108,7 @@ public class BeneficiaryController {
             @ApiResponse(responseCode = "404", description = "Beneficiary introuvable")
     })
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<Void> supprimerBeneficiaire(@PathVariable Long id) {
         beneficiaryService.delete(id);
         return ResponseEntity.noContent().build();

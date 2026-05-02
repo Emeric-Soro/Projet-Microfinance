@@ -24,7 +24,7 @@ public class SystemAuditLogController {
 
     @GetMapping
     @Operation(summary = "Get all audit logs with pagination")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'SECURITY_AUDIT_VIEW')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_AUDIT_VIEW)")
     public ResponseEntity<Page<SystemAuditLogResponseDTO>> getAllAuditLogs(@ParameterObject Pageable pageable) {
         Page<SystemAuditLogResponseDTO> response = auditLogService.getAuditLogs(pageable).map(auditLogMapper::toDto);
         return ResponseEntity.ok(response);
@@ -32,7 +32,7 @@ public class SystemAuditLogController {
 
     @GetMapping("/user/{userName}")
     @Operation(summary = "Get audit logs by user with pagination")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'SECURITY_AUDIT_VIEW')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_AUDIT_VIEW)")
     public ResponseEntity<Page<SystemAuditLogResponseDTO>> getAuditLogsByUser(
             @PathVariable String userName, 
             @ParameterObject Pageable pageable) {

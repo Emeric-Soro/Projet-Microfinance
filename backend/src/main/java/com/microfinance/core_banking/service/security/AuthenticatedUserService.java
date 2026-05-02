@@ -10,10 +10,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.microfinance.core_banking.service.security.SecurityConstants.*;
+
 @Service
 public class AuthenticatedUserService {
 
-    private static final Set<String> GLOBAL_SCOPE_ROLES = Set.of("ADMIN", "SUPERVISEUR");
+    private static final Set<String> GLOBAL_SCOPE_ROLES = Set.of(ROLE_ADMIN, ROLE_SUPERVISEUR);
 
     public Optional<Utilisateur> getCurrentUserOptional() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

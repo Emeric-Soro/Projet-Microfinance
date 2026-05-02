@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -29,6 +30,9 @@ public interface CompteRepository extends JpaRepository<Compte, Long> {
 
 	// Liste paginee des comptes d'un client.
 	Page<Compte> findByClient_IdClient(Long idClient, Pageable pageable);
+
+	// Liste non paginee des comptes d'un client.
+	List<Compte> findByClient_IdClient(Long idClient);
 
 	// Liste paginee des comptes par type.
 	Page<Compte> findByTypeCompte_IdTypeCompte(Long idTypeCompte, Pageable pageable);

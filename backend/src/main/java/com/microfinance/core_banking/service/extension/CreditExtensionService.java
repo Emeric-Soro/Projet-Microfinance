@@ -1,5 +1,16 @@
 package com.microfinance.core_banking.service.extension;
 
+import com.microfinance.core_banking.dto.request.extension.CalculerProvisionsRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerDemandeCreditRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerProduitCreditRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.DebloquerCreditRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.DeciderDemandeCreditRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.DetecterImpayesRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.EnregistrerGarantieRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.PassagePerteCreditRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.ReportEcheanceCreditRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.RembourserCreditRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.RestructurationCreditRequestDTO;
 import com.microfinance.core_banking.entity.Agence;
 import com.microfinance.core_banking.entity.Client;
 import com.microfinance.core_banking.entity.Credit;
@@ -32,7 +43,6 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -83,41 +93,41 @@ public class CreditExtensionService {
     }
 
     @Transactional
-    public ProduitCredit creerProduit(Map<String, Object> payload) {
+    public ProduitCredit creerProduit(CreerProduitCreditRequestDTO dto) {
         ProduitCredit produit = new ProduitCredit();
-        produit.setCodeProduit(required(payload, "codeProduit"));
-        produit.setLibelle(required(payload, "libelle"));
-        produit.setCategorie(required(payload, "categorie"));
-        produit.setTauxAnnuel(decimal(payload, "tauxAnnuel"));
-        produit.setDureeMinMois(integer(payload, "dureeMinMois"));
-        produit.setDureeMaxMois(integer(payload, "dureeMaxMois"));
-        produit.setMontantMin(decimal(payload, "montantMin"));
-        produit.setMontantMax(decimal(payload, "montantMax"));
-        produit.setFraisDossier(optionalDecimal(payload, "fraisDossier"));
-        produit.setAssuranceTaux(optionalDecimal(payload, "assuranceTaux"));
-        produit.setStatut(defaulted(payload, "statut", "ACTIF"));
+        produit.setCodeProduit(dto.getCodeProduit());
+        produit.setLibelle(dto.getLibelle());
+        produit.setCategorie(dto.getCategorie());
+        produit.setTauxAnnuel(dto.getTauxAnnuel());
+        produit.setDureeMinMois(dto.getDureeMinMois());
+        produit.setDureeMaxMois(dto.getDureeMaxMois());
+        produit.setMontantMin(dto.getMontantMin());
+        produit.setMontantMax(dto.getMontantMax());
+        produit.setFraisDossier(dto.getFraisDossier());
+        produit.setAssuranceTaux(dto.getAssuranceTaux());
+        produit.setStatut(dto.getStatut() != null ? dto.getStatut() : "ACTIF");
         return produitCreditRepository.save(produit);
     }
 
     @Transactional
-    public DemandeCredit creerDemande(Map<String, Object> payload) {
-        Client client = clientRepository.findById(longValue(payload, "idClient"))
+    public DemandeCredit creerDemande(CreerDemandeCreditRequestDTO dto) {
+        Client client = clientRepository.findById(dto.getIdClient())
                 .orElseThrow(() -> new EntityNotFoundException("Client introuvable"));
         verifierPerimetreClient(client);
-        ProduitCredit produit = produitCreditRepository.findById(longValue(payload, "idProduitCredit"))
+        ProduitCredit produit = produitCreditRepository.findById(dto.getIdProduitCredit())
                 .orElseThrow(() -> new EntityNotFoundException("Produit de credit introuvable"));
 
         DemandeCredit demande = new DemandeCredit();
         demande.setReferenceDossier("DCR-" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase());
         demande.setClient(client);
         demande.setProduitCredit(produit);
-        demande.setMontantDemande(decimal(payload, "montantDemande"));
-        demande.setDureeMois(integer(payload, "dureeMois"));
-        demande.setObjetCredit((String) payload.get("objetCredit"));
-        demande.setScoreCredit(payload.get("scoreCredit") == null ? null : integer(payload, "scoreCredit"));
-        demande.setStatut(defaulted(payload, "statut", "SOUMISE"));
-        if (payload.get("idAgence") != null) {
-            Agence agence = agenceRepository.findById(longValue(payload, "idAgence"))
+        demande.setMontantDemande(dto.getMontantDemande());
+        demande.setDureeMois(dto.getDureeMois());
+        demande.setObjetCredit(dto.getObjetCredit());
+        demande.setScoreCredit(dto.getScoreCredit());
+        demande.setStatut(dto.getStatut() != null ? dto.getStatut() : "SOUMISE");
+        if (dto.getIdAgence() != null) {
+            Agence agence = agenceRepository.findById(dto.getIdAgence())
                     .orElseThrow(() -> new EntityNotFoundException("Agence introuvable"));
             demande.setAgence(agence);
         }
@@ -125,19 +135,19 @@ public class CreditExtensionService {
     }
 
     @Transactional
-    public DemandeCredit deciderDemande(Long idDemande, Map<String, Object> payload) {
+    public DemandeCredit deciderDemande(Long idDemande, DeciderDemandeCreditRequestDTO dto) {
         DemandeCredit demande = demandeCreditRepository.findById(idDemande)
                 .orElseThrow(() -> new EntityNotFoundException("Demande de credit introuvable"));
         verifierPerimetreClient(demande.getClient());
-        demande.setStatut(required(payload, "statut"));
-        demande.setAvisComite((String) payload.get("avisComite"));
-        demande.setDecisionFinale((String) payload.get("decisionFinale"));
+        demande.setStatut(dto.getStatut());
+        demande.setAvisComite(dto.getAvisComite());
+        demande.setDecisionFinale(dto.getDecisionFinale());
         demande.setDateDecision(LocalDateTime.now());
         return demandeCreditRepository.save(demande);
     }
 
     @Transactional
-    public Credit debloquerCredit(Long idDemande, Map<String, Object> payload) {
+    public Credit debloquerCredit(Long idDemande, DebloquerCreditRequestDTO dto) {
         DemandeCredit demande = demandeCreditRepository.findById(idDemande)
                 .orElseThrow(() -> new EntityNotFoundException("Demande de credit introuvable"));
         verifierPerimetreClient(demande.getClient());
@@ -145,18 +155,18 @@ public class CreditExtensionService {
             throw new IllegalStateException("La demande doit etre approuvee avant de creer un credit");
         }
 
-        BigDecimal montantAccorde = payload.get("montantAccorde") == null
-                ? demande.getMontantDemande()
-                : decimal(payload, "montantAccorde");
+        BigDecimal montantAccorde = dto.getMontantAccorde() != null
+                ? dto.getMontantAccorde()
+                : demande.getMontantDemande();
         BigDecimal fraisDossier = safe(demande.getProduitCredit().getFraisDossier());
         BigDecimal assuranceInitiale = montantAccorde.multiply(safe(demande.getProduitCredit().getAssuranceTaux()))
                 .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
         BigDecimal fraisPreleves = fraisDossier.add(assuranceInitiale);
         BigDecimal mensualite = calculerMensualite(montantAccorde, demande.getProduitCredit().getTauxAnnuel(), demande.getDureeMois());
-        String numCompteDestination = required(payload, "numCompteDestination");
-        Long idUtilisateurOperateur = payload.get("idUtilisateurOperateur") == null
-                ? authenticatedUserService.getCurrentUserOrThrow().getIdUser()
-                : Long.valueOf(payload.get("idUtilisateurOperateur").toString());
+        String numCompteDestination = dto.getNumCompteDestination();
+        Long idUtilisateurOperateur = dto.getIdUtilisateurOperateur() != null
+                ? dto.getIdUtilisateurOperateur()
+                : authenticatedUserService.getCurrentUserOrThrow().getIdUser();
         var transactionDeblocage = transactionService.posterDepotSysteme(
                 numCompteDestination,
                 montantAccorde,
@@ -176,7 +186,7 @@ public class CreditExtensionService {
         credit.setMensualite(mensualite);
         credit.setCapitalRestantDu(montantAccorde);
         credit.setFraisPreleves(fraisPreleves);
-        credit.setStatut(defaulted(payload, "statut", "ACTIF"));
+        credit.setStatut(dto.getStatut() != null ? dto.getStatut() : "ACTIF");
         credit.setDateDeblocage(LocalDateTime.now());
         credit.setDateProchaineEcheance(LocalDate.now().plusMonths(1));
         credit.setReferenceTransactionDeblocage(transactionDeblocage.getReferenceUnique());
@@ -213,26 +223,26 @@ public class CreditExtensionService {
     }
 
     @Transactional
-    public GarantieCredit enregistrerGarantie(Long idCredit, Map<String, Object> payload) {
+    public GarantieCredit enregistrerGarantie(Long idCredit, EnregistrerGarantieRequestDTO dto) {
         Credit credit = creditRepository.findById(idCredit)
                 .orElseThrow(() -> new EntityNotFoundException("Credit introuvable"));
         verifierPerimetreClient(credit.getClient());
         GarantieCredit garantie = new GarantieCredit();
         garantie.setCredit(credit);
-        garantie.setTypeGarantie(required(payload, "typeGarantie"));
-        garantie.setDescription(required(payload, "description"));
-        garantie.setValeur(decimal(payload, "valeur"));
-        garantie.setValeurNantie(payload.get("valeurNantie") == null ? garantie.getValeur() : decimal(payload, "valeurNantie"));
-        garantie.setStatut(defaulted(payload, "statut", "ACTIVE"));
+        garantie.setTypeGarantie(dto.getTypeGarantie());
+        garantie.setDescription(dto.getDescription());
+        garantie.setValeur(dto.getValeur());
+        garantie.setValeurNantie(dto.getValeurNantie() != null ? dto.getValeurNantie() : garantie.getValeur());
+        garantie.setStatut(dto.getStatut() != null ? dto.getStatut() : "ACTIVE");
         return garantieCreditRepository.save(garantie);
     }
 
     @Transactional
-    public RemboursementCredit rembourserCredit(Long idCredit, Map<String, Object> payload) {
+    public RemboursementCredit rembourserCredit(Long idCredit, RembourserCreditRequestDTO dto) {
         Credit credit = creditRepository.findById(idCredit)
                 .orElseThrow(() -> new EntityNotFoundException("Credit introuvable"));
         verifierPerimetreClient(credit.getClient());
-        BigDecimal montant = decimal(payload, "montant");
+        BigDecimal montant = dto.getMontant();
         List<EcheanceCredit> echeances = echeanceCreditRepository.findByCredit_IdCreditOrderByDateEcheanceAsc(idCredit).stream()
                 .filter(echeance -> !"REGLEE".equalsIgnoreCase(echeance.getStatut()))
                 .toList();
@@ -241,10 +251,10 @@ public class CreditExtensionService {
         }
 
         AllocationRemboursement allocation = calculerAllocation(echeances, montant);
-        String referenceTransaction = defaulted(payload, "referenceTransaction", "CRPAY-" + UUID.randomUUID().toString().replace("-", "").substring(0, 14).toUpperCase());
+        String referenceTransaction = dto.getReferenceTransaction() != null ? dto.getReferenceTransaction() : "CRPAY-" + UUID.randomUUID().toString().replace("-", "").substring(0, 14).toUpperCase();
         RemboursementCredit remboursement = new RemboursementCredit();
         remboursement.setCredit(credit);
-        remboursement.setReferenceRemboursement(defaulted(payload, "referenceRemboursement", "REM-" + UUID.randomUUID().toString().replace("-", "").substring(0, 14).toUpperCase()));
+        remboursement.setReferenceRemboursement(dto.getReferenceRemboursement() != null ? dto.getReferenceRemboursement() : "REM-" + UUID.randomUUID().toString().replace("-", "").substring(0, 14).toUpperCase());
         remboursement.setMontant(montant);
         remboursement.setCapitalPaye(allocation.capitalPaye());
         remboursement.setInteretPaye(allocation.interetPaye());
@@ -254,11 +264,11 @@ public class CreditExtensionService {
         remboursement.setStatut("COMPTABILISE");
         remboursementCreditRepository.save(remboursement);
 
-        Long idUtilisateurOperateur = payload.get("idUtilisateurOperateur") == null
-                ? authenticatedUserService.getCurrentUserOrThrow().getIdUser()
-                : Long.valueOf(payload.get("idUtilisateurOperateur").toString());
+        Long idUtilisateurOperateur = dto.getIdUtilisateurOperateur() != null
+                ? dto.getIdUtilisateurOperateur()
+                : authenticatedUserService.getCurrentUserOrThrow().getIdUser();
         transactionService.posterRetraitSysteme(
-                required(payload, "numCompteSource"),
+                dto.getNumCompteSource(),
                 montant,
                 BigDecimal.ZERO,
                 idUtilisateurOperateur,
@@ -266,7 +276,7 @@ public class CreditExtensionService {
                 "CREDIT_REMBOURSEMENT"
         );
 
-        LocalDate dateRegularisation = payload.get("datePaiement") == null ? LocalDate.now() : LocalDate.parse(payload.get("datePaiement").toString());
+        LocalDate dateRegularisation = dto.getDatePaiement() != null ? dto.getDatePaiement() : LocalDate.now();
         for (EcheanceCredit echeance : allocation.echeancesMaj()) {
             if (echeance.getCapitalPaye().add(echeance.getInteretPaye()).add(echeance.getAssurancePayee())
                     .compareTo(echeance.getTotalPrevu()) >= 0) {
@@ -292,8 +302,8 @@ public class CreditExtensionService {
     }
 
     @Transactional
-    public List<ImpayeCredit> detecterImpayes(Map<String, Object> payload) {
-        LocalDate dateArrete = payload.get("dateArrete") == null ? LocalDate.now() : LocalDate.parse(payload.get("dateArrete").toString());
+    public List<ImpayeCredit> detecterImpayes(DetecterImpayesRequestDTO dto) {
+        LocalDate dateArrete = dto.getDateArrete() != null ? dto.getDateArrete() : LocalDate.now();
         List<ImpayeCredit> resultats = new java.util.ArrayList<>();
         for (Credit credit : listerCredits()) {
             for (EcheanceCredit echeance : echeanceCreditRepository.findByCredit_IdCreditOrderByDateEcheanceAsc(credit.getIdCredit())) {
@@ -326,9 +336,11 @@ public class CreditExtensionService {
     }
 
     @Transactional
-    public List<ProvisionCredit> calculerProvisions(Map<String, Object> payload) {
-        LocalDate dateCalcul = payload.get("dateCalcul") == null ? LocalDate.now() : LocalDate.parse(payload.get("dateCalcul").toString());
-        detecterImpayes(Map.of("dateArrete", dateCalcul.toString()));
+    public List<ProvisionCredit> calculerProvisions(CalculerProvisionsRequestDTO dto) {
+        LocalDate dateCalcul = dto.getDateCalcul() != null ? dto.getDateCalcul() : LocalDate.now();
+        DetecterImpayesRequestDTO detectDto = new DetecterImpayesRequestDTO();
+        detectDto.setDateArrete(dateCalcul);
+        detecterImpayes(detectDto);
         List<ProvisionCredit> provisions = new java.util.ArrayList<>();
         for (Credit credit : listerCredits()) {
             int retardMax = impayeCreditRepository.findByCredit_IdCreditAndStatutIgnoreCaseOrderByJoursRetardDesc(credit.getIdCredit(), "OUVERT").stream()
@@ -386,6 +398,92 @@ public class CreditExtensionService {
         return provisionCreditRepository.findByCredit_IdCreditOrderByDateCalculDesc(idCredit);
     }
 
+    @Transactional
+    public Credit restructurerCredit(Long idCredit, RestructurationCreditRequestDTO dto) {
+        Credit credit = creditRepository.findById(idCredit)
+                .orElseThrow(() -> new EntityNotFoundException("Credit introuvable"));
+        verifierPerimetreClient(credit.getClient());
+        if ("PERTE".equalsIgnoreCase(credit.getStatut())) {
+            throw new IllegalStateException("Un credit passe en perte ne peut plus etre restructure");
+        }
+
+        BigDecimal capitalRestant = credit.getCapitalRestantDu() == null ? BigDecimal.ZERO : credit.getCapitalRestantDu();
+        if (capitalRestant.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalStateException("Aucun capital restant a restructurer");
+        }
+
+        BigDecimal taux = dto.getNouveauTauxAnnuel() != null ? dto.getNouveauTauxAnnuel() : credit.getTauxAnnuel();
+        credit.setTauxAnnuel(taux);
+        credit.setDureeMois(dto.getNouvelleDureeMois());
+        credit.setMensualite(calculerMensualite(capitalRestant, taux, dto.getNouvelleDureeMois()));
+        credit.setCapitalRestantDu(capitalRestant);
+        credit.setStatut("RESTRUCTURE");
+        credit.setDateProchaineEcheance(LocalDate.now().plusMonths(1));
+
+        List<EcheanceCredit> echeances = echeanceCreditRepository.findByCredit_IdCreditOrderByNumeroEcheanceAsc(idCredit);
+        for (EcheanceCredit echeance : echeances) {
+            BigDecimal dejaPaye = echeance.getCapitalPaye().add(echeance.getInteretPaye()).add(echeance.getAssurancePayee());
+            if (dejaPaye.compareTo(BigDecimal.ZERO) == 0) {
+                echeanceCreditRepository.delete(echeance);
+            } else if (!"REGLEE".equalsIgnoreCase(echeance.getStatut())) {
+                echeance.setStatut("RESTRUCTUREE");
+                echeanceCreditRepository.save(echeance);
+            }
+        }
+
+        Credit sauvegarde = creditRepository.save(credit);
+        genererEcheancierRestructure(sauvegarde, capitalRestant, dto.getNouvelleDureeMois(), taux);
+        return sauvegarde;
+    }
+
+    @Transactional
+    public EcheanceCredit reporterEcheance(Long idCredit, Long idEcheanceCredit, ReportEcheanceCreditRequestDTO dto) {
+        Credit credit = creditRepository.findById(idCredit)
+                .orElseThrow(() -> new EntityNotFoundException("Credit introuvable"));
+        verifierPerimetreClient(credit.getClient());
+        EcheanceCredit echeance = echeanceCreditRepository.findById(idEcheanceCredit)
+                .orElseThrow(() -> new EntityNotFoundException("Echeance introuvable"));
+        if (!idCredit.equals(echeance.getCredit().getIdCredit())) {
+            throw new IllegalArgumentException("L'echeance ne correspond pas au credit cible");
+        }
+        if ("REGLEE".equalsIgnoreCase(echeance.getStatut())) {
+            throw new IllegalStateException("Une echeance deja reglee ne peut pas etre reportee");
+        }
+        if (dto.getNouvelleDateEcheance().isBefore(echeance.getDateEcheance())) {
+            throw new IllegalArgumentException("La nouvelle date d'echeance doit etre posterieure ou egale a la date actuelle");
+        }
+
+        echeance.setDateEcheance(dto.getNouvelleDateEcheance());
+        echeance.setStatut("REPORTEE");
+        echeance = echeanceCreditRepository.save(echeance);
+        credit.setDateProchaineEcheance(echeanceCreditRepository.findByCredit_IdCreditOrderByDateEcheanceAsc(idCredit).stream()
+                .filter(item -> !"REGLEE".equalsIgnoreCase(item.getStatut()))
+                .map(EcheanceCredit::getDateEcheance)
+                .min(LocalDate::compareTo)
+                .orElse(dto.getNouvelleDateEcheance()));
+        creditRepository.save(credit);
+        return echeance;
+    }
+
+    @Transactional
+    public Credit passerEnPerte(Long idCredit, PassagePerteCreditRequestDTO dto) {
+        Credit credit = creditRepository.findById(idCredit)
+                .orElseThrow(() -> new EntityNotFoundException("Credit introuvable"));
+        verifierPerimetreClient(credit.getClient());
+        List<ImpayeCredit> impayes = impayeCreditRepository.findByCredit_IdCreditAndStatutIgnoreCaseOrderByJoursRetardDesc(idCredit, "OUVERT");
+        int retardMax = impayes.stream().map(ImpayeCredit::getJoursRetard).findFirst().orElse(0);
+        if (retardMax < 180) {
+            throw new IllegalStateException("Le passage en perte exige au moins 180 jours de retard");
+        }
+
+        credit.setStatut("PERTE");
+        for (ImpayeCredit impaye : impayes) {
+            impaye.setClasseRisque("PERTE");
+            impayeCreditRepository.save(impaye);
+        }
+        return creditRepository.save(credit);
+    }
+
     private BigDecimal calculerMensualite(BigDecimal principal, BigDecimal tauxAnnuel, Integer dureeMois) {
         if (principal == null || dureeMois == null || dureeMois <= 0) {
             return BigDecimal.ZERO;
@@ -402,52 +500,36 @@ public class CreditExtensionService {
         return principal.multiply(BigDecimal.valueOf(facteur)).setScale(2, RoundingMode.HALF_UP);
     }
 
-    private String required(Map<String, Object> payload, String key) {
-        Object value = payload.get(key);
-        if (value == null || value.toString().isBlank()) {
-            throw new IllegalArgumentException("Le champ '" + key + "' est obligatoire");
-        }
-        return value.toString().trim();
-    }
-
-    private String defaulted(Map<String, Object> payload, String key, String defaultValue) {
-        Object value = payload.get(key);
-        return value == null || value.toString().isBlank() ? defaultValue : value.toString().trim();
-    }
-
-    private BigDecimal decimal(Map<String, Object> payload, String key) {
-        return new BigDecimal(required(payload, key));
-    }
-
-    private BigDecimal optionalDecimal(Map<String, Object> payload, String key) {
-        return payload.get(key) == null ? BigDecimal.ZERO : new BigDecimal(payload.get(key).toString());
-    }
-
-    private Integer integer(Map<String, Object> payload, String key) {
-        return Integer.valueOf(required(payload, key));
-    }
-
-    private Long longValue(Map<String, Object> payload, String key) {
-        return Long.valueOf(required(payload, key));
-    }
-
     private void genererEcheancier(Credit credit) {
         BigDecimal capitalRestant = credit.getMontantAccorde();
-        BigDecimal tauxMensuel = credit.getTauxAnnuel() == null
+        genererEcheancierRestructure(credit, capitalRestant, credit.getDureeMois(), credit.getTauxAnnuel());
+    }
+
+    private void genererEcheancierRestructure(Credit credit, BigDecimal capitalRestantInitial, Integer dureeMois, BigDecimal tauxAnnuel) {
+        BigDecimal capitalRestant = capitalRestantInitial;
+        BigDecimal tauxMensuel = tauxAnnuel == null
                 ? BigDecimal.ZERO
-                : credit.getTauxAnnuel().divide(BigDecimal.valueOf(12 * 100L), 10, RoundingMode.HALF_UP);
+                : tauxAnnuel.divide(BigDecimal.valueOf(12 * 100L), 10, RoundingMode.HALF_UP);
         BigDecimal assuranceMensuelle = BigDecimal.ZERO;
 
-        for (int index = 1; index <= credit.getDureeMois(); index++) {
+        int numeroDepart = echeanceCreditRepository.findByCredit_IdCreditOrderByNumeroEcheanceAsc(credit.getIdCredit()).stream()
+                .map(EcheanceCredit::getNumeroEcheance)
+                .max(Integer::compareTo)
+                .orElse(0);
+
+        for (int index = 1; index <= dureeMois; index++) {
             BigDecimal interet = capitalRestant.multiply(tauxMensuel).setScale(2, RoundingMode.HALF_UP);
             BigDecimal capital = credit.getMensualite().subtract(interet).subtract(assuranceMensuelle).setScale(2, RoundingMode.HALF_UP);
-            if (index == credit.getDureeMois()) {
+            if (index == dureeMois) {
                 capital = capitalRestant;
             }
             EcheanceCredit echeance = new EcheanceCredit();
             echeance.setCredit(credit);
-            echeance.setNumeroEcheance(index);
-            echeance.setDateEcheance(credit.getDateDeblocage().toLocalDate().plusMonths(index));
+            echeance.setNumeroEcheance(numeroDepart + index);
+            LocalDate baseDate = credit.getDateProchaineEcheance() != null
+                    ? credit.getDateProchaineEcheance().minusMonths(1)
+                    : (credit.getDateDeblocage() != null ? credit.getDateDeblocage().toLocalDate() : LocalDate.now());
+            echeance.setDateEcheance(baseDate.plusMonths(index));
             echeance.setCapitalPrevu(capital);
             echeance.setInteretPrevu(interet);
             echeance.setAssurancePrevue(assuranceMensuelle);

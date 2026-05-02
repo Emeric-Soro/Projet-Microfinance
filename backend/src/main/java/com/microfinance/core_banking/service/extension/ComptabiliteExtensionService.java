@@ -1,5 +1,22 @@
 package com.microfinance.core_banking.service.extension;
 
+import com.microfinance.core_banking.dto.request.extension.CalculerProvisionsRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.ClotureComptableRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerClasseComptableRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerCompteComptableRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerEcritureManuelleRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.DetecterImpayesRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerJournalComptableRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerSchemaComptableRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.LigneEcritureDTO;
+import com.microfinance.core_banking.dto.request.extension.TesterSchemaComptableRequestDTO;
+import com.microfinance.core_banking.dto.response.extension.ControlesComptablesResponseDTO;
+import com.microfinance.core_banking.dto.response.extension.BalanceLineDTO;
+import com.microfinance.core_banking.dto.response.extension.EcritureDesequilibreeDTO;
+import com.microfinance.core_banking.dto.response.extension.LigneSchemaTestDTO;
+import com.microfinance.core_banking.dto.response.extension.SchemaTestResponseDTO;
+import com.microfinance.core_banking.dto.response.extension.BootstrapResponseDTO;
+import com.microfinance.core_banking.dto.response.extension.LigneGrandLivreDTO;
 import com.microfinance.core_banking.entity.Agence;
 import com.microfinance.core_banking.entity.ClasseComptable;
 import com.microfinance.core_banking.entity.ClotureComptable;
@@ -99,37 +116,37 @@ public class ComptabiliteExtensionService {
     }
 
     @Transactional
-    public Map<String, Object> bootstrapReferentiel() {
+    public BootstrapResponseDTO bootstrapReferentiel() {
         bootstrapSiNecessaire();
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("classes", classeComptableRepository.count());
-        response.put("comptes", compteComptableRepository.count());
-        response.put("journaux", journalComptableRepository.count());
-        response.put("schemas", schemaComptableRepository.count());
+        BootstrapResponseDTO response = new BootstrapResponseDTO();
+        response.setClasses(classeComptableRepository.count());
+        response.setComptes(compteComptableRepository.count());
+        response.setJournaux(journalComptableRepository.count());
+        response.setSchemas(schemaComptableRepository.count());
         return response;
     }
 
     @Transactional
-    public ClasseComptable creerClasse(Map<String, Object> payload) {
+    public ClasseComptable creerClasse(CreerClasseComptableRequestDTO payload) {
         ClasseComptable classe = new ClasseComptable();
-        classe.setCodeClasse(required(payload, "codeClasse"));
-        classe.setLibelle(required(payload, "libelle"));
-        classe.setOrdreAffichage(integerOrDefault(payload, "ordreAffichage", 0));
+        classe.setCodeClasse(payload.getCodeClasse());
+        classe.setLibelle(payload.getLibelle());
+        classe.setOrdreAffichage(payload.getOrdreAffichage() != null ? payload.getOrdreAffichage() : 0);
         return classeComptableRepository.save(classe);
     }
 
     @Transactional
-    public CompteComptable creerCompte(Map<String, Object> payload) {
-        ClasseComptable classe = classeComptableRepository.findByCodeClasse(required(payload, "codeClasse"))
+    public CompteComptable creerCompte(CreerCompteComptableRequestDTO payload) {
+        ClasseComptable classe = classeComptableRepository.findByCodeClasse(payload.getCodeClasse())
                 .orElseThrow(() -> new EntityNotFoundException("Classe comptable introuvable"));
         CompteComptable compte = new CompteComptable();
-        compte.setNumeroCompte(required(payload, "numeroCompte"));
-        compte.setIntitule(required(payload, "intitule"));
-        compte.setTypeSolde(defaulted(payload, "typeSolde", "MIXTE"));
-        compte.setCompteInterne(booleanValue(payload, "compteInterne", false));
+        compte.setNumeroCompte(payload.getNumeroCompte());
+        compte.setIntitule(payload.getIntitule());
+        compte.setTypeSolde(payload.getTypeSolde() != null ? payload.getTypeSolde() : "MIXTE");
+        compte.setCompteInterne(payload.getCompteInterne() != null ? payload.getCompteInterne() : false);
         compte.setClasseComptable(classe);
-        if (payload.get("idAgence") != null) {
-            Agence agence = agenceRepository.findById(Long.valueOf(payload.get("idAgence").toString()))
+        if (payload.getIdAgence() != null) {
+            Agence agence = agenceRepository.findById(payload.getIdAgence())
                     .orElseThrow(() -> new EntityNotFoundException("Agence introuvable"));
             authenticatedUserService.assertAgencyAccess(agence.getIdAgence());
             compte.setAgence(agence);
@@ -138,53 +155,54 @@ public class ComptabiliteExtensionService {
     }
 
     @Transactional
-    public JournalComptable creerJournal(Map<String, Object> payload) {
+    public JournalComptable creerJournal(CreerJournalComptableRequestDTO payload) {
         JournalComptable journal = new JournalComptable();
-        journal.setCodeJournal(required(payload, "codeJournal"));
-        journal.setLibelle(required(payload, "libelle"));
-        journal.setTypeJournal(required(payload, "typeJournal"));
-        journal.setActif(booleanValue(payload, "actif", true));
+        journal.setCodeJournal(payload.getCodeJournal());
+        journal.setLibelle(payload.getLibelle());
+        journal.setTypeJournal(payload.getTypeJournal());
+        journal.setActif(payload.getActif() != null ? payload.getActif() : true);
         return journalComptableRepository.save(journal);
     }
 
     @Transactional
-    public SchemaComptable creerSchema(Map<String, Object> payload) {
+    public SchemaComptable creerSchema(CreerSchemaComptableRequestDTO payload) {
         SchemaComptable schema = new SchemaComptable();
-        schema.setCodeOperation(required(payload, "codeOperation"));
-        schema.setCompteDebit(required(payload, "compteDebit"));
-        schema.setCompteCredit(required(payload, "compteCredit"));
-        schema.setCompteFrais(optionalString(payload, "compteFrais"));
-        schema.setJournalCode(defaulted(payload, "journalCode", "OD"));
-        schema.setActif(booleanValue(payload, "actif", true));
+        schema.setCodeOperation(payload.getCodeOperation());
+        schema.setCompteDebit(payload.getCompteDebit());
+        schema.setCompteCredit(payload.getCompteCredit());
+        schema.setCompteFrais(payload.getCompteFrais());
+        schema.setJournalCode(payload.getJournalCode() != null ? payload.getJournalCode() : "OD");
+        schema.setActif(payload.getActif() != null ? payload.getActif() : true);
         return schemaComptableRepository.save(schema);
     }
 
     @Transactional
-    public EcritureComptable creerEcritureManuelle(Map<String, Object> payload) {
+    public EcritureComptable creerEcritureManuelle(CreerEcritureManuelleRequestDTO payload) {
         bootstrapSiNecessaire();
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> lignes = (List<Map<String, Object>>) payload.get("lignes");
+        List<LigneEcritureDTO> lignes = payload.getLignes();
         if (lignes == null || lignes.isEmpty()) {
             throw new IllegalArgumentException("Une ecriture manuelle doit contenir au moins une ligne");
         }
         List<ManualLine> manualLines = new ArrayList<>();
-        for (Map<String, Object> ligne : lignes) {
+        for (LigneEcritureDTO ligne : lignes) {
             manualLines.add(new ManualLine(
-                    required(ligne, "numeroCompte"),
-                    SensEcriture.valueOf(required(ligne, "sens").toUpperCase()),
-                    decimal(ligne, "montant"),
-                    optionalString(ligne, "referenceAuxiliaire"),
-                    optionalString(ligne, "libelleAuxiliaire")
+                    ligne.getNumeroCompte(),
+                    SensEcriture.valueOf(ligne.getSens().toUpperCase()),
+                    ligne.getMontant(),
+                    ligne.getReferenceAuxiliaire(),
+                    ligne.getLibelleAuxiliaire()
             ));
         }
+        String referencePiece = payload.getReferencePiece() != null ? payload.getReferencePiece() : "MAN-" + System.currentTimeMillis();
+        String referenceSource = payload.getReferenceSource() != null ? payload.getReferenceSource() : referencePiece;
         return enregistrerPiece(
-                defaulted(payload, "referencePiece", "MAN-" + System.currentTimeMillis()),
-                defaulted(payload, "codeJournal", "OD"),
-                payload.get("dateComptable") == null ? LocalDate.now() : LocalDate.parse(payload.get("dateComptable").toString()),
-                payload.get("dateValeur") == null ? null : LocalDate.parse(payload.get("dateValeur").toString()),
-                required(payload, "libelle"),
+                referencePiece,
+                payload.getCodeJournal() != null ? payload.getCodeJournal() : "OD",
+                payload.getDateComptable() != null ? payload.getDateComptable() : LocalDate.now(),
+                payload.getDateValeur(),
+                payload.getLibelle(),
                 "MANUELLE",
-                defaulted(payload, "referenceSource", defaulted(payload, "referencePiece", "MAN-" + System.currentTimeMillis())),
+                referenceSource,
                 manualLines
         );
     }
@@ -302,19 +320,18 @@ public class ComptabiliteExtensionService {
     }
 
     @Transactional(readOnly = true)
-    public Map<String, Object> testerSchemaComptable(Map<String, Object> payload) {
+    public SchemaTestResponseDTO testerSchemaComptable(TesterSchemaComptableRequestDTO payload) {
         bootstrapSiNecessaire();
-        SchemaComptable schema = chargerSchema(required(payload, "codeOperation"));
-        BigDecimal montant = decimal(payload, "montant");
+        SchemaComptable schema = chargerSchema(payload.getCodeOperation());
+        BigDecimal montant = payload.getMontant();
         if (montant.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Le montant de test doit etre strictement positif");
         }
-        BigDecimal frais = payload.get("frais") == null ? BigDecimal.ZERO : new BigDecimal(payload.get("frais").toString());
+        BigDecimal frais = payload.getFrais() != null ? payload.getFrais() : BigDecimal.ZERO;
         if (frais.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Les frais de test ne peuvent pas etre negatifs");
         }
 
-        // Validation des comptes references par le schema cible.
         chargerCompteComptable(schema.getCompteDebit());
         chargerCompteComptable(schema.getCompteCredit());
         if (frais.compareTo(BigDecimal.ZERO) > 0 && (schema.getCompteFrais() == null || schema.getCompteFrais().isBlank())) {
@@ -326,12 +343,12 @@ public class ComptabiliteExtensionService {
 
         List<ManualLine> lines = new ArrayList<>();
         if (frais.compareTo(BigDecimal.ZERO) > 0) {
-            lines.add(new ManualLine(schema.getCompteDebit(), SensEcriture.DEBIT, montant.add(frais), optionalString(payload, "referenceDebit"), optionalString(payload, "libelleDebit")));
-            lines.add(new ManualLine(schema.getCompteCredit(), SensEcriture.CREDIT, montant, optionalString(payload, "referenceCredit"), optionalString(payload, "libelleCredit")));
-            lines.add(new ManualLine(schema.getCompteFrais(), SensEcriture.CREDIT, frais, optionalString(payload, "referenceFrais"), optionalString(payload, "libelleFrais")));
+            lines.add(new ManualLine(schema.getCompteDebit(), SensEcriture.DEBIT, montant.add(frais), payload.getReferenceDebit(), payload.getLibelleDebit()));
+            lines.add(new ManualLine(schema.getCompteCredit(), SensEcriture.CREDIT, montant, payload.getReferenceCredit(), payload.getLibelleCredit()));
+            lines.add(new ManualLine(schema.getCompteFrais(), SensEcriture.CREDIT, frais, payload.getReferenceFrais(), payload.getLibelleFrais()));
         } else {
-            lines.add(new ManualLine(schema.getCompteDebit(), SensEcriture.DEBIT, montant, optionalString(payload, "referenceDebit"), optionalString(payload, "libelleDebit")));
-            lines.add(new ManualLine(schema.getCompteCredit(), SensEcriture.CREDIT, montant, optionalString(payload, "referenceCredit"), optionalString(payload, "libelleCredit")));
+            lines.add(new ManualLine(schema.getCompteDebit(), SensEcriture.DEBIT, montant, payload.getReferenceDebit(), payload.getLibelleDebit()));
+            lines.add(new ManualLine(schema.getCompteCredit(), SensEcriture.CREDIT, montant, payload.getReferenceCredit(), payload.getLibelleCredit()));
         }
         validerPieceEquilibree(lines);
 
@@ -344,30 +361,30 @@ public class ComptabiliteExtensionService {
                 .map(ManualLine::montant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        List<Map<String, Object>> lignes = lines.stream().map(line -> {
-            Map<String, Object> item = new LinkedHashMap<>();
-            item.put("numeroCompte", line.numeroCompte());
-            item.put("sens", line.sens().name());
-            item.put("montant", line.montant());
-            item.put("referenceAuxiliaire", line.referenceAuxiliaire());
-            item.put("libelleAuxiliaire", line.libelleAuxiliaire());
+        List<LigneSchemaTestDTO> lignes = lines.stream().map(line -> {
+            LigneSchemaTestDTO item = new LigneSchemaTestDTO();
+            item.setNumeroCompte(line.numeroCompte());
+            item.setSens(line.sens().name());
+            item.setMontant(line.montant());
+            item.setReferenceAuxiliaire(line.referenceAuxiliaire());
+            item.setLibelleAuxiliaire(line.libelleAuxiliaire());
             return item;
         }).toList();
 
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("codeOperation", schema.getCodeOperation());
-        response.put("journalCode", schema.getJournalCode());
-        response.put("montantOperation", montant);
-        response.put("frais", frais);
-        response.put("totalDebit", totalDebit);
-        response.put("totalCredit", totalCredit);
-        response.put("equilibree", totalDebit.compareTo(totalCredit) == 0);
-        response.put("lignes", lignes);
+        SchemaTestResponseDTO response = new SchemaTestResponseDTO();
+        response.setCodeOperation(schema.getCodeOperation());
+        response.setJournalCode(schema.getJournalCode());
+        response.setMontantOperation(montant);
+        response.setFrais(frais);
+        response.setTotalDebit(totalDebit);
+        response.setTotalCredit(totalCredit);
+        response.setEquilibree(totalDebit.compareTo(totalCredit) == 0);
+        response.setLignes(lignes);
         return response;
     }
 
     @Transactional(readOnly = true)
-    public Map<String, Object> controlesComptables(LocalDate dateDebut, LocalDate dateFin) {
+    public ControlesComptablesResponseDTO controlesComptables(LocalDate dateDebut, LocalDate dateFin) {
         LocalDate debut = dateDebut == null ? LocalDate.now().minusMonths(1) : dateDebut;
         LocalDate fin = dateFin == null ? LocalDate.now() : dateFin;
         List<EcritureComptable> ecritures = ecritureComptableRepository.findByDateComptableBetween(debut, fin);
@@ -390,7 +407,7 @@ public class ComptabiliteExtensionService {
         }
 
         int ecrituresSansLignes = 0;
-        List<Map<String, Object>> ecrituresDesequilibrees = new ArrayList<>();
+        List<EcritureDesequilibreeDTO> ecrituresDesequilibrees = new ArrayList<>();
         for (EcritureComptable ecriture : ecritures) {
             Long idEcriture = ecriture.getIdEcritureComptable();
             BigDecimal debit = debitParEcriture.getOrDefault(idEcriture, BigDecimal.ZERO);
@@ -400,99 +417,99 @@ public class ComptabiliteExtensionService {
                 continue;
             }
             if (debit.compareTo(credit) != 0) {
-                Map<String, Object> anomalie = new LinkedHashMap<>();
-                anomalie.put("idEcritureComptable", idEcriture);
-                anomalie.put("referencePiece", ecriture.getReferencePiece());
-                anomalie.put("dateComptable", ecriture.getDateComptable());
-                anomalie.put("debit", debit);
-                anomalie.put("credit", credit);
-                anomalie.put("ecart", debit.subtract(credit));
+                EcritureDesequilibreeDTO anomalie = new EcritureDesequilibreeDTO();
+                anomalie.setIdEcritureComptable(idEcriture);
+                anomalie.setReferencePiece(ecriture.getReferencePiece());
+                anomalie.setDateComptable(ecriture.getDateComptable());
+                anomalie.setDebit(debit);
+                anomalie.setCredit(credit);
+                anomalie.setEcart(debit.subtract(credit));
                 ecrituresDesequilibrees.add(anomalie);
             }
         }
 
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("dateDebut", debut);
-        response.put("dateFin", fin);
-        response.put("totalEcritures", ecritures.size());
-        response.put("totalLignes", lignes.size());
-        response.put("totalDebit", totalDebit);
-        response.put("totalCredit", totalCredit);
-        response.put("equilibreGlobal", totalDebit.compareTo(totalCredit) == 0);
-        response.put("ecrituresSansLignes", ecrituresSansLignes);
-        response.put("ecrituresDesequilibrees", ecrituresDesequilibrees);
+        ControlesComptablesResponseDTO response = new ControlesComptablesResponseDTO();
+        response.setDateDebut(debut);
+        response.setDateFin(fin);
+        response.setTotalEcritures(ecritures.size());
+        response.setTotalLignes(lignes.size());
+        response.setTotalDebit(totalDebit);
+        response.setTotalCredit(totalCredit);
+        response.setEquilibreGlobal(totalDebit.compareTo(totalCredit) == 0);
+        response.setEcrituresSansLignes(ecrituresSansLignes);
+        response.setEcrituresDesequilibrees(ecrituresDesequilibrees);
         return response;
     }
 
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> consulterGrandLivre(String numeroCompte, LocalDate dateDebut, LocalDate dateFin) {
+    public List<LigneGrandLivreDTO> consulterGrandLivre(String numeroCompte, LocalDate dateDebut, LocalDate dateFin) {
         bootstrapSiNecessaire();
         LocalDate debut = dateDebut == null ? LocalDate.now().minusMonths(1) : dateDebut;
         LocalDate fin = dateFin == null ? LocalDate.now() : dateFin;
         List<LigneEcritureComptable> lignes = ligneEcritureComptableRepository
                 .findByCompteComptable_NumeroCompteAndEcritureComptable_DateComptableBetweenOrderByEcritureComptable_DateComptableAsc(numeroCompte, debut, fin);
         BigDecimal solde = BigDecimal.ZERO;
-        List<Map<String, Object>> response = new ArrayList<>();
+        List<LigneGrandLivreDTO> response = new ArrayList<>();
         for (LigneEcritureComptable ligne : lignes) {
             BigDecimal variation = "DEBIT".equalsIgnoreCase(ligne.getSens()) ? ligne.getMontant() : ligne.getMontant().negate();
             solde = solde.add(variation);
-            Map<String, Object> item = new LinkedHashMap<>();
-            item.put("dateComptable", ligne.getEcritureComptable().getDateComptable());
-            item.put("referencePiece", ligne.getEcritureComptable().getReferencePiece());
-            item.put("libelle", ligne.getEcritureComptable().getLibelle());
-            item.put("sens", ligne.getSens());
-            item.put("montant", ligne.getMontant());
-            item.put("solde", solde);
-            item.put("sourceType", ligne.getEcritureComptable().getSourceType());
-            item.put("sourceReference", ligne.getEcritureComptable().getSourceReference());
+            LigneGrandLivreDTO item = new LigneGrandLivreDTO();
+            item.setDateComptable(ligne.getEcritureComptable().getDateComptable());
+            item.setReferencePiece(ligne.getEcritureComptable().getReferencePiece());
+            item.setLibelle(ligne.getEcritureComptable().getLibelle());
+            item.setSens(ligne.getSens());
+            item.setMontant(ligne.getMontant());
+            item.setSolde(solde);
+            item.setSourceType(ligne.getEcritureComptable().getSourceType());
+            item.setSourceReference(ligne.getEcritureComptable().getSourceReference());
             response.add(item);
         }
         return response;
     }
 
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> consulterBalance(LocalDate dateDebut, LocalDate dateFin) {
+    public List<BalanceLineDTO> consulterBalance(LocalDate dateDebut, LocalDate dateFin) {
         bootstrapSiNecessaire();
         LocalDate debut = dateDebut == null ? LocalDate.now().minusMonths(1) : dateDebut;
         LocalDate fin = dateFin == null ? LocalDate.now() : dateFin;
-        Map<String, Map<String, Object>> agregats = new LinkedHashMap<>();
+        Map<String, BalanceLineDTO> agregats = new LinkedHashMap<>();
         for (LigneEcritureComptable ligne : ligneEcritureComptableRepository.findByEcritureComptable_DateComptableBetween(debut, fin)) {
             String numeroCompte = ligne.getCompteComptable().getNumeroCompte();
-            Map<String, Object> agregat = agregats.computeIfAbsent(numeroCompte, key -> {
-                Map<String, Object> initial = new LinkedHashMap<>();
-                initial.put("numeroCompte", key);
-                initial.put("intitule", ligne.getCompteComptable().getIntitule());
-                initial.put("debit", BigDecimal.ZERO);
-                initial.put("credit", BigDecimal.ZERO);
-                initial.put("solde", BigDecimal.ZERO);
-                return initial;
+            BalanceLineDTO agregat = agregats.computeIfAbsent(numeroCompte, key -> {
+                BalanceLineDTO dto = new BalanceLineDTO();
+                dto.setNumeroCompte(key);
+                dto.setIntitule(ligne.getCompteComptable().getIntitule());
+                dto.setDebit(BigDecimal.ZERO);
+                dto.setCredit(BigDecimal.ZERO);
+                dto.setSolde(BigDecimal.ZERO);
+                return dto;
             });
-            BigDecimal debit = (BigDecimal) agregat.get("debit");
-            BigDecimal credit = (BigDecimal) agregat.get("credit");
+            BigDecimal debit = agregat.getDebit();
+            BigDecimal credit = agregat.getCredit();
             if ("DEBIT".equalsIgnoreCase(ligne.getSens())) {
                 debit = debit.add(ligne.getMontant());
             } else {
                 credit = credit.add(ligne.getMontant());
             }
-            agregat.put("debit", debit);
-            agregat.put("credit", credit);
-            agregat.put("solde", debit.subtract(credit));
+            agregat.setDebit(debit);
+            agregat.setCredit(credit);
+            agregat.setSolde(debit.subtract(credit));
         }
         return new ArrayList<>(agregats.values());
     }
 
     @Transactional
-    public ClotureComptable cloturerPeriode(Map<String, Object> payload) {
-        LocalDate dateDebut = payload.get("dateDebut") == null ? LocalDate.now() : LocalDate.parse(payload.get("dateDebut").toString());
-        LocalDate dateFin = payload.get("dateFin") == null ? LocalDate.now() : LocalDate.parse(payload.get("dateFin").toString());
+    public ClotureComptable cloturerPeriode(ClotureComptableRequestDTO payload) {
+        LocalDate dateDebut = payload.getDateDebut() != null ? payload.getDateDebut() : LocalDate.now();
+        LocalDate dateFin = payload.getDateFin() != null ? payload.getDateFin() : LocalDate.now();
         if (dateFin.isBefore(dateDebut)) {
             throw new IllegalArgumentException("La date de fin doit etre posterieure ou egale a la date de debut");
         }
         if (transactionRepository.countByStatutOperation(StatutOperation.EN_ATTENTE) > 0) {
             throw new IllegalStateException("Impossible de cloturer tant que des transactions sont encore en attente");
         }
-        Map<String, Object> controles = controlesComptables(dateDebut, dateFin);
-        if (!Boolean.TRUE.equals(controles.get("equilibreGlobal"))) {
+        ControlesComptablesResponseDTO controles = controlesComptables(dateDebut, dateFin);
+        if (!Boolean.TRUE.equals(controles.getEquilibreGlobal())) {
             throw new IllegalStateException("Impossible de cloturer une periode comptable desequilibree");
         }
 
@@ -503,26 +520,26 @@ public class ComptabiliteExtensionService {
                 );
         List<ProvisionCredit> provisions = creditExtensionServiceProvider.getIfAvailable(() -> null) == null
                 ? List.of()
-                : creditExtensionServiceProvider.getObject().calculerProvisions(Map.of("dateCalcul", dateFin.toString()));
+                : creditExtensionServiceProvider.getObject().calculerProvisions(new CalculerProvisionsRequestDTO(dateFin));
         List<?> impayes = creditExtensionServiceProvider.getIfAvailable(() -> null) == null
                 ? List.of()
-                : creditExtensionServiceProvider.getObject().detecterImpayes(Map.of("dateArrete", dateFin.toString()));
+                : creditExtensionServiceProvider.getObject().detecterImpayes(new DetecterImpayesRequestDTO(dateFin));
         Map<String, Object> reglementExterne = paiementExterneServiceProvider.getIfAvailable(() -> null) == null
                 ? Map.of("mobileMoneyReglees", 0, "ordresCompenses", 0)
                 : paiementExterneServiceProvider.getObject().traiterReglementFinDeJournee(dateFin.plusDays(1).atStartOfDay().minusSeconds(1));
 
         ClotureComptable cloture = new ClotureComptable();
-        cloture.setTypeCloture(defaulted(payload, "typeCloture", "JOURNALIERE"));
+        cloture.setTypeCloture(payload.getTypeCloture() != null ? payload.getTypeCloture() : "JOURNALIERE");
         cloture.setDateDebut(dateDebut);
         cloture.setDateFin(dateFin);
-        cloture.setStatut(defaulted(payload, "statut", "TERMINEE"));
+        cloture.setStatut(payload.getStatut() != null ? payload.getStatut() : "TERMINEE");
         String commentaireTechnique = "ecritures=" + ecritureComptableRepository.countByDateComptableBetween(dateDebut, dateFin)
                 + ", impayes=" + impayes.size()
                 + ", provisions=" + provisions.size()
                 + ", agiosPreleves=" + agiosPreleves.size()
                 + ", reglementsMm=" + reglementExterne.getOrDefault("mobileMoneyReglees", 0)
                 + ", ordresCompenses=" + reglementExterne.getOrDefault("ordresCompenses", 0);
-        String commentaireMetier = optionalString(payload, "commentaire");
+        String commentaireMetier = payload.getCommentaire();
         cloture.setCommentaire(commentaireMetier == null ? commentaireTechnique : commentaireMetier + " | " + commentaireTechnique);
         cloture.setTotalEcritures((int) ecritureComptableRepository.countByDateComptableBetween(dateDebut, dateFin));
         return clotureComptableRepository.save(cloture);
@@ -681,7 +698,6 @@ public class ComptabiliteExtensionService {
         if (manualLines == null || manualLines.isEmpty()) {
             throw new IllegalArgumentException("Une piece comptable doit contenir des lignes");
         }
-        // Map ManualLine to BalanceLine DTOs and delegate to the dedicated service
         List<BalanceLine> balanceLines = manualLines.stream()
                 .map(ml -> new BalanceLine(
                         ml.numeroCompte(),
@@ -750,6 +766,16 @@ public class ComptabiliteExtensionService {
         ensureSchema("CHEQUE_ENCAISSEMENT", "273000", "251000", "701300", "PAY");
         ensureSchema("MONETIQUE_REGLEMENT", "251000", "273000", "701300", "PAY");
         ensureSchema("PROVISION_CREDIT", "681000", "281000", null, "OD");
+
+        ensureCompte("579000", "Caisse - comptes de passage", classe5, true);
+        ensureCompte("778000", "Produits exceptionnels", classe7, true);
+        ensureCompte("678000", "Charges exceptionnelles", classe6, true);
+
+        ensureSchema("OUVERTURE_CAISSE", "571000", "579000", null, "TRS");
+        ensureSchema("FERMETURE_CAISSE", "579000", "571000", null, "TRS");
+        ensureSchema("ECART_CAISSE_EXCEDENT", "571000", "778000", null, "OD");
+        ensureSchema("ECART_CAISSE_DEFICIT", "678000", "571000", null, "OD");
+        ensureSchema("DEPOT_OUVERTURE", "571000", "251000", null, "CAI");
     }
 
     private ClasseComptable ensureClasse(String codeClasse, String libelle, int ordre) {
@@ -825,36 +851,6 @@ public class ComptabiliteExtensionService {
             return transaction.getSessionCaisse().getCaisse().getLibelle();
         }
         return transaction.getAgenceOperation() == null ? null : transaction.getAgenceOperation().getNomAgence();
-    }
-
-    private String required(Map<String, Object> payload, String key) {
-        Object value = payload.get(key);
-        if (value == null || value.toString().isBlank()) {
-            throw new IllegalArgumentException("Le champ '" + key + "' est obligatoire");
-        }
-        return value.toString().trim();
-    }
-
-    private String defaulted(Map<String, Object> payload, String key, String defaultValue) {
-        Object value = payload.get(key);
-        return value == null || value.toString().isBlank() ? defaultValue : value.toString().trim();
-    }
-
-    private String optionalString(Map<String, Object> payload, String key) {
-        Object value = payload.get(key);
-        return value == null || value.toString().isBlank() ? null : value.toString().trim();
-    }
-
-    private BigDecimal decimal(Map<String, Object> payload, String key) {
-        return new BigDecimal(required(payload, key));
-    }
-
-    private Integer integerOrDefault(Map<String, Object> payload, String key, Integer defaultValue) {
-        return payload.get(key) == null ? defaultValue : Integer.valueOf(payload.get(key).toString());
-    }
-
-    private boolean booleanValue(Map<String, Object> payload, String key, boolean defaultValue) {
-        return payload.get(key) == null ? defaultValue : Boolean.parseBoolean(payload.get(key).toString());
     }
 
     private record ManualLine(

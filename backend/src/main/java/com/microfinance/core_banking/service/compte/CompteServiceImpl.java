@@ -2,6 +2,11 @@ package com.microfinance.core_banking.service.compte;
 
 import com.microfinance.core_banking.entity.Client;
 import com.microfinance.core_banking.entity.Compte;
+import com.microfinance.core_banking.entity.CompteComptable;
+import com.microfinance.core_banking.entity.EcritureComptable;
+import com.microfinance.core_banking.entity.JournalComptable;
+import com.microfinance.core_banking.entity.LigneEcritureComptable;
+import com.microfinance.core_banking.entity.SensEcriture;
 import com.microfinance.core_banking.entity.StatutClient;
 import com.microfinance.core_banking.entity.StatutCompte;
 import com.microfinance.core_banking.entity.StatutKycClient;
@@ -10,6 +15,10 @@ import com.microfinance.core_banking.repository.client.ClientRepository;
 import com.microfinance.core_banking.repository.compte.CompteRepository;
 import com.microfinance.core_banking.repository.compte.StatutCompteRepository;
 import com.microfinance.core_banking.repository.compte.TypeCompteRepository;
+import com.microfinance.core_banking.repository.extension.EcritureComptableRepository;
+import com.microfinance.core_banking.repository.extension.JournalComptableRepository;
+import com.microfinance.core_banking.repository.extension.CompteComptableRepository;
+import com.microfinance.core_banking.repository.extension.LigneEcritureComptableRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class CompteServiceImpl implements CompteService {
@@ -27,17 +37,29 @@ public class CompteServiceImpl implements CompteService {
     private final ClientRepository clientRepository;
     private final TypeCompteRepository typeCompteRepository;
     private final StatutCompteRepository statutCompteRepository;
+    private final LigneEcritureComptableRepository ligneEcritureComptableRepository;
+    private final EcritureComptableRepository ecritureComptableRepository;
+    private final JournalComptableRepository journalComptableRepository;
+    private final CompteComptableRepository compteComptableRepository;
 
     public CompteServiceImpl(
             CompteRepository compteRepository,
             ClientRepository clientRepository,
             TypeCompteRepository typeCompteRepository,
-            StatutCompteRepository statutCompteRepository
+            StatutCompteRepository statutCompteRepository,
+            LigneEcritureComptableRepository ligneEcritureComptableRepository,
+            EcritureComptableRepository ecritureComptableRepository,
+            JournalComptableRepository journalComptableRepository,
+            CompteComptableRepository compteComptableRepository
     ) {
         this.compteRepository = compteRepository;
         this.clientRepository = clientRepository;
         this.typeCompteRepository = typeCompteRepository;
         this.statutCompteRepository = statutCompteRepository;
+        this.ligneEcritureComptableRepository = ligneEcritureComptableRepository;
+        this.ecritureComptableRepository = ecritureComptableRepository;
+        this.journalComptableRepository = journalComptableRepository;
+        this.compteComptableRepository = compteComptableRepository;
     }
 
     @Override
@@ -66,6 +88,7 @@ public class CompteServiceImpl implements CompteService {
         compte.setNumCompte(genererNumeroCompteUnique(client));
         compte.setClient(client);
         compte.setTypeCompte(typeCompte);
+        compte.setAgence(client.getAgence());
         compte.setDateOuverture(LocalDate.now());
         compte.setSolde(depotInitial);
         compte.setDevise("XOF");
@@ -74,12 +97,45 @@ public class CompteServiceImpl implements CompteService {
 
         Compte compteSauvegarde = compteRepository.save(compte);
 
-        StatutCompte statutActif = new StatutCompte();
-        statutActif.setCompte(compteSauvegarde);
-        statutActif.setLibelleStatut("ACTIF");
-        statutActif.setDateStatut(LocalDateTime.now());
-        StatutCompte statutActifSauvegarde = statutCompteRepository.save(statutActif);
-        compteSauvegarde.getStatutsCompte().add(statutActifSauvegarde);
+        ajouterStatut(compteSauvegarde, "ACTIF");
+
+        // Creer une ecriture comptable pour le depot initial
+        JournalComptable journalCaisse = journalComptableRepository.findByCodeJournal("CAI")
+                .orElse(null);
+        if (journalCaisse != null) {
+            EcritureComptable ecriture = new EcritureComptable();
+            ecriture.setJournalComptable(journalCaisse);
+            ecriture.setDateComptable(LocalDate.now());
+            ecriture.setLibelle("Depot initial ouverture compte " + compteSauvegarde.getNumCompte());
+            ecriture.setReferencePiece("DINIT-" + compteSauvegarde.getNumCompte());
+            ecriture.setStatut("COMPTABILISEE");
+            ecriture = ecritureComptableRepository.save(ecriture);
+
+            CompteComptable compte571 = compteComptableRepository.findByNumeroCompte("571000").orElse(null);
+            CompteComptable compte251 = compteComptableRepository.findByNumeroCompte("251000").orElse(null);
+
+            if (compte571 != null) {
+                LigneEcritureComptable ligneDebit = new LigneEcritureComptable();
+                ligneDebit.setEcritureComptable(ecriture);
+                ligneDebit.setCompteComptable(compte571);
+                ligneDebit.setSens("DEBIT");
+                ligneDebit.setMontant(depotInitial);
+                ligneDebit.setReferenceAuxiliaire(compteSauvegarde.getNumCompte());
+                ligneDebit.setLibelleAuxiliaire(compteSauvegarde.getClient().getNom() + " " + compteSauvegarde.getClient().getPrenom());
+                ligneEcritureComptableRepository.save(ligneDebit);
+            }
+
+            if (compte251 != null) {
+                LigneEcritureComptable ligneCredit = new LigneEcritureComptable();
+                ligneCredit.setEcritureComptable(ecriture);
+                ligneCredit.setCompteComptable(compte251);
+                ligneCredit.setSens("CREDIT");
+                ligneCredit.setMontant(depotInitial);
+                ligneCredit.setReferenceAuxiliaire(compteSauvegarde.getNumCompte());
+                ligneCredit.setLibelleAuxiliaire(compteSauvegarde.getClient().getNom() + " " + compteSauvegarde.getClient().getPrenom());
+                ligneEcritureComptableRepository.save(ligneCredit);
+            }
+        }
 
         return compteSauvegarde;
     }
@@ -87,9 +143,26 @@ public class CompteServiceImpl implements CompteService {
     @Override
     @Transactional(readOnly = true)
     public BigDecimal consulterSolde(String numCompte) {
-        return compteRepository.findByNumCompte(numCompte)
-                .map(Compte::getSolde)
+        if (!compteRepository.existsByNumCompte(numCompte)) {
+            throw new EntityNotFoundException("Compte introuvable: " + numCompte);
+        }
+        List<LigneEcritureComptable> lignes = ligneEcritureComptableRepository
+                .findByReferenceAuxiliaire(numCompte);
+        BigDecimal solde = BigDecimal.ZERO;
+        for (LigneEcritureComptable l : lignes) {
+            if ("CREDIT".equalsIgnoreCase(l.getSens())) {
+                solde = solde.add(l.getMontant() != null ? l.getMontant() : BigDecimal.ZERO);
+            } else {
+                solde = solde.subtract(l.getMontant() != null ? l.getMontant() : BigDecimal.ZERO);
+            }
+        }
+        // Ajouter le decouvert autorise
+        Compte compte = compteRepository.findByNumCompte(numCompte)
                 .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
+        if (compte.getDecouvertAutorise() != null) {
+            solde = solde.add(compte.getDecouvertAutorise());
+        }
+        return solde;
     }
 
     @Override
@@ -112,17 +185,43 @@ public class CompteServiceImpl implements CompteService {
         Compte compte = compteRepository.findByNumCompte(numCompte)
                 .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
 
-        if (compte.getSolde().compareTo(BigDecimal.ZERO) != 0) {
+        if ("FERME".equals(statutCourant(compte))) {
+            return compte;
+        }
+
+        if (calculerSoldeGrandLivre(numCompte).compareTo(BigDecimal.ZERO) != 0) {
             throw new IllegalStateException("Impossible de clôturer un compte avec un solde non nul");
         }
 
-        StatutCompte statutFerme = new StatutCompte();
-        statutFerme.setCompte(compte);
-        statutFerme.setLibelleStatut("FERME");
-        statutFerme.setDateStatut(LocalDateTime.now());
-        StatutCompte statutFermeSauvegarde = statutCompteRepository.save(statutFerme);
-        compte.getStatutsCompte().add(statutFermeSauvegarde);
+        ajouterStatut(compte, "FERME");
+        return compte;
+    }
 
+    @Override
+    @Transactional
+    public Compte bloquerCompte(String numCompte, String motif) {
+        Compte compte = compteRepository.findByNumCompte(numCompte)
+                .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
+        if ("FERME".equals(statutCourant(compte))) {
+            throw new IllegalStateException("Impossible de bloquer un compte deja ferme");
+        }
+        if (!"BLOQUE".equals(statutCourant(compte))) {
+            ajouterStatut(compte, "BLOQUE");
+        }
+        return compte;
+    }
+
+    @Override
+    @Transactional
+    public Compte debloquerCompte(String numCompte, String motif) {
+        Compte compte = compteRepository.findByNumCompte(numCompte)
+                .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
+        if ("FERME".equals(statutCourant(compte))) {
+            throw new IllegalStateException("Impossible de debloquer un compte deja ferme");
+        }
+        if (!"ACTIF".equals(statutCourant(compte))) {
+            ajouterStatut(compte, "ACTIF");
+        }
         return compte;
     }
 
@@ -152,5 +251,38 @@ public class CompteServiceImpl implements CompteService {
         }
         String statut = statutClient.getLibelleStatut().trim().toUpperCase();
         return "BLOQUE".equals(statut) || "SUSPENDU".equals(statut) || "INACTIF".equals(statut);
+    }
+
+    private BigDecimal calculerSoldeGrandLivre(String numCompte) {
+        List<LigneEcritureComptable> lignes = ligneEcritureComptableRepository.findByReferenceAuxiliaire(numCompte);
+        BigDecimal solde = BigDecimal.ZERO;
+        for (LigneEcritureComptable ligne : lignes) {
+            BigDecimal montant = ligne.getMontant() == null ? BigDecimal.ZERO : ligne.getMontant();
+            if ("CREDIT".equalsIgnoreCase(ligne.getSens())) {
+                solde = solde.add(montant);
+            } else {
+                solde = solde.subtract(montant);
+            }
+        }
+        return solde;
+    }
+
+    private StatutCompte ajouterStatut(Compte compte, String libelleStatut) {
+        StatutCompte statut = new StatutCompte();
+        statut.setCompte(compte);
+        statut.setLibelleStatut(libelleStatut);
+        statut.setDateStatut(LocalDateTime.now());
+        StatutCompte sauvegarde = statutCompteRepository.save(statut);
+        compte.getStatutsCompte().add(sauvegarde);
+        return sauvegarde;
+    }
+
+    private String statutCourant(Compte compte) {
+        return compte.getStatutsCompte().stream()
+                .max(java.util.Comparator.comparing(StatutCompte::getDateStatut, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())))
+                .map(StatutCompte::getLibelleStatut)
+                .map(String::trim)
+                .map(String::toUpperCase)
+                .orElse("ACTIF");
     }
 }

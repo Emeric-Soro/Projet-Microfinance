@@ -1,5 +1,9 @@
 package com.microfinance.core_banking.service.extension;
 
+import com.microfinance.core_banking.dto.request.extension.CalculerInteretsEpargneRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CloturerDatRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerProduitEpargneServiceRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.SouscrireDatServiceRequestDTO;
 import com.microfinance.core_banking.entity.Client;
 import com.microfinance.core_banking.entity.Compte;
 import com.microfinance.core_banking.entity.DepotATerme;
@@ -18,7 +22,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -48,57 +51,53 @@ public class EpargneExtensionService {
     }
 
     @Transactional
-    public ProduitEpargne creerProduit(Map<String, Object> payload) {
+    public ProduitEpargne creerProduit(CreerProduitEpargneServiceRequestDTO dto) {
         ProduitEpargne produit = new ProduitEpargne();
-        produit.setCodeProduit(required(payload, "codeProduit"));
-        produit.setLibelle(required(payload, "libelle"));
-        produit.setCategorie(required(payload, "categorie"));
-        produit.setTauxInteret(decimalOrZero(payload, "tauxInteret"));
-        produit.setDepotInitialMin(decimalOrZero(payload, "depotInitialMin"));
-        produit.setSoldeMinimum(decimalOrZero(payload, "soldeMinimum"));
-        produit.setFrequenceInteret((String) payload.get("frequenceInteret"));
-        produit.setStatut(defaulted(payload, "statut", "ACTIF"));
+        produit.setCodeProduit(dto.getCodeProduit());
+        produit.setLibelle(dto.getLibelle());
+        produit.setCategorie(dto.getCategorie());
+        produit.setTauxInteret(dto.getTauxInteret());
+        produit.setDepotInitialMin(dto.getDepotInitialMin());
+        produit.setSoldeMinimum(dto.getSoldeMinimum());
+        produit.setFrequenceInteret(dto.getFrequenceInteret());
+        produit.setStatut(dto.getStatut());
         return produitEpargneRepository.save(produit);
     }
 
     @Transactional
-    public DepotATerme souscrireDepotATerme(Map<String, Object> payload) {
-        Client client = clientRepository.findById(Long.valueOf(required(payload, "idClient")))
+    public DepotATerme souscrireDepotATerme(SouscrireDatServiceRequestDTO dto) {
+        Client client = clientRepository.findById(dto.getIdClient())
                 .orElseThrow(() -> new EntityNotFoundException("Client introuvable"));
         verifierPerimetreClient(client);
-        ProduitEpargne produit = produitEpargneRepository.findById(Long.valueOf(required(payload, "idProduitEpargne")))
+        ProduitEpargne produit = produitEpargneRepository.findById(dto.getIdProduitEpargne())
                 .orElseThrow(() -> new EntityNotFoundException("Produit epargne introuvable"));
-        String numCompteSupport = required(payload, "numCompteSupport");
-        Compte compteSupport = compteRepository.findByNumCompte(numCompteSupport)
+        Compte compteSupport = compteRepository.findByNumCompte(dto.getNumCompteSupport())
                 .orElseThrow(() -> new EntityNotFoundException("Compte support introuvable"));
         if (compteSupport.getClient() == null || compteSupport.getClient().getIdClient() == null || !compteSupport.getClient().getIdClient().equals(client.getIdClient())) {
             throw new IllegalStateException("Le compte support doit appartenir au client du depot a terme");
         }
-        Long idUtilisateurOperateur = payload.get("idUtilisateurOperateur") == null
-                ? authenticatedUserService.getCurrentUserOrThrow().getIdUser()
-                : Long.valueOf(payload.get("idUtilisateurOperateur").toString());
 
         DepotATerme depot = new DepotATerme();
         depot.setReferenceDepot("DAT-" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase());
         depot.setClient(client);
         depot.setProduitEpargne(produit);
         depot.setCompteSupport(compteSupport);
-        depot.setMontant(new BigDecimal(required(payload, "montant")));
-        depot.setDureeMois(Integer.valueOf(required(payload, "dureeMois")));
-        depot.setTauxApplique(payload.get("tauxApplique") == null ? produit.getTauxInteret() : new BigDecimal(payload.get("tauxApplique").toString()));
-        depot.setDateSouscription(payload.get("dateSouscription") == null ? LocalDate.now() : LocalDate.parse(payload.get("dateSouscription").toString()));
+        depot.setMontant(new BigDecimal(dto.getMontant()));
+        depot.setDureeMois(Integer.valueOf(dto.getDureeMois()));
+        depot.setTauxApplique(dto.getTauxApplique() == null ? produit.getTauxInteret() : dto.getTauxApplique());
+        depot.setDateSouscription(dto.getDateSouscription() == null ? LocalDate.now() : LocalDate.parse(dto.getDateSouscription()));
         depot.setDateEcheance(depot.getDateSouscription().plusMonths(depot.getDureeMois()));
-        depot.setRenouvellementAuto(Boolean.parseBoolean(String.valueOf(payload.getOrDefault("renouvellementAuto", false))));
+        depot.setRenouvellementAuto(dto.getRenouvellementAuto());
         depot.setInteretsEstimes(depot.getMontant()
                 .multiply(depot.getTauxApplique())
                 .multiply(BigDecimal.valueOf(depot.getDureeMois()))
                 .divide(BigDecimal.valueOf(1200), 2, RoundingMode.HALF_UP));
-        depot.setStatut(defaulted(payload, "statut", "ACTIF"));
+        depot.setStatut(dto.getStatut());
         var transactionSouscription = transactionService.posterRetraitSysteme(
                 compteSupport.getNumCompte(),
                 depot.getMontant(),
                 BigDecimal.ZERO,
-                idUtilisateurOperateur,
+                dto.getIdUtilisateurOperateur(),
                 "DATSUB-" + UUID.randomUUID().toString().replace("-", "").substring(0, 14).toUpperCase(),
                 "DAT_SOUSCRIPTION"
         );
@@ -107,11 +106,8 @@ public class EpargneExtensionService {
     }
 
     @Transactional
-    public List<Compte> calculerInteretsEpargne(Map<String, Object> payload) {
-        LocalDate dateCalcul = payload.get("dateCalcul") == null ? LocalDate.now() : LocalDate.parse(payload.get("dateCalcul").toString());
-        Long idUtilisateurOperateur = payload.get("idUtilisateurOperateur") == null
-                ? authenticatedUserService.getCurrentUserOrThrow().getIdUser()
-                : Long.valueOf(payload.get("idUtilisateurOperateur").toString());
+    public List<Compte> calculerInteretsEpargne(CalculerInteretsEpargneRequestDTO dto) {
+        LocalDate dateCalcul = dto.getDateCalcul() == null ? LocalDate.now() : LocalDate.parse(dto.getDateCalcul());
 
         List<Compte> comptesEpargne = compteRepository.findAll().stream()
                 .filter(c -> c.getTypeCompte() != null
@@ -132,7 +128,7 @@ public class EpargneExtensionService {
                         compte.getNumCompte(),
                         interets,
                         BigDecimal.ZERO,
-                        idUtilisateurOperateur,
+                        dto.getIdUtilisateurOperateur(),
                         "INT-" + compte.getNumCompte() + "-" + dateCalcul.toString().replace("-", ""),
                         "INTERET_EPARGNE"
                 );
@@ -142,27 +138,23 @@ public class EpargneExtensionService {
     }
 
     @Transactional
-    public DepotATerme cloturerDepotATerme(Long idDepotATerme, Map<String, Object> payload) {
+    public DepotATerme cloturerDepotATerme(Long idDepotATerme, CloturerDatRequestDTO dto) {
         DepotATerme depot = depotATermeRepository.findById(idDepotATerme)
                 .orElseThrow(() -> new EntityNotFoundException("Depot a terme introuvable"));
-        
+
         verifierPerimetreClient(depot.getClient());
-        
+
         if ("CLOTURE".equalsIgnoreCase(depot.getStatut())) {
             throw new IllegalStateException("Le depot a terme est deja cloture");
         }
 
-        Long idUtilisateurOperateur = payload.get("idUtilisateurOperateur") == null
-                ? authenticatedUserService.getCurrentUserOrThrow().getIdUser()
-                : Long.valueOf(payload.get("idUtilisateurOperateur").toString());
-
         BigDecimal montantTotal = depot.getMontant().add(depot.getInteretsEstimes());
-        
+
         var transaction = transactionService.posterDepotSysteme(
                 depot.getCompteSupport().getNumCompte(),
                 montantTotal,
                 BigDecimal.ZERO,
-                idUtilisateurOperateur,
+                dto.getIdUtilisateurOperateur(),
                 "DATCLO-" + UUID.randomUUID().toString().replace("-", "").substring(0, 14).toUpperCase(),
                 "DAT_CLOTURE"
         );
@@ -190,23 +182,6 @@ public class EpargneExtensionService {
                             && idAgence.equals(depot.getClient().getAgence().getIdAgence());
                 })
                 .toList();
-    }
-
-    private String required(Map<String, Object> payload, String key) {
-        Object value = payload.get(key);
-        if (value == null || value.toString().isBlank()) {
-            throw new IllegalArgumentException("Le champ '" + key + "' est obligatoire");
-        }
-        return value.toString().trim();
-    }
-
-    private BigDecimal decimalOrZero(Map<String, Object> payload, String key) {
-        return payload.get(key) == null ? BigDecimal.ZERO : new BigDecimal(payload.get(key).toString());
-    }
-
-    private String defaulted(Map<String, Object> payload, String key, String defaultValue) {
-        Object value = payload.get(key);
-        return value == null || value.toString().isBlank() ? defaultValue : value.toString().trim();
     }
 
     private void verifierPerimetreClient(Client client) {

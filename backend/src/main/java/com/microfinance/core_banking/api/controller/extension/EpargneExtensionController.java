@@ -1,11 +1,18 @@
 package com.microfinance.core_banking.api.controller.extension;
 
 import com.microfinance.core_banking.audit.AuditLog;
+import com.microfinance.core_banking.dto.request.extension.CreerProduitEpargneRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.SouscrireDatRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.SouscrireDatServiceRequestDTO;
+import com.microfinance.core_banking.dto.response.extension.ActionEnAttenteResponseDTO;
+import com.microfinance.core_banking.dto.response.extension.DepotATermeResponseDTO;
+import com.microfinance.core_banking.dto.response.extension.ProduitEpargneResponseDTO;
 import com.microfinance.core_banking.entity.ActionEnAttente;
 import com.microfinance.core_banking.entity.DepotATerme;
 import com.microfinance.core_banking.entity.ProduitEpargne;
 import com.microfinance.core_banking.service.extension.EpargneExtensionService;
 import com.microfinance.core_banking.service.extension.PendingActionSubmissionService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,9 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/epargne")
@@ -32,66 +37,73 @@ public class EpargneExtensionController {
     }
 
     @PostMapping("/produits")
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','SAVINGS_MANAGE')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SAVINGS_MANAGE)")
     @AuditLog(action = "SAVINGS_PRODUCT_CREATE", resource = "PRODUIT_EPARGNE")
-    public ResponseEntity<Map<String, Object>> creerProduit(@RequestBody Map<String, Object> payload) {
-        ActionEnAttente action = pendingActionSubmissionService.submit("CREATE_PRODUIT_EPARGNE", "PRODUIT_EPARGNE", (String) payload.get("codeProduit"), payload, "Creation produit epargne soumise");
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionMap(action));
+    public ResponseEntity<ActionEnAttenteResponseDTO> creerProduit(@Valid @RequestBody CreerProduitEpargneRequestDTO dto) {
+        ActionEnAttente action = pendingActionSubmissionService.submit("CREATE_PRODUIT_EPARGNE", "PRODUIT_EPARGNE", dto.getCodeProduit(), dto, "Creation produit epargne soumise");
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
     @GetMapping("/produits")
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','GUICHETIER','SAVINGS_VIEW')")
-    public ResponseEntity<List<Map<String, Object>>> listerProduits() {
-        return ResponseEntity.ok(epargneExtensionService.listerProduits().stream().map(this::toProduitMap).toList());
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SAVINGS_VIEW)")
+    public ResponseEntity<List<ProduitEpargneResponseDTO>> listerProduits() {
+        return ResponseEntity.ok(epargneExtensionService.listerProduits().stream().map(this::toDto).toList());
     }
 
     @PostMapping("/depots-a-terme")
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','GUICHETIER','SAVINGS_MANAGE')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SAVINGS_MANAGE)")
     @AuditLog(action = "TERM_DEPOSIT_CREATE", resource = "DEPOT_A_TERME")
-    public ResponseEntity<Map<String, Object>> souscrireDepotATerme(@RequestBody Map<String, Object> payload) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(toDepotMap(epargneExtensionService.souscrireDepotATerme(payload)));
+    public ResponseEntity<DepotATermeResponseDTO> souscrireDepotATerme(@Valid @RequestBody SouscrireDatRequestDTO dto) {
+        SouscrireDatServiceRequestDTO serviceDto = new SouscrireDatServiceRequestDTO();
+        serviceDto.setIdClient(dto.getIdClient());
+        serviceDto.setIdProduitEpargne(dto.getIdProduitEpargne());
+        serviceDto.setMontant(dto.getMontantSouscription().toString());
+        serviceDto.setDureeMois(String.valueOf(dto.getDureeMois()));
+        serviceDto.setDateSouscription(dto.getDateSouscription());
+        serviceDto.setIdUtilisateurOperateur(dto.getIdGuichetier());
+        return ResponseEntity.status(HttpStatus.CREATED).body(toDto(epargneExtensionService.souscrireDepotATerme(serviceDto)));
     }
 
     @GetMapping("/depots-a-terme")
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','GUICHETIER','SAVINGS_VIEW')")
-    public ResponseEntity<List<Map<String, Object>>> listerDepotsATerme() {
-        return ResponseEntity.ok(epargneExtensionService.listerDepotsATerme().stream().map(this::toDepotMap).toList());
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SAVINGS_VIEW)")
+    public ResponseEntity<List<DepotATermeResponseDTO>> listerDepotsATerme() {
+        return ResponseEntity.ok(epargneExtensionService.listerDepotsATerme().stream().map(this::toDto).toList());
     }
 
-    private Map<String, Object> toProduitMap(ProduitEpargne produit) {
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("idProduitEpargne", produit.getIdProduitEpargne());
-        response.put("codeProduit", produit.getCodeProduit());
-        response.put("libelle", produit.getLibelle());
-        response.put("categorie", produit.getCategorie());
-        response.put("tauxInteret", produit.getTauxInteret());
-        response.put("frequenceInteret", produit.getFrequenceInteret());
-        response.put("statut", produit.getStatut());
-        return response;
+    private ProduitEpargneResponseDTO toDto(ProduitEpargne produit) {
+        ProduitEpargneResponseDTO dto = new ProduitEpargneResponseDTO();
+        dto.setIdProduitEpargne(produit.getIdProduitEpargne());
+        dto.setCodeProduit(produit.getCodeProduit());
+        dto.setLibelle(produit.getLibelle());
+        dto.setCategorie(produit.getCategorie());
+        dto.setTauxInteret(produit.getTauxInteret());
+        dto.setFrequenceInteret(produit.getFrequenceInteret());
+        dto.setStatut(produit.getStatut());
+        return dto;
     }
 
-    private Map<String, Object> toDepotMap(DepotATerme depot) {
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("idDepotTerme", depot.getIdDepotTerme());
-        response.put("referenceDepot", depot.getReferenceDepot());
-        response.put("idClient", depot.getClient().getIdClient());
-        response.put("produit", depot.getProduitEpargne().getLibelle());
-        response.put("montant", depot.getMontant());
-        response.put("tauxApplique", depot.getTauxApplique());
-        response.put("interetsEstimes", depot.getInteretsEstimes());
-        response.put("dateEcheance", depot.getDateEcheance());
-        response.put("compteSupport", depot.getCompteSupport() == null ? null : depot.getCompteSupport().getNumCompte());
-        response.put("referenceTransactionSouscription", depot.getReferenceTransactionSouscription());
-        response.put("statut", depot.getStatut());
-        return response;
+    private DepotATermeResponseDTO toDto(DepotATerme depot) {
+        DepotATermeResponseDTO dto = new DepotATermeResponseDTO();
+        dto.setIdDepotTerme(depot.getIdDepotTerme());
+        dto.setReferenceDepot(depot.getReferenceDepot());
+        dto.setIdClient(depot.getClient().getIdClient());
+        dto.setProduit(depot.getProduitEpargne().getLibelle());
+        dto.setMontant(depot.getMontant());
+        dto.setTauxApplique(depot.getTauxApplique());
+        dto.setInteretsEstimes(depot.getInteretsEstimes());
+        dto.setDateEcheance(depot.getDateEcheance());
+        dto.setCompteSupport(depot.getCompteSupport() == null ? null : depot.getCompteSupport().getNumCompte());
+        dto.setReferenceTransactionSouscription(depot.getReferenceTransactionSouscription());
+        dto.setStatut(depot.getStatut());
+        return dto;
     }
 
-    private Map<String, Object> toActionMap(ActionEnAttente action) {
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("idActionEnAttente", action.getIdActionEnAttente());
-        response.put("typeAction", action.getTypeAction());
-        response.put("ressource", action.getRessource());
-        response.put("statut", action.getStatut());
-        return response;
+    private ActionEnAttenteResponseDTO toActionDto(ActionEnAttente action) {
+        ActionEnAttenteResponseDTO dto = new ActionEnAttenteResponseDTO();
+        dto.setIdActionEnAttente(action.getIdActionEnAttente());
+        dto.setTypeAction(action.getTypeAction());
+        dto.setRessource(action.getRessource());
+        dto.setStatut(action.getStatut());
+        return dto;
     }
 }

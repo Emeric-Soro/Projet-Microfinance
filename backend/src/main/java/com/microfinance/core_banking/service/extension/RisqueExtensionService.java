@@ -1,5 +1,9 @@
 package com.microfinance.core_banking.service.extension;
 
+import com.microfinance.core_banking.dto.request.extension.CreerRisqueServiceRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerStressTestServiceRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.DeclarerIncidentServiceRequestDTO;
+import com.microfinance.core_banking.dto.response.extension.TableauLiquiditeResponseDTO;
 import com.microfinance.core_banking.entity.Caisse;
 import com.microfinance.core_banking.entity.Client;
 import com.microfinance.core_banking.entity.Coffre;
@@ -63,26 +67,26 @@ public class RisqueExtensionService {
     }
 
     @Transactional
-    public Risque creerRisque(Map<String, Object> payload) {
+    public Risque creerRisque(CreerRisqueServiceRequestDTO dto) {
         Risque risque = new Risque();
-        risque.setCodeRisque(defaulted(payload, "codeRisque", "RSK-" + randomSuffix()));
-        risque.setCategorie(required(payload, "categorie"));
-        risque.setLibelle(required(payload, "libelle"));
-        risque.setNiveau(required(payload, "niveau"));
-        risque.setStatut(defaulted(payload, "statut", "OUVERT"));
+        risque.setCodeRisque(dto.getCodeRisque() == null ? "RSK-" + randomSuffix() : dto.getCodeRisque());
+        risque.setCategorie(dto.getCategorie());
+        risque.setLibelle(dto.getLibelle());
+        risque.setNiveau(dto.getNiveau());
+        risque.setStatut(dto.getStatut());
         return risqueRepository.save(risque);
     }
 
     @Transactional
-    public IncidentOperationnel declarerIncident(Map<String, Object> payload) {
+    public IncidentOperationnel declarerIncident(DeclarerIncidentServiceRequestDTO dto) {
         IncidentOperationnel incident = new IncidentOperationnel();
-        incident.setReferenceIncident(defaulted(payload, "referenceIncident", "INC-" + randomSuffix()));
-        incident.setTypeIncident(required(payload, "typeIncident"));
-        incident.setGravite(required(payload, "gravite"));
-        incident.setStatut(defaulted(payload, "statut", "OUVERT"));
-        incident.setDescription((String) payload.get("description"));
-        if (payload.get("idRisque") != null) {
-            Risque risque = risqueRepository.findById(Long.valueOf(payload.get("idRisque").toString()))
+        incident.setReferenceIncident(dto.getReferenceIncident() == null ? "INC-" + randomSuffix() : dto.getReferenceIncident());
+        incident.setTypeIncident(dto.getTypeIncident());
+        incident.setGravite(dto.getGravite());
+        incident.setStatut(dto.getStatut());
+        incident.setDescription(dto.getDescription());
+        if (dto.getIdRisque() != null) {
+            Risque risque = risqueRepository.findById(Long.valueOf(dto.getIdRisque()))
                     .orElseThrow(() -> new EntityNotFoundException("Risque introuvable"));
             incident.setRisque(risque);
         }
@@ -90,13 +94,13 @@ public class RisqueExtensionService {
     }
 
     @Transactional
-    public StressTest creerStressTest(Map<String, Object> payload) {
+    public StressTest creerStressTest(CreerStressTestServiceRequestDTO dto) {
         StressTest stressTest = new StressTest();
-        stressTest.setCodeScenario(defaulted(payload, "codeScenario", "ST-" + randomSuffix()));
-        stressTest.setLibelle(required(payload, "libelle"));
-        stressTest.setTauxDefaut(decimalOrZero(payload, "tauxDefaut"));
-        stressTest.setTauxRetrait(decimalOrZero(payload, "tauxRetrait"));
-        stressTest.setStatut(defaulted(payload, "statut", "ACTIF"));
+        stressTest.setCodeScenario(dto.getCodeScenario() == null ? "ST-" + randomSuffix() : dto.getCodeScenario());
+        stressTest.setLibelle(dto.getLibelle());
+        stressTest.setTauxDefaut(dto.getTauxDefaut());
+        stressTest.setTauxRetrait(dto.getTauxRetrait());
+        stressTest.setStatut(dto.getStatut());
         return stressTestRepository.save(stressTest);
     }
 
@@ -149,7 +153,7 @@ public class RisqueExtensionService {
     }
 
     @Transactional(readOnly = true)
-    public Map<String, Object> calculerTableauLiquidite() {
+    public TableauLiquiditeResponseDTO calculerTableauLiquidite() {
         BigDecimal depots = comptesVisibles().stream()
                 .map(compte -> compte.getSolde().max(BigDecimal.ZERO))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -163,13 +167,16 @@ public class RisqueExtensionService {
                 .map(Credit::getCapitalRestantDu)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        return Map.of(
-                "depotsClients", depots,
-                "liquiditesCaisses", liquiditesCaisses,
-                "liquiditesCoffres", liquiditesCoffres,
-                "encoursCredit", encoursCredit,
-                "gapLiquidite", liquiditesCaisses.add(liquiditesCoffres).subtract(depots)
-        );
+        Map<String, Object> lignes = new java.util.LinkedHashMap<>();
+        lignes.put("depotsClients", depots);
+        lignes.put("liquiditesCaisses", liquiditesCaisses);
+        lignes.put("liquiditesCoffres", liquiditesCoffres);
+        lignes.put("encoursCredit", encoursCredit);
+        lignes.put("gapLiquidite", liquiditesCaisses.add(liquiditesCoffres).subtract(depots));
+
+        TableauLiquiditeResponseDTO response = new TableauLiquiditeResponseDTO();
+        response.setLignes(List.of(lignes));
+        return response;
     }
 
     private List<com.microfinance.core_banking.entity.Compte> comptesVisibles() {
@@ -210,23 +217,6 @@ public class RisqueExtensionService {
                         && coffre.getAgence() != null
                         && authenticatedUserService.getCurrentAgencyId().equals(coffre.getAgence().getIdAgence())))
                 .toList();
-    }
-
-    private String required(Map<String, Object> payload, String key) {
-        Object value = payload.get(key);
-        if (value == null || value.toString().isBlank()) {
-            throw new IllegalArgumentException("Le champ '" + key + "' est obligatoire");
-        }
-        return value.toString().trim();
-    }
-
-    private String defaulted(Map<String, Object> payload, String key, String defaultValue) {
-        Object value = payload.get(key);
-        return value == null || value.toString().isBlank() ? defaultValue : value.toString().trim();
-    }
-
-    private BigDecimal decimalOrZero(Map<String, Object> payload, String key) {
-        return payload.get(key) == null ? BigDecimal.ZERO : new BigDecimal(payload.get(key).toString());
     }
 
     private String randomSuffix() {

@@ -44,7 +44,7 @@ public class LoanFacilityController {
             @ApiResponse(responseCode = "409", description = "Conflit métier")
     })
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<LoanFacilityResponseDTO> creerLoanFacility(
             @Valid @RequestBody LoanFacilityRequestDTO requestDTO) {
         LoanFacilityResponseDTO response = loanFacilityService.create(requestDTO);
@@ -60,7 +60,7 @@ public class LoanFacilityController {
             @ApiResponse(responseCode = "400", description = "Paramètres de pagination invalides")
     })
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<Page<LoanFacilityResponseDTO>> listerLoanFacilities(
             @ParameterObject Pageable pageable) {
         Page<LoanFacilityResponseDTO> page = loanFacilityService.getAll(pageable);
@@ -76,7 +76,7 @@ public class LoanFacilityController {
             @ApiResponse(responseCode = "404", description = "LoanFacility introuvable")
     })
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<LoanFacilityResponseDTO> obtenirDetailsLoanFacility(@PathVariable Long id) {
         LoanFacilityResponseDTO response = loanFacilityService.getById(id);
         return ResponseEntity.ok(response);
@@ -92,7 +92,7 @@ public class LoanFacilityController {
             @ApiResponse(responseCode = "404", description = "LoanFacility introuvable")
     })
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<LoanFacilityResponseDTO> mettreAJourLoanFacility(
             @PathVariable Long id,
             @Valid @RequestBody LoanFacilityRequestDTO requestDTO) {
@@ -109,7 +109,7 @@ public class LoanFacilityController {
             @ApiResponse(responseCode = "404", description = "LoanFacility introuvable")
     })
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<Void> supprimerLoanFacility(@PathVariable Long id) {
         loanFacilityService.delete(id);
         return ResponseEntity.noContent().build();

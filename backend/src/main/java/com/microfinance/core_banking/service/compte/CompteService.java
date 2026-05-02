@@ -13,4 +13,8 @@ public interface CompteService {
     Compte changerDecouvertAutorise(String numCompte, BigDecimal nouveauPlafond);
 
     Compte cloturerCompte(String numCompte);
+
+    Compte bloquerCompte(String numCompte, String motif);
+
+    Compte debloquerCompte(String numCompte, String motif);
 }

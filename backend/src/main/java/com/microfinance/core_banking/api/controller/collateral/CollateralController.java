@@ -44,7 +44,7 @@ public class CollateralController {
             @ApiResponse(responseCode = "409", description = "Conflit métier")
     })
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<CollateralResponseDTO> creerCollateral(
             @Valid @RequestBody CollateralRequestDTO requestDTO) {
         CollateralResponseDTO response = collateralService.create(requestDTO);
@@ -60,7 +60,7 @@ public class CollateralController {
             @ApiResponse(responseCode = "400", description = "Paramètres de pagination invalides")
     })
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<Page<CollateralResponseDTO>> listerCollaterals(@ParameterObject Pageable pageable) {
         Page<CollateralResponseDTO> page = collateralService.getAll(pageable);
         return ResponseEntity.ok(page);
@@ -75,7 +75,7 @@ public class CollateralController {
             @ApiResponse(responseCode = "404", description = "Collateral introuvable")
     })
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<CollateralResponseDTO> obtenirDetailsCollateral(@PathVariable Long id) {
         CollateralResponseDTO response = collateralService.getById(id);
         return ResponseEntity.ok(response);
@@ -91,7 +91,7 @@ public class CollateralController {
             @ApiResponse(responseCode = "404", description = "Collateral introuvable")
     })
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<CollateralResponseDTO> mettreAJourCollateral(
             @PathVariable Long id,
             @Valid @RequestBody CollateralRequestDTO requestDTO) {
@@ -108,7 +108,7 @@ public class CollateralController {
             @ApiResponse(responseCode = "404", description = "Collateral introuvable")
     })
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<Void> supprimerCollateral(@PathVariable Long id) {
         collateralService.delete(id);
         return ResponseEntity.noContent().build();

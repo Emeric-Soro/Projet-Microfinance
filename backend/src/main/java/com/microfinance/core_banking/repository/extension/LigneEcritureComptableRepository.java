@@ -14,4 +14,8 @@ public interface LigneEcritureComptableRepository extends JpaRepository<LigneEcr
     );
 
     List<LigneEcritureComptable> findByEcritureComptable_DateComptableBetween(LocalDate dateDebut, LocalDate dateFin);
+
+    List<LigneEcritureComptable> findByReferenceAuxiliaire(String referenceAuxiliaire);
+
+    List<LigneEcritureComptable> findByEcritureComptable_IdEcritureComptable(Long idEcritureComptable);
 }

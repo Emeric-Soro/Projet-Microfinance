@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.service.extension;
 
+import com.microfinance.core_banking.dto.request.extension.PermissionSecuriteRequestDTO;
 import com.microfinance.core_banking.entity.ActionEnAttente;
 import com.microfinance.core_banking.entity.PermissionSecurite;
 import com.microfinance.core_banking.entity.RoleUtilisateur;
@@ -145,28 +146,28 @@ public class PermissionSecuriteServiceImpl implements PermissionSecuriteService 
 
     @Override
     @Transactional
-    public PermissionSecurite appliquerCreation(Map<String, Object> payload) {
-        String normalizedCode = normalizeCode(required(payload, "codePermission"));
+    public PermissionSecurite appliquerCreation(PermissionSecuriteRequestDTO dto) {
+        String normalizedCode = normalizeCode(dto.getCodePermission());
         if (permissionSecuriteRepository.existsByCodePermission(normalizedCode)) {
             throw new IllegalArgumentException("La permission existe deja: " + normalizedCode);
         }
         PermissionSecurite permission = new PermissionSecurite();
-        hydratePermission(permission, payload);
+        hydratePermission(permission, dto);
         permission.setCodePermission(normalizedCode);
         return permissionSecuriteRepository.save(permission);
     }
 
     @Override
     @Transactional
-    public PermissionSecurite appliquerMiseAJour(Long idPermission, Map<String, Object> payload) {
+    public PermissionSecurite appliquerMiseAJour(Long idPermission, PermissionSecuriteRequestDTO dto) {
         PermissionSecurite permission = getById(idPermission);
-        String normalizedCode = normalizeCode(required(payload, "codePermission"));
+        String normalizedCode = normalizeCode(dto.getCodePermission());
         permissionSecuriteRepository.findByCodePermission(normalizedCode)
                 .filter(existing -> !existing.getIdPermission().equals(idPermission))
                 .ifPresent(existing -> {
                     throw new IllegalArgumentException("Le code permission est deja utilise: " + normalizedCode);
                 });
-        hydratePermission(permission, payload);
+        hydratePermission(permission, dto);
         permission.setCodePermission(normalizedCode);
         return permissionSecuriteRepository.save(permission);
     }
@@ -222,19 +223,11 @@ public class PermissionSecuriteServiceImpl implements PermissionSecuriteService 
         return snapshot;
     }
 
-    private void hydratePermission(PermissionSecurite permission, Map<String, Object> payload) {
-        permission.setLibellePermission(required(payload, "libellePermission"));
-        permission.setModuleCode(normalizeCode(required(payload, "moduleCode")));
-        permission.setDescriptionPermission(optional(payload, "descriptionPermission"));
-        permission.setActif(payload.get("actif") == null || Boolean.parseBoolean(payload.get("actif").toString()));
-    }
-
-    private String required(Map<String, Object> payload, String key) {
-        Object value = payload.get(key);
-        if (value == null || value.toString().isBlank()) {
-            throw new IllegalArgumentException("Le champ '" + key + "' est obligatoire");
-        }
-        return value.toString().trim();
+    private void hydratePermission(PermissionSecurite permission, PermissionSecuriteRequestDTO dto) {
+        permission.setLibellePermission(requiredString(dto.getLibellePermission(), "libellePermission"));
+        permission.setModuleCode(normalizeCode(dto.getModuleCode()));
+        permission.setDescriptionPermission(dto.getDescriptionPermission() == null ? null : dto.getDescriptionPermission().trim());
+        permission.setActif(dto.getActif() == null || dto.getActif());
     }
 
     private String requiredString(String value, String key) {
@@ -242,11 +235,6 @@ public class PermissionSecuriteServiceImpl implements PermissionSecuriteService 
             throw new IllegalArgumentException("Le champ '" + key + "' est obligatoire");
         }
         return value.trim();
-    }
-
-    private String optional(Map<String, Object> payload, String key) {
-        Object value = payload.get(key);
-        return value == null || value.toString().isBlank() ? null : value.toString().trim();
     }
 
     private String normalizeCode(String code) {

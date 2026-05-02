@@ -23,5 +23,9 @@ public interface TransactionService {
 
     Transaction rejeterTransaction(String referenceUnique, Long idSuperviseur, String motif);
 
+    Transaction annulerTransaction(String referenceUnique, Long idSuperviseur, String motif);
+
+    Transaction extournerTransaction(String referenceUnique, Long idSuperviseur, String motif);
+
     Page<LigneEcriture> historiqueOperations(String numCompte, Pageable pageable);
 }

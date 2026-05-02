@@ -30,14 +30,14 @@ public class RoleUtilisateurController {
 
     @GetMapping
     @Operation(summary = "Get all roles")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER', 'SECURITY_PERMISSION_VIEW')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_MANAGER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_PERMISSION_VIEW)")
     public ResponseEntity<List<RoleUtilisateurResponseDTO>> getAllRoles() {
         return ResponseEntity.ok(roleUtilisateurMapper.toDtoList(roleUtilisateurService.getAllRoles()));
     }
 
     @PostMapping
     @Operation(summary = "Create a new role")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'SECURITY_PERMISSION_MANAGE')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_PERMISSION_MANAGE)")
     @AuditLog(action = "ROLE_CREATE", resource = "ROLE")
     public ResponseEntity<PendingActionResponseDTO> createRole(@Valid @RequestBody RoleUtilisateurRequestDTO requestDTO) {
         return ResponseEntity.status(HttpStatus.ACCEPTED)
@@ -50,7 +50,7 @@ public class RoleUtilisateurController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update an existing role")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'SECURITY_PERMISSION_MANAGE')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_PERMISSION_MANAGE)")
     @AuditLog(action = "ROLE_UPDATE", resource = "ROLE")
     public ResponseEntity<PendingActionResponseDTO> updateRole(
             @PathVariable Long id,
@@ -65,7 +65,7 @@ public class RoleUtilisateurController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a role")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'SECURITY_PERMISSION_MANAGE')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_PERMISSION_MANAGE)")
     @AuditLog(action = "ROLE_DELETE", resource = "ROLE")
     public ResponseEntity<PendingActionResponseDTO> deleteRole(
             @PathVariable Long id,

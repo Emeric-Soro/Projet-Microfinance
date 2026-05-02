@@ -67,7 +67,7 @@ public class ClientController {
             @ApiResponse(responseCode = "400", description = "Parametres de pagination invalides")
     })
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<Page<ClientResponseDTO>> listerClients(@ParameterObject Pageable pageable) {
         Page<ClientResponseDTO> pageClients = clientService.listerClients(pageable)
                 .map(clientMapper::toResponseDTO);
@@ -83,7 +83,7 @@ public class ClientController {
             @ApiResponse(responseCode = "404", description = "Client introuvable")
     })
     @GetMapping("/{idClient}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     public ResponseEntity<ClientResponseDTO> obtenirDetailsClient(@PathVariable Long idClient) {
         Client client = clientService.obtenirDetailsClient(idClient);
         return ResponseEntity.ok(clientMapper.toResponseDTO(client));
@@ -99,7 +99,7 @@ public class ClientController {
             @ApiResponse(responseCode = "404", description = "Client introuvable")
     })
     @PutMapping("/{idClient}/statut")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     @AuditLog(action = "CLIENT_STATUS_UPDATE", resource = "CLIENT")
     public ResponseEntity<ClientResponseDTO> modifierStatutClient(
             @PathVariable Long idClient,
@@ -119,7 +119,7 @@ public class ClientController {
             @ApiResponse(responseCode = "404", description = "Client introuvable")
     })
     @PutMapping("/{idClient}/kyc")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     @AuditLog(action = "CLIENT_KYC_UPDATE", resource = "CLIENT")
     public ResponseEntity<ClientResponseDTO> mettreAJourKyc(
             @PathVariable Long idClient,
@@ -139,7 +139,7 @@ public class ClientController {
             @ApiResponse(responseCode = "404", description = "Client introuvable")
     })
     @PutMapping("/{idClient}/kyc/decision")
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR)")
     @AuditLog(action = "CLIENT_KYC_DECISION", resource = "CLIENT")
     public ResponseEntity<ClientResponseDTO> traiterDossierKyc(
             @PathVariable Long idClient,

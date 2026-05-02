@@ -26,6 +26,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.microfinance.core_banking.service.security.SecurityConstants.*;
+
 @Service
 public class UtilisateurServiceImpl implements UtilisateurService {
 
@@ -260,7 +262,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         boolean administrateur = acteur.getRoles().stream()
                 .map(RoleUtilisateur::getCodeRoleUtilisateur)
                 .map(String::toUpperCase)
-                .anyMatch(role -> role.equals("ADMIN") || role.equals("SUPERVISEUR"));
+                .anyMatch(role -> role.equals(ROLE_ADMIN) || role.equals(ROLE_SUPERVISEUR));
 
         if (!selfService && !administrateur) {
             throw new IllegalStateException("Seul l'utilisateur lui-meme ou un administrateur peut changer ce mot de passe");

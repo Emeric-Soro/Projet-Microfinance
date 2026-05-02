@@ -136,7 +136,7 @@ public class UtilisateurController {
             @ApiResponse(responseCode = "400", description = "Code role invalide"),
             @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
     })
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN)")
     @PutMapping("/{idUser}/roles")
     @AuditLog(action = "USER_ASSIGN_ROLE", resource = "UTILISATEUR")
     public ResponseEntity<UtilisateurResponseDTO> assignerRole(
@@ -156,7 +156,7 @@ public class UtilisateurController {
             @ApiResponse(responseCode = "400", description = "Code role invalide"),
             @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
     })
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN)")
     @DeleteMapping("/{idUser}/roles")
     @AuditLog(action = "USER_REVOKE_ROLE", resource = "UTILISATEUR")
     public ResponseEntity<UtilisateurResponseDTO> revoquerRole(
@@ -175,7 +175,7 @@ public class UtilisateurController {
             @ApiResponse(responseCode = "200", description = "Statut d'activation mis a jour"),
             @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
     })
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN)")
     @PutMapping("/{idUser}/activation")
     @AuditLog(action = "USER_ACTIVATION_UPDATE", resource = "UTILISATEUR")
     public ResponseEntity<UtilisateurResponseDTO> changerActivation(

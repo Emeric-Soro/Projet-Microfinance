@@ -7,6 +7,7 @@ import com.microfinance.core_banking.dto.response.loan.LoanFacilityResponseDTO;
 import com.microfinance.core_banking.entity.LoanFacility;
 import com.microfinance.core_banking.repository.extension.LoanFacilityRepository;
 import com.microfinance.core_banking.mapper.LoanFacilityMapper;
+import com.microfinance.core_banking.dto.request.extension.CreerActionRequestDTO;
 import com.microfinance.core_banking.service.extension.ValidationExtensionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -70,7 +71,7 @@ public class LoanFacilityServiceImpl implements LoanFacilityService {
             }
             payload.put("commentaireMaker", "Création via Maker-Checker");
             // Create the Maker-Checker action
-            validationExtensionService.creerAction(payload);
+            validationExtensionService.creerAction(CreerActionRequestDTO.fromMap(payload));
             // Return the placeholder loan with status indicating waiting validation
             return loanFacilityMapper.toResponse(savedPending);
         }

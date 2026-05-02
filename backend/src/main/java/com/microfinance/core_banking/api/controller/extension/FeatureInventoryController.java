@@ -1,13 +1,12 @@
 package com.microfinance.core_banking.api.controller.extension;
 
+import com.microfinance.core_banking.dto.response.extension.FeatureInventoryResponseDTO;
 import com.microfinance.core_banking.service.extension.FeatureInventoryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/features")
@@ -20,8 +19,8 @@ public class FeatureInventoryController {
     }
 
     @GetMapping("/inventory")
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','FEATURE_VIEW')")
-    public ResponseEntity<Map<String, Object>> getInventory() {
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_FEATURE_VIEW)")
+    public ResponseEntity<FeatureInventoryResponseDTO> getInventory() {
         return ResponseEntity.ok(featureInventoryService.buildInventory());
     }
 }

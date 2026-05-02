@@ -1,5 +1,10 @@
 package com.microfinance.core_banking.service.extension;
 
+import com.microfinance.core_banking.dto.request.extension.CreerBudgetServiceRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerCommandeServiceRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerFournisseurServiceRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.CreerImmobilisationServiceRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.GenererBulletinPaieServiceRequestDTO;
 import com.microfinance.core_banking.entity.Agence;
 import com.microfinance.core_banking.entity.BudgetExploitation;
 import com.microfinance.core_banking.entity.BulletinPaie;
@@ -64,30 +69,29 @@ public class SupportEntrepriseService {
     }
 
     @Transactional
-    public BudgetExploitation creerBudget(Map<String, Object> payload) {
+    public BudgetExploitation creerBudget(CreerBudgetServiceRequestDTO dto) {
         BudgetExploitation budget = new BudgetExploitation();
-        budget.setCodeBudget(defaulted(payload, "codeBudget", "BDG-" + randomSuffix()));
-        budget.setAnnee(Integer.valueOf(required(payload, "annee")));
-        budget.setMontantTotal(decimalOrZero(payload, "montantTotal"));
-        budget.setStatut(defaulted(payload, "statut", "BROUILLON"));
-        if (payload.get("idAgence") != null) {
-            Agence agence = agenceRepository.findById(Long.valueOf(payload.get("idAgence").toString()))
+        budget.setCodeBudget(dto.getCodeBudget() == null ? "BDG-" + randomSuffix() : dto.getCodeBudget());
+        budget.setAnnee(Integer.valueOf(dto.getAnnee()));
+        budget.setMontantTotal(dto.getMontantTotal());
+        budget.setStatut(dto.getStatut());
+        if (dto.getIdAgence() != null) {
+            Agence agence = agenceRepository.findById(Long.valueOf(dto.getIdAgence()))
                     .orElseThrow(() -> new EntityNotFoundException("Agence introuvable"));
             authenticatedUserService.assertAgencyAccess(agence.getIdAgence());
             budget.setAgence(agence);
         }
         BudgetExploitation saved = budgetExploitationRepository.save(budget);
 
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> lignes = (List<Map<String, Object>>) payload.get("lignes");
+        List<Map<String, Object>> lignes = dto.getLignes();
         if (lignes != null) {
             for (Map<String, Object> lignePayload : lignes) {
                 LigneBudget ligneBudget = new LigneBudget();
                 ligneBudget.setBudget(saved);
-                ligneBudget.setRubrique(required(lignePayload, "rubrique"));
-                ligneBudget.setMontantPrevu(decimalOrZero(lignePayload, "montantPrevu"));
-                ligneBudget.setMontantEngage(decimalOrZero(lignePayload, "montantEngage"));
-                ligneBudget.setMontantConsomme(decimalOrZero(lignePayload, "montantConsomme"));
+                ligneBudget.setRubrique(String.valueOf(lignePayload.get("rubrique")));
+                ligneBudget.setMontantPrevu(lignePayload.get("montantPrevu") == null ? BigDecimal.ZERO : new BigDecimal(lignePayload.get("montantPrevu").toString()));
+                ligneBudget.setMontantEngage(lignePayload.get("montantEngage") == null ? BigDecimal.ZERO : new BigDecimal(lignePayload.get("montantEngage").toString()));
+                ligneBudget.setMontantConsomme(lignePayload.get("montantConsomme") == null ? BigDecimal.ZERO : new BigDecimal(lignePayload.get("montantConsomme").toString()));
                 ligneBudgetRepository.save(ligneBudget);
             }
         }
@@ -95,30 +99,30 @@ public class SupportEntrepriseService {
     }
 
     @Transactional
-    public Fournisseur creerFournisseur(Map<String, Object> payload) {
+    public Fournisseur creerFournisseur(CreerFournisseurServiceRequestDTO dto) {
         Fournisseur fournisseur = new Fournisseur();
-        fournisseur.setCodeFournisseur(defaulted(payload, "codeFournisseur", "FRN-" + randomSuffix()));
-        fournisseur.setNom(required(payload, "nom"));
-        fournisseur.setContact((String) payload.get("contact"));
-        fournisseur.setTelephone((String) payload.get("telephone"));
-        fournisseur.setEmail((String) payload.get("email"));
-        fournisseur.setStatut(defaulted(payload, "statut", "ACTIF"));
+        fournisseur.setCodeFournisseur(dto.getCodeFournisseur() == null ? "FRN-" + randomSuffix() : dto.getCodeFournisseur());
+        fournisseur.setNom(dto.getNom());
+        fournisseur.setContact(dto.getContact());
+        fournisseur.setTelephone(dto.getTelephone());
+        fournisseur.setEmail(dto.getEmail());
+        fournisseur.setStatut(dto.getStatut());
         return fournisseurRepository.save(fournisseur);
     }
 
     @Transactional
-    public CommandeAchat creerCommandeAchat(Map<String, Object> payload) {
-        Fournisseur fournisseur = fournisseurRepository.findById(Long.valueOf(required(payload, "idFournisseur")))
+    public CommandeAchat creerCommandeAchat(CreerCommandeServiceRequestDTO dto) {
+        Fournisseur fournisseur = fournisseurRepository.findById(Long.valueOf(dto.getIdFournisseur()))
                 .orElseThrow(() -> new EntityNotFoundException("Fournisseur introuvable"));
         CommandeAchat commandeAchat = new CommandeAchat();
-        commandeAchat.setReferenceCommande(defaulted(payload, "referenceCommande", "CDA-" + randomSuffix()));
+        commandeAchat.setReferenceCommande(dto.getReferenceCommande() == null ? "CDA-" + randomSuffix() : dto.getReferenceCommande());
         commandeAchat.setFournisseur(fournisseur);
-        commandeAchat.setObjet(required(payload, "objet"));
-        commandeAchat.setMontant(decimalOrZero(payload, "montant"));
-        commandeAchat.setDateCommande(payload.get("dateCommande") == null ? LocalDate.now() : LocalDate.parse(payload.get("dateCommande").toString()));
-        commandeAchat.setStatut(defaulted(payload, "statut", "INITIEE"));
-        if (payload.get("idAgence") != null) {
-            Agence agence = agenceRepository.findById(Long.valueOf(payload.get("idAgence").toString()))
+        commandeAchat.setObjet(dto.getObjet());
+        commandeAchat.setMontant(dto.getMontant());
+        commandeAchat.setDateCommande(dto.getDateCommande() == null ? LocalDate.now() : LocalDate.parse(dto.getDateCommande()));
+        commandeAchat.setStatut(dto.getStatut());
+        if (dto.getIdAgence() != null) {
+            Agence agence = agenceRepository.findById(Long.valueOf(dto.getIdAgence()))
                     .orElseThrow(() -> new EntityNotFoundException("Agence introuvable"));
             authenticatedUserService.assertAgencyAccess(agence.getIdAgence());
             commandeAchat.setAgence(agence);
@@ -127,38 +131,38 @@ public class SupportEntrepriseService {
     }
 
     @Transactional
-    public BulletinPaie genererBulletinPaie(Map<String, Object> payload) {
-        Employe employe = employeRepository.findById(Long.valueOf(required(payload, "idEmploye")))
+    public BulletinPaie genererBulletinPaie(GenererBulletinPaieServiceRequestDTO dto) {
+        Employe employe = employeRepository.findById(Long.valueOf(dto.getIdEmploye()))
                 .orElseThrow(() -> new EntityNotFoundException("Employe introuvable"));
         if (employe.getAgence() != null) {
             authenticatedUserService.assertAgencyAccess(employe.getAgence().getIdAgence());
         }
         BulletinPaie bulletinPaie = new BulletinPaie();
         bulletinPaie.setEmploye(employe);
-        bulletinPaie.setPeriode(required(payload, "periode"));
-        bulletinPaie.setSalaireBrut(decimalOrZero(payload, "salaireBrut"));
-        bulletinPaie.setRetenues(decimalOrZero(payload, "retenues"));
-        bulletinPaie.setSalaireNet(payload.get("salaireNet") == null
+        bulletinPaie.setPeriode(dto.getPeriode());
+        bulletinPaie.setSalaireBrut(dto.getSalaireBrut());
+        bulletinPaie.setRetenues(dto.getRetenues());
+        bulletinPaie.setSalaireNet(dto.getSalaireNet() == null
                 ? bulletinPaie.getSalaireBrut().subtract(bulletinPaie.getRetenues())
-                : decimalOrZero(payload, "salaireNet"));
-        bulletinPaie.setStatut(defaulted(payload, "statut", "BROUILLON"));
+                : dto.getSalaireNet());
+        bulletinPaie.setStatut(dto.getStatut());
         return bulletinPaieRepository.save(bulletinPaie);
     }
 
     @Transactional
-    public Immobilisation creerImmobilisation(Map<String, Object> payload) {
+    public Immobilisation creerImmobilisation(CreerImmobilisationServiceRequestDTO dto) {
         Immobilisation immobilisation = new Immobilisation();
-        immobilisation.setCodeImmobilisation(defaulted(payload, "codeImmobilisation", "IMM-" + randomSuffix()));
-        immobilisation.setLibelle(required(payload, "libelle"));
-        immobilisation.setValeurOrigine(decimalOrZero(payload, "valeurOrigine"));
-        immobilisation.setDureeAmortissementMois(Integer.valueOf(required(payload, "dureeAmortissementMois")));
+        immobilisation.setCodeImmobilisation(dto.getCodeImmobilisation() == null ? "IMM-" + randomSuffix() : dto.getCodeImmobilisation());
+        immobilisation.setLibelle(dto.getLibelle());
+        immobilisation.setValeurOrigine(dto.getValeurOrigine());
+        immobilisation.setDureeAmortissementMois(Integer.valueOf(dto.getDureeAmortissementMois()));
         immobilisation.setAmortissementMensuel(immobilisation.getValeurOrigine()
                 .divide(BigDecimal.valueOf(immobilisation.getDureeAmortissementMois()), 2, RoundingMode.HALF_UP));
-        immobilisation.setValeurNette(payload.get("valeurNette") == null ? immobilisation.getValeurOrigine() : decimalOrZero(payload, "valeurNette"));
-        immobilisation.setDateAcquisition(payload.get("dateAcquisition") == null ? LocalDate.now() : LocalDate.parse(payload.get("dateAcquisition").toString()));
-        immobilisation.setStatut(defaulted(payload, "statut", "ACTIVE"));
-        if (payload.get("idAgence") != null) {
-            Agence agence = agenceRepository.findById(Long.valueOf(payload.get("idAgence").toString()))
+        immobilisation.setValeurNette(dto.getValeurNette() == null ? immobilisation.getValeurOrigine() : dto.getValeurNette());
+        immobilisation.setDateAcquisition(dto.getDateAcquisition() == null ? LocalDate.now() : LocalDate.parse(dto.getDateAcquisition()));
+        immobilisation.setStatut(dto.getStatut());
+        if (dto.getIdAgence() != null) {
+            Agence agence = agenceRepository.findById(Long.valueOf(dto.getIdAgence()))
                     .orElseThrow(() -> new EntityNotFoundException("Agence introuvable"));
             authenticatedUserService.assertAgencyAccess(agence.getIdAgence());
             immobilisation.setAgence(agence);
@@ -220,23 +224,6 @@ public class SupportEntrepriseService {
                         && immobilisation.getAgence() != null
                         && authenticatedUserService.getCurrentAgencyId().equals(immobilisation.getAgence().getIdAgence())))
                 .toList();
-    }
-
-    private String required(Map<String, Object> payload, String key) {
-        Object value = payload.get(key);
-        if (value == null || value.toString().isBlank()) {
-            throw new IllegalArgumentException("Le champ '" + key + "' est obligatoire");
-        }
-        return value.toString().trim();
-    }
-
-    private String defaulted(Map<String, Object> payload, String key, String defaultValue) {
-        Object value = payload.get(key);
-        return value == null || value.toString().isBlank() ? defaultValue : value.toString().trim();
-    }
-
-    private BigDecimal decimalOrZero(Map<String, Object> payload, String key) {
-        return payload.get(key) == null ? BigDecimal.ZERO : new BigDecimal(payload.get(key).toString());
     }
 
     private String randomSuffix() {

@@ -14,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.microfinance.core_banking.dto.request.extension.PermissionSecuriteRequestDTO;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -118,13 +119,15 @@ class PermissionSecuriteServiceTest {
         when(permissionSecuriteRepository.findByCodePermission("SECURITY_AUDIT_VIEW")).thenReturn(Optional.empty());
         when(permissionSecuriteRepository.save(any(PermissionSecurite.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        PermissionSecurite resultat = permissionSecuriteService.appliquerMiseAJour(4L, Map.of(
+        PermissionSecuriteRequestDTO dto = PermissionSecuriteRequestDTO.fromMap(Map.of(
                 "codePermission", "security_audit_view",
                 "libellePermission", "Consulter audit",
                 "moduleCode", "security",
                 "descriptionPermission", "Lecture audit",
                 "actif", true
         ));
+
+        PermissionSecurite resultat = permissionSecuriteService.appliquerMiseAJour(4L, dto);
 
         assertThat(resultat.getCodePermission()).isEqualTo("SECURITY_AUDIT_VIEW");
         assertThat(resultat.getModuleCode()).isEqualTo("SECURITY");

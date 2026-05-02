@@ -41,7 +41,7 @@ public class CarteVisaController {
 			@ApiResponse(responseCode = "404", description = "Compte introuvable")
     })
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     @AuditLog(action = "CARD_ORDER", resource = "CARTE_VISA")
     public ResponseEntity<CarteVisaResponseDTO> commanderCarte(@RequestParam String numCompte) {
 		// Cree une nouvelle carte active rattachee au compte.
@@ -58,7 +58,7 @@ public class CarteVisaController {
 			@ApiResponse(responseCode = "404", description = "Carte introuvable")
     })
     @PutMapping("/{numeroCarte}/opposition")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
     @AuditLog(action = "CARD_BLOCK", resource = "CARTE_VISA")
     public ResponseEntity<CarteVisaResponseDTO> faireOpposition(@PathVariable String numeroCarte) {
 		// Desactive la carte pour empecher toute nouvelle utilisation.
