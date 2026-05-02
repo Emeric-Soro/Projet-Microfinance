@@ -1,0 +1,219 @@
+================================================================================
+ MATRICE DE COUVERTURE DES TESTS - MicroFin Core Banking
+================================================================================
+ Projet:   MicroFin Core Banking
+ Date:     2026-05-02
+ Backend:  Spring Boot 3.5.13 / Java 21 / Oracle XE (Testcontainers)
+ Package:  com.microfinance.core_banking
+ Framework: JUnit 5 + Mockito + MockMvc + Testcontainers
+================================================================================
+
+[PARTIE 2] INFRASTRUCTURE DE TEST
+--------------------------------------------------------------------------------
+ Fichier                                          | Statut       | Type
+--------------------------------------------------------------------------------
+ support/JwtTokenProvider.java                    | GENERATED    | Utilitaire
+ support/TestDataFactory.java                     | GENERATED    | Factory
+ support/AbstractControllerTest.java              | GENERATED    | Base Test
+ support/ApiTestConstants.java                    | GENERATED    | Constantes
+ support/TestContainersConfig.java                | GENERATED    | Configuration
+ CoreBankingApplicationTests.java                 | EXISTANT     | Smoke Test
+--------------------------------------------------------------------------------
+
+[PARTIE 3] TESTS API REST PAR CONTROLLER (34 controllers)
+--------------------------------------------------------------------------------
+ Controller                                       | Fichier Test                   | Statut
+--------------------------------------------------------------------------------
+ ClientController                                 | api/controller/client/         | GENERATED
+                                                  |   ClientControllerTest.java    |
+ UtilisateurController                            | api/controller/client/         | GENERATED
+                                                  |   UtilisateurControllerTest.java|
+ CompteController                                 | api/controller/compte/         | GENERATED
+                                                  |   CompteControllerTest.java    |
+ CarteVisaController                              | api/controller/compte/         | GENERATED
+                                                  |   CarteVisaControllerTest.java |
+ TransactionController                            | api/controller/operation/      | GENERATED
+                                                  |   TransactionControllerTest.java|
+ CreditExtensionController                        | api/controller/extension/      | GENERATED
+                                                  |   CreditExtensionControllerTest.java|
+ EpargneExtensionController                       | api/controller/extension/      | GENERATED
+                                                  |   EpargneExtensionControllerTest.java|
+ CaisseExtensionController                        | api/controller/extension/      | GENERATED
+                                                  |   CaisseExtensionControllerTest.java|
+ ComptabiliteExtensionController                  | api/controller/extension/      | GENERATED
+                                                  |   ComptabiliteExtensionControllerTest.java|
+ ValidationExtensionController                    | api/controller/extension/      | GENERATED
+                                                  |   ValidationExtensionControllerTest.java|
+ EodController                                    | api/controller/extension/      | GENERATED
+                                                  |   EodControllerTest.java       |
+ OrganisationController                           | api/controller/extension/      | GENERATED
+                                                  |   OrganisationControllerTest.java|
+ ConformiteExtensionController                    | api/controller/extension/      | GENERATED
+                                                  |   ConformiteExtensionControllerTest.java|
+ ScoringExtensionController                       | api/controller/extension/      | GENERATED
+                                                  |   ScoringExtensionControllerTest.java|
+ RisqueExtensionController                        | api/controller/extension/      | GENERATED
+                                                  |   RisqueExtensionControllerTest.java|
+ TresorerieController                             | api/controller/extension/      | GENERATED
+                                                  |   TresorerieControllerTest.java|
+ DigitalExtensionController                       | api/controller/extension/      | GENERATED
+                                                  |   DigitalExtensionControllerTest.java|
+ PaiementExterneController                        | api/controller/extension/      | GENERATED
+                                                  |   PaiementExterneControllerTest.java|
+ MonetiqueController                              | api/controller/extension/      | GENERATED
+                                                  |   MonetiqueControllerTest.java |
+ OpenBankingController                            | api/controller/extension/      | GENERATED
+                                                  |   OpenBankingControllerTest.java|
+ PermissionSecuriteController                     | api/controller/extension/      | GENERATED
+                                                  |   PermissionSecuriteControllerTest.java|
+ RoleUtilisateurController                        | api/controller/extension/      | GENERATED
+                                                  |   RoleUtilisateurControllerTest.java|
+ SupportEntrepriseController                      | api/controller/extension/      | GENERATED
+                                                  |   SupportEntrepriseControllerTest.java|
+ DataIntegrityController                          | api/controller/extension/      | GENERATED
+                                                  |   DataIntegrityControllerTest.java|
+ FeatureInventoryController                       | api/controller/extension/      | GENERATED
+                                                  |   FeatureInventoryControllerTest.java|
+ SystemAuditLogController                         | api/controller/extension/      | GENERATED
+                                                  |   SystemAuditLogControllerTest.java|
+ RapprochementController                          | api/controller/extension/      | GENERATED
+                                                  |   RapprochementControllerTest.java|
+ AgioController                                   | api/controller/tarification/   | GENERATED
+                                                  |   AgioControllerTest.java      |
+ TarificationParametreController                  | api/controller/tarification/   | GENERATED
+                                                  |   TarificationParametreControllerTest.java|
+ LoanFacilityController                           | api/controller/loan/           | GENERATED
+                                                  |   LoanFacilityControllerTest.java|
+ JournalEntryController                           | api/controller/journalentry/   | GENERATED
+                                                  |   JournalEntryControllerTest.java|
+ BeneficiaryController                            | api/controller/beneficiary/    | GENERATED
+                                                  |   BeneficiaryControllerTest.java|
+ CollateralController                             | api/controller/collateral/     | GENERATED
+                                                  |   CollateralControllerTest.java|
+ GuarantorController                              | api/controller/guarantor/      | GENERATED
+                                                  |   GuarantorControllerTest.java |
+--------------------------------------------------------------------------------
+
+[PARTIE 4] TESTS DE WORKFLOW
+--------------------------------------------------------------------------------
+ Fichier                                          | Portee                       | Statut
+--------------------------------------------------------------------------------
+ workflow/CreditWorkflowTest.java                 | Cycle de vie credit complet  | GENERATED
+ workflow/TransactionWorkflowTest.java            | Depot/retrait/virement/      | GENERATED
+                                                  | extourne                      |
+ workflow/MakerCheckerWorkflowTest.java           | Maker-Checker workflow       | GENERATED
+ workflow/CaisseWorkflowTest.java                 | Ouverture/fermeture session  | GENERATED
+ workflow/EpargneWorkflowTest.java                | Interets/DAT/cloture         | GENERATED
+ workflow/EodBatchWorkflowTest.java               | EOD batch processing         | GENERATED
+ workflow/MultiAgenceWorkflowTest.java            | Multi-agence operations      | GENERATED
+--------------------------------------------------------------------------------
+
+[PARTIE 5] TESTS DE SECURITE
+--------------------------------------------------------------------------------
+ Fichier                                          | Portee                       | Statut
+--------------------------------------------------------------------------------
+ workflow/SecurityApiTest.java                    | Roles/Permissions/expressions| GENERATED
+ workflow/JwtTokenSecurityTest.java               | JWT token validation         | GENERATED
+ config/SecurityRoleAccessTest.java               | @PreAuthorize sur controleurs| EXISTANT
+ config/AccountAccessSecurityTest.java            | Acces par role               | EXISTANT
+ config/JwtTokenBlacklistServiceTest.java         | Blacklist JWT                | EXISTANT
+ config/PublicApiRateLimitingFilterTest.java      | Rate limiting                | EXISTANT
+--------------------------------------------------------------------------------
+
+[PARTIE 6] TESTS COMPTABLES EXTREMES
+--------------------------------------------------------------------------------
+ Fichier                                          | Portee                       | Statut
+--------------------------------------------------------------------------------
+ workflow/ExtremeAccountingTest.java              | 10 scenarios extremes:       | GENERATED
+                                                  | - Partie double equilibree   |
+                                                  | - Solde negatif sans decouvert|
+                                                  | - Cumul transactions journal.|
+                                                  | - Arrondi centimes           |
+                                                  | - Provision progressive      |
+                                                  | - Grand livre solde          |
+                                                  | - Balance agee impayes       |
+                                                  | - Amortissement constant     |
+                                                  | - Ecart caisse               |
+                                                  | - Cloture exercice           |
+--------------------------------------------------------------------------------
+
+[PARTIE 7] TESTS DE CONCURRENCE ET IDEMPOTENCE
+--------------------------------------------------------------------------------
+ Fichier                                          | Portee                       | Statut
+--------------------------------------------------------------------------------
+ concurrency/ConcurrencyConflictTest.java         | 5 scenarios concurrence     | GENERATED
+ concurrency/IdempotencyTest.java                 | 5 scenarios idempotence     | GENERATED
+--------------------------------------------------------------------------------
+
+[PARTIE 8] TESTS D'INTEGRATION
+--------------------------------------------------------------------------------
+ Fichier                                          | Portee                       | Statut
+--------------------------------------------------------------------------------
+ integration/ApiDocumentationIntegrationTest.java | Swagger/OpenAPI              | EXISTANT
+ integration/TarificationMigrationIntegrationTest.java| Migration tarification  | EXISTANT
+ integration/OracleXeIntegrationTest.java         | Oracle XE container + schema | GENERATED
+
+[PARTIE 9-10] TESTS DE PERFORMANCE (smoke)
+--------------------------------------------------------------------------------
+ performance/PerformanceSmokeTest.java            | 4 scenarios seuils temporels | GENERATED
+--------------------------------------------------------------------------------
+
+[PARTIES 11-14] FICHIERS SUPPORT
+--------------------------------------------------------------------------------
+ Fichier                                          | Fonction                     | Statut
+--------------------------------------------------------------------------------
+ support/JwtTokenProvider.java                    | Generation tokens JWT test   | GENERATED
+ support/TestDataFactory.java                     | Fabrique d'entites test      | GENERATED
+ support/AbstractControllerTest.java              | Classe mere tests MockMvc    | GENERATED
+ support/ApiTestConstants.java                    | Constantes endpoints API     | GENERATED
+ support/TestContainersConfig.java                | Configuration OracleXE       | GENERATED
+--------------------------------------------------------------------------------
+
+== STATISTIQUES GENERALES ==
+
+Fichiers generes (ce script): ~45 fichiers
+Fichiers existants prealablement: ~40 fichiers (service layer unit tests)
+Total fichiers de test: ~85 fichiers
+Taux de couverture controleurs API: 34/34 (100%)
+Modules couverts: Client, Compte, Transaction, Credit, Epargne, Caisse,
+                  Comptabilite, Maker-Checker, EOD, Organisation, Conformite,
+                  Scoring, Risque, Tresorerie, Digital, Paiement, Monetique,
+                  OpenBanking, Permissions, Roles, Support, Data Integrity,
+                  Features, Audit, Rapprochement, Tarification, Agios,
+                  Loan Facility, Journal Entry, Beneficiaire, Collateral, Garant
+Workflows couverts: Credit, Transaction, Maker-Checker, Caisse, Epargne,
+                    EOD Batch, Multi-Agence
+Scenarios comptables extremes: 10 scenarios
+Scenarios concurrence: 5
+Scenarios idempotence: 5
+
+================================================================================
+ INSTRUCTIONS D'EXECUTION
+================================================================================
+
+ Pour executer TOUS les tests (avec Oracle XE container):
+   cd backend
+   mvn clean test
+
+ Pour executer uniquement les tests unitaires (sans base de donnees):
+   mvn test -Dtest="!*IntegrationTest"
+
+ Pour executer les tests d'integration avec Testcontainers:
+   mvn test -Dtest="*IntegrationTest"
+
+ Pour un controller specifique:
+   mvn test -Dtest="ClientControllerTest"
+
+ Pour les workflows:
+   mvn test -Dtest="*WorkflowTest"
+
+ Pour les tests de securite:
+   mvn test -Dtest="*Security*,*JwtToken*"
+
+ Pour les tests comptables extremes:
+   mvn test -Dtest="ExtremeAccountingTest"
+
+ Pour les tests de concurrence:
+   mvn test -Dtest="ConcurrencyConflictTest,IdempotencyTest"
+
+================================================================================

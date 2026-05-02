@@ -5,9 +5,10 @@ import com.microfinance.core_banking.dto.request.extension.DetecterImpayesReques
 import com.microfinance.core_banking.service.extension.ComptabiliteExtensionService;
 import com.microfinance.core_banking.service.extension.CreditExtensionService;
 import com.microfinance.core_banking.service.extension.EpargneExtensionService;
+import com.microfinance.core_banking.entity.SessionCaisse;
 import com.microfinance.core_banking.entity.Transaction;
+import com.microfinance.core_banking.repository.extension.SessionCaisseRepository;
 import com.microfinance.core_banking.repository.operation.TransactionRepository;
-import com.microfinance.core_banking.entity.EcritureComptable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
@@ -17,6 +18,7 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
@@ -37,17 +39,20 @@ public class EodBatchConfig {
     private final EpargneExtensionService epargneExtensionService;
     private final ComptabiliteExtensionService comptabiliteExtensionService;
     private final TransactionRepository transactionRepository;
+    private final SessionCaisseRepository sessionCaisseRepository;
 
     public EodBatchConfig(
             CreditExtensionService creditExtensionService,
             EpargneExtensionService epargneExtensionService,
             ComptabiliteExtensionService comptabiliteExtensionService,
-            TransactionRepository transactionRepository
+            TransactionRepository transactionRepository,
+            SessionCaisseRepository sessionCaisseRepository
     ) {
         this.creditExtensionService = creditExtensionService;
         this.epargneExtensionService = epargneExtensionService;
         this.comptabiliteExtensionService = comptabiliteExtensionService;
         this.transactionRepository = transactionRepository;
+        this.sessionCaisseRepository = sessionCaisseRepository;
     }
 
     @Bean
@@ -55,10 +60,8 @@ public class EodBatchConfig {
         return new StepBuilder("freezeTransactionsStep", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     log.info("=== Step 1: freezeTransactionsStep - Freezing/locking all transactions for the period ===");
-                    String dateDebutStr = chunkContext.getStepContext().getJobParameters().getString("dateDebut");
-                    String dateFinStr = chunkContext.getStepContext().getJobParameters().getString("dateFin");
-                    LocalDate dateDebut = LocalDate.parse(dateDebutStr);
-                    LocalDate dateFin = LocalDate.parse(dateFinStr);
+                    LocalDate dateDebut = getRequiredLocalDate(chunkContext, "dateDebut");
+                    LocalDate dateFin = getRequiredLocalDate(chunkContext, "dateFin");
                     List<Transaction> periodTransactions = transactionRepository
                             .findByDateExecutionBetween(dateDebut.atStartOfDay(), dateFin.atTime(23, 59, 59));
                     int count = periodTransactions.size();
@@ -75,7 +78,15 @@ public class EodBatchConfig {
         return new StepBuilder("closeTellersStep", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     log.info("=== Step 2: closeTellersStep - Closing all teller sessions ===");
+                    List<SessionCaisse> openSessions = sessionCaisseRepository.findByStatutIgnoreCase("OUVERTE");
                     int closedSessions = 0;
+                    for (SessionCaisse session : openSessions) {
+                        session.setStatut("FERMEE");
+                        session.setDateFermeture(java.time.LocalDateTime.now());
+                        session.setCommentaire("Fermeture automatique EOD");
+                        sessionCaisseRepository.save(session);
+                        closedSessions++;
+                    }
                     log.info("Closed {} teller sessions", closedSessions);
                     chunkContext.getStepContext().getStepExecution().getJobExecution()
                             .getExecutionContext().putInt("closeTellersCount", closedSessions);
@@ -89,8 +100,7 @@ public class EodBatchConfig {
         return new StepBuilder("calculateInterestStep", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     log.info("=== Step 3: calculateInterestStep - Calculating and posting interest ===");
-                    String dateFinStr = chunkContext.getStepContext().getJobParameters().getString("dateFin");
-                    LocalDate dateFin = LocalDate.parse(dateFinStr);
+                    LocalDate dateFin = getRequiredLocalDate(chunkContext, "dateFin");
                     Long systemUserId = 0L;
                     int comptesCredites = epargneExtensionService.calculerInteretsCourusMensuels(dateFin, systemUserId);
                     log.info("Credited monthly interest to {} savings accounts", comptesCredites);
@@ -106,8 +116,7 @@ public class EodBatchConfig {
         return new StepBuilder("agingAnalysisStep", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     log.info("=== Step 4: agingAnalysisStep - Running aging analysis on overdue loans ===");
-                    String dateFinStr = chunkContext.getStepContext().getJobParameters().getString("dateFin");
-                    LocalDate dateFin = LocalDate.parse(dateFinStr);
+                    LocalDate dateFin = getRequiredLocalDate(chunkContext, "dateFin");
                     DetecterImpayesRequestDTO dto = new DetecterImpayesRequestDTO();
                     dto.setDateArrete(dateFin);
                     var impayes = creditExtensionService.detecterImpayes(dto);
@@ -124,8 +133,7 @@ public class EodBatchConfig {
         return new StepBuilder("calculateProvisionsStep", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     log.info("=== Step 5: calculateProvisionsStep - Calculating loan loss provisions ===");
-                    String dateFinStr = chunkContext.getStepContext().getJobParameters().getString("dateFin");
-                    LocalDate dateFin = LocalDate.parse(dateFinStr);
+                    LocalDate dateFin = getRequiredLocalDate(chunkContext, "dateFin");
                     CalculerProvisionsRequestDTO dto = new CalculerProvisionsRequestDTO();
                     dto.setDateCalcul(dateFin);
                     var provisions = creditExtensionService.calculerProvisions(dto);
@@ -147,8 +155,7 @@ public class EodBatchConfig {
         return new StepBuilder("postToGeneralLedgerStep", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     log.info("=== Step 6: postToGeneralLedgerStep - Posting all entries to General Ledger ===");
-                    String dateFinStr = chunkContext.getStepContext().getJobParameters().getString("dateFin");
-                    LocalDate dateFin = LocalDate.parse(dateFinStr);
+                    LocalDate dateFin = getRequiredLocalDate(chunkContext, "dateFin");
                     var ecritures = comptabiliteExtensionService.listerEcritures(dateFin.minusMonths(1), dateFin, null);
                     log.info("General Ledger contains {} entries for the period", ecritures.size());
                     chunkContext.getStepContext().getStepExecution().getJobExecution()
@@ -163,8 +170,7 @@ public class EodBatchConfig {
         return new StepBuilder("openNextDayStep", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     log.info("=== Step 7: openNextDayStep - Opening the system for the next day ===");
-                    String dateFinStr = chunkContext.getStepContext().getJobParameters().getString("dateFin");
-                    LocalDate dateFin = LocalDate.parse(dateFinStr);
+                    LocalDate dateFin = getRequiredLocalDate(chunkContext, "dateFin");
                     LocalDate nextDay = dateFin.plusDays(1);
                     log.info("System opened for {}", nextDay);
                     chunkContext.getStepContext().getStepExecution().getJobExecution()
@@ -207,5 +213,13 @@ public class EodBatchConfig {
                 .next(postToGeneralLedgerStep)
                 .next(openNextDayStep)
                 .build();
+    }
+
+    private LocalDate getRequiredLocalDate(ChunkContext chunkContext, String parameterName) {
+        Object parameterValue = chunkContext.getStepContext().getJobParameters().get(parameterName);
+        if (parameterValue == null) {
+            throw new IllegalArgumentException("Le parametre batch '" + parameterName + "' est obligatoire");
+        }
+        return LocalDate.parse(parameterValue.toString());
     }
 }
