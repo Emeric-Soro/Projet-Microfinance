@@ -14,6 +14,7 @@ import com.microfinance.core_banking.dto.response.extension.ClasseComptableRespo
 import com.microfinance.core_banking.dto.response.extension.ClotureComptableResponseDTO;
 import com.microfinance.core_banking.dto.response.extension.CompteComptableResponseDTO;
 import com.microfinance.core_banking.dto.response.extension.EcritureComptableResponseDTO;
+import com.microfinance.core_banking.dto.response.common.ErrorResponseDTO;
 import com.microfinance.core_banking.dto.response.extension.JournalComptableResponseDTO;
 import com.microfinance.core_banking.dto.response.extension.LigneGrandLivreDTO;
 import com.microfinance.core_banking.dto.response.extension.ControlesComptablesResponseDTO;
@@ -29,9 +30,11 @@ import com.microfinance.core_banking.entity.SchemaComptable;
 import com.microfinance.core_banking.service.extension.ComptabiliteExtensionService;
 import com.microfinance.core_banking.service.extension.PendingActionSubmissionService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -49,6 +52,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/comptabilite")
+@Tag(name = "Comptabilité", description = "API de gestion de la comptabilité bancaire (classes, comptes, journaux, écritures, balance, clôtures)")
 public class ComptabiliteExtensionController {
 
     private final ComptabiliteExtensionService comptabiliteExtensionService;
@@ -62,10 +66,13 @@ public class ComptabiliteExtensionController {
         this.pendingActionSubmissionService = pendingActionSubmissionService;
     }
 
-    @Operation(summary = "Initialiser le referentiel comptable", description = "Cree les classes et comptes comptables par defaut")
+    @Operation(summary = "Initialiser le référentiel comptable", description = "Crée les classes et comptes comptables par défaut nécessaires au fonctionnement du système bancaire. Génère le plan comptable de l'institution selon les normes en vigueur. Effet comptable : création de l'ensemble des comptes de base (actif, passif, charges, produits). Nécessite le rôle administrateur.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Referentiel initialise avec succes"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "200", description = "Référentiel initialisé avec succès", content = @Content(schema = @Schema(implementation = BootstrapResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - référentiel déjà initialisé", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/bootstrap")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_MANAGE)")
@@ -74,11 +81,14 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.ok(comptabiliteExtensionService.bootstrapReferentiel());
     }
 
-    @Operation(summary = "Creer une classe comptable", description = "Cree une nouvelle classe comptable (soumis pour approbation)")
+    @Operation(summary = "Créer une classe comptable", description = "Crée une nouvelle classe comptable dans le plan comptable (ex: classe 1 - Capitaux propres). Transit par le workflow Maker-Checker pour validation. La classe définit la structure de premier niveau du référentiel comptable.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Creation classe comptable soumise en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "202", description = "Création classe comptable soumise en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - code classe déjà existant", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/classes")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_MANAGE)")
@@ -88,11 +98,15 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Creer un compte comptable", description = "Cree un nouveau compte comptable (soumis pour approbation)")
+    @Operation(summary = "Créer un compte comptable", description = "Crée un nouveau compte comptable rattaché à une classe existante (ex: compte 101 - Capital social). Transit par le workflow Maker-Checker pour validation. Définit le type de solde (débiteur/créditeur) et l'affectation à une agence. Effet comptable : le compte est utilisable dans les écritures après activation.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Creation compte comptable soumise en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "202", description = "Création compte comptable soumise en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Classe comptable introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - numéro de compte déjà existant", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/comptes")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_MANAGE)")
@@ -102,11 +116,14 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Creer un journal comptable", description = "Cree un nouveau journal comptable (soumis pour approbation)")
+    @Operation(summary = "Créer un journal comptable", description = "Crée un nouveau journal comptable (ex: journal des opérations diverses, journal de banque). Transit par le workflow Maker-Checker pour validation. Le journal sert de regroupement pour les écritures comptables de même nature.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Creation journal comptable soumise en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "202", description = "Création journal comptable soumise en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - code journal déjà existant", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/journaux")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_MANAGE)")
@@ -116,11 +133,14 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Creer un schema comptable", description = "Cree un nouveau schema comptable (soumis pour approbation)")
+    @Operation(summary = "Créer un schéma comptable", description = "Crée un nouveau schéma comptable définissant les règles d'écriture automatique pour une opération métier (débit/crédit). Transit par le workflow Maker-Checker pour validation. Le schéma est utilisé par les modules métier pour générer automatiquement les écritures comptables.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Creation schema comptable soumise en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "202", description = "Création schéma comptable soumise en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - code opération déjà existant", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/schemas")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_MANAGE)")
@@ -130,11 +150,14 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Creer une ecriture manuelle", description = "Cree une ecriture comptable manuelle (soumis pour approbation)")
+    @Operation(summary = "Créer une écriture manuelle", description = "Crée une écriture comptable manuelle (pièce comptable). Transit par le workflow Maker-Checker pour validation. Permet de saisir des écritures qui ne sont pas générées automatiquement par les modules métier. Effet comptable : impacte immédiatement les soldes des comptes concernés après validation.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Ecriture manuelle soumise en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "202", description = "Écriture manuelle soumise en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - écriture non équilibrée", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/ecritures")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_MANAGE)")
@@ -144,11 +167,14 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Soumettre une cloture comptable", description = "Soumet une cloture comptable pour approbation")
+    @Operation(summary = "Soumettre une clôture comptable", description = "Soumet une clôture comptable générale pour une période donnée. Transit par le workflow Maker-Checker pour approbation. Précondition : toutes les écritures de la période doivent être validées. Effet comptable : arrête les comptes de la période et calcule le résultat. Les écritures ultérieures ne peuvent pas impacter la période clôturée.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Cloture comptable soumise en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "202", description = "Clôture comptable soumise en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - période déjà clôturée", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/clotures")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_MANAGE)")
@@ -158,11 +184,14 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Soumettre une cloture mensuelle", description = "Soumet une cloture comptable mensuelle pour approbation")
+    @Operation(summary = "Soumettre une clôture mensuelle", description = "Soumet une clôture comptable mensuelle pour arrêter les comptes d'un mois donné. Transit par le workflow Maker-Checker pour approbation. Effet comptable : calcul du résultat mensuel et vérification de la balance avant report des soldes sur le mois suivant.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Cloture mensuelle soumise en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "202", description = "Clôture mensuelle soumise en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - mois déjà clôturé", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/clotures/mensuelles")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_MANAGE)")
@@ -173,11 +202,14 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Soumettre une cloture annuelle", description = "Soumet une cloture comptable annuelle pour approbation")
+    @Operation(summary = "Soumettre une clôture annuelle", description = "Soumet une clôture comptable annuelle pour arrêter les comptes de fin d'exercice. Transit par le workflow Maker-Checker pour approbation. Effet comptable : clôture définitive de l'exercice, calcul du résultat annuel, affectation du résultat et réouverture des comptes pour le nouvel exercice.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Cloture annuelle soumise en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "202", description = "Clôture annuelle soumise en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - exercice déjà clôturé", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/clotures/annuelles")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_MANAGE)")
@@ -188,10 +220,12 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Lister les classes comptables", description = "Retourne la liste de toutes les classes comptables")
+    @Operation(summary = "Lister les classes comptables", description = "Retourne la liste de toutes les classes comptables du plan comptable. Permet de consulter la structure hiérarchique des comptes (classe 1 à 9) avec leur code et libellé.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des classes retournee avec succes"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "200", description = "Liste des classes retournée avec succès", content = @Content(schema = @Schema(implementation = ClasseComptableResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/classes")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_VIEW)")
@@ -199,10 +233,12 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.ok(comptabiliteExtensionService.listerClasses().stream().map(this::toClasseDto).toList());
     }
 
-    @Operation(summary = "Lister les comptes comptables", description = "Retourne la liste de tous les comptes comptables")
+    @Operation(summary = "Lister les comptes comptables", description = "Retourne la liste de tous les comptes comptables avec leur numéro, intitulé et type de solde. Permet de consulter l'intégralité du plan comptable utilisé par l'institution.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des comptes retournee avec succes"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "200", description = "Liste des comptes retournée avec succès", content = @Content(schema = @Schema(implementation = CompteComptableResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/comptes")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_VIEW)")
@@ -210,10 +246,12 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.ok(comptabiliteExtensionService.listerComptes().stream().map(this::toCompteDto).toList());
     }
 
-    @Operation(summary = "Lister les journaux comptables", description = "Retourne la liste de tous les journaux comptables")
+    @Operation(summary = "Lister les journaux comptables", description = "Retourne la liste de tous les journaux comptables avec leur code, libellé et type. Permet de consulter les journaux disponibles pour l'enregistrement des opérations comptables.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des journaux retournee avec succes"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "200", description = "Liste des journaux retournée avec succès", content = @Content(schema = @Schema(implementation = JournalComptableResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/journaux")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_VIEW)")
@@ -221,10 +259,12 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.ok(comptabiliteExtensionService.listerJournaux().stream().map(this::toJournalDto).toList());
     }
 
-    @Operation(summary = "Lister les schemas comptables", description = "Retourne la liste de tous les schemas comptables")
+    @Operation(summary = "Lister les schémas comptables", description = "Retourne la liste de tous les schémas comptables configurés. Permet de consulter les règles d'écriture automatique (compte de débit, compte de crédit) pour chaque type d'opération métier.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des schemas retournee avec succes"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "200", description = "Liste des schémas retournée avec succès", content = @Content(schema = @Schema(implementation = SchemaComptableResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/schemas")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_VIEW)")
@@ -232,11 +272,14 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.ok(comptabiliteExtensionService.listerSchemas().stream().map(this::toSchemaDto).toList());
     }
 
-    @Operation(summary = "Tester un schema comptable", description = "Simule un schema comptable et retourne les ecritures generees")
+    @Operation(summary = "Tester un schéma comptable", description = "Simule l'exécution d'un schéma comptable et retourne les écritures qui seraient générées sans les valider. Permet de vérifier le bon paramétrage des règles de comptabilisation avant de les activer. Aucun impact comptable.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Test execute avec succes"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "200", description = "Test exécuté avec succès", content = @Content(schema = @Schema(implementation = SchemaTestResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Schéma comptable introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/schemas/test")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_VIEW)")
@@ -245,11 +288,13 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.ok(comptabiliteExtensionService.testerSchemaComptable(dto));
     }
 
-    @Operation(summary = "Lister les ecritures comptables", description = "Retourne les ecritures comptables filtrees par date et journal")
+    @Operation(summary = "Lister les écritures comptables", description = "Retourne les écritures comptables avec possibilité de filtrage par période et par journal. Permet de consulter l'historique des pièces comptables enregistrées dans le système avec leur référence, libellé et statut.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des ecritures retournee avec succes"),
-        @ApiResponse(responseCode = "400", description = "Parametres invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "200", description = "Liste des écritures retournée avec succès", content = @Content(schema = @Schema(implementation = EcritureComptableResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Paramètres invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/ecritures")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_VIEW)")
@@ -261,11 +306,13 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.ok(comptabiliteExtensionService.listerEcritures(dateDebut, dateFin, codeJournal).stream().map(this::toEcritureDto).toList());
     }
 
-    @Operation(summary = "Lister les pieces comptables", description = "Retourne les pieces comptables filtrees par date et journal")
+    @Operation(summary = "Lister les pièces comptables", description = "Retourne les pièces comptables (écritures) avec filtrage par période et journal. Synonyme fonctionnel de la liste des écritures, présenté sous l'angle des pièces justificatives pour faciliter le travail des comptables.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des pieces retournee avec succes"),
-        @ApiResponse(responseCode = "400", description = "Parametres invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "200", description = "Liste des pièces retournée avec succès", content = @Content(schema = @Schema(implementation = EcritureComptableResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Paramètres invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/pieces")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_VIEW)")
@@ -277,12 +324,14 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.ok(comptabiliteExtensionService.listerEcritures(dateDebut, dateFin, codeJournal).stream().map(this::toEcritureDto).toList());
     }
 
-    @Operation(summary = "Consulter le grand livre", description = "Retourne les lignes du grand livre pour un compte donne")
+    @Operation(summary = "Consulter le grand livre", description = "Retourne les lignes du grand livre pour un compte comptable donné sur une période. Permet de visualiser le détail de toutes les mouvements (débit, crédit, solde) d'un compte spécifique. Essentiel pour le reporting comptable et l'audit.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Grand livre retourne avec succes"),
-        @ApiResponse(responseCode = "400", description = "Parametres invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse"),
-        @ApiResponse(responseCode = "404", description = "Compte comptable introuvable")
+        @ApiResponse(responseCode = "200", description = "Grand livre retourné avec succès", content = @Content(schema = @Schema(implementation = LigneGrandLivreDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Paramètres invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Compte comptable introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/grand-livre")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_VIEW)")
@@ -294,11 +343,13 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.ok(comptabiliteExtensionService.consulterGrandLivre(numeroCompte, dateDebut, dateFin));
     }
 
-    @Operation(summary = "Consulter la balance", description = "Retourne la balance des comptes pour une periode donnee")
+    @Operation(summary = "Consulter la balance", description = "Retourne la balance des comptes pour une période donnée avec les soldes débiteurs et créditeurs. Permet de vérifier l'équilibre comptable avant clôture. Chaque ligne présente un compte avec son total débit, total crédit et solde.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Balance retournee avec succes"),
-        @ApiResponse(responseCode = "400", description = "Parametres invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "200", description = "Balance retournée avec succès", content = @Content(schema = @Schema(implementation = BalanceLineDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Paramètres invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/balance")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_VIEW)")
@@ -309,11 +360,13 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.ok(comptabiliteExtensionService.consulterBalance(dateDebut, dateFin));
     }
 
-    @Operation(summary = "Effectuer les controles comptables", description = "Execute les controles de coherence comptable pour une periode")
+    @Operation(summary = "Effectuer les contrôles comptables", description = "Exécute les contrôles de cohérence comptable pour une période donnée. Vérifie l'équilibre des écritures, la continuité des séquences, la validité des comptes utilisés et l'absence d'anomalies. Retourne un rapport de synthèse des contrôles effectués.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Controles executes avec succes"),
-        @ApiResponse(responseCode = "400", description = "Parametres invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "200", description = "Contrôles exécutés avec succès", content = @Content(schema = @Schema(implementation = ControlesComptablesResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Paramètres invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/controles")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_VIEW)")
@@ -324,11 +377,13 @@ public class ComptabiliteExtensionController {
         return ResponseEntity.ok(comptabiliteExtensionService.controlesComptables(dateDebut, dateFin));
     }
 
-    @Operation(summary = "Lister les clotures comptables", description = "Retourne la liste des clotures comptables pour une periode")
+    @Operation(summary = "Lister les clôtures comptables", description = "Retourne la liste des clôtures comptables effectuées avec leur type (mensuelle, annuelle), période et statut. Permet de consulter l'historique des clôtures et de vérifier les périodes verrouillées.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des clotures retournee avec succes"),
-        @ApiResponse(responseCode = "400", description = "Parametres invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "200", description = "Liste des clôtures retournée avec succès", content = @Content(schema = @Schema(implementation = ClotureComptableResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Paramètres invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/clotures")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_ACCOUNTING_VIEW)")

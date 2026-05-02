@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
@@ -24,7 +26,8 @@ public class GlobalExceptionHandler {
             EntityNotFoundException ex,
             HttpServletRequest request
     ) {
-        return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+        String details = extractEntityName(ex);
+        return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request, "RESSOURCE_INTROUVABLE", details);
     }
 
     @ExceptionHandler({IllegalArgumentException.class, ConstraintViolationException.class})
@@ -32,7 +35,8 @@ public class GlobalExceptionHandler {
             RuntimeException ex,
             HttpServletRequest request
     ) {
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+        String code = (ex instanceof ConstraintViolationException) ? "CONTRAINTE_VIOLATION" : "ARGUMENT_INVALIDE";
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request, code, null);
     }
 
     @ExceptionHandler(IllegalStateException.class)
@@ -40,7 +44,7 @@ public class GlobalExceptionHandler {
             IllegalStateException ex,
             HttpServletRequest request
     ) {
-        return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), request);
+        return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), request, "CONFLIT_METIER", null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -58,7 +62,12 @@ public class GlobalExceptionHandler {
             message = "Requete invalide";
         }
 
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, message, request);
+        String details = ex.getBindingResult().getFieldErrors().stream()
+                .map(fe -> "\"" + fe.getField() + "\": \"" +
+                        (fe.getDefaultMessage() != null ? fe.getDefaultMessage().replace("\"", "'") : "valeur invalide") + "\"")
+                .collect(Collectors.joining(", ", "{", "}"));
+
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, message, request, "VALIDATION_ECHOUEE", details);
     }
 
     @ExceptionHandler(AuthenticationException.class)
@@ -66,8 +75,7 @@ public class GlobalExceptionHandler {
             AuthenticationException ex,
             HttpServletRequest request
     ) {
-        // Retourne une reponse 401 coherente lorsque Spring Security rejette les identifiants.
-        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Identifiants invalides", request);
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Identifiants invalides", request, "AUTHENTIFICATION_ECHOUEE", null);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -75,7 +83,7 @@ public class GlobalExceptionHandler {
             AccessDeniedException ex,
             HttpServletRequest request
     ) {
-        return buildErrorResponse(HttpStatus.FORBIDDEN, "Acces refuse", request);
+        return buildErrorResponse(HttpStatus.FORBIDDEN, "Acces refuse", request, "ACCES_REFUSE", null);
     }
 
     @ExceptionHandler(Exception.class)
@@ -84,27 +92,32 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         String safeMessage = "Une erreur interne est survenue. Veuillez reessayer plus tard.";
-        if (ex.getMessage() == null || ex.getMessage().isBlank()) {
-            safeMessage = "Une erreur interne est survenue. Veuillez reessayer plus tard.";
-        }
         return buildErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 safeMessage,
-                request
+                request,
+                "ERREUR_INTERNE",
+                null
         );
     }
 
     private ResponseEntity<ErrorResponseDTO> buildErrorResponse(
             HttpStatus status,
             String message,
-            HttpServletRequest request
+            HttpServletRequest request,
+            String code,
+            String details
     ) {
+        String correlationId = request.getHeader("X-Correlation-Id");
         ErrorResponseDTO errorResponseDTO = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 status.value(),
                 status.getReasonPhrase(),
                 message,
-                request.getRequestURI()
+                request.getRequestURI(),
+                code,
+                details,
+                correlationId
         );
         return ResponseEntity.status(status).body(errorResponseDTO);
     }
@@ -114,5 +127,20 @@ public class GlobalExceptionHandler {
                 ? "valeur invalide"
                 : fieldError.getDefaultMessage();
         return fieldError.getField() + " : " + defaultMessage;
+    }
+
+    private String extractEntityName(EntityNotFoundException ex) {
+        String msg = ex.getMessage();
+        if (msg != null && !msg.isBlank()) {
+            String lower = msg.toLowerCase();
+            if (lower.contains("introuvable") || lower.contains("not found")) {
+                String[] parts = msg.split("\\s+");
+                if (parts.length > 0) {
+                    return parts[0];
+                }
+            }
+            return msg;
+        }
+        return null;
     }
 }

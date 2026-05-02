@@ -8,12 +8,15 @@ import com.microfinance.core_banking.dto.request.compte.OuvertureCompteRequestDT
 import com.microfinance.core_banking.dto.response.extension.ActionEnAttenteResponseDTO;
 import com.microfinance.core_banking.entity.ActionEnAttente;
 import com.microfinance.core_banking.dto.response.compte.CompteResponseDTO;
+import com.microfinance.core_banking.dto.response.common.ErrorResponseDTO;
 import com.microfinance.core_banking.entity.Compte;
 import com.microfinance.core_banking.entity.StatutCompte;
 import com.microfinance.core_banking.mapper.CompteMapper;
 import com.microfinance.core_banking.service.compte.CompteService;
 import com.microfinance.core_banking.service.extension.PendingActionSubmissionService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -54,9 +57,12 @@ public class CompteController {
 	)
 	@ApiResponses({
 			@ApiResponse(responseCode = "201", description = "Compte ouvert avec succes"),
-			@ApiResponse(responseCode = "400", description = "Donnees invalides"),
-			@ApiResponse(responseCode = "404", description = "Client introuvable"),
-			@ApiResponse(responseCode = "409", description = "Conflit metier")
+			@ApiResponse(responseCode = "400", description = "Donnees invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "401", description = "Authentification requise - token JWT manquant ou invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "403", description = "Accès refusé - permissions insuffisantes pour cette ressource", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "404", description = "Client introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "409", description = "Conflit metier", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
@@ -79,8 +85,11 @@ public class CompteController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "202", description = "Ouverture soumise en attente de validation"),
-            @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-            @ApiResponse(responseCode = "404", description = "Client introuvable")
+            @ApiResponse(responseCode = "400", description = "Donnees invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Authentification requise - token JWT manquant ou invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Accès refusé - permissions insuffisantes pour cette ressource", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Client introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/ouvertures-sensibles")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
@@ -98,7 +107,10 @@ public class CompteController {
 	)
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Solde retourne avec succes"),
-			@ApiResponse(responseCode = "404", description = "Compte introuvable")
+			@ApiResponse(responseCode = "401", description = "Authentification requise - token JWT manquant ou invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "403", description = "Accès refusé - permissions insuffisantes pour cette ressource", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "404", description = "Compte introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/{numCompte}/solde")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER) or (hasAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_CLIENT) and @accountAccessSecurity.canAccessAccount(authentication, #numCompte))")
@@ -114,8 +126,11 @@ public class CompteController {
 	)
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Decouvert mis a jour avec succes"),
-			@ApiResponse(responseCode = "400", description = "Donnees invalides"),
-			@ApiResponse(responseCode = "404", description = "Compte introuvable")
+			@ApiResponse(responseCode = "400", description = "Donnees invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "401", description = "Authentification requise - token JWT manquant ou invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "403", description = "Accès refusé - permissions insuffisantes pour cette ressource", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "404", description = "Compte introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PutMapping("/decouvert")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
@@ -137,8 +152,11 @@ public class CompteController {
 	)
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Compte cloture avec succes"),
-			@ApiResponse(responseCode = "404", description = "Compte introuvable"),
-			@ApiResponse(responseCode = "409", description = "Compte non cloturable")
+			@ApiResponse(responseCode = "401", description = "Authentification requise - token JWT manquant ou invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "403", description = "Accès refusé - permissions insuffisantes pour cette ressource", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "404", description = "Compte introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "409", description = "Compte non cloturable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PutMapping("/{numCompte}/cloture")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
@@ -155,8 +173,11 @@ public class CompteController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "202", description = "Cloture soumise en attente de validation"),
-            @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-            @ApiResponse(responseCode = "404", description = "Compte introuvable")
+            @ApiResponse(responseCode = "400", description = "Donnees invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Authentification requise - token JWT manquant ou invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Accès refusé - permissions insuffisantes pour cette ressource", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Compte introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PutMapping("/cloture/soumettre")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
@@ -174,8 +195,11 @@ public class CompteController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "202", description = "Blocage soumis en attente de validation"),
-            @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-            @ApiResponse(responseCode = "404", description = "Compte introuvable")
+            @ApiResponse(responseCode = "400", description = "Donnees invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Authentification requise - token JWT manquant ou invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Accès refusé - permissions insuffisantes pour cette ressource", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Compte introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PutMapping("/blocage/soumettre")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
@@ -193,8 +217,11 @@ public class CompteController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "202", description = "Deblocage soumis en attente de validation"),
-            @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-            @ApiResponse(responseCode = "404", description = "Compte introuvable")
+            @ApiResponse(responseCode = "400", description = "Donnees invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Authentification requise - token JWT manquant ou invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Accès refusé - permissions insuffisantes pour cette ressource", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Compte introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PutMapping("/deblocage/soumettre")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")

@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.dto.request.extension;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,21 +9,23 @@ import lombok.Setter;
 import java.util.Map;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
+@Schema(description = "Requête service de re-scannage client")
 public class RescannerClientServiceRequestDTO {
+    @Schema(description = "Origine du rescannage (optionnel)", example = "RESCAN")
     private String origine;
+    @Schema(description = "Sanction hit (optionnel)", example = "false")
     private Boolean sanctionHit;
+    @Schema(description = "Niveau de risque (optionnel)", example = "CRITIQUE")
     private String niveauRisque;
+    @Schema(description = "Détails (optionnel)", example = "Aucune correspondance trouvée")
     private String details;
 
-    public static RescannerClientServiceRequestDTO fromMap(Map<String, Object> payload) {
+    public static RescannerClientServiceRequestDTO fromMap(java.util.Map<String, Object> payload) {
         RescannerClientServiceRequestDTO dto = new RescannerClientServiceRequestDTO();
-        Object origineVal = payload.get("origine");
-        dto.setOrigine(origineVal == null || origineVal.toString().isBlank() ? "RESCAN" : origineVal.toString().trim());
-        dto.setSanctionHit(Boolean.parseBoolean(String.valueOf(payload.getOrDefault("sanctionHit", false))));
-        Object niveauVal = payload.get("niveauRisque");
-        dto.setNiveauRisque(niveauVal == null || niveauVal.toString().isBlank() ? "CRITIQUE" : niveauVal.toString().trim());
-        Object detailsVal = payload.get("details");
-        dto.setDetails(detailsVal == null || detailsVal.toString().isBlank() ? null : detailsVal.toString().trim());
+        dto.setOrigine((String) payload.get("origine"));
+        if (payload.get("sanctionHit") != null) dto.setSanctionHit(Boolean.parseBoolean(payload.get("sanctionHit").toString()));
+        dto.setNiveauRisque((String) payload.get("niveauRisque"));
+        dto.setDetails((String) payload.get("details"));
         return dto;
     }
 }

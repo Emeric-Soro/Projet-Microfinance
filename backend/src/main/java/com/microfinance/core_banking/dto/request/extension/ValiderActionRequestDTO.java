@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.dto.request.extension;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,14 +9,17 @@ import lombok.Setter;
 import java.util.Map;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
+@Schema(description = "Requête de validation d'une action")
 public class ValiderActionRequestDTO {
+    @Schema(description = "Statut (optionnel)", example = "APPROUVE")
     private String statut;
+    @Schema(description = "Commentaire de validation (optionnel)", example = "Action validée")
     private String commentaireValidation;
 
-    public static ValiderActionRequestDTO fromMap(Map<String, Object> payload) {
+    public static ValiderActionRequestDTO fromMap(java.util.Map<String, Object> payload) {
         ValiderActionRequestDTO dto = new ValiderActionRequestDTO();
-        dto.setStatut(payload.get("statut") == null ? null : payload.get("statut").toString());
-        dto.setCommentaireValidation(payload.get("commentaireChecker") == null ? null : payload.get("commentaireChecker").toString());
+        dto.setStatut((String) payload.get("statut"));
+        dto.setCommentaireValidation((String) payload.get("commentaireValidation"));
         return dto;
     }
 }

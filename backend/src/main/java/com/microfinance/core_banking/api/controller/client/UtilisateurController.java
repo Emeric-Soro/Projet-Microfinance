@@ -11,11 +11,14 @@ import com.microfinance.core_banking.dto.request.client.VerificationOtpRequestDT
 import com.microfinance.core_banking.dto.response.client.AuthenticationResponseDTO;
 import com.microfinance.core_banking.dto.response.client.AuthenticationStepStatus;
 import com.microfinance.core_banking.dto.response.client.UtilisateurResponseDTO;
+import com.microfinance.core_banking.dto.response.common.ErrorResponseDTO;
 import com.microfinance.core_banking.entity.Utilisateur;
 import com.microfinance.core_banking.mapper.UtilisateurMapper;
 import com.microfinance.core_banking.service.client.AuthenticationWorkflowResult;
 import com.microfinance.core_banking.service.client.UtilisateurService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -62,8 +65,11 @@ public class UtilisateurController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Compte web cree avec succes"),
-            @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-            @ApiResponse(responseCode = "409", description = "Compte web deja existant pour ce client")
+            @ApiResponse(responseCode = "400", description = "Donnees invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Authentification requise - token JWT manquant ou invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Accès refusé - permissions insuffisantes pour cette ressource", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "409", description = "Compte web deja existant pour ce client", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping
     @AuditLog(action = "USER_CREATE", resource = "UTILISATEUR")
@@ -85,8 +91,10 @@ public class UtilisateurController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Authentification reussie ou OTP emis"),
-            @ApiResponse(responseCode = "401", description = "Identifiants invalides ou compte verrouille"),
-            @ApiResponse(responseCode = "400", description = "Donnees de connexion invalides")
+            @ApiResponse(responseCode = "400", description = "Donnees de connexion invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Identifiants invalides ou compte verrouille", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Accès refusé - permissions insuffisantes pour cette ressource", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/login")
     @AuditLog(action = "USER_LOGIN", resource = "AUTH")
@@ -111,8 +119,10 @@ public class UtilisateurController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OTP valide et session ouverte"),
-            @ApiResponse(responseCode = "401", description = "OTP invalide ou expire"),
-            @ApiResponse(responseCode = "400", description = "Donnees OTP invalides")
+            @ApiResponse(responseCode = "400", description = "Donnees OTP invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "401", description = "OTP invalide ou expire", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Accès refusé - permissions insuffisantes pour cette ressource", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/login/otp")
     @AuditLog(action = "USER_LOGIN_OTP", resource = "AUTH")
@@ -133,8 +143,11 @@ public class UtilisateurController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Role assigne avec succes"),
-            @ApiResponse(responseCode = "400", description = "Code role invalide"),
-            @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
+            @ApiResponse(responseCode = "400", description = "Code role invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Authentification requise - token JWT manquant ou invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Accès refusé - permissions insuffisantes pour cette ressource", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Utilisateur introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PreAuthorize("hasAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN)")
     @PutMapping("/{idUser}/roles")
@@ -153,8 +166,11 @@ public class UtilisateurController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Role revoque avec succes"),
-            @ApiResponse(responseCode = "400", description = "Code role invalide"),
-            @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
+            @ApiResponse(responseCode = "400", description = "Code role invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Authentification requise - token JWT manquant ou invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Accès refusé - permissions insuffisantes pour cette ressource", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Utilisateur introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PreAuthorize("hasAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN)")
     @DeleteMapping("/{idUser}/roles")
@@ -173,7 +189,10 @@ public class UtilisateurController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Statut d'activation mis a jour"),
-            @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
+            @ApiResponse(responseCode = "401", description = "Authentification requise - token JWT manquant ou invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Accès refusé - permissions insuffisantes pour cette ressource", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Utilisateur introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PreAuthorize("hasAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN)")
     @PutMapping("/{idUser}/activation")
@@ -192,7 +211,10 @@ public class UtilisateurController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Deconnexion prise en compte"),
-            @ApiResponse(responseCode = "400", description = "Token manquant ou invalide")
+            @ApiResponse(responseCode = "400", description = "Token manquant ou invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Authentification requise - token JWT manquant ou invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Accès refusé - permissions insuffisantes pour cette ressource", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/logout")
@@ -212,10 +234,11 @@ public class UtilisateurController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Mot de passe mis a jour"),
-            @ApiResponse(responseCode = "400", description = "Mot de passe invalide ou reutilise"),
-            @ApiResponse(responseCode = "401", description = "Mot de passe actuel invalide"),
-            @ApiResponse(responseCode = "403", description = "Acces refuse"),
-            @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
+            @ApiResponse(responseCode = "400", description = "Mot de passe invalide ou reutilise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Mot de passe actuel invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Accès refusé - permissions insuffisantes pour cette ressource", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Utilisateur introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PreAuthorize("isAuthenticated()")
     @PutMapping("/{idUser}/mot-de-passe")

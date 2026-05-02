@@ -10,6 +10,7 @@ import com.microfinance.core_banking.dto.request.extension.OuvrirSessionRequestD
 import com.microfinance.core_banking.dto.response.extension.ActionEnAttenteResponseDTO;
 import com.microfinance.core_banking.dto.response.extension.CaisseResponseDTO;
 import com.microfinance.core_banking.dto.response.extension.CoffreResponseDTO;
+import com.microfinance.core_banking.dto.response.common.ErrorResponseDTO;
 import com.microfinance.core_banking.dto.response.extension.MouvementCoffreResponseDTO;
 import com.microfinance.core_banking.dto.response.extension.SessionCaisseResponseDTO;
 import com.microfinance.core_banking.entity.ActionEnAttente;
@@ -20,9 +21,11 @@ import com.microfinance.core_banking.entity.SessionCaisse;
 import com.microfinance.core_banking.service.extension.PendingActionSubmissionService;
 import com.microfinance.core_banking.service.extension.TresorerieService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +42,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/tresorerie")
+@Tag(name = "Trésorerie", description = "API de gestion de la trésorerie (caisses, coffres, sessions, approvisionnements, délestages)")
 public class TresorerieController {
 
     private final TresorerieService tresorerieService;
@@ -49,11 +53,14 @@ public class TresorerieController {
         this.pendingActionSubmissionService = pendingActionSubmissionService;
     }
 
-    @Operation(summary = "Creer une caisse", description = "Cree une nouvelle caisse (soumis pour approbation)")
+    @Operation(summary = "Créer une caisse", description = "Crée une nouvelle caisse rattachée à une agence et éventuellement à un guichet. Transit par le workflow Maker-Checker pour validation. Définit le point de trésorerie physique où seront enregistrées les opérations de caisse.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Creation caisse soumise en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "202", description = "Création caisse soumise en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - code caisse déjà existant", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/caisses")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_TREASURY_MANAGE)")
@@ -63,10 +70,12 @@ public class TresorerieController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Lister les caisses", description = "Retourne la liste de toutes les caisses")
+    @Operation(summary = "Lister les caisses", description = "Retourne la liste de toutes les caisses avec leur code, libellé, agence de rattachement et solde théorique. Permet de consulter l'état des points de trésorerie disponibles dans l'institution.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des caisses retournee avec succes"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "200", description = "Liste des caisses retournée avec succès", content = @Content(schema = @Schema(implementation = CaisseResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/caisses")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_TREASURY_VIEW)")
@@ -74,11 +83,14 @@ public class TresorerieController {
         return ResponseEntity.ok(tresorerieService.listerCaisses().stream().map(this::toDto).toList());
     }
 
-    @Operation(summary = "Creer un coffre", description = "Cree un nouveau coffre (soumis pour approbation)")
+    @Operation(summary = "Créer un coffre", description = "Crée un nouveau coffre rattaché à une agence pour le stockage sécurisé des fonds. Transit par le workflow Maker-Checker pour validation. Le coffre permet les mouvements d'espèces entre la caisse et le coffre-fort.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Creation coffre soumise en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "202", description = "Création coffre soumise en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - code coffre déjà existant", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/coffres")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_TREASURY_MANAGE)")
@@ -88,10 +100,12 @@ public class TresorerieController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Lister les coffres", description = "Retourne la liste de tous les coffres")
+    @Operation(summary = "Lister les coffres", description = "Retourne la liste de tous les coffres avec leur code, libellé, agence et solde théorique. Permet de consulter l'état des coffres-forts disponibles dans l'institution.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des coffres retournee avec succes"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "200", description = "Liste des coffres retournée avec succès", content = @Content(schema = @Schema(implementation = CoffreResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/coffres")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_TREASURY_VIEW)")
@@ -99,11 +113,13 @@ public class TresorerieController {
         return ResponseEntity.ok(tresorerieService.listerCoffres().stream().map(this::toDto).toList());
     }
 
-    @Operation(summary = "Lister les mouvements d'un coffre", description = "Retourne l'historique des mouvements d'un coffre")
+    @Operation(summary = "Lister les mouvements d'un coffre", description = "Retourne l'historique des mouvements (entrées/sorties) d'un coffre identifié par son ID. Permet de tracer toutes les opérations affectant le solde du coffre : approvisionnements depuis la caisse et délestages vers la caisse.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des mouvements retournee avec succes"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse"),
-        @ApiResponse(responseCode = "404", description = "Coffre introuvable")
+        @ApiResponse(responseCode = "200", description = "Liste des mouvements retournée avec succès", content = @Content(schema = @Schema(implementation = MouvementCoffreResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Coffre introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/coffres/{idCoffre}/mouvements")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_TREASURY_VIEW)")
@@ -111,11 +127,14 @@ public class TresorerieController {
         return ResponseEntity.ok(tresorerieService.listerMouvementsCoffre(idCoffre).stream().map(this::toDto).toList());
     }
 
-    @Operation(summary = "Ouvrir une session de caisse", description = "Soumet une ouverture de session de caisse pour approbation")
+    @Operation(summary = "Ouvrir une session de caisse", description = "Soumet une ouverture de session de caisse pour un utilisateur et une caisse donnés. Transit par le workflow Maker-Checker pour validation. La session enregistre le solde d'ouverture et permet de tracer les opérations de la journée. Précondition : la caisse ne doit pas avoir de session ouverte.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Ouverture de session soumise en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "202", description = "Ouverture de session soumise en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - session déjà ouverte", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/sessions")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_TREASURY_MANAGE)")
@@ -125,12 +144,15 @@ public class TresorerieController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Fermer une session de caisse", description = "Soumet une fermeture de session de caisse pour approbation")
+    @Operation(summary = "Fermer une session de caisse", description = "Soumet la fermeture d'une session de caisse avec le solde physique constaté. Transit par le workflow Maker-Checker pour validation. Précondition : la session doit être ouverte. Effet comptable : calcul de l'écart entre solde théorique et solde physique, génération d'une écriture de régularisation si nécessaire.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Fermeture de session soumise en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse"),
-        @ApiResponse(responseCode = "404", description = "Session introuvable")
+        @ApiResponse(responseCode = "202", description = "Fermeture de session soumise en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Session introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - session déjà fermée", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PutMapping("/sessions/{idSession}/fermeture")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_TREASURY_MANAGE)")
@@ -140,10 +162,12 @@ public class TresorerieController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Lister les sessions de caisse", description = "Retourne la liste de toutes les sessions de caisse")
+    @Operation(summary = "Lister les sessions de caisse", description = "Retourne la liste de toutes les sessions de caisse avec leur date d'ouverture, date de fermeture, soldes et statut. Permet de suivre l'historique des ouvertures et fermetures de caisses par utilisateur.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des sessions retournee avec succes"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "200", description = "Liste des sessions retournée avec succès", content = @Content(schema = @Schema(implementation = SessionCaisseResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/sessions")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_TREASURY_VIEW)")
@@ -151,11 +175,14 @@ public class TresorerieController {
         return ResponseEntity.ok(tresorerieService.listerSessions().stream().map(this::toDto).toList());
     }
 
-    @Operation(summary = "Approvisionner une caisse", description = "Soumet un approvisionnement de caisse pour approbation")
+    @Operation(summary = "Approvisionner une caisse", description = "Soumet un approvisionnement de caisse depuis le coffre pour augmenter le fonds de caisse disponible. Transit par le workflow Maker-Checker pour validation. Effet comptable : transfert du coffre vers la caisse avec mise à jour des soldes respectifs. Génère un mouvement de coffre.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Approvisionnement soumis en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "202", description = "Approvisionnement soumis en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - solde coffre insuffisant", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/approvisionnements")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_TREASURY_MANAGE)")
@@ -165,11 +192,14 @@ public class TresorerieController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Delester une caisse", description = "Soumet un delestage de caisse pour approbation")
+    @Operation(summary = "Délester une caisse", description = "Soumet un délestage de caisse vers le coffre pour réduire le montant d'espèces en caisse. Transit par le workflow Maker-Checker pour validation. Effet comptable : transfert de la caisse vers le coffre avec mise à jour des soldes. Génère un mouvement de coffre.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Delestage soumis en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "202", description = "Délestage soumis en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - solde caisse insuffisant", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/delestages")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_TREASURY_MANAGE)")

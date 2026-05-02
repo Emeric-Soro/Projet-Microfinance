@@ -11,6 +11,7 @@ import com.microfinance.core_banking.dto.request.extension.EnregistrerGarantieRe
 import com.microfinance.core_banking.dto.request.extension.PassagePerteCreditRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.ReportEcheanceCreditRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.RembourserCreditRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.ReportEcheanceCreditRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.RestructurationCreditRequestDTO;
 import com.microfinance.core_banking.dto.response.extension.ActionEnAttenteResponseDTO;
 import com.microfinance.core_banking.dto.response.extension.CreditResponseDTO;
@@ -21,21 +22,24 @@ import com.microfinance.core_banking.dto.response.extension.ImpayeCreditResponse
 import com.microfinance.core_banking.dto.response.extension.ProduitCreditResponseDTO;
 import com.microfinance.core_banking.dto.response.extension.ProvisionCreditResponseDTO;
 import com.microfinance.core_banking.dto.response.extension.RemboursementCreditResponseDTO;
+import com.microfinance.core_banking.dto.response.common.ErrorResponseDTO;
 import com.microfinance.core_banking.entity.ActionEnAttente;
 import com.microfinance.core_banking.entity.Credit;
 import com.microfinance.core_banking.entity.DemandeCredit;
 import com.microfinance.core_banking.entity.EcheanceCredit;
 import com.microfinance.core_banking.entity.GarantieCredit;
 import com.microfinance.core_banking.entity.ImpayeCredit;
-import com.microfinance.core_banking.entity.ProvisionCredit;
 import com.microfinance.core_banking.entity.ProduitCredit;
+import com.microfinance.core_banking.entity.ProvisionCredit;
 import com.microfinance.core_banking.entity.RemboursementCredit;
 import com.microfinance.core_banking.service.extension.CreditExtensionService;
 import com.microfinance.core_banking.service.extension.PendingActionSubmissionService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -52,6 +56,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/credits")
+@Tag(name = "Crédit", description = "API de gestion des crédits, produits, demandes, échéances, garanties, impayés et provisions")
 public class CreditExtensionController {
 
     private final CreditExtensionService creditExtensionService;
@@ -62,11 +67,13 @@ public class CreditExtensionController {
         this.pendingActionSubmissionService = pendingActionSubmissionService;
     }
 
-    @Operation(summary = "Creer un produit de credit", description = "Cree un nouveau produit de credit (soumis pour approbation)")
+    @Operation(summary = "Créer un produit de crédit", description = "Crée un nouveau produit de crédit définissant les paramètres de prêt (taux, montants, durée). Transit par le workflow Maker-Checker pour validation avant activation. Une fois approuvé, le produit pourra être utilisé lors des demandes de crédit.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Creation produit credit soumise en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "202", description = "Création produit crédit soumise en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/produits")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_MANAGE)")
@@ -76,10 +83,12 @@ public class CreditExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Lister les produits de credit", description = "Retourne la liste de tous les produits de credit")
+    @Operation(summary = "Lister les produits de crédit", description = "Retourne la liste de tous les produits de crédit actifs et inactifs. Permet aux chargés de crédit et superviseurs de consulter les paramètres des offres de prêt disponibles dans l'institution.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des produits retournee avec succes"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "200", description = "Liste des produits retournée avec succès", content = @Content(schema = @Schema(implementation = ProduitCreditResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/produits")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_VIEW)")
@@ -87,12 +96,14 @@ public class CreditExtensionController {
         return ResponseEntity.ok(creditExtensionService.listerProduits().stream().map(this::toDto).toList());
     }
 
-    @Operation(summary = "Creer une demande de credit", description = "Cree une nouvelle demande de credit")
+    @Operation(summary = "Créer une demande de crédit", description = "Enregistre une nouvelle demande de crédit soumise par un client. La demande est créée avec un statut initial et doit transiter par les étapes d'analyse, décision et déblocage. Le dossier de crédit est automatiquement référencé et associé au produit sélectionné.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Demande de credit creee avec succes"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse"),
-        @ApiResponse(responseCode = "404", description = "Client introuvable")
+        @ApiResponse(responseCode = "201", description = "Demande de crédit créée avec succès", content = @Content(schema = @Schema(implementation = DemandeCreditResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Client introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/demandes")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_MANAGE)")
@@ -101,10 +112,12 @@ public class CreditExtensionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toDto(creditExtensionService.creerDemande(dto)));
     }
 
-    @Operation(summary = "Lister les demandes de credit", description = "Retourne la liste de toutes les demandes de credit")
+    @Operation(summary = "Lister les demandes de crédit", description = "Retourne la liste de toutes les demandes de crédit enregistrées. Permet aux agents et superviseurs de suivre l'état d'avancement des dossiers depuis la soumission jusqu'à la décision finale.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des demandes retournee avec succes"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "200", description = "Liste des demandes retournée avec succès", content = @Content(schema = @Schema(implementation = DemandeCreditResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/demandes")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_VIEW)")
@@ -112,12 +125,15 @@ public class CreditExtensionController {
         return ResponseEntity.ok(creditExtensionService.listerDemandes().stream().map(this::toDto).toList());
     }
 
-    @Operation(summary = "Decider une demande de credit", description = "Approuve ou rejette une demande de credit (soumis pour approbation)")
+    @Operation(summary = "Décider une demande de crédit", description = "Permet d'approuver ou de rejeter une demande de crédit après analyse du dossier. La décision est soumise au workflow Maker-Checker pour validation par un superviseur. Un score de crédit et un avis du comité peuvent être renseignés. Effet comptable : la décision conditionne le déblocage ultérieur des fonds.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Decision soumise en attente de validation"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse"),
-        @ApiResponse(responseCode = "404", description = "Demande introuvable")
+        @ApiResponse(responseCode = "202", description = "Décision soumise en attente de validation", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Demande introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - demande déjà traitée", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PutMapping("/demandes/{idDemande}/decision")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_MANAGE)")
@@ -127,12 +143,15 @@ public class CreditExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Debloquer un credit", description = "Debloque les fonds d'un credit approuve (soumis pour approbation)")
+    @Operation(summary = "Débloquer un crédit", description = "Débloque les fonds d'un crédit approuvé et génère les écritures comptables de décaissement. Transit par le workflow Maker-Checker pour validation. Effet comptable : création d'une écriture au débit du compte de prêt et au crédit du compte de trésorerie. Le capital est mis à disposition du client.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Deblocage soumis en attente de validation"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse"),
-        @ApiResponse(responseCode = "404", description = "Demande introuvable")
+        @ApiResponse(responseCode = "202", description = "Déblocage soumis en attente de validation", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Demande introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - crédit déjà débloqué", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/demandes/{idDemande}/deblocage")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_MANAGE)")
@@ -143,12 +162,15 @@ public class CreditExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Restructurer un credit", description = "Soumet une restructuration de credit pour approbation")
+    @Operation(summary = "Restructurer un crédit", description = "Soumet une demande de restructuration d'un crédit existant (révision des termes : durée, taux, mensualité). Transit par le workflow Maker-Checker pour approbation. Précondition : le crédit doit être en cours. Effet comptable : annulation des anciennes échéances et création d'un nouveau plan d'amortissement.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Restructuration soumise en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse"),
-        @ApiResponse(responseCode = "404", description = "Credit introuvable")
+        @ApiResponse(responseCode = "202", description = "Restructuration soumise en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Crédit introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - restructuration non applicable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PutMapping("/{idCredit}/restructuration")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_MANAGE)")
@@ -159,12 +181,15 @@ public class CreditExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Reporter une echeance de credit", description = "Soumet un report d'echeance de credit pour approbation")
+    @Operation(summary = "Reporter une échéance de crédit", description = "Soumet un report d'échéance pour un crédit en cours, permettant de décaler la date d'une mensualité. Transit par le workflow Maker-Checker pour approbation. Précondition : l'échéance doit être impayée ou à venir. Effet comptable : modification du plan d'amortissement et impact sur les provisions.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Report d'echeance soumis en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse"),
-        @ApiResponse(responseCode = "404", description = "Credit ou echeance introuvable")
+        @ApiResponse(responseCode = "202", description = "Report d'échéance soumis en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Crédit ou échéance introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - report non autorisé", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PutMapping("/{idCredit}/echeances/{idEcheanceCredit}/report")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_MANAGE)")
@@ -176,12 +201,15 @@ public class CreditExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Passer un credit en perte", description = "Soumet un passage en perte de credit pour approbation")
+    @Operation(summary = "Passer un crédit en perte", description = "Soumet un passage en perte (write-off) d'un crédit jugé irrécouvrable. Transit par le workflow Maker-Checker pour validation. Précondition : le crédit doit être en situation d'impayé depuis la période réglementaire. Effet comptable : sortie du bilan du capital restant dû et constatation de la perte dans les comptes de résultat.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Passage en perte soumis en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse"),
-        @ApiResponse(responseCode = "404", description = "Credit introuvable")
+        @ApiResponse(responseCode = "202", description = "Passage en perte soumis en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Crédit introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - conditions de passage en perte non remplies", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PutMapping("/{idCredit}/passage-perte")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_MANAGE)")
@@ -192,10 +220,12 @@ public class CreditExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Lister les credits", description = "Retourne la liste de tous les credits")
+    @Operation(summary = "Lister les crédits", description = "Retourne la liste de tous les crédits accordés dans l'institution. Permet de visualiser l'encours global, le statut de chaque crédit, le capital restant dû et les mensualités.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des credits retournee avec succes"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "200", description = "Liste des crédits retournée avec succès", content = @Content(schema = @Schema(implementation = CreditResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_VIEW)")
@@ -203,11 +233,13 @@ public class CreditExtensionController {
         return ResponseEntity.ok(creditExtensionService.listerCredits().stream().map(this::toDto).toList());
     }
 
-    @Operation(summary = "Lister les echeances d'un credit", description = "Retourne le calendrier des echeances pour un credit")
+    @Operation(summary = "Lister les échéances d'un crédit", description = "Retourne le calendrier prévisionnel des échéances d'un crédit avec le détail capital, intérêts et assurance. Permet de suivre le plan d'amortissement et l'état de chaque mensualité (payée, impayée, à venir).")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des echeances retournee avec succes"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse"),
-        @ApiResponse(responseCode = "404", description = "Credit introuvable")
+        @ApiResponse(responseCode = "200", description = "Liste des échéances retournée avec succès", content = @Content(schema = @Schema(implementation = EcheanceCreditResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Crédit introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/{idCredit}/echeances")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_VIEW)")
@@ -215,12 +247,14 @@ public class CreditExtensionController {
         return ResponseEntity.ok(creditExtensionService.listerEcheances(idCredit).stream().map(this::toDto).toList());
     }
 
-    @Operation(summary = "Enregistrer une garantie", description = "Enregistre une garantie pour un credit (soumis pour approbation)")
+    @Operation(summary = "Enregistrer une garantie", description = "Enregistre une garantie (sûreté réelle ou personnelle) associée à un crédit pour sécuriser le prêt. Transit par le workflow Maker-Checker pour validation. La valeur de la garantie et le type sont enregistrés pour le suivi des risques.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Creation garantie soumise en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse"),
-        @ApiResponse(responseCode = "404", description = "Credit introuvable")
+        @ApiResponse(responseCode = "202", description = "Création garantie soumise en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Crédit introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/{idCredit}/garanties")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_MANAGE)")
@@ -230,11 +264,13 @@ public class CreditExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
-    @Operation(summary = "Lister les garanties d'un credit", description = "Retourne la liste des garanties associees a un credit")
+    @Operation(summary = "Lister les garanties d'un crédit", description = "Retourne la liste des garanties associées à un crédit avec leur type, description et valeur. Permet d'évaluer le niveau de couverture des sûretés pour chaque prêt accordé.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des garanties retournee avec succes"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse"),
-        @ApiResponse(responseCode = "404", description = "Credit introuvable")
+        @ApiResponse(responseCode = "200", description = "Liste des garanties retournée avec succès", content = @Content(schema = @Schema(implementation = GarantieCreditResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Crédit introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/{idCredit}/garanties")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_VIEW)")
@@ -242,12 +278,15 @@ public class CreditExtensionController {
         return ResponseEntity.ok(creditExtensionService.listerGaranties(idCredit).stream().map(this::toDto).toList());
     }
 
-    @Operation(summary = "Rembourser un credit", description = "Effectue un remboursement sur un credit")
+    @Operation(summary = "Rembourser un crédit", description = "Effectue un remboursement sur un crédit en répartissant le paiement entre le capital, les intérêts et l'assurance. Précondition : le crédit doit être en cours. Effet comptable : génération d'une écriture comptable au crédit du compte de trésorerie et au débit des comptes de créance et produits. Met à jour le plan d'amortissement.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Remboursement effectue avec succes"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse"),
-        @ApiResponse(responseCode = "404", description = "Credit introuvable")
+        @ApiResponse(responseCode = "201", description = "Remboursement effectué avec succès", content = @Content(schema = @Schema(implementation = RemboursementCreditResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Crédit introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit métier - montant supérieur au solde dû", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/{idCredit}/remboursements")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_MANAGE)")
@@ -256,11 +295,13 @@ public class CreditExtensionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toDto(creditExtensionService.rembourserCredit(idCredit, dto)));
     }
 
-    @Operation(summary = "Lister les remboursements d'un credit", description = "Retourne l'historique des remboursements d'un credit")
+    @Operation(summary = "Lister les remboursements d'un crédit", description = "Retourne l'historique complet des remboursements effectués sur un crédit. Permet de consulter le détail de chaque versement (capital, intérêts, assurance) et la référence de transaction associée.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des remboursements retournee avec succes"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse"),
-        @ApiResponse(responseCode = "404", description = "Credit introuvable")
+        @ApiResponse(responseCode = "200", description = "Liste des remboursements retournée avec succès", content = @Content(schema = @Schema(implementation = RemboursementCreditResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Crédit introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/{idCredit}/remboursements")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_VIEW)")
@@ -268,11 +309,13 @@ public class CreditExtensionController {
         return ResponseEntity.ok(creditExtensionService.listerRemboursements(idCredit).stream().map(this::toDto).toList());
     }
 
-    @Operation(summary = "Detecter les impayes", description = "Lance la detection des impayes sur les credits (soumis pour approbation)")
+    @Operation(summary = "Détecter les impayés", description = "Lance la détection automatique des impayés sur l'ensemble des crédits en cours à une date donnée. Transit par le workflow Maker-Checker pour validation. Effet comptable : génération des enregistrements d'impayés et calcul des pénalités de retard. Les impayés servent de base au calcul des provisions réglementaires.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Detection impayes soumise en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "202", description = "Détection impayés soumise en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/impayes/detection")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_MANAGE)")
@@ -282,11 +325,13 @@ public class CreditExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(List.of(toActionDto(action)));
     }
 
-    @Operation(summary = "Lister les impayes d'un credit", description = "Retourne la liste des impayes pour un credit")
+    @Operation(summary = "Lister les impayés d'un crédit", description = "Retourne la liste des impayés enregistrés pour un crédit avec le montant dû, les jours de retard et la classe de risque. Permet le suivi du portefeuille à risque et alimente le calcul des provisions.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des impayes retournee avec succes"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse"),
-        @ApiResponse(responseCode = "404", description = "Credit introuvable")
+        @ApiResponse(responseCode = "200", description = "Liste des impayés retournée avec succès", content = @Content(schema = @Schema(implementation = ImpayeCreditResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Crédit introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/{idCredit}/impayes")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_VIEW)")
@@ -294,11 +339,13 @@ public class CreditExtensionController {
         return ResponseEntity.ok(creditExtensionService.listerImpayes(idCredit).stream().map(this::toDto).toList());
     }
 
-    @Operation(summary = "Calculer les provisions", description = "Lance le calcul des provisions sur les credits (soumis pour approbation)")
+    @Operation(summary = "Calculer les provisions", description = "Lance le calcul des provisions réglementaires sur les crédits en fonction des impayés et de la classification des risques. Transit par le workflow Maker-Checker pour validation. Effet comptable : génération d'une écriture de provisionnement au débit des charges et au crédit des comptes de provisions. Met à jour le taux de couverture du portefeuille.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "202", description = "Calcul provisions soumis en attente"),
-        @ApiResponse(responseCode = "400", description = "Donnees invalides"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse")
+        @ApiResponse(responseCode = "202", description = "Calcul provisions soumis en attente", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @PostMapping("/provisions/calcul")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_MANAGE)")
@@ -308,11 +355,13 @@ public class CreditExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(List.of(toActionDto(action)));
     }
 
-    @Operation(summary = "Lister les provisions d'un credit", description = "Retourne l'historique des provisions pour un credit")
+    @Operation(summary = "Lister les provisions d'un crédit", description = "Retourne l'historique des provisions constituées pour un crédit avec le taux appliqué, le montant provisionné et la référence de la pièce comptable. Permet d'auditer la couverture des risques de crédit.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste des provisions retournee avec succes"),
-        @ApiResponse(responseCode = "403", description = "Acces refuse"),
-        @ApiResponse(responseCode = "404", description = "Credit introuvable")
+        @ApiResponse(responseCode = "200", description = "Liste des provisions retournée avec succès", content = @Content(schema = @Schema(implementation = ProvisionCreditResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Crédit introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @GetMapping("/{idCredit}/provisions")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_VIEW)")

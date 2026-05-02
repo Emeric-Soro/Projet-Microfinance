@@ -22,6 +22,13 @@ import com.microfinance.core_banking.entity.Immobilisation;
 import com.microfinance.core_banking.entity.LigneBudget;
 import com.microfinance.core_banking.service.extension.PendingActionSubmissionService;
 import com.microfinance.core_banking.service.extension.SupportEntrepriseService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import com.microfinance.core_banking.dto.response.common.ErrorResponseDTO;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +44,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/support")
+@Tag(name = "Support Entreprise", description = "API de gestion des ressources humaines, achats, immobilisations et budget")
 public class SupportEntrepriseController {
 
     private final SupportEntrepriseService supportEntrepriseService;
@@ -50,6 +58,15 @@ public class SupportEntrepriseController {
     @PostMapping("/budgets")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SUPPORT_MANAGE)")
     @AuditLog(action = "SUPPORT_BUDGET_CREATE", resource = "BUDGET")
+    @Operation(summary = "Créer un budget d'exploitation", description = "Soumet la création d'un nouveau budget d'exploitation via le workflow de validation")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "202", description = "Demande de création de budget soumise et en attente de validation", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Requête invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Non authentifié", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès interdit", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit - budget déjà existant", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
     public ResponseEntity<ActionEnAttenteResponseDTO> creerBudget(@Valid @RequestBody CreerBudgetRequestDTO dto) {
         ActionEnAttente action = pendingActionSubmissionService.submit("CREATE_BUDGET", "BUDGET", dto.getCodeBudget(), dto, "Creation budget soumise");
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionEnAttenteDto(action));
@@ -57,12 +74,27 @@ public class SupportEntrepriseController {
 
     @GetMapping("/budgets")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SUPPORT_VIEW)")
+    @Operation(summary = "Lister les budgets d'exploitation", description = "Retourne la liste de tous les budgets d'exploitation enregistrés")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Liste des budgets retournée avec succès", content = @Content(schema = @Schema(implementation = BudgetExploitationResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Non authentifié", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès interdit", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
     public ResponseEntity<List<BudgetExploitationResponseDTO>> listerBudgets() {
         return ResponseEntity.ok(supportEntrepriseService.listerBudgets().stream().map(this::toBudgetDto).toList());
     }
 
     @GetMapping("/budgets/{idBudget}/lignes")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SUPPORT_VIEW)")
+    @Operation(summary = "Lister les lignes d'un budget", description = "Retourne les lignes budgétaires détaillées pour un budget d'exploitation donné")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Liste des lignes budgétaires retournée avec succès", content = @Content(schema = @Schema(implementation = LigneBudgetResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Non authentifié", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès interdit", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Budget non trouvé", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
     public ResponseEntity<List<LigneBudgetResponseDTO>> listerLignesBudget(@PathVariable Long idBudget) {
         return ResponseEntity.ok(supportEntrepriseService.listerLignesBudget(idBudget).stream().map(this::toLigneBudgetDto).toList());
     }
@@ -70,6 +102,15 @@ public class SupportEntrepriseController {
     @PostMapping("/fournisseurs")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SUPPORT_MANAGE)")
     @AuditLog(action = "SUPPORT_SUPPLIER_CREATE", resource = "FOURNISSEUR")
+    @Operation(summary = "Créer un fournisseur", description = "Soumet la création d'un nouveau fournisseur via le workflow de validation")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "202", description = "Demande de création de fournisseur soumise et en attente de validation", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Requête invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Non authentifié", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès interdit", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit - fournisseur déjà existant", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
     public ResponseEntity<ActionEnAttenteResponseDTO> creerFournisseur(@Valid @RequestBody CreerFournisseurRequestDTO dto) {
         ActionEnAttente action = pendingActionSubmissionService.submit("CREATE_FOURNISSEUR", "FOURNISSEUR", dto.getCodeFournisseur(), dto, "Creation fournisseur soumise");
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionEnAttenteDto(action));
@@ -77,6 +118,13 @@ public class SupportEntrepriseController {
 
     @GetMapping("/fournisseurs")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SUPPORT_VIEW)")
+    @Operation(summary = "Lister les fournisseurs", description = "Retourne la liste de tous les fournisseurs enregistrés")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Liste des fournisseurs retournée avec succès", content = @Content(schema = @Schema(implementation = FournisseurResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Non authentifié", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès interdit", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
     public ResponseEntity<List<FournisseurResponseDTO>> listerFournisseurs() {
         return ResponseEntity.ok(supportEntrepriseService.listerFournisseurs().stream().map(this::toFournisseurDto).toList());
     }
@@ -84,6 +132,14 @@ public class SupportEntrepriseController {
     @PostMapping("/commandes-achat")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SUPPORT_MANAGE)")
     @AuditLog(action = "SUPPORT_PURCHASE_ORDER_CREATE", resource = "COMMANDE_ACHAT")
+    @Operation(summary = "Créer une commande d'achat", description = "Soumet la création d'une nouvelle commande d'achat via le workflow de validation")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "202", description = "Demande de création de commande soumise et en attente de validation", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Requête invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Non authentifié", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès interdit", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
     public ResponseEntity<ActionEnAttenteResponseDTO> creerCommande(@Valid @RequestBody CreerCommandeRequestDTO dto) {
         ActionEnAttente action = pendingActionSubmissionService.submit("CREATE_COMMANDE_ACHAT", "COMMANDE_ACHAT", null, dto, "Creation commande achat soumise");
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionEnAttenteDto(action));
@@ -91,6 +147,13 @@ public class SupportEntrepriseController {
 
     @GetMapping("/commandes-achat")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SUPPORT_VIEW)")
+    @Operation(summary = "Lister les commandes d'achat", description = "Retourne la liste de toutes les commandes d'achat enregistrées")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Liste des commandes retournée avec succès", content = @Content(schema = @Schema(implementation = CommandeAchatResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Non authentifié", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès interdit", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
     public ResponseEntity<List<CommandeAchatResponseDTO>> listerCommandes() {
         return ResponseEntity.ok(supportEntrepriseService.listerCommandesAchat().stream().map(this::toCommandeDto).toList());
     }
@@ -98,6 +161,14 @@ public class SupportEntrepriseController {
     @PostMapping("/bulletins-paie")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SUPPORT_MANAGE)")
     @AuditLog(action = "SUPPORT_PAYROLL_CREATE", resource = "BULLETIN_PAIE")
+    @Operation(summary = "Générer un bulletin de paie", description = "Soumet une demande de génération de bulletin de paie via le workflow de validation")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "202", description = "Demande de génération de bulletin soumise et en attente de validation", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Requête invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Non authentifié", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès interdit", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
     public ResponseEntity<ActionEnAttenteResponseDTO> genererBulletinPaie(@Valid @RequestBody GenererBulletinPaieRequestDTO dto) {
         ActionEnAttente action = pendingActionSubmissionService.submit("CREATE_BULLETIN_PAIE", "BULLETIN_PAIE", dto.getPeriodePaie(), dto, "Generation bulletin paie soumise");
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionEnAttenteDto(action));
@@ -105,6 +176,13 @@ public class SupportEntrepriseController {
 
     @GetMapping("/bulletins-paie")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SUPPORT_VIEW)")
+    @Operation(summary = "Lister les bulletins de paie", description = "Retourne la liste de tous les bulletins de paie générés")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Liste des bulletins retournée avec succès", content = @Content(schema = @Schema(implementation = BulletinPaieResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Non authentifié", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès interdit", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
     public ResponseEntity<List<BulletinPaieResponseDTO>> listerBulletinsPaie() {
         return ResponseEntity.ok(supportEntrepriseService.listerBulletinsPaie().stream().map(this::toBulletinDto).toList());
     }
@@ -112,6 +190,15 @@ public class SupportEntrepriseController {
     @PostMapping("/immobilisations")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SUPPORT_MANAGE)")
     @AuditLog(action = "SUPPORT_ASSET_CREATE", resource = "IMMOBILISATION")
+    @Operation(summary = "Créer une immobilisation", description = "Soumet la création d'une nouvelle immobilisation via le workflow de validation")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "202", description = "Demande de création d'immobilisation soumise et en attente de validation", content = @Content(schema = @Schema(implementation = ActionEnAttenteResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Requête invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Non authentifié", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès interdit", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "409", description = "Conflit - immobilisation déjà existante", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
     public ResponseEntity<ActionEnAttenteResponseDTO> creerImmobilisation(@Valid @RequestBody CreerImmobilisationRequestDTO dto) {
         ActionEnAttente action = pendingActionSubmissionService.submit("CREATE_IMMOBILISATION", "IMMOBILISATION", dto.getCodeImmobilisation(), dto, "Creation immobilisation soumise");
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionEnAttenteDto(action));
@@ -119,6 +206,13 @@ public class SupportEntrepriseController {
 
     @GetMapping("/immobilisations")
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SUPPORT_VIEW)")
+    @Operation(summary = "Lister les immobilisations", description = "Retourne la liste de toutes les immobilisations enregistrées")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Liste des immobilisations retournée avec succès", content = @Content(schema = @Schema(implementation = ImmobilisationResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Non authentifié", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès interdit", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
     public ResponseEntity<List<ImmobilisationResponseDTO>> listerImmobilisations() {
         return ResponseEntity.ok(supportEntrepriseService.listerImmobilisations().stream().map(this::toImmobilisationDto).toList());
     }

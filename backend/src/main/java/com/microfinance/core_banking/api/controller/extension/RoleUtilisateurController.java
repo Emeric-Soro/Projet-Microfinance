@@ -2,12 +2,17 @@ package com.microfinance.core_banking.api.controller.extension;
 
 import com.microfinance.core_banking.audit.AuditLog;
 import com.microfinance.core_banking.dto.request.extension.RoleUtilisateurRequestDTO;
+import com.microfinance.core_banking.dto.response.common.ErrorResponseDTO;
 import com.microfinance.core_banking.dto.response.extension.PendingActionResponseDTO;
 import com.microfinance.core_banking.dto.response.extension.RoleUtilisateurResponseDTO;
 import com.microfinance.core_banking.mapper.extension.PendingActionMapper;
 import com.microfinance.core_banking.mapper.extension.RoleUtilisateurMapper;
 import com.microfinance.core_banking.service.extension.RoleUtilisateurService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +26,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/roles")
 @RequiredArgsConstructor
-@Tag(name = "Roles", description = "Role and Access Control management API")
+@Tag(name = "Rôles", description = "API de gestion des rôles et des accès")
 public class RoleUtilisateurController {
 
     private final RoleUtilisateurService roleUtilisateurService;
@@ -29,14 +34,26 @@ public class RoleUtilisateurController {
     private final PendingActionMapper pendingActionMapper;
 
     @GetMapping
-    @Operation(summary = "Get all roles")
+    @Operation(summary = "Lister tous les rôles")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Liste des rôles retournée avec succès"),
+            @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Accès refusé", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erreur interne", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_MANAGER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_PERMISSION_VIEW)")
     public ResponseEntity<List<RoleUtilisateurResponseDTO>> getAllRoles() {
         return ResponseEntity.ok(roleUtilisateurMapper.toDtoList(roleUtilisateurService.getAllRoles()));
     }
 
     @PostMapping
-    @Operation(summary = "Create a new role")
+    @Operation(summary = "Créer un nouveau rôle")
+    @ApiResponses({
+            @ApiResponse(responseCode = "202", description = "Demande de création soumise pour approbation"),
+            @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Accès refusé", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erreur interne", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_PERMISSION_MANAGE)")
     @AuditLog(action = "ROLE_CREATE", resource = "ROLE")
     public ResponseEntity<PendingActionResponseDTO> createRole(@Valid @RequestBody RoleUtilisateurRequestDTO requestDTO) {
@@ -49,7 +66,13 @@ public class RoleUtilisateurController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update an existing role")
+    @Operation(summary = "Modifier un rôle existant")
+    @ApiResponses({
+            @ApiResponse(responseCode = "202", description = "Demande de modification soumise pour approbation"),
+            @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Accès refusé", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erreur interne", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_PERMISSION_MANAGE)")
     @AuditLog(action = "ROLE_UPDATE", resource = "ROLE")
     public ResponseEntity<PendingActionResponseDTO> updateRole(
@@ -64,7 +87,13 @@ public class RoleUtilisateurController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete a role")
+    @Operation(summary = "Supprimer un rôle")
+    @ApiResponses({
+            @ApiResponse(responseCode = "202", description = "Demande de suppression soumise pour approbation"),
+            @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Accès refusé", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Erreur interne", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SECURITY_PERMISSION_MANAGE)")
     @AuditLog(action = "ROLE_DELETE", resource = "ROLE")
     public ResponseEntity<PendingActionResponseDTO> deleteRole(

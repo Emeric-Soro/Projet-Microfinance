@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.dto.request.extension;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,31 +10,22 @@ import java.math.BigDecimal;
 import java.util.Map;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
+@Schema(description = "Requête service de consultation BIC")
 public class ConsulterBicServiceRequestDTO {
+    @Schema(description = "Identifiant du client (optionnel)", example = "1")
     private String idClient;
+    @Schema(description = "Encours externe (optionnel)", example = "500000.00")
     private BigDecimal encoursExterne;
+    @Schema(description = "Code du rapport (optionnel)", example = "BIC-001")
     private String codeRapport;
+    @Schema(description = "Période (optionnel)", example = "2026-Q1")
     private String periode;
+    @Schema(description = "Statut (optionnel)", example = "GENERE")
     private String statut;
+    @Schema(description = "Référence de consentement (optionnel)", example = "CONS-001")
     private String referenceConsentement;
+    @Schema(description = "Nombre d'établissements (optionnel)", example = "5")
     private String nombreEtablissements;
-
-    public static ConsulterBicServiceRequestDTO fromMap(Map<String, Object> payload) {
-        ConsulterBicServiceRequestDTO dto = new ConsulterBicServiceRequestDTO();
-        dto.setIdClient(required(payload, "idClient"));
-        dto.setEncoursExterne(payload.get("encoursExterne") == null ? BigDecimal.ZERO : new BigDecimal(payload.get("encoursExterne").toString()));
-        Object codeVal = payload.get("codeRapport");
-        dto.setCodeRapport(codeVal == null || codeVal.toString().isBlank() ? null : codeVal.toString().trim());
-        Object periodeVal = payload.get("periode");
-        dto.setPeriode(periodeVal == null || periodeVal.toString().isBlank() ? null : periodeVal.toString().trim());
-        Object statutVal = payload.get("statut");
-        dto.setStatut(statutVal == null || statutVal.toString().isBlank() ? "GENERE" : statutVal.toString().trim());
-        Object consentVal = payload.get("referenceConsentement");
-        dto.setReferenceConsentement(consentVal == null || consentVal.toString().isBlank() ? "N/A" : consentVal.toString().trim());
-        Object nbVal = payload.get("nombreEtablissements");
-        dto.setNombreEtablissements(nbVal == null || nbVal.toString().isBlank() ? "0" : nbVal.toString().trim());
-        return dto;
-    }
 
     private static String required(Map<String, Object> payload, String key) {
         Object value = payload.get(key);
@@ -41,5 +33,17 @@ public class ConsulterBicServiceRequestDTO {
             throw new IllegalArgumentException("Le champ '" + key + "' est obligatoire");
         }
         return value.toString().trim();
+    }
+
+    public static ConsulterBicServiceRequestDTO fromMap(java.util.Map<String, Object> payload) {
+        ConsulterBicServiceRequestDTO dto = new ConsulterBicServiceRequestDTO();
+        dto.setIdClient((String) payload.get("idClient"));
+        if (payload.get("encoursExterne") != null) dto.setEncoursExterne(new java.math.BigDecimal(payload.get("encoursExterne").toString()));
+        dto.setCodeRapport((String) payload.get("codeRapport"));
+        dto.setPeriode((String) payload.get("periode"));
+        dto.setStatut((String) payload.get("statut"));
+        dto.setReferenceConsentement((String) payload.get("referenceConsentement"));
+        dto.setNombreEtablissements((String) payload.get("nombreEtablissements"));
+        return dto;
     }
 }
