@@ -1,0 +1,23 @@
+package com.microfinance.core_banking.service.extension.action;
+
+import com.microfinance.core_banking.dto.request.extension.PermissionSecuriteRequestDTO;
+import com.microfinance.core_banking.entity.ActionEnAttente;
+import com.microfinance.core_banking.service.extension.PermissionSecuriteService;
+import org.springframework.stereotype.Component;
+import java.util.Map;
+
+@Component
+public class UpdatePermissionHandler implements PendingActionHandler {
+    private final PermissionSecuriteService permissionSecuriteService;
+    public UpdatePermissionHandler(PermissionSecuriteService permissionSecuriteService) {
+        this.permissionSecuriteService = permissionSecuriteService;
+    }
+    @Override
+    public String execute(ActionEnAttente action, Map<String, Object> payload) {
+        PermissionSecuriteRequestDTO dto = PermissionSecuriteRequestDTO.fromMap(payload);
+        return String.valueOf(permissionSecuriteService.appliquerMiseAJour(
+                Long.valueOf(action.getReferenceRessource()), dto).getIdPermission());
+    }
+    @Override
+    public String getTypeAction() { return "UPDATE_PERMISSION"; }
+}
