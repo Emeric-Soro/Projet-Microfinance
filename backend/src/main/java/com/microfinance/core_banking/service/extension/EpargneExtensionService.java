@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -138,28 +139,90 @@ public class EpargneExtensionService {
     }
 
     @Transactional
-    public DepotATerme cloturerDepotATerme(Long idDepotATerme, CloturerDatRequestDTO dto) {
-        DepotATerme depot = depotATermeRepository.findById(idDepotATerme)
-                .orElseThrow(() -> new EntityNotFoundException("Depot a terme introuvable"));
+    public int calculerInteretsCourusMensuels(LocalDate dateCalcul, Long idUtilisateurOperateur) {
+        List<Compte> comptesEpargne = compteRepository.findAll().stream()
+                .filter(c -> c.getTypeCompte() != null
+                        && c.getTypeCompte().getLibelle() != null
+                        && ("EPARGNE".equalsIgnoreCase(c.getTypeCompte().getLibelle())
+                        || "SAVINGS".equalsIgnoreCase(c.getTypeCompte().getLibelle())))
+                .filter(c -> c.getTauxInteret() != null && c.getTauxInteret().compareTo(BigDecimal.ZERO) > 0)
+                .filter(c -> c.getSolde() != null && c.getSolde().compareTo(BigDecimal.ZERO) > 0)
+                .toList();
 
-        verifierPerimetreClient(depot.getClient());
+        int comptesCredites = 0;
+        for (Compte compte : comptesEpargne) {
+            BigDecimal interetsMensuels = compte.getSolde()
+                    .multiply(compte.getTauxInteret())
+                    .divide(BigDecimal.valueOf(12 * 100L), 10, RoundingMode.HALF_UP)
+                    .setScale(2, RoundingMode.HALF_UP);
 
+            if (interetsMensuels.compareTo(BigDecimal.ZERO) > 0) {
+                transactionService.posterDepotSysteme(
+                        compte.getNumCompte(),
+                        interetsMensuels,
+                        BigDecimal.ZERO,
+                        idUtilisateurOperateur,
+                        "INTM-" + compte.getNumCompte() + "-" + dateCalcul.toString().replace("-", ""),
+                        "INTERET_EPARGNE_MENSUEL"
+                );
+                comptesCredites++;
+            }
+        }
+        return comptesCredites;
+    }
+
+    @Transactional
+    public int calculerInteretsEpargne(LocalDate dateCalcul, Long idUtilisateurOperateur) {
+        CalculerInteretsEpargneRequestDTO dto = new CalculerInteretsEpargneRequestDTO();
+        dto.setDateCalcul(dateCalcul.toString());
+        dto.setIdUtilisateurOperateur(idUtilisateurOperateur);
+        List<Compte> comptes = calculerInteretsEpargne(dto);
+        return comptes.size();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<DepotATerme> consulterDepotATerme(Long id) {
+        return depotATermeRepository.findById(id);
+    }
+
+    @Transactional
+    public DepotATerme cloturerDepotATerme(Long id, CloturerDatRequestDTO dto) {
+        DepotATerme depot = depotATermeRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Depot a terme introuvable: " + id));
         if ("CLOTURE".equalsIgnoreCase(depot.getStatut())) {
             throw new IllegalStateException("Le depot a terme est deja cloture");
         }
+        verifierPerimetreClient(depot.getClient());
 
-        BigDecimal montantTotal = depot.getMontant().add(depot.getInteretsEstimes());
+        boolean estAnticipe = dto.getClotureAnticipee() != null && dto.getClotureAnticipee()
+                && LocalDate.now().isBefore(depot.getDateEcheance());
 
-        var transaction = transactionService.posterDepotSysteme(
+        BigDecimal montantRembourse;
+        BigDecimal penalite = BigDecimal.ZERO;
+
+        if (estAnticipe) {
+            BigDecimal penaliteTaux = dto.getPenaliteTaux() != null ? dto.getPenaliteTaux() : BigDecimal.valueOf(3.0);
+            BigDecimal interetsAcquis = depot.getInteretsEstimes() != null ? depot.getInteretsEstimes() : BigDecimal.ZERO;
+            BigDecimal interetsReduits = interetsAcquis.multiply(
+                    BigDecimal.valueOf(java.time.temporal.ChronoUnit.DAYS.between(depot.getDateSouscription(), LocalDate.now())))
+                    .divide(BigDecimal.valueOf(java.time.temporal.ChronoUnit.DAYS.between(depot.getDateSouscription(), depot.getDateEcheance())), 2, RoundingMode.HALF_UP);
+            penalite = depot.getMontant().multiply(penaliteTaux).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            montantRembourse = depot.getMontant().add(interetsReduits).subtract(penalite).max(BigDecimal.ZERO);
+        } else {
+            montantRembourse = depot.getMontant().add(depot.getInteretsEstimes() != null ? depot.getInteretsEstimes() : BigDecimal.ZERO);
+        }
+
+        var transactionCloture = transactionService.posterDepotSysteme(
                 depot.getCompteSupport().getNumCompte(),
-                montantTotal,
-                BigDecimal.ZERO,
-                dto.getIdUtilisateurOperateur(),
-                "DATCLO-" + UUID.randomUUID().toString().replace("-", "").substring(0, 14).toUpperCase(),
+                montantRembourse,
+                penalite,
+                dto.getIdUtilisateurOperateur() != null ? dto.getIdUtilisateurOperateur() : authenticatedUserService.getCurrentUserOrThrow().getIdUser(),
+                "DATCLO-" + depot.getReferenceDepot(),
                 "DAT_CLOTURE"
         );
 
         depot.setStatut("CLOTURE");
+        depot.setReferenceTransactionSouscription(depot.getReferenceTransactionSouscription() + "|CLO-" + transactionCloture.getReferenceUnique());
         return depotATermeRepository.save(depot);
     }
 

@@ -1,9 +1,9 @@
 package com.microfinance.core_banking.service.operation;
 
+import com.microfinance.core_banking.audit.AuditLog;
 import com.microfinance.core_banking.config.TransactionWorkflowProperties;
 import com.microfinance.core_banking.entity.Compte;
 import com.microfinance.core_banking.entity.LigneEcriture;
-import com.microfinance.core_banking.entity.LigneEcritureComptable;
 import com.microfinance.core_banking.entity.RoleUtilisateur;
 import com.microfinance.core_banking.entity.SensEcriture;
 import com.microfinance.core_banking.entity.StatutCompte;
@@ -85,6 +85,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @AuditLog(action = "TRANSACTION_DEPOT_REQUEST", resource = "TRANSACTION")
     public Transaction faireDepot(String numCompte, BigDecimal montant, Long idUser, Long idSessionCaisse) {
         validerMontantPositif(montant);
 
@@ -121,6 +122,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @AuditLog(action = "TRANSACTION_RETRAIT_REQUEST", resource = "TRANSACTION")
     public Transaction faireRetrait(String numCompte, BigDecimal montant, Long idUser, Long idSessionCaisse) {
         validerMontantPositif(montant);
 
@@ -153,6 +155,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @AuditLog(action = "TRANSACTION_VIREMENT_REQUEST", resource = "TRANSACTION")
     public Transaction faireVirement(String compteSource, String compteDest, BigDecimal montant, Long idUser) {
         if (compteSource == null || compteDest == null || compteSource.equals(compteDest)) {
             throw new IllegalArgumentException("Les comptes source et destination doivent être différents");
@@ -189,9 +192,11 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @AuditLog(action = "TRANSACTION_SYSTEM_POST_DEPOT", resource = "TRANSACTION")
     public Transaction posterDepotSysteme(String numCompte, BigDecimal montant, BigDecimal frais, Long idUser, String referenceExterne, String codeOperationMetier) {
         validerMontantPositif(montant);
         Compte compte = chargerCompte(numCompte);
+        verifierCompteOperationnel(compte);
         Utilisateur utilisateur = chargerUtilisateur(idUser);
         TypeTransaction typeDepot = chargerTypeStrict("DEPOT");
 
@@ -212,9 +217,11 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @AuditLog(action = "TRANSACTION_SYSTEM_POST_RETRAIT", resource = "TRANSACTION")
     public Transaction posterRetraitSysteme(String numCompte, BigDecimal montant, BigDecimal frais, Long idUser, String referenceExterne, String codeOperationMetier) {
         validerMontantPositif(montant);
         Compte compte = chargerCompte(numCompte);
+        verifierCompteOperationnel(compte);
         Utilisateur utilisateur = chargerUtilisateur(idUser);
         TypeTransaction typeRetrait = chargerTypeStrict("RETRAIT");
 
@@ -234,10 +241,16 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Transactional
+    @AuditLog(action = "TRANSACTION_SYSTEM_POST_VIREMENT", resource = "TRANSACTION")
     public Transaction posterVirementSysteme(String compteSource, String compteDestination, BigDecimal montant, BigDecimal frais, Long idUser, String referenceExterne, String codeOperationMetier) {
+        if (compteSource == null || compteDestination == null || compteSource.equals(compteDestination)) {
+            throw new IllegalArgumentException("Les comptes source et destination doivent etre differents");
+        }
         validerMontantPositif(montant);
         Compte source = chargerCompte(compteSource);
         Compte destination = chargerCompte(compteDestination);
+        verifierCompteOperationnel(source);
+        verifierCompteOperationnel(destination);
         Utilisateur utilisateur = chargerUtilisateur(idUser);
         TypeTransaction typeVirement = chargerTypeStrict("VIREMENT");
 
@@ -258,6 +271,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @AuditLog(action = "TRANSACTION_APPROVE", resource = "TRANSACTION")
     public Transaction approuverTransaction(String referenceUnique, Long idSuperviseur) {
         Transaction transaction = chargerTransaction(referenceUnique);
         Utilisateur superviseur = chargerUtilisateur(idSuperviseur);
@@ -272,6 +286,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @AuditLog(action = "TRANSACTION_REJECT", resource = "TRANSACTION")
     public Transaction rejeterTransaction(String referenceUnique, Long idSuperviseur, String motif) {
         Transaction transaction = chargerTransaction(referenceUnique);
         Utilisateur superviseur = chargerUtilisateur(idSuperviseur);
@@ -288,6 +303,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @AuditLog(action = "TRANSACTION_CANCEL", resource = "TRANSACTION")
     public Transaction annulerTransaction(String referenceUnique, Long idSuperviseur, String motif) {
         Transaction transaction = chargerTransaction(referenceUnique);
         Utilisateur superviseur = chargerUtilisateur(idSuperviseur);
@@ -304,6 +320,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @AuditLog(action = "TRANSACTION_REVERSE", resource = "TRANSACTION")
     public Transaction extournerTransaction(String referenceUnique, Long idSuperviseur, String motif) {
         Transaction transaction = chargerTransaction(referenceUnique);
         Utilisateur superviseur = chargerUtilisateur(idSuperviseur);
@@ -525,21 +542,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     private BigDecimal fondsDisponibles(Compte compte) {
         BigDecimal decouvert = compte.getDecouvertAutorise() == null ? BigDecimal.ZERO : compte.getDecouvertAutorise();
-        return calculerSoldeDepuisEcritures(compte).add(decouvert);
-    }
-
-    private BigDecimal calculerSoldeDepuisEcritures(Compte compte) {
-        List<LigneEcritureComptable> lignes = ligneEcritureComptableRepository.findByReferenceAuxiliaire(compte.getNumCompte());
-        BigDecimal credit = BigDecimal.ZERO;
-        BigDecimal debit = BigDecimal.ZERO;
-        for (LigneEcritureComptable ligne : lignes) {
-            if ("CREDIT".equalsIgnoreCase(ligne.getSens())) {
-                credit = credit.add(ligne.getMontant());
-            } else if ("DEBIT".equalsIgnoreCase(ligne.getSens())) {
-                debit = debit.add(ligne.getMontant());
-            }
-        }
-        return credit.subtract(debit);
+        return comptabiliteExtensionService.calculerSoldeComptable(compte.getNumCompte()).add(decouvert);
     }
 
     private void verifierTransactionEnAttente(Transaction transaction) {

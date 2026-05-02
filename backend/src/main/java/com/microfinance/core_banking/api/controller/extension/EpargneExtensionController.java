@@ -1,6 +1,7 @@
 package com.microfinance.core_banking.api.controller.extension;
 
 import com.microfinance.core_banking.audit.AuditLog;
+import com.microfinance.core_banking.dto.request.extension.CloturerDatRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.CreerProduitEpargneRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.SouscrireDatRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.SouscrireDatServiceRequestDTO;
@@ -13,6 +14,7 @@ import com.microfinance.core_banking.entity.DepotATerme;
 import com.microfinance.core_banking.entity.ProduitEpargne;
 import com.microfinance.core_banking.service.extension.EpargneExtensionService;
 import com.microfinance.core_banking.service.extension.PendingActionSubmissionService;
+import com.microfinance.core_banking.service.security.AuthenticatedUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -25,11 +27,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -39,10 +45,12 @@ public class EpargneExtensionController {
 
     private final EpargneExtensionService epargneExtensionService;
     private final PendingActionSubmissionService pendingActionSubmissionService;
+    private final AuthenticatedUserService authenticatedUserService;
 
-    public EpargneExtensionController(EpargneExtensionService epargneExtensionService, PendingActionSubmissionService pendingActionSubmissionService) {
+    public EpargneExtensionController(EpargneExtensionService epargneExtensionService, PendingActionSubmissionService pendingActionSubmissionService, AuthenticatedUserService authenticatedUserService) {
         this.epargneExtensionService = epargneExtensionService;
         this.pendingActionSubmissionService = pendingActionSubmissionService;
+        this.authenticatedUserService = authenticatedUserService;
     }
 
     @PostMapping("/produits")
@@ -94,6 +102,8 @@ public class EpargneExtensionController {
         serviceDto.setDureeMois(String.valueOf(dto.getDureeMois()));
         serviceDto.setDateSouscription(dto.getDateSouscription());
         serviceDto.setIdUtilisateurOperateur(dto.getIdGuichetier());
+        serviceDto.setRenouvellementAuto(dto.getRenouvellementAuto());
+        serviceDto.setNumCompteSupport(dto.getNumCompteSupport());
         return ResponseEntity.status(HttpStatus.CREATED).body(toDto(epargneExtensionService.souscrireDepotATerme(serviceDto)));
     }
 
@@ -108,6 +118,65 @@ public class EpargneExtensionController {
     })
     public ResponseEntity<List<DepotATermeResponseDTO>> listerDepotsATerme() {
         return ResponseEntity.ok(epargneExtensionService.listerDepotsATerme().stream().map(this::toDto).toList());
+    }
+
+    @Operation(
+        summary = "Calculer les interets d'epargne",
+        description = "Calcule et credite les interets sur tous les comptes epargne actifs"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Interets calcules et credites avec succes"),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Acces interdit", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
+    @PostMapping("/calcul-interets")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR, T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SAVINGS_MANAGE)")
+    @AuditLog(action = "SAVINGS_INTEREST_CALCULATE", resource = "PRODUIT_EPARGNE")
+    public ResponseEntity<Integer> calculerInteretsEpargne(
+            @RequestParam(required = false) LocalDate dateCalcul,
+            @RequestParam(required = false) Long idUtilisateurOperateur) {
+        LocalDate date = dateCalcul != null ? dateCalcul : LocalDate.now();
+        Long userId = idUtilisateurOperateur != null ? idUtilisateurOperateur : authenticatedUserService.getCurrentUserOrThrow().getIdUser();
+        int comptesCredites = epargneExtensionService.calculerInteretsEpargne(date, userId);
+        return ResponseEntity.ok(comptesCredites);
+    }
+
+    @Operation(
+        summary = "Soumettre une cloture de depot a terme",
+        description = "Soumet une demande de cloture d'un depot a terme pour approbation superviseur"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "202", description = "Cloture DAT soumise en attente de validation"),
+        @ApiResponse(responseCode = "400", description = "Donnees invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Acces interdit", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "DAT introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
+    @PutMapping("/depots-a-terme/{id}/cloture")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SAVINGS_MANAGE)")
+    @AuditLog(action = "SAVINGS_DAT_CLOSE_SUBMIT", resource = "DEPOT_A_TERME")
+    public ResponseEntity<ActionEnAttenteResponseDTO> soumettreClotureDat(
+            @PathVariable Long id,
+            @Valid @RequestBody CloturerDatRequestDTO requestDTO) {
+        ActionEnAttente action = pendingActionSubmissionService.submit("CLOTURE_DAT", "DEPOT_A_TERME", String.valueOf(id), requestDTO, "Cloture DAT soumise");
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
+    }
+
+    @Operation(summary = "Consulter un depot a terme", description = "Retourne les details d'un depot a terme par son identifiant")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "DAT trouve", content = @Content(schema = @Schema(implementation = DepotATermeResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "DAT introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
+    @GetMapping("/depots-a-terme/{id}")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER, T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_SAVINGS_VIEW)")
+    public ResponseEntity<DepotATermeResponseDTO> consulterDepotATerme(@PathVariable Long id) {
+        return epargneExtensionService.consulterDepotATerme(id)
+            .map(this::toDto)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
     }
 
     private ProduitEpargneResponseDTO toDto(ProduitEpargne produit) {

@@ -64,7 +64,6 @@ BEGIN
             actif NUMBER(1,0) DEFAULT 1 NOT NULL,
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL,
-            CONSTRAINT fk_affectation_user FOREIGN KEY (id_user) REFERENCES utilisateur(id_user),
             CONSTRAINT fk_affectation_agence FOREIGN KEY (id_agence) REFERENCES agence(id_agence)
         )';
 EXCEPTION
@@ -115,7 +114,6 @@ BEGIN
             date_decision TIMESTAMP,
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL,
-            CONSTRAINT fk_demande_client FOREIGN KEY (id_client) REFERENCES client(id_client),
             CONSTRAINT fk_demande_produit_credit FOREIGN KEY (id_produit_credit) REFERENCES produit_credit(id_produit_credit),
             CONSTRAINT fk_demande_agence FOREIGN KEY (id_agence) REFERENCES agence(id_agence)
         )';
@@ -142,8 +140,7 @@ BEGIN
             date_prochaine_echeance DATE,
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL,
-            CONSTRAINT fk_credit_demande FOREIGN KEY (id_demande_credit) REFERENCES demande_credit(id_demande_credit),
-            CONSTRAINT fk_credit_client FOREIGN KEY (id_client) REFERENCES client(id_client)
+            CONSTRAINT fk_credit_demande FOREIGN KEY (id_demande_credit) REFERENCES demande_credit(id_demande_credit)
         )';
 EXCEPTION
     WHEN OTHERS THEN
@@ -189,7 +186,6 @@ BEGIN
             renouvellement_auto NUMBER(1,0) DEFAULT 0 NOT NULL,
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL,
-            CONSTRAINT fk_depot_client FOREIGN KEY (id_client) REFERENCES client(id_client),
             CONSTRAINT fk_depot_produit FOREIGN KEY (id_produit_epargne) REFERENCES produit_epargne(id_produit_epargne)
         )';
 EXCEPTION
@@ -235,8 +231,7 @@ BEGIN
             commentaire VARCHAR2(500 CHAR),
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL,
-            CONSTRAINT fk_session_caisse FOREIGN KEY (id_caisse) REFERENCES caisse(id_caisse),
-            CONSTRAINT fk_session_user FOREIGN KEY (id_user) REFERENCES utilisateur(id_user)
+            CONSTRAINT fk_session_caisse FOREIGN KEY (id_caisse) REFERENCES caisse(id_caisse)
         )';
 EXCEPTION
     WHEN OTHERS THEN
@@ -260,9 +255,7 @@ BEGIN
             id_checker NUMBER(19,0),
             date_validation TIMESTAMP,
             created_at TIMESTAMP NOT NULL,
-            updated_at TIMESTAMP NOT NULL,
-            CONSTRAINT fk_action_maker FOREIGN KEY (id_maker) REFERENCES utilisateur(id_user),
-            CONSTRAINT fk_action_checker FOREIGN KEY (id_checker) REFERENCES utilisateur(id_user)
+            updated_at TIMESTAMP NOT NULL
         )';
 EXCEPTION
     WHEN OTHERS THEN
@@ -284,9 +277,7 @@ BEGIN
             details CLOB,
             date_detection TIMESTAMP NOT NULL,
             created_at TIMESTAMP NOT NULL,
-            updated_at TIMESTAMP NOT NULL,
-            CONSTRAINT fk_alerte_client FOREIGN KEY (id_client) REFERENCES client(id_client),
-            CONSTRAINT fk_alerte_transaction FOREIGN KEY (id_transaction) REFERENCES bank_transaction(id_transaction)
+            updated_at TIMESTAMP NOT NULL
         )';
 EXCEPTION
     WHEN OTHERS THEN
@@ -328,8 +319,7 @@ BEGIN
             autorise NUMBER(1,0) DEFAULT 1 NOT NULL,
             derniere_connexion TIMESTAMP,
             created_at TIMESTAMP NOT NULL,
-            updated_at TIMESTAMP NOT NULL,
-            CONSTRAINT fk_appareil_client FOREIGN KEY (id_client) REFERENCES client(id_client)
+            updated_at TIMESTAMP NOT NULL
         )';
 EXCEPTION
     WHEN OTHERS THEN
@@ -381,59 +371,6 @@ END;
 DECLARE
     v_count NUMBER := 0;
 BEGIN
-    SELECT COUNT(*) INTO v_count FROM user_tab_cols WHERE table_name = 'CLIENT' AND column_name = 'ID_AGENCE';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'ALTER TABLE client ADD (id_agence NUMBER(19,0) NULL)';
-    END IF;
-
-    SELECT COUNT(*) INTO v_count FROM user_constraints WHERE table_name = 'CLIENT' AND constraint_name = 'FK_CLIENT_AGENCE';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'ALTER TABLE client ADD CONSTRAINT fk_client_agence FOREIGN KEY (id_agence) REFERENCES agence(id_agence)';
-    END IF;
-END;
-/
-
-DECLARE
-    v_count NUMBER := 0;
-BEGIN
-    SELECT COUNT(*) INTO v_count FROM user_tab_cols WHERE table_name = 'COMPTE' AND column_name = 'ID_AGENCE';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'ALTER TABLE compte ADD (id_agence NUMBER(19,0) NULL)';
-    END IF;
-
-    SELECT COUNT(*) INTO v_count FROM user_constraints WHERE table_name = 'COMPTE' AND constraint_name = 'FK_COMPTE_AGENCE';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'ALTER TABLE compte ADD CONSTRAINT fk_compte_agence FOREIGN KEY (id_agence) REFERENCES agence(id_agence)';
-    END IF;
-END;
-/
-
-DECLARE
-    v_count NUMBER := 0;
-BEGIN
-    SELECT COUNT(*) INTO v_count FROM user_tab_cols WHERE table_name = 'UTILISATEUR' AND column_name = 'ID_AGENCE_ACTIVE';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'ALTER TABLE utilisateur ADD (id_agence_active NUMBER(19,0) NULL)';
-    END IF;
-
-    SELECT COUNT(*) INTO v_count FROM user_constraints WHERE table_name = 'UTILISATEUR' AND constraint_name = 'FK_USER_AGENCE_ACTIVE';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'ALTER TABLE utilisateur ADD CONSTRAINT fk_user_agence_active FOREIGN KEY (id_agence_active) REFERENCES agence(id_agence)';
-    END IF;
-END;
-/
-
-DECLARE
-    v_count NUMBER := 0;
-BEGIN
-    SELECT COUNT(*) INTO v_count FROM user_tab_cols WHERE table_name = 'BANK_TRANSACTION' AND column_name = 'ID_AGENCE_OPERATION';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'ALTER TABLE bank_transaction ADD (id_agence_operation NUMBER(19,0) NULL)';
-    END IF;
-
-    SELECT COUNT(*) INTO v_count FROM user_constraints WHERE table_name = 'BANK_TRANSACTION' AND constraint_name = 'FK_TX_AGENCE_OPERATION';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'ALTER TABLE bank_transaction ADD CONSTRAINT fk_tx_agence_operation FOREIGN KEY (id_agence_operation) REFERENCES agence(id_agence)';
-    END IF;
+    NULL;
 END;
 /

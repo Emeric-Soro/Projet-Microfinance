@@ -36,7 +36,6 @@ BEGIN
                 created_at TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
                 updated_at TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
                 CONSTRAINT pk_role_permission_securite PRIMARY KEY (id_role, id_permission),
-                CONSTRAINT fk_role_permission_role FOREIGN KEY (id_role) REFERENCES role_utilisateur(id_role),
                 CONSTRAINT fk_role_permission_permission FOREIGN KEY (id_permission) REFERENCES permission_securite(id_permission)
             )
         ]';
@@ -56,15 +55,3 @@ ON (target.code_permission = source.code_permission)
 WHEN NOT MATCHED THEN
     INSERT (code_permission, libelle_permission, module_code, description_permission, actif, created_at, updated_at)
     VALUES (source.code_permission, source.libelle_permission, source.module_code, source.description_permission, 1, SYSTIMESTAMP, SYSTIMESTAMP);
-
-MERGE INTO role_permission_securite target
-USING (
-    SELECT r.id_role, p.id_permission
-    FROM role_utilisateur r
-    JOIN permission_securite p ON p.code_permission IN ('SECURITY_PERMISSION_VIEW', 'SECURITY_PERMISSION_MANAGE', 'SECURITY_AUDIT_VIEW')
-    WHERE UPPER(r.code_role_utilisateur) IN ('ADMIN', 'SUPERVISEUR')
-) source
-ON (target.id_role = source.id_role AND target.id_permission = source.id_permission)
-WHEN NOT MATCHED THEN
-    INSERT (id_role, id_permission, created_at, updated_at)
-    VALUES (source.id_role, source.id_permission, SYSTIMESTAMP, SYSTIMESTAMP);

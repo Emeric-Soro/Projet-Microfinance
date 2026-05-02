@@ -159,4 +159,22 @@ class ComptabiliteExtensionServiceTest {
         assertEquals(1, resultat.getEcrituresDesequilibrees().size());
         assertEquals("PC-2", resultat.getEcrituresDesequilibrees().get(0).getReferencePiece());
     }
+
+    @Test
+    void calculerSoldeComptable_returnsBalanceFromLedgerLines() {
+        LigneEcritureComptable ligneDebit = new LigneEcritureComptable();
+        ligneDebit.setSens("DEBIT");
+        ligneDebit.setMontant(new BigDecimal("1000.00"));
+
+        LigneEcritureComptable ligneCredit = new LigneEcritureComptable();
+        ligneCredit.setSens("CREDIT");
+        ligneCredit.setMontant(new BigDecimal("1500.00"));
+
+        when(ligneEcritureComptableRepository.findByReferenceAuxiliaire("CPT-001"))
+                .thenReturn(List.of(ligneDebit, ligneCredit));
+
+        BigDecimal solde = comptabiliteExtensionService.calculerSoldeComptable("CPT-001");
+
+        assertEquals(0, new BigDecimal("500.00").compareTo(solde));
+    }
 }

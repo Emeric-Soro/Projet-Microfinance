@@ -1,58 +1,57 @@
 package com.microfinance.core_banking.service;
 
+import com.microfinance.core_banking.dto.BalanceLine;
+import com.microfinance.core_banking.entity.SensEcriture;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/**
- * Tests de comptabilité : vérifie que la règle "total débit = total crédit"
- * est respectée dans tous les cas (Section E.09 de CORR.txt).
- */
 @ExtendWith(MockitoExtension.class)
 class DoubleEntryIntegrityTest {
 
+    private final DoubleEntryService doubleEntryService = new DoubleEntryServiceImpl();
+
     @Test
-    void debitEqualsCredit_whenBothPresent_shouldBeEqual() {
-        BigDecimal debit = new BigDecimal("1000.00");
-        BigDecimal credit = new BigDecimal("1000.00");
-        assertEquals(0, debit.compareTo(credit), "Le total debit doit etre egal au total credit");
+    void balancedPieceShouldPass() {
+        List<BalanceLine> lines = List.of(
+                new BalanceLine("571000", SensEcriture.DEBIT, new BigDecimal("1000.00"), "CPT-001", "Caisse"),
+                new BalanceLine("251000", SensEcriture.CREDIT, new BigDecimal("1000.00"), "CPT-001", "Depots clientele")
+        );
+
+        assertDoesNotThrow(() -> doubleEntryService.validerPieceEquilibree(lines));
     }
 
     @Test
-    void transactionAmount_shouldBePositive() {
-        BigDecimal montant = new BigDecimal("500.00");
-        assertTrue(montant.compareTo(BigDecimal.ZERO) > 0, "Le montant doit etre strictement positif");
+    void unbalancedPieceShouldFail() {
+        List<BalanceLine> lines = List.of(
+                new BalanceLine("571000", SensEcriture.DEBIT, new BigDecimal("1000.00"), "CPT-001", "Caisse"),
+                new BalanceLine("251000", SensEcriture.CREDIT, new BigDecimal("900.00"), "CPT-001", "Depots clientele")
+        );
+
+        assertThrows(IllegalStateException.class, () -> doubleEntryService.validerPieceEquilibree(lines));
     }
 
     @Test
-    void feeCalculation_shouldNotExceedPrincipal() {
-        BigDecimal principal = new BigDecimal("10000.00");
-        BigDecimal fee = new BigDecimal("250.00");
-        assertTrue(fee.compareTo(principal) < 0, "Les frais ne doivent pas depasser le principal");
-        assertTrue(fee.compareTo(BigDecimal.ZERO) > 0, "Les frais doivent etre positifs");
+    void debitOnlyPieceShouldFail() {
+        List<BalanceLine> lines = List.of(
+                new BalanceLine("571000", SensEcriture.DEBIT, new BigDecimal("1000.00"), "CPT-001", "Caisse")
+        );
+
+        assertThrows(IllegalStateException.class, () -> doubleEntryService.validerPieceEquilibree(lines));
     }
 
     @Test
-    void balanceAfterDebitAndCredit_shouldBeCorrect() {
-        BigDecimal soldeInitial = new BigDecimal("5000.00");
-        BigDecimal debit = new BigDecimal("1500.00");
-        BigDecimal credit = new BigDecimal("2000.00");
-        BigDecimal soldeFinal = soldeInitial.subtract(debit).add(credit);
-        assertEquals(0, new BigDecimal("5500.00").compareTo(soldeFinal),
-                "Le solde final est incorrect: " + soldeFinal);
-    }
+    void creditOnlyPieceShouldFail() {
+        List<BalanceLine> lines = List.of(
+                new BalanceLine("251000", SensEcriture.CREDIT, new BigDecimal("1000.00"), "CPT-001", "Depots clientele")
+        );
 
-    @Test
-    void zeroAmountTransaction_shouldBeRejected() {
-        BigDecimal montant = BigDecimal.ZERO;
-        assertThrows(IllegalArgumentException.class, () -> {
-            if (montant.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("Le montant doit etre strictement positif");
-            }
-        });
+        assertThrows(IllegalStateException.class, () -> doubleEntryService.validerPieceEquilibree(lines));
     }
 }

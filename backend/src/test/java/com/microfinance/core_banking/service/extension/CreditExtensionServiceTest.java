@@ -264,4 +264,96 @@ class CreditExtensionServiceTest {
         assertThat(resultat.getStatut()).isEqualTo("REPORTEE");
         assertThat(resultat.getDateEcheance()).isEqualTo(LocalDate.of(2026, 6, 10));
     }
+
+    @Test
+    void rembourserAnticipeCredit_calculePenaliteEtSoldeComplet() {
+        Client client = new Client();
+        client.setIdClient(60L);
+
+        Credit credit = new Credit();
+        credit.setIdCredit(30L);
+        credit.setClient(client);
+        credit.setCapitalRestantDu(new BigDecimal("100000"));
+        credit.setTauxAnnuel(new BigDecimal("12"));
+        credit.setStatut("ACTIF");
+
+        EcheanceCredit echeance1 = new EcheanceCredit();
+        echeance1.setIdEcheanceCredit(1L);
+        echeance1.setCredit(credit);
+        echeance1.setCapitalPrevu(new BigDecimal("50000"));
+        echeance1.setInteretPrevu(new BigDecimal("1000"));
+        echeance1.setAssurancePrevue(new BigDecimal("500"));
+        echeance1.setStatut("A_ECHOIR");
+
+        EcheanceCredit echeance2 = new EcheanceCredit();
+        echeance2.setIdEcheanceCredit(2L);
+        echeance2.setCredit(credit);
+        echeance2.setCapitalPrevu(new BigDecimal("50000"));
+        echeance2.setInteretPrevu(new BigDecimal("500"));
+        echeance2.setAssurancePrevue(new BigDecimal("250"));
+        echeance2.setStatut("A_ECHOIR");
+
+        Transaction transaction = new Transaction();
+        transaction.setReferenceUnique("TXN-ANT-001");
+        Utilisateur user = new Utilisateur();
+        user.setIdUser(12L);
+
+        when(creditRepository.findById(30L)).thenReturn(Optional.of(credit));
+        when(creditRepository.save(any(Credit.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(authenticatedUserService.getCurrentUserOrThrow()).thenReturn(user);
+        when(transactionService.posterRetraitSysteme(any(), any(), any(), any(), any(), any())).thenReturn(transaction);
+        when(remboursementCreditRepository.save(any(RemboursementCredit.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(echeanceCreditRepository.findByCredit_IdCreditOrderByDateEcheanceAsc(30L)).thenReturn(List.of(echeance1, echeance2));
+        when(echeanceCreditRepository.save(any(EcheanceCredit.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        RembourserAnticipeCreditRequestDTO dto = new RembourserAnticipeCreditRequestDTO();
+        dto.setNumCompteSource("CPT-SRC-01");
+        dto.setPenaliteTaux(new BigDecimal("2.0"));
+        dto.setReferenceRemboursement("REM-ANT-001");
+
+        RemboursementCredit resultat = creditExtensionService.rembourserAnticipeCredit(30L, dto);
+
+        assertThat(resultat.getMontant()).isEqualByComparingTo(new BigDecimal("102000"));
+        assertThat(resultat.getCapitalPaye()).isEqualByComparingTo(new BigDecimal("100000"));
+        assertThat(credit.getStatut()).isEqualTo("REMBOURSE");
+        assertThat(credit.getCapitalRestantDu()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(credit.getDateProchaineEcheance()).isNull();
+        assertThat(echeance1.getStatut()).isEqualTo("REGLEE");
+        assertThat(echeance2.getStatut()).isEqualTo("REGLEE");
+    }
+
+    @Test
+    void rembourserAnticipeCredit_refuseCreditDejaSolde() {
+        Credit credit = new Credit();
+        credit.setIdCredit(31L);
+        credit.setClient(new Client());
+        credit.setStatut("REMBOURSE");
+
+        when(creditRepository.findById(31L)).thenReturn(Optional.of(credit));
+
+        RembourserAnticipeCreditRequestDTO dto = new RembourserAnticipeCreditRequestDTO();
+        dto.setNumCompteSource("CPT-SRC");
+
+        assertThatThrownBy(() -> creditExtensionService.rembourserAnticipeCredit(31L, dto))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("deja solde");
+    }
+
+    @Test
+    void rembourserAnticipeCredit_refuseCapitalNul() {
+        Credit credit = new Credit();
+        credit.setIdCredit(32L);
+        credit.setClient(new Client());
+        credit.setCapitalRestantDu(BigDecimal.ZERO);
+        credit.setStatut("ACTIF");
+
+        when(creditRepository.findById(32L)).thenReturn(Optional.of(credit));
+
+        RembourserAnticipeCreditRequestDTO dto = new RembourserAnticipeCreditRequestDTO();
+        dto.setNumCompteSource("CPT-SRC");
+
+        assertThatThrownBy(() -> creditExtensionService.rembourserAnticipeCredit(32L, dto))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("capital restant");
+    }
 }

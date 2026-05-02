@@ -12,8 +12,7 @@ BEGIN
             date_remise TIMESTAMP,
             motif_opposition VARCHAR2(255 CHAR),
             created_at TIMESTAMP NOT NULL,
-            updated_at TIMESTAMP NOT NULL,
-            CONSTRAINT fk_chequier_compte FOREIGN KEY (id_compte) REFERENCES compte(id_compte)
+            updated_at TIMESTAMP NOT NULL
         )';
 EXCEPTION
     WHEN OTHERS THEN
@@ -36,8 +35,7 @@ BEGIN
             reference_transaction VARCHAR2(100 CHAR),
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL,
-            CONSTRAINT fk_remise_cheque_chequier FOREIGN KEY (id_chequier) REFERENCES chequier(id_chequier),
-            CONSTRAINT fk_remise_compte FOREIGN KEY (id_compte_remise) REFERENCES compte(id_compte)
+            CONSTRAINT fk_remise_cheque_chequier FOREIGN KEY (id_chequier) REFERENCES chequier(id_chequier)
         )';
 EXCEPTION
     WHEN OTHERS THEN

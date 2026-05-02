@@ -1,0 +1,1593 @@
+================================================================================
+  MICROFIN CORE BANKING — LISTE EXHAUSTIVE DES MODULES, FONCTIONNALITÉS,
+  WORKFLOWS ET DIAGRAMMES UML NÉCESSAIRES
+================================================================================
+  Date : 02/05/2026
+  Projet : MicroFin — Système Bancaire Core (Core Banking System)
+  Stack : Java 21 + Spring Boot 3.5.13 + Oracle DB + Flyway + JWT
+================================================================================
+
+
+TABLE DES MATIÈRES
+==================
+  1. SYSTÈMES D'INFORMATION BANCAIRE
+  2. GESTION DES CLIENTS
+  3. GESTION DES COMPTES
+  4. GESTION DES OPÉRATIONS
+  5. GESTION DES FINANCES / COMPTABILITÉ
+  6. GESTION DES CRÉDITS
+  7. GESTION DE L'ÉPARGNE
+  8. GESTION DE LA CAISSE ET DU COFFRE
+  9. GESTION DE LA CONFORMITÉ (COMPLIANCE)
+  10. GESTION DES PAIEMENTS
+  11. GESTION DU SCORING
+  12. GESTION DES RISQUES
+  13. GESTION DE LA TRÉSORERIE
+  14. GESTION ORGANISATIONNELLE (AGENCES / RÉSEAU)
+  15. GESTION DE LA SÉCURITÉ / AUTH
+  16. GESTION DU DIGITAL / OPEN BANKING
+  17. GESTION DES TONTINES
+  18. GESTION DES COMMISSIONS
+  19. GESTION DU BATCH (EOD — END OF DAY)
+  20. GESTION DE LA TARIFICATION
+  21. GESTION DES NOTIFICATIONS
+  22. GESTION DES RESSOURCES HUMAINES
+  23. GESTION DES ACHATS / APPROVISIONNEMENTS
+  24. GESTION DES IMMOBILISATIONS
+  25. GESTION DES AGENTS BANKING
+  26. GESTION DES CARTES / MONÉTIQUE
+  27. GESTION DES CHÉQUIERS
+  28. GESTION FISCALE
+  29. GESTION DE L'AUDIT / TRAÇABILITÉ
+  30. GESTION DU MAKER-CHECKER (4-YEUX)
+
+  ANNEXE A : LISTE DES DIAGRAMMES UML NÉCESSAIRES
+  ANNEXE B : STATISTIQUES DU PROJET
+
+
+================================================================================
+1. SYSTÈMES D'INFORMATION BANCAIRE
+================================================================================
+
+  1.1 Architecture générale
+  ──────────────────────────
+  - Architecture 5 couches : Controller → DTO → Service → Repository → Entity
+  - Base de données Oracle XE 21c
+  - Migrations Flyway (28 fichiers : B0 + V1 à V27)
+  - API REST documentée via SpringDoc OpenAPI (Swagger UI)
+  - Sécurité JWT stateless (HS256)
+  - Cache Caffeine pour les paramètres de tarification
+  - Spring Batch pour les traitements EOD (End of Day)
+  - AOP pour l'audit (@AuditLog annotation)
+  - Injection de dépendances par constructeur (Lombok @RequiredArgsConstructor)
+  - MapStruct pour le mapping DTO <-> Entité
+  - Gestion des exceptions centralisée (GlobalExceptionHandler)
+
+  1.2 Modules fonctionnels couverts
+  ─────────────────────────────────
+  - Core bancaire : Clients, Comptes, Transactions
+  - Crédit : Demandes, Produits, Garanties, Échéances, Remboursements
+  - Épargne : Produits, Opérations, Dépôts à terme
+  - Caisse / Coffre : Sessions, Approvisionnement, Délestage
+  - Comptabilité : Partie double, Schémas, Journaux, Écritures, Clôture
+  - Conformité : Sanctions, PEP, AML, BIC, Déclarations fiscales
+  - Paiements : Mobile Money, Cartes Visa, Chéquiers, Virements externes
+  - Scoring : Grilles, Critères, Résultats
+  - Risques : Stress tests, Incidents
+  - Trésorerie : Budget, Commandes, Fournisseurs, Immobilisations, Paie
+  - Organisation : Régions, Agences, Guichets, Employés, Mutations
+  - Sécurité : JWT, RBAC, Permissions, Audit, Rate Limiting
+  - Digital : Mobile Money, Wallets, Open Banking
+  - Tontines : Cotisations, Tours
+  - Commissions : Agent, Inter-agence
+  - Batch : EOD (stubbé — à implémenter)
+  - RH : Employés, Mutations, Paie
+  - Achats : Commandes, Fournisseurs
+  - Immobilisations : Amortissements, Inventaire
+  - Agents Banking : Portefeuille, Commissions
+  - Cartes : Plafonds, Statuts
+  - Chéquiers : Demandes, Validations, Livraisons
+  - Fiscalité : Déclarations, Rapports prudentiels
+  - Audit : Traçabilité des actions, SystemAuditLog
+
+  1.3 Infrastructure technique
+  ────────────────────────────
+  - Docker Compose : Oracle XE + Backend Spring Boot + CloudBeaver
+  - Maven Wrapper (mvnw) — build sans Maven installé
+  - Variables d'environnement externalisées (.env)
+  - Healthchecks Docker pour l'orchestration
+  - CloudBeaver pour l'administration DB (UI web)
+  - 41 fichiers de test (JUnit 5 + Testcontainers + Mockito)
+
+
+================================================================================
+2. GESTION DES CLIENTS
+================================================================================
+
+  2.1 Entités
+  ────────────
+  - Client.java — Client principal
+  - AppareilClient.java — Appareils enregistrés du client
+  - StatutClient.java (enum) — ACTIF, INACTIF, BLOQUE, FERME, PROSPECT
+
+  2.2 Fonctionnalités
+  ───────────────────
+  - Création de client (POST /api/clients — endpoint PUBLIC)
+  - Liste des clients avec pagination (GET /api/clients)
+  - Consultation détail client (GET /api/clients/{id})
+  - Mise à jour des informations client (PUT /api/clients/{id})
+  - Workflow KYC (Know Your Customer) :
+      - Soumission KYC (PUT /api/clients/{id}/kyc)
+      - Décision KYC (PUT /api/clients/{id}/kyc/decision — VALIDE/REJETE)
+  - Recherche et filtrage des clients
+  - Statuts client (ACTIF, INACTIF, BLOQUE, FERME, PROSPECT)
+  - Gestion des pièces d'identité (TypePieceIdentite enum)
+
+  2.3 Workflows
+  ─────────────
+  [KYC Workflow]
+  1. Agent soumet les documents KYC pour un client
+  2. Superviseur examine et prend une décision (VALIDER / REJETER)
+  3. Le statut KYC du client est mis à jour
+
+  [Création Client]
+  1. Agent saisit les informations du client
+  2. Validation des champs obligatoires
+  3. Création du compte client
+  4. Option : création d'un compte bancaire associé
+
+
+================================================================================
+3. GESTION DES COMPTES
+================================================================================
+
+  3.1 Entités
+  ───────────
+  - Compte.java — Compte bancaire principal
+  - StatutCompte.java (enum) — ACTIF, BLOQUE, CLOTURE, INACTIF
+  - TypeCompte.java (enum) — COURANT, EPARGNE, DEPOT_A_TERME
+  - CarteVisa.java — Cartes bancaires
+  - LoanFacility.java — Facilités de caisse / découverts
+
+  3.2 Fonctionnalités
+  ───────────────────
+  - Création de compte (POST /api/comptes)
+  - Liste des comptes avec pagination (GET /api/comptes)
+  - Détail compte (GET /api/comptes/{numCompte})
+  - Consultation du solde
+  - Demande de carte Visa (POST /api/comptes/{numCompte}/carte)
+  - Gestion des découverts (facilités de caisse)
+  - Types de comptes : Courant, Épargne, Dépôt à terme
+  - Statuts compte (ACTIF, BLOQUÉ, CLÔTURÉ, INACTIF)
+
+  3.3 Workflows
+  ─────────────
+  [Création Compte]
+  1. Agent sélectionne le client
+  2. Choix du type de compte
+  3. Paramétrage (découvert autorisé, plafonds)
+  4. Validation et création
+
+  [Demande Carte]
+  1. Client demande une carte sur son compte
+  2. Vérification éligibilité
+  3. Création de la carte avec plafonds
+  4. Activation / blocage
+
+
+================================================================================
+4. GESTION DES OPÉRATIONS
+================================================================================
+
+  4.1 Entités
+  ───────────
+  - Transaction.java — Transaction bancaire (bank_transaction)
+  - StatutOperation.java (enum) — EN_ATTENTE, EXECUTEE, REJETEE
+  - TypeTransaction.java (enum) — DEPOT_CASH, RETRAIT_CASH, VIREMENT_INTERNE,
+    FRAIS_DEPOT, FRAIS_RETRAIT, FRAIS_VIREMENT, CREDIT_DEBLOCAGE,
+    CREDIT_REMBOURSEMENT, MOBILEMONEY_CASHIN, MOBILEMONEY_CASHOUT, etc.
+  - TypeCanal.java (enum) — AGENCE, GAB, MOBILE, WEB, USSD, API
+  - Beneficiary.java — Bénéficiaires de virements
+  - Collateral.java — Garanties
+  - Guarantor.java — Garants
+
+  4.2 Contrôleurs
+  ────────────────
+  - TransactionController.java
+  - DepotController.java
+  - RetraitController.java
+  - VirementController.java
+  - ValidationController.java
+
+  4.3 Fonctionnalités
+  ───────────────────
+  - Dépôt sur compte (POST /api/transactions/depot)
+  - Retrait depuis compte (POST /api/transactions/retrait)
+  - Virement interne (POST /api/transactions/virement)
+  - Validation 4-yeux (POST /api/transactions/{id}/validation)
+  - Rejet de transaction (POST /api/transactions/{id}/rejet)
+  - Annulation de transaction (POST /api/transactions/{id}/annulation)
+  - Extourne (POST /api/transactions/{id}/extourne)
+  - Liste des transactions (GET /api/transactions)
+  - Détail transaction (GET /api/transactions/{id})
+  - Calcul automatique des frais (Strategy Pattern)
+      - DepotTransactionFeeStrategy
+      - RetraitTransactionFeeStrategy
+      - VirementTransactionFeeStrategy
+  - Suivi de caisse (solde théorique ouverture/fermeture)
+  - Vérification comptable avant exécution
+  - Comptabilisation après exécution
+  - Analyse conformité après exécution
+  - Idempotency key pour les opérations externes
+
+  4.4 Workflow Transaction Complet
+  ────────────────────────────────
+  [Workflow Dépôt]
+  1. Agent saisit le montant et le compte destination
+  2. Validation : montant positif, session caisse ouverte
+  3. Vérification supervision : si montant >= 500 000 FCFA → 4-yeux
+  4. Création transaction (statut EN_ATTENTE)
+  5. Si supervision requise :
+      a. Soumission au superviseur
+      b. Superviseur valide ou rejette
+      c. Anti-auto-validation (initiateur != superviseur)
+  6. Vérification comptable (verifierTransactionComptable)
+  7. Exécution :
+      a. Crédit du compte destination
+      b. Débit des frais (compte de charges)
+      c. Mise à jour solde caisse
+  8. Comptabilisation (comptabiliserTransaction)
+  9. Analyse conformité
+  10. Notification si virement
+
+  [Workflow Retrait]
+  1. Agent saisit le montant et le compte source
+  2. Vérification fonds disponibles (solde >= montant + frais)
+  3. Idem workflow validation 4-yeux si >= 500 000 FCFA
+  4. Exécution : débit du compte, crédit des frais, mise à jour caisse
+
+  [Workflow Virement]
+  1. Agent saisit montant, compte source, compte destination
+  2. Vérification fonds disponibles
+  3. Vérification BIC si externe
+  4. Idem workflow validation 4-yeux si >= 500 000 FCFA
+  5. Exécution : débit source, crédit destination, frais
+  6. Publication de l'événement VirementEffectueEvent
+
+  [Workflow Extourne]
+  1. Transaction originale identifiée
+  2. Création d'une contre-opération (opération inverse)
+  3. Types supportés : DEPOT_CASH, RETRAIT_CASH, VIREMENT_INTERNE,
+     CREDIT_DEBLOCAGE, MOBILEMONEY_CASHIN, MOBILEMONEY_CASHOUT
+  4. Comptabilisation de l'extourne
+
+
+================================================================================
+5. GESTION DES FINANCES / COMPTABILITÉ
+================================================================================
+
+  5.1 Entités comptables
+  ──────────────────────
+  - ClasseComptable.java — Classes (1: Bilan Actif, 2: Bilan Passif,
+    3: Charges, 4: Produits, 5: Hors Bilan)
+  - CompteComptable.java — Comptes comptables (~20 préinitialisés)
+  - JournalComptable.java — Journaux (ACH, BAN, CAI, OPE, ECH, etc.)
+  - EcritureComptable.java — Écritures comptables
+  - LigneEcritureComptable.java — Lignes d'écritures (Débit/Crédit)
+  - SchemaComptable.java — Schémas comptables (~25 patterns)
+  - ClotureComptable.java — Clôture périodique
+  - SensEcriture.java (enum) — DEBIT, CREDIT
+
+  5.2 Services
+  ────────────
+  - ComptabiliteExtensionService.java (867+ lignes)
+      - Bootstrap automatique (classes, comptes, journaux, schémas)
+      - Génération d'écritures par schéma
+      - Clôture comptable
+      - Balance générale
+      - Grand Livre
+  - DoubleEntryServiceImpl.java
+      - Validation équilibre Débit = Crédit
+      - Contrôle d'intégrité
+  - JournalEntryServiceImpl.java
+      - Gestion des journaux
+
+  5.3 Fonctionnalités comptables
+  ──────────────────────────────
+  - Comptabilité en partie double complète
+  - Bootstrap automatique au démarrage :
+      - 5 classes comptables
+      - ~20 comptes comptables (Caisse, Banque, Clients, etc.)
+      - 7 journaux (ACH, BAN, CAI, OPE, ECH, ANL, DIV)
+      - ~25 schémas comptables
+  - Génération d'écritures basée sur les schémas pour :
+      - Dépôt cash, Retrait cash, Virement interne
+      - Déblocage crédit, Remboursement crédit
+      - Mobile Money CashIn/Out
+      - Agios, Frais, Intérêts, Provisions
+  - Validation équilibre (total Débit = total Crédit)
+  - Clôture comptable (mensuelle, annuelle)
+  - Balance générale
+  - Grand Livre
+  - Rapport de balance par compte
+  - Calcul des soldes comptables
+
+  5.4 Workflow Comptable
+  ──────────────────────
+  [Bootstrap Comptable (au démarrage)]
+  1. Création des 5 classes comptables
+  2. Création des comptes comptables
+  3. Création des journaux
+  4. Création des schémas comptables
+
+  [Écriture Comptable]
+  1. Déclenchement par une opération bancaire
+  2. Sélection du schéma comptable adapté
+  3. Génération des lignes Débit/Crédit
+  4. Validation de l'équilibre (total Débit >= total Crédit)
+  5. Enregistrement dans le journal approprié
+  6. Mise à jour des soldes comptables
+
+  [Clôture Comptable]
+  1. Vérification : aucune transaction en attente
+  2. Vérification : équilibre comptable
+  3. Calcul et comptabilisation des agios
+  4. Calcul et comptabilisation des provisions
+  5. Détection et comptabilisation des impayés
+  6. Traitement EOD
+  7. Clôture de la période
+  8. Ouverture de la nouvelle période
+
+
+================================================================================
+6. GESTION DES CRÉDITS
+================================================================================
+
+  6.1 Entités
+  ───────────
+  - DemandeCredit.java — Demande de crédit
+  - ProduitCredit.java — Produits de crédit paramétrables
+  - GarantieCredit.java — Garanties associées
+  - Credit.java — Crédit débloqué
+  - EcheanceCredit.java — Échéancier
+  - RemboursementCredit.java — Remboursements
+  - ImpayeCredit.java — Impayés
+  - ProvisionCredit.java — Provisions
+
+  6.2 Services
+  ────────────
+  - CreditExtensionService.java — Cycle de vie complet du crédit
+  - ScoringExtensionService.java — Scoring des demandes
+
+  6.3 Fonctionnalités
+  ───────────────────
+  - Création de demande de crédit
+  - Scoring automatique de la demande
+  - Décision d'octroi (approbation / rejet via Maker-Checker)
+  - Déblocage des fonds
+  - Gestion des échéances (plan de remboursement)
+  - Remboursement (partiel ou total)
+  - Détection des impayés
+  - Calcul des provisions
+  - Restructuration de crédit
+  - Report d'échéance
+  - Passage en perte
+  - Clôture de crédit
+
+  6.4 Workflow Crédit Complet
+  ───────────────────────────
+  [Demande → Octroi → Remboursement]
+  1. Client soumet une demande de crédit
+  2. Scoring automatique (grille de scoring)
+  3. Décision (Maker-Checker) :
+      a. Création de l'action "DecisionDemandeCredit"
+      b. Validation par superviseur
+  4. Déblocage (Maker-Checker) :
+      a. Création de l'action "DeblocageCredit"
+      b. Validation par superviseur
+      c. Génération de l'échéancier
+  5. Remboursement :
+      a. Paiement des échéances
+      b. Mise à jour du solde du crédit
+  6. Détection impayés (automatique, EOD)
+  7. Provisions périodiques
+  8. Clôture du crédit
+
+
+================================================================================
+7. GESTION DE L'ÉPARGNE
+================================================================================
+
+  7.1 Entités
+  ───────────
+  - Epargne.java — Compte épargne
+  - DepotATerme.java — Dépôt à terme (DAT)
+  - ProduitEpargne.java — Produits d'épargne paramétrables
+
+  7.2 Services
+  ────────────
+  - EpargneExtensionService.java — Opérations d'épargne
+  - SupportEntrepriseService.java — Fonctionnalités entreprise
+
+  7.3 Fonctionnalités
+  ───────────────────
+  - Création de produits d'épargne (Maker-Checker)
+  - ouverture de comptes épargne
+  - Dépôt sur compte épargne
+  - Retrait sur compte épargne
+  - Calcul des intérêts
+  - Gestion des dépôts à terme
+  - Échéance des DAT
+
+
+================================================================================
+8. GESTION DE LA CAISSE ET DU COFFRE
+================================================================================
+
+  8.1 Entités
+  ───────────
+  - Caisse.java — Caisse (liée à un guichet)
+  - Coffre.java — Coffre-fort
+  - SessionCaisse.java — Session d'ouverture/fermeture de caisse
+  - MouvementCoffre.java — Mouvements du coffre
+  - ApprovisionnementCaisse.java — Approvisionnement
+  - DelestageCaisse.java — Délestage (retrait d'espèces)
+
+  8.2 Fonctionnalités
+  ───────────────────
+  - Ouverture de session caisse (Maker-Checker)
+  - Fermeture de session caisse (Maker-Checker)
+  - Approvisionnement caisse depuis le coffre (Maker-Checker)
+  - Délestage caisse vers le coffre (Maker-Checker)
+  - Suivi du solde théorique de caisse
+  - Mouvements du coffre
+  - Création de caisse (Maker-Checker)
+  - Création de coffre (Maker-Checker)
+
+  8.3 Workflow Caisse
+  ───────────────────
+  [Session de Caisse]
+  1. Ouverture :
+      a. Agent soumet demande d'ouverture (Maker)
+      b. Superviseur valide (Checker)
+      c. Solde d'ouverture enregistré
+  2. Opérations (dépôts, retraits) :
+      a. Chaque opération met à jour le solde théorique
+      b. Suivi en temps réel
+  3. Fermeture :
+      a. Agent soumet demande de fermeture (Maker)
+      b. Comptage physique vs solde théorique
+      c. Superviseur valide (Checker)
+
+
+================================================================================
+9. GESTION DE LA CONFORMITÉ (COMPLIANCE)
+================================================================================
+
+  9.1 Entités
+  ───────────
+  - ListeSanction.java — Listes de sanctions internationales
+  - ListePep.java — Personnes politiquement exposées
+  - AlerteConformite.java — Alertes générées
+  - ConsultationBic.java — Consultations BIC
+  - ConsentementOpenBanking.java — Consentements Open Banking
+  - IncidentOperationnel.java — Incidents opérationnels
+  - DeclarationFiscale.java — Déclarations fiscales
+  - TauxFiscal.java — Taux fiscaux paramétrables
+
+  9.2 Services
+  ────────────
+  - ConformiteExtensionService.java — Gestion de la conformité
+  - AmlService.java — Lutte anti-blanchiment
+  - BicService.java — Consultations BIC
+  - FiscaliteService.java — Déclarations fiscales
+
+  9.3 Fonctionnalités
+  ───────────────────
+  - Scan automatique des transactions (AML)
+  - Scan des clients sur listes sanctions/PEP
+  - Consultation BIC (Banque de France)
+  - Gestion des alertes de conformité
+  - Déclaration d'incidents opérationnels
+  - Déclarations fiscales (Maker-Checker)
+  - Rapports prudentiels (Maker-Checker)
+  - Gestion des consentements Open Banking
+  - Taux fiscaux paramétrables
+  - Rescan manuel des clients
+  - Rescan manuel des transactions
+
+  9.4 Workflow Conformité
+  ───────────────────────
+  [Alerte Conformité]
+  1. Déclenchement automatique (AML scan)
+  2. Création de l'alerte
+  3. Assignation à un analyste conformité
+  4. Investigation et décision
+  5. Résolution / escalade
+
+  [Déclaration Fiscale]
+  1. Agent soumet la déclaration (Maker)
+  2. Superviseur valide (Checker)
+  3. Enregistrement et archivage
+
+
+================================================================================
+10. GESTION DES PAIEMENTS
+================================================================================
+
+  10.1 Entités
+  ────────────
+  - TransactionMobileMoney.java — Transactions Mobile Money
+  - WalletClient.java — Portefeuille électronique
+  - OperateurMobileMoney.java — Opérateurs (Orange Money, MTN, etc.)
+  - OrdrePaiementExterne.java — Ordres de paiement externes
+  - CarteVisa.java — Cartes Visa
+  - Chequier.java — Chéquiers
+  - RemiseCheque.java — Remises de chèques
+  - LotCompensation.java — Lots de compensation
+  - PartenaireApi.java — Partenaires API
+
+  10.2 Services
+  ─────────────
+  - DigitalExtensionService.java — Paiements digitaux
+  - MonetiqueExtensionService.java — Monétique
+  - PaiementExterneService.java — Paiements externes
+  - ChequierService.java — Chéquiers
+
+  10.3 Fonctionnalités
+  ────────────────────
+  - Transactions Mobile Money (CashIn, CashOut)
+  - Gestion des wallets clients
+  - Gestion des opérateurs Mobile Money
+  - Ordres de paiement externes (Maker-Checker)
+  - Lots de compensation
+  - Cartes Visa (demande, activation, blocage, plafonds)
+  - Chéquiers (demande, validation, livraison)
+  - Remises de chèques
+  - Partenaires API (création, gestion)
+
+  10.4 Workflow Mobile Money
+  ──────────────────────────
+  [CashIn Mobile Money]
+  1. Client envoie de l'argent depuis son wallet mobile
+  2. Réception sur le wallet MicroFin
+  3. Crédit du compte bancaire du client
+  4. Comptabilisation
+
+  [CashOut Mobile Money]
+  1. Client demande un retrait vers son wallet mobile
+  2. Vérification fonds disponibles
+  3. Débit du compte bancaire
+  4. Envoi vers le wallet mobile
+  5. Comptabilisation
+
+
+================================================================================
+11. GESTION DU SCORING
+================================================================================
+
+  11.1 Entités
+  ────────────
+  - GrilleScoring.java — Grille de scoring
+  - CritereScoring.java — Critères (âge, revenu, historique, etc.)
+  - GrilleScoringDetail.java — Détail grille-critère
+  - ResultatScoring.java — Résultat de scoring
+
+  11.2 Services
+  ─────────────
+  - ScoringExtensionService.java — Moteur de scoring
+
+  11.3 Fonctionnalités
+  ────────────────────
+  - Création de grilles de scoring (Maker-Checker)
+  - Définition des critères et pondérations
+  - Calcul automatique du score
+  - Interprétation du score (éligibilité)
+  - Historique des résultats
+
+
+================================================================================
+12. GESTION DES RISQUES
+================================================================================
+
+  12.1 Entités
+  ────────────
+  - Risque.java — Risque identifié
+  - StressTest.java — Scénario de stress test
+  - ResultatStressTest.java — Résultat du stress test
+  - NiveauRisqueClient.java (enum) — FAIBLE, MOYEN, ELEVE, CRITIQUE
+
+  12.2 Services
+  ─────────────
+  - RisqueExtensionService.java — Gestion des risques
+
+  12.3 Fonctionnalités
+  ────────────────────
+  - Création et suivi des risques (Maker-Checker)
+  - Stress tests (création de scénarios, exécution)
+  - Résultats et analyses
+  - Niveau de risque client
+  - Provisions pour risques
+
+
+================================================================================
+13. GESTION DE LA TRÉSORERIE
+================================================================================
+
+  13.1 Entités
+  ────────────
+  - BudgetExploitation.java — Budget d'exploitation
+  - LigneBudget.java — Lignes budgétaires
+  - CommandeAchat.java — Commandes d'achat
+  - Fournisseur.java — Fournisseurs
+  - BulletinPaie.java — Bulletins de paie
+  - Immobilisation.java — Immobilisations
+
+  13.2 Services
+  ─────────────
+  - TresorerieExtensionService.java — Gestion de trésorerie
+
+  13.3 Fonctionnalités
+  ────────────────────
+  - Création et suivi des budgets (Maker-Checker)
+  - Gestion des lignes budgétaires
+  - Commandes d'achat (Maker-Checker)
+  - Gestion des fournisseurs (Maker-Checker)
+  - Immobilisations (Maker-Checker)
+  - Bulletins de paie (Maker-Checker)
+  - Suivi des flux de trésorerie
+
+
+================================================================================
+14. GESTION ORGANISATIONNELLE (AGENCES / RÉSEAU)
+================================================================================
+
+  14.1 Entités
+  ────────────
+  - Region.java — Régions géographiques
+  - Agence.java — Agences bancaires
+  - Guichet.java — Guichets physiques
+  - ParametreAgence.java — Paramètres par agence
+  - AffectationUtilisateurAgence.java — Affectations
+  - MutationPersonnel.java — Mutations
+  - Employee.java — Employés
+  - OperationDeplacee.java — Opérations inter-agences
+  - CompteLiaisonAgence.java — Comptes de liaison
+  - CommissionInterAgence.java — Commissions inter-agences
+  - RapprochementInterAgence.java — Rapprochements
+
+  14.2 Services
+  ─────────────
+  - OrganisationExtensionService.java — Gestion organisationnelle
+
+  14.3 Fonctionnalités
+  ────────────────────
+  - Création de régions (Maker-Checker)
+  - Création d'agences (Maker-Checker)
+  - Création de guichets (Maker-Checker)
+  - Création d'employés (Maker-Checker)
+  - Mutations du personnel (Maker-Checker)
+  - Affectation utilisateur ↔ agence
+  - Paramétrage par agence
+  - Opérations déplacées (client agence A → guichet agence B)
+  - Commissions inter-agences
+  - Comptes de liaison entre agences
+  - Rapprochement inter-agences
+
+  14.4 Workflow Multi-Agence
+  ──────────────────────────
+  [Opération Déplacée]
+  1. Client de l'agence A se présente à l'agence B
+  2. Agent B identifie le client
+  3. Opération traitée dans le contexte de l'agence B
+  4. Commission inter-agence calculée
+  5. Comptabilisation via compte de liaison
+  6. Rapprochement périodique
+
+
+================================================================================
+15. GESTION DE LA SÉCURITÉ / AUTH
+================================================================================
+
+  15.1 Entités
+  ────────────
+  - Utilisateur.java — Utilisateurs du système
+  - RoleUtilisateur.java — Rôles (ADMIN, GUICHETIER, SUPERVISEUR, CHEF_AGENCE)
+  - PermissionSecurite.java — Permissions granulaires
+  - HistoriqueMotDePasseUtilisateur.java — Historique des mots de passe
+
+  15.2 Configuration
+  ──────────────────
+  - SecurityConfig.java — Configuration Spring Security
+  - JwtService.java — Génération/validation JWT
+  - JwtAuthFilter.java — Filtre d'authentification
+  - JwtTokenBlacklistService.java — Blacklist des tokens
+  - CorsConfig.java — Configuration CORS
+  - PublicApiRateLimitingFilter.java — Rate limiting (3 niveaux)
+  - RequestCorrelationFilter.java — Correlation ID
+  - AccountAccessSecurity.java — Sécurité d'accès aux comptes
+  - AuthSecurityProperties.java — Propriétés de sécurité
+  - PublicApiRateLimitProperties.java — Propriétés rate limit
+
+  15.3 Fonctionnalités
+  ────────────────────
+  - Authentification JWT (stateless)
+  - Login avec mot de passe
+  - Login avec OTP (email/téléphone)
+  - Rate limiting :
+      - Client signup : 5 requêtes par minute
+      - User signup : 3 requêtes par minute
+      - Login : 10 requêtes par minute
+  - RBAC (4 rôles : ADMIN, GUICHETIER, SUPERVISEUR, CHEF_AGENCE)
+  - Permissions granulaires (CRUD par module)
+  - Création de rôles (Maker-Checker)
+  - Modification de rôles (Maker-Checker)
+  - Suppression de rôles (Maker-Checker)
+  - Assignation de permissions aux rôles (Maker-Checker)
+  - Création de permissions (Maker-Checker)
+  - Blacklist des tokens JWT (jti)
+  - Historique des mots de passe
+  - Blocage après tentatives échouées
+  - Durée de validité des credentials (90 jours)
+  - Filtre de corrélation (X-Correlation-Id)
+  - Anti-auto-validation (Maker != Checker)
+
+
+================================================================================
+16. GESTION DU DIGITAL / OPEN BANKING
+================================================================================
+
+  16.1 Entités
+  ────────────
+  - ConsentementOpenBanking.java — Consentements API
+  - PartenaireApi.java — Partenaires autorisés
+
+  16.2 Services
+  ─────────────
+  - OpenBankingExtensionService.java — Open Banking
+  - DigitalExtensionService.java — Services digitaux
+
+  16.3 Fonctionnalités
+  ────────────────────
+  - Gestion des consentements Open Banking
+  - Création et gestion des partenaires API
+  - Transactions Mobile Money
+  - Wallets clients
+  - Opérateurs Mobile Money
+
+
+================================================================================
+17. GESTION DES TONTINES
+================================================================================
+
+  17.1 Entités
+  ────────────
+  - Tontine.java — Groupe de tontine
+  - CotisationTontine.java — Cotisations des membres
+  - TourTontine.java — Tours de la tontine
+
+  17.2 Services
+  ─────────────
+  - TontineExtensionService.java — Gestion des tontines
+
+  17.3 Fonctionnalités
+  ────────────────────
+  - Création de groupes de tontine
+  - Gestion des cotisations
+  - Gestion des tours
+  - Suivi des participants
+
+
+================================================================================
+18. GESTION DES COMMISSIONS
+================================================================================
+
+  18.1 Entités
+  ────────────
+  - CommissionAgent.java — Commissions des agents
+  - CommissionInterAgence.java — Commissions inter-agences
+
+  18.2 Fonctionnalités
+  ────────────────────
+  - Calcul des commissions agents
+  - Calcul des commissions inter-agences (opérations déplacées)
+
+
+================================================================================
+19. GESTION DU BATCH (EOD — END OF DAY)
+================================================================================
+
+  19.1 Configuration
+  ──────────────────
+  - EodBatchConfig.java — Configuration Spring Batch (171 lignes)
+  - EodBatchService.java — Service EOD
+
+  19.2 Pipeline EOD (7 étapes — TOUTES STUBBÉES)
+  ──────────────────────────────────────────────
+  Étape 1 : Freeze des transactions (gel des opérations du jour)
+  Étape 2 : Clôture des caisses
+  Étape 3 : Calcul des intérêts (crédit/épargne)
+  Étape 4 : Calcul des agios et provisions
+  Étape 5 : Provisions pour risques
+  Étape 6 : Comptabilisation (Posting en GL)
+  Étape 7 : Ouverture du jour suivant
+
+  ⚠️ ATTENTION : Toutes les étapes sont des STUBS
+     (log uniquement, aucune logique métier réelle)
+     Ce module est à implémenter complètement.
+
+
+================================================================================
+20. GESTION DE LA TARIFICATION
+================================================================================
+
+  20.1 Entités
+  ────────────
+  - TarificationParametre.java — Paramètres de tarification
+  - Agio.java — Agios (frais bancaires)
+  - TypeAgio.java — Types d'agios
+
+  20.2 Services
+  ─────────────
+  - TarificationParametreServiceImpl.java — Cache Caffeine
+  - AgioServiceImpl.java — Calcul des agios
+  - TransactionFeeCalculator.java — Calcul des frais (Strategy Pattern)
+  - DepotTransactionFeeStrategy.java
+  - RetraitTransactionFeeStrategy.java
+  - VirementTransactionFeeStrategy.java
+
+  20.3 Fonctionnalités
+  ────────────────────
+  - Paramétrage des frais par type d'opération
+  - Cache Caffeine (1000 entrées max, 30min TTL)
+  - Calcul automatique des frais
+  - Types d'agios paramétrables
+  - Calcul des agios périodique
+
+
+================================================================================
+21. GESTION DES NOTIFICATIONS
+================================================================================
+
+  21.1 Entités
+  ────────────
+  - Notification.java — Notification
+  - StatutEnvoi.java (enum) — EN_ATTENTE, ENVOYE, ECHEC
+
+  21.2 Services
+  ─────────────
+  - NotificationServiceImpl.java — Gestion des notifications
+  - Event-driven via ApplicationEventPublisher
+
+  21.3 Fonctionnalités
+  ────────────────────
+  - Notifications événementielles
+  - Publication d'événements (VirementEffectueEvent)
+  - Suivi des statuts d'envoi
+  - Canal de notification (TypeCanal enum)
+
+
+================================================================================
+22. GESTION DES RESSOURCES HUMAINES
+================================================================================
+
+  22.1 Entités
+  ────────────
+  - Employee.java — Employés de l'institution
+  - MutationPersonnel.java — Mutations inter-agences
+  - BulletinPaie.java — Bulletins de salaire
+
+  22.2 Fonctionnalités
+  ────────────────────
+  - Création d'employés (Maker-Checker)
+  - Mutations du personnel (Maker-Checker)
+  - Bulletins de paie (Maker-Checker)
+  - Affectations aux agences
+
+
+================================================================================
+23. GESTION DES ACHATS / APPROVISIONNEMENTS
+================================================================================
+
+  23.1 Entités
+  ────────────
+  - CommandeAchat.java — Commandes d'achat
+  - Fournisseur.java — Fournisseurs
+
+  23.2 Fonctionnalités
+  ────────────────────
+  - Création de commandes d'achat (Maker-Checker)
+  - Gestion des fournisseurs (Maker-Checker)
+  - Suivi des approvisionnements
+
+
+================================================================================
+24. GESTION DES IMMOBILISATIONS
+================================================================================
+
+  24.1 Entités
+  ────────────
+  - Immobilisation.java — Biens immobilisés
+
+  24.2 Fonctionnalités
+  ────────────────────
+  - Création d'immobilisations (Maker-Checker)
+  - Suivi des amortissements
+  - Inventaire
+
+
+================================================================================
+25. GESTION DES AGENTS BANKING
+================================================================================
+
+  25.1 Entités
+  ────────────
+  - Agent.java — Agents banking
+  - PortefeuilleAgent.java — Portefeuille de l'agent
+  - CommissionAgent.java — Commissions
+  - TransactionAgent.java — Transactions agent
+
+  25.2 Services
+  ─────────────
+  - AgentBankingExtensionService.java — Services agents
+
+  25.3 Fonctionnalités
+  ────────────────────
+  - Gestion des agents
+  - Portefeuille agent (solde, plafond)
+  - Commissions agents
+  - Transactions agent
+  - Suivi d'activité
+
+
+================================================================================
+26. GESTION DES CARTES / MONÉTIQUE
+================================================================================
+
+  26.1 Entités
+  ────────────
+  - CarteVisa.java — Cartes bancaires
+  - (CVV supprimé en migration V2)
+
+  26.2 Services
+  ─────────────
+  - MonetiqueExtensionService.java — Services monétiques
+
+  26.3 Fonctionnalités
+  ────────────────────
+  - Demande de carte
+  - Activation / blocage de carte
+  - Gestion des plafonds
+  - Consultation des cartes par compte
+
+
+================================================================================
+27. GESTION DES CHÉQUIERS
+================================================================================
+
+  27.1 Entités
+  ────────────
+  - Chequier.java — Chéquier
+  - RemiseCheque.java — Remise de chèque
+
+  27.2 Services
+  ─────────────
+  - ChequierExtensionService.java — Gestion des chéquiers
+
+  27.3 Fonctionnalités
+  ────────────────────
+  - Demande de chéquier (Maker-Checker)
+  - Validation de la demande (Maker-Checker)
+  - Livraison du chéquier
+  - Remise de chèque
+
+
+================================================================================
+28. GESTION FISCALE
+================================================================================
+
+  28.1 Entités
+  ────────────
+  - TauxFiscal.java — Taux fiscaux applicables
+  - DeclarationFiscale.java — Déclarations fiscales
+
+  28.2 Services
+  ─────────────
+  - FiscaliteService.java — Gestion fiscale
+
+  28.3 Fonctionnalités
+  ────────────────────
+  - Paramétrage des taux fiscaux
+  - Déclarations fiscales (Maker-Checker)
+  - Rapports prudentiels (Maker-Checker)
+
+
+================================================================================
+29. GESTION DE L'AUDIT / TRAÇABILITÉ
+================================================================================
+
+  29.1 Entités
+  ────────────
+  - SystemAuditLog.java — Journal d'audit système
+  - BaseAuditEntity.java (createdAt, updatedAt sur toutes les entités)
+
+  29.2 Configuration
+  ──────────────────
+  - AuditLog.java — Annotation personnalisée @AuditLog
+  - AuditLogAspect.java — Aspect AOP pour l'audit
+
+  29.3 Services
+  ─────────────
+  - SystemAuditLogService.java — Service d'audit
+  - DataIntegrityAuditorService.java — Audit d'intégrité
+
+  29.4 Fonctionnalités
+  ────────────────────
+  - Traçabilité de toutes les actions sensibles (via @AuditLog)
+  - Timestamps automatiques (createdAt, updatedAt)
+  - Historique des modifications (SystemAuditLog)
+  - Audit d'intégrité des données
+  - Correlation ID pour le tracing
+
+
+================================================================================
+30. GESTION DU MAKER-CHECKER (4-YEUX)
+================================================================================
+
+  30.1 Entités
+  ────────────
+  - ActionEnAttente.java — Action en attente de validation
+
+  30.2 Services
+  ─────────────
+  - PendingActionSubmissionService.java — Soumission d'actions
+  - PendingActionExecutionService.java — Exécution d'actions
+  - ValidationExtensionService.java — Validation (statuts, anti-auto-validation)
+
+  30.3 Handlers (78 implémentations)
+  ──────────────────────────────────
+  Comptes (5) :
+    - OpenCompteSensible      → OPEN_COMPTE_SENSIBLE
+    - BlockCompte             → BLOCK_COMPTE
+    - UnblockCompte           → UNBLOCK_COMPTE
+    - ClotureCompte           → CLOTURE_COMPTE
+    - ModifyDecouvert         → MODIFY_DECOUVERT
+
+  Caisse (4) :
+    - OpenSessionCaisse       → OPEN_SESSION_CAISSE
+    - CloseSessionCaisse      → CLOSE_SESSION_CAISSE
+    - ApprovisionnementCaisse → APPROVISIONNEMENT_CAISSE
+    - DelestageCaisse         → DELESTAGE_CAISSE
+
+  Crédit (8) :
+    - DeblocageCredit         → DEBLOCAGE_CREDIT
+    - DecisionDemandeCredit   → DECISION_DEMANDE_CREDIT
+    - ClotureCredit           → CLOTURE_CREDIT
+    - RestructurationCredit   → RESTRUCTURATION_CREDIT
+    - ReportEcheanceCredit    → REPORT_ECHEANCE_CREDIT
+    - PassagePerteCredit      → PASSAGE_PERTE_CREDIT
+    - DetectionImpayeCredit   → DETECTION_IMPAYE_CREDIT
+    - CalculProvisionCredit   → CALCUL_PROVISION_CREDIT
+
+  Scoring (1) :
+    - ExecuterScoring         → EXECUTER_SCORING
+
+  Organisation (6) :
+    - CreateAgence            → CREATE_AGENCE
+    - CreateGuichet           → CREATE_GUICHET
+    - CreateCaisse            → CREATE_CAISSE
+    - CreateCoffre            → CREATE_COFFRE
+    - CreateEmploye           → CREATE_EMPLOYE
+    - CreateMutationPersonnel → CREATE_MUTATION_PERSONNEL
+
+  Comptabilité (8) :
+    - CreateClasseComptable    → CREATE_CLASSE_COMPTABLE
+    - CreateCompteComptable    → CREATE_COMPTE_COMPTABLE
+    - CreateJournalComptable   → CREATE_JOURNAL_COMPTABLE
+    - CreateSchemaComptable    → CREATE_SCHEMA_COMPTABLE
+    - CreateEcritureManuelle   → CREATE_ECRITURE_MANUELLE
+    - ClotureComptable         → CLOTURE_COMPTABLE
+    - ClotureAnnuelle          → CLOTURE_ANNUELLE
+    - ClotureMensuelle         → CLOTURE_MENSUELLE
+
+  Rôles & Permissions (8) :
+    - CreateRole               → CREATE_ROLE
+    - UpdateRole               → UPDATE_ROLE
+    - DeleteRole               → DELETE_ROLE
+    - AssignPermissionRole     → ASSIGN_PERMISSION_ROLE
+    - RevokePermissionRole     → REVOKE_PERMISSION_ROLE
+    - CreatePermission         → CREATE_PERMISSION
+    - UpdatePermission         → UPDATE_PERMISSION
+    - DeletePermission         → DELETE_PERMISSION
+
+  Risque (3) :
+    - CreateRisque             → CREATE_RISQUE
+    - ExecuteStressTest        → EXECUTE_STRESS_TEST
+    - CreateStressTest         → CREATE_STRESS_TEST
+
+  Conformité (8) :
+    - DeclareIncidentOperationnel     → DECLARE_INCIDENT_OPERATIONNEL
+    - CreateAlerteConformite          → CREATE_ALERTE_CONFORMITE
+    - RescanClientConformite          → RESCAN_CLIENT_CONFORMITE
+    - RescanTransactionConformite     → RESCAN_TRANSACTION_CONFORMITE
+    - RapportFiscal                   → RAPPORT_FISCAL
+    - RapportPrudentiel               → RAPPORT_PRUDENTIEL
+    - BicConsultation                 → BIC_CONSULTATION
+
+  Trésorerie (5) :
+    - CreateBudget             → CREATE_BUDGET
+    - CreateCommandeAchat      → CREATE_COMMANDE_ACHAT
+    - CreateFournisseur        → CREATE_FOURNISSEUR
+    - CreateImmobilisation     → CREATE_IMMOBILISATION
+    - CreateBulletinPaie       → CREATE_BULLETIN_PAIE
+
+  Paiements (9) :
+    - CreateOrdrePaiementExterne              → CREATE_ORDRE_PAIEMENT_EXTERNE
+    - UpdateStatutOrdrePaiementExterne        → UPDATE_STATUT_ORDRE_PAIEMENT_EXTERNE
+    - CreateTransactionMobileMoney            → CREATE_TRANSACTION_MOBILE_MONEY
+    - UpdateStatutTransactionMobileMoney      → UPDATE_STATUT_TRANSACTION_MOBILE_MONEY
+    - CreateWalletClient                      → CREATE_WALLET_CLIENT
+    - CreateOperateurMobileMoney              → CREATE_OPERATEUR_MOBILE_MONEY
+    - CreateLotCompensation                   → CREATE_LOT_COMPENSATION
+    - CreatePartenaireApi                     → CREATE_PARTENAIRE_API
+
+  Produits (2) :
+    - CreateProduitCredit     → CREATE_PRODUIT_CREDIT
+    - CreateProduitEpargne    → CREATE_PRODUIT_EPARGNE
+
+  Autres :
+    - (Handlers additionnels pour les extensions futures)
+
+  30.4 Workflow Maker-Checker
+  ────────────────────────────
+  1. Utilisateur A (Maker) soumet une action
+      → ActionEnAttente créée (statut: EN_ATTENTE)
+  2. Utilisateur B (Checker) consulte les actions en attente
+  3. Utilisateur B valide ou rejette
+      → Anti-auto-validation : A != B
+      → ValidationExtensionService vérifie les statuts
+  4. Si validée :
+      a. PendingActionExecutionService exécute le handler
+      b. L'action est marquée comme exécutée
+  5. Si rejetée :
+      a. L'action est marquée comme rejetée
+      b. Motif du rejet enregistré
+
+
+================================================================================
+ANNEXE A : LISTE DES DIAGRAMMES UML NÉCESSAIRES
+================================================================================
+
+A.1 DIAGRAMMES DE CLASSES
+─────────────────────────
+
+1. Diagramme de classes — Domaines principaux
+   - Entités : Client, Compte, Transaction, Utilisateur
+   - Relations : héritages, associations, compositions
+   - Attributs et méthodes clés
+
+2. Diagramme de classes — Comptabilité
+   - ClasseComptable, CompteComptable, JournalComptable
+   - EcritureComptable, LigneEcritureComptable
+   - SchemaComptable, ClotureComptable
+
+3. Diagramme de classes — Crédit
+   - DemandeCredit, Credit, ProduitCredit
+   - GarantieCredit, EcheanceCredit, RemboursementCredit
+   - ImpayeCredit, ProvisionCredit
+
+4. Diagramme de classes — Organisation / Multi-agence
+   - Region, Agence, Guichet, Employee
+   - AffectationUtilisateurAgence, MutationPersonnel
+   - ParametreAgence, OperationDeplacee
+   - CompteLiaisonAgence, CommissionInterAgence, RapprochementInterAgence
+
+5. Diagramme de classes — Caisse / Coffre
+   - Caisse, Coffre, SessionCaisse
+   - MouvementCoffre, ApprovisionnementCaisse, DelestageCaisse
+
+6. Diagramme de classes — Conformité / Compliance
+   - AlerteConformite, ListeSanction, ListePep
+   - DeclarationFiscale, TauxFiscal, ConsultationBic
+   - ConsentementOpenBanking, IncidentOperationnel
+
+7. Diagramme de classes — Paiements / Digital
+   - TransactionMobileMoney, WalletClient, OperateurMobileMoney
+   - OrdrePaiementExterne, LotCompensation, PartenaireApi
+   - CarteVisa, Chequier, RemiseCheque
+
+8. Diagramme de classes — Sécurité
+   - Utilisateur, RoleUtilisateur, PermissionSecurite
+   - HistoriqueMotDePasseUtilisateur, AppareilClient
+   - ActionEnAttente, SystemAuditLog
+
+9. Diagramme de classes — Scoring / Risques
+   - GrilleScoring, CritereScoring, GrilleScoringDetail, ResultatScoring
+   - Risque, StressTest, ResultatStressTest
+
+10. Diagramme de classes — Trésorerie / RH / Achats
+    - BudgetExploitation, LigneBudget, CommandeAchat, Fournisseur
+    - BulletinPaie, Immobilisation
+
+11. Diagramme de classes — Architecture (couches)
+    - Controller → DTO → Service → Repository → Entity
+    - Config, Security, Audit, Exception
+
+12. Diagramme de classes — Design Patterns
+    - Strategy Pattern (TransactionFeeCalculator + strategies)
+    - Maker-Checker Pattern (PendingActionHandler + services)
+    - AOP Audit Pattern (@AuditLog + Aspect)
+    - Builder/Factory (DTO patterns)
+
+
+A.2 DIAGRAMMES DE CAS D'UTILISATION
+────────────────────────────────────
+
+1. Cas d'utilisation — Gestion des Clients
+   - Acteurs : Agent Guichet, Superviseur, Chef d'Agence
+   - Cas : Créer client, Consulter client, Modifier client
+   - Cas : Soumettre KYC, Décider KYC
+
+2. Cas d'utilisation — Gestion des Comptes
+   - Acteurs : Agent Guichet, Superviseur
+   - Cas : Créer compte, Consulter compte, Bloquer/Débloquer compte
+   - Cas : Demander carte, Clôturer compte, Modifier découvert
+
+3. Cas d'utilisation — Opérations Bancaires
+   - Acteurs : Agent Guichet, Superviseur, Caissier
+   - Cas : Effectuer dépôt, Effectuer retrait, Effectuer virement
+   - Cas : Valider transaction (4-yeux), Rejeter transaction
+   - Cas : Annuler transaction, Extourner transaction
+
+4. Cas d'utilisation — Crédit
+   - Acteurs : Agent de Crédit, Comité de Crédit, Superviseur
+   - Cas : Créer demande, Scorer demande, Décider crédit
+   - Cas : Débloquer fonds, Gérer échéances, Restructurer crédit
+   - Cas : Détecter impayés, Calculer provisions, Passer en perte
+
+5. Cas d'utilisation — Comptabilité
+   - Acteurs : Comptable, Chef Comptable, Superviseur
+   - Cas : Créer classe/compte/journal/schéma
+   - Cas : Saisir écriture manuelle, Clôturer période
+   - Cas : Consulter balance, Consulter Grand Livre
+
+6. Cas d'utilisation — Administration / Sécurité
+   - Acteurs : Administrateur
+   - Cas : Créer/modifier/supprimer utilisateur
+   - Cas : Créer/modifier/supprimer rôle
+   - Cas : Assigner/retirer permissions
+   - Cas : Consulter audit, Gérer mots de passe
+
+7. Cas d'utilisation — Caisse / Coffre
+   - Acteurs : Caissier, Superviseur
+   - Cas : Ouvrir session caisse, Fermer session caisse
+   - Cas : Approvisionner caisse, Délester caisse
+   - Cas : Gérer coffre
+
+8. Cas d'utilisation — Conformité
+   - Acteurs : Agent Conformité, Responsable Conformité
+   - Cas : Scanner sanctions/PEP, Gérer alertes
+   - Cas : Déclarer incident, Émettre rapport fiscal
+   - Cas : Consulter BIC
+
+9. Cas d'utilisation — Paiements
+   - Acteurs : Agent, Superviseur
+   - Cas : Mobile Money CashIn/Out, Gérer wallets
+   - Cas : Créer ordre paiement externe
+   - Cas : Gérer cartes, Gérer chéquiers
+
+10. Cas d'utilisation — Organisation / Multi-agence
+    - Acteurs : Administrateur, Chef d'Agence
+    - Cas : Créer région/agence/guichet
+    - Cas : Gérer employés, Gérer mutations
+    - Cas : Opération déplacée, Rapprochement inter-agence
+
+11. Cas d'utilisation — Scoring / Risques
+    - Acteurs : Analyste Risques, Comité
+    - Cas : Créer grille scoring, Exécuter scoring
+    - Cas : Créer risque, Exécuter stress test
+
+12. Cas d'utilisation — Trésorerie / Achats / RH
+    - Acteurs : Responsable Trésorerie, RH, Achats
+    - Cas : Gérer budget, Gérer commandes
+    - Cas : Gérer fournisseurs, Gérer immobilisations
+    - Cas : Gérer paie
+
+13. Cas d'utilisation — EOD (Fin de Journée)
+    - Acteurs : Système (automatique)
+    - Cas : Exécuter pipeline EOD (7 étapes)
+
+
+A.3 DIAGRAMMES D'ACTIVITÉS
+───────────────────────────
+
+1. Activité — Workflow Transaction (Dépôt/Retrait/Virement)
+   - Début → Saisie → Validation → Supervision (si ≥ seuil) → 4-yeux
+   - Vérification comptable → Exécution → Comptabilisation → Conformité → Fin
+
+2. Activité — Workflow Maker-Checker (générique)
+   - Début → Soumission action → EN_ATTENTE → Validation → Exécution
+   - (Alternative : Rejet avec motif)
+
+3. Activité — Workflow Crédit (Demande → Octroi → Remboursement)
+   - Début → Demande → Scoring → Décision → Déblocage → Échéances
+   - Remboursement → (si impayé) Détection → Provisions → Recouvrement
+
+4. Activité — Workflow KYC
+   - Début → Soumission documents → EN_ATTENTE → Décision
+   - (Alternative : Rejet → Demande de complément)
+
+5. Activité — Workflow Comptable (Clôture périodique)
+   - Début → Vérifier transactions en attente → Vérifier équilibre
+   - Calculer agios → Provisions → Impayés → EOD → Clôture période
+   - Ouvrir nouvelle période → Fin
+
+6. Activité — Workflow Caisse (Session)
+   - Début → Demande ouverture → Validation → Opérations
+   - Suivi solde → Demande fermeture → Comptage → Validation → Fin
+
+7. Activité — Workflow EOD (End of Day)
+   - Début → Freeze transactions → Clôture caisses → Calcul intérêts
+   - Calcul agios/provisions → Posting GL → Ouvrir jour suivant → Fin
+
+8. Activité — Workflow Multi-Agence (Opération Déplacée)
+   - Début → Identification client → Traitement
+   - Calcul commission inter-agence → Comptabilisation liaison
+   - Rapprochement périodique → Fin
+
+
+A.4 DIAGRAMMES DE SÉQUENCE
+───────────────────────────
+
+1. Séquence — Authentification (Login JWT)
+   - Acteur → LoginController → UtilisateurService → JwtService
+   - Validation credentials → Génération token → Retour token
+
+2. Séquence — Dépôt avec Supervision
+   - Acteur → DepotController → TransactionServiceImpl
+   - Vérification seuil → Création EN_ATTENTE → Superviseur valide
+   - Vérification comptable → Exécution → Comptabilisation → Réponse
+
+3. Séquence — Maker-Checker (Création Agent)
+   - Maker → PendingActionSubmissionService → Création ActionEnAttente
+   - Checker → ValidationExtensionService → Vérification anti-auto
+   - PendingActionExecutionService → Handler → Exécution
+
+4. Séquence — Comptabilisation d'une Transaction
+   - TransactionServiceImpl → ComptabiliteExtensionService
+   - Sélection schéma → Génération écriture → Validation équilibre
+   - Enregistrement écriture → Mise à jour soldes
+
+5. Séquence — Demande de Crédit avec Scoring
+   - Acteur → CreditController → CreditService → ScoringService
+   - Calcul score → Décision Maker-Checker → Déblocage
+   - Génération échéancier
+
+6. Séquence — Session Caisse
+   - Caissier → SessionCaisseController → PendingActionSubmissionService
+   - Ouverture → Opérations (dépôts/retraits) → Mise à jour solde
+   - Fermeture → Vérification écart → Validation
+
+7. Séquence — Audit (Tracabilité)
+   - Méthode annotée → AuditLogAspect (AOP)
+   - Capture arguments → Création SystemAuditLog → Persistance
+
+8. Séquence — EOD Batch
+   - Spring Boot Scheduler → EodBatchConfig → JobLauncher
+   - Step 1→2→3→4→5→6→7 séquentiellement
+   - Chaque étape → Tasklet correspondant → Log + contexte
+
+
+A.5 DIAGRAMMES D'ÉTATS
+───────────────────────
+
+1. États — Cycle de vie d'une Transaction
+   ┌──────────┐     ┌────────────┐     ┌──────────┐
+   │EN_ATTENTE│────→│  EXECUTEE  │────→│ TERMINEE │
+   └──────────┘     └────────────┘     └──────────┘
+        │
+        ↓
+   ┌──────────┐
+   │ REJETEE  │
+   └──────────┘
+
+2. États — Cycle de vie d'un Client
+   ┌──────────┐     ┌────────┐     ┌────────┐
+   │ PROSPECT │────→│ ACTIF  │────→│ BLOQUE │
+   └──────────┘     └────────┘     └────────┘
+                         │              │
+                         ↓              ↓
+                     ┌────────┐     ┌────────┐
+                     │INACTIF │     │ FERME  │
+                     └────────┘     └────────┘
+
+3. États — Cycle de vie d'un Compte
+   ┌──────────┐     ┌────────┐     ┌──────────┐
+   │  ACTIF   │────→│ BLOQUE │────→│ CLOTURE  │
+   └──────────┘     └────────┘     └──────────┘
+        │
+        ↓
+   ┌──────────┐
+   │ INACTIF  │
+   └──────────┘
+
+4. États — Cycle de vie d'une Demande de Crédit
+   ┌──────────────┐     ┌───────────┐     ┌──────────────┐
+   │SOUMISE       │────→│APPROUVEE  │────→│ DEBLOQUEE    │
+   └──────────────┘     └───────────┘     └──────────────┘
+        │                                      │
+        ↓                                      ↓
+   ┌──────────────┐     ┌───────────┐     ┌──────────────┐
+   │REJETEE       │     │EN_IMPAYE  │────→│ EN_PERTE     │
+   └──────────────┘     └───────────┘     └──────────────┘
+
+5. États — Cycle de vie d'une Action Maker-Checker
+   ┌────────────┐     ┌──────────────┐     ┌──────────────┐
+   │EN_ATTENTE  │────→│  VALIDEE     │────→│  EXECUTEE    │
+   └────────────┘     └──────────────┘     └──────────────┘
+        │
+        ↓
+   ┌────────────┐
+   │  REJETEE   │
+   └────────────┘
+
+6. États — Cycle de vie d'une Session de Caisse
+   ┌────────────┐     ┌──────────────┐     ┌──────────────┐
+   │  OUVERTE   │────→│  EN_COURS    │────→│  FERMEE      │
+   └────────────┘     └──────────────┘     └──────────────┘
+
+7. États — Cycle de vie d'un Crédit
+   ┌──────────┐    ┌──────────┐    ┌───────────┐    ┌───────────┐
+   │  ACTIF   │───→│EN_IMPAYE │───→│ EN_PERTE  │───→│  CLOTURE  │
+   └──────────┘    └──────────┘    └───────────┘    └───────────┘
+        │
+        ↓
+   ┌──────────┐
+   │REMBOURSE │
+   └──────────┘
+
+
+A.6 DIAGRAMMES DE COMPOSANTS ET DÉPLOIEMENT
+────────────────────────────────────────────
+
+1. Diagramme de Composants (Architecture 5 couches)
+   ┌─────────────┐
+   │  Frontend   │  (React/Vue.js à implémenter)
+   ├─────────────┤
+   │ Controller  │  (32 contrôleurs REST)
+   ├─────────────┤
+   │    DTO      │  (Request/Response)
+   ├─────────────┤
+   │   Service   │  (49 services : 18 core + 31 extension)
+   ├─────────────┤
+   │ Repository  │  (98 interfaces JPA)
+   ├─────────────┤
+   │   Entity    │  (104 @Entity)
+   └─────────────┘
+
+2. Diagramme de Déploiement (Docker)
+   ┌─────────────────────────────────────┐
+   │   Machine Hôte (Windows/Linux)      │
+   │  ┌──────────────────────────────┐   │
+   │  │  Docker Compose              │   │
+   │  │  ┌────────┐ ┌──────────┐   │   │
+   │  │  │Oracle  │ │Spring    │   │   │
+   │  │  │XE 21c  │ │Boot App  │   │   │
+   │  │  │:1521   │ │:8080     │   │   │
+   │  │  └────────┘ └──────────┘   │   │
+   │  │  ┌──────────────────────┐  │   │
+   │  │  │ CloudBeaver :8978    │  │   │
+   │  │  └──────────────────────┘  │   │
+   │  └──────────────────────────────┘   │
+   └─────────────────────────────────────┘
+
+3. Diagramme de Déploiement (Production cible)
+   ┌─────────┐     ┌──────────────┐     ┌──────────┐
+   │Client   │────→│ Reverse Proxy│────→│ Frontend │
+   │Web      │     │ (Nginx/Caddy)│     │(React)   │
+   └─────────┘     └──────────────┘     └──────────┘
+                                              │
+                                              ↓
+                                         ┌──────────┐     ┌──────────┐
+                                         │ Backend  │────→│ Oracle   │
+                                         │:8080     │     │ DB       │
+                                         └──────────┘     └──────────┘
+                                              │
+                                              ↓
+                                         ┌──────────┐
+                                         │Monitoring│
+                                         │(Actuator)│
+                                         └──────────┘
+
+4. Diagramme de Composants — Sécurité
+   ┌──────────────┐     ┌────────────────┐     ┌───────────────┐
+   │ JwtAuthFilter│────→│UsernamePassword │────→│  Controllers  │
+   │              │     │AuthFilter       │     │               │
+   └──────────────┘     └────────────────┘     └───────────────┘
+         │                      │                       │
+         ↓                      ↓                       ↓
+   ┌──────────────┐     ┌────────────────┐     ┌───────────────┐
+   │RateLimit     │     │RequestCorrelat │     │ @PreAuthorize │
+   │Filter        │     │ionFilter       │     │ + Permissions │
+   └──────────────┘     └────────────────┘     └───────────────┘
+
+5. Diagramme de Composants — Batch EOD
+   ┌─────────────────────────────────────────────────────┐
+   │  Job: endOfDayJob                                   │
+   │  Step 1: freezeTransactionsTasklet                   │
+   │  Step 2: closeTellersTasklet                         │
+   │  Step 3: calculateInterestTasklet                    │
+   │  Step 4: agingProvisionTasklet                       │
+   │  Step 5: riskProvisionTasklet                        │
+   │  Step 6: postGeneralLedgerTasklet                    │
+   │  Step 7: openNextDayTasklet                          │
+   └─────────────────────────────────────────────────────┘
+
+6. Diagramme de Composants — Maker-Checker
+   ┌────────────────────┐
+   │  Maker (Employee)  │
+   │  PendingActionSub  │
+   │  missionService    │
+   └─────────┬──────────┘
+             │ ActionEnAttente (EN_ATTENTE)
+             ↓
+   ┌────────────────────┐
+   │ Checker (Supervisor│
+   │ )                  │
+   │ ValidationExtension│
+   │ Service            │
+   └─────────┬──────────┘
+             │ VALIDER / REJETER
+             ↓
+   ┌────────────────────┐
+   │ PendingActionExec  │
+   │ utionService       │
+   │ → Handler.execute()│
+   └────────────────────┘
+
+7. Diagramme de Composants — Comptabilité (Double Entry)
+   ┌────────────┐     ┌──────────────┐     ┌────────────────┐
+   │ Bootstrap  │────→│ SchemaCompta │────→│ JournalCompta  │
+   │ (Classes,  │     │ ble          │     │ ble            │
+   │  Comptes)  │     │ (25 patterns)│     │ (7 journaux)   │
+   └────────────┘     └──────────────┘     └────────────────┘
+                                                     │
+                                                     ↓
+                                              ┌────────────────┐
+                                              │ EcritureCompta │
+                                              │ ble            │
+                                              │ (Débit/Crédit) │
+                                              └────────────────┘
+                                                     │
+                                              ┌────────────────┐
+                                              │ Balance / Grand│
+                                              │ Livre          │
+                                              └────────────────┘
+
+
+================================================================================
+ANNEXE B : STATISTIQUES DU PROJET
+================================================================================
+
+  Entités Java          : 104
+  Contrôleurs REST      : 32
+  Services              : 49 (18 core + 31 extension)
+  Repositories JPA      : 98
+  Mappers MapStruct     : 12
+  Handlers Maker-Checker : 78
+  Fichiers de config    : 14
+  Migrations Flyway     : 28
+  Tables Oracle         : ~70
+  Fichiers de test      : 41
+  Lignes de code (est.) : ~80 000 - 100 000
+  Branches Git          : 5 (master, paul, paulTest*, yannis)
+
+  État du backend       : ~85% fonctionnel (EOD stubbé, handlers non testés)
+  État du frontend      : 0% (index.html vide)
+  État de la doc        : ~90% (exhaustive)
+  État des tests        : ~30% (critiques manquants)
+
+
+================================================================================
+FIN DU DOCUMENT
+================================================================================

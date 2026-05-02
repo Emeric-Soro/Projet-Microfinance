@@ -8,10 +8,11 @@ import com.microfinance.core_banking.dto.request.extension.DebloquerCreditReques
 import com.microfinance.core_banking.dto.request.extension.DeciderDemandeCreditRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.DetecterImpayesRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.EnregistrerGarantieRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.ClotureCreditRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.PassagePerteCreditRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.ReportEcheanceCreditRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.RembourserAnticipeCreditRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.RembourserCreditRequestDTO;
-import com.microfinance.core_banking.dto.request.extension.ReportEcheanceCreditRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.RestructurationCreditRequestDTO;
 import com.microfinance.core_banking.dto.response.extension.ActionEnAttenteResponseDTO;
 import com.microfinance.core_banking.dto.response.extension.CreditResponseDTO;
@@ -220,6 +221,29 @@ public class CreditExtensionController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
+    @Operation(
+        summary = "Soumettre une cloture de credit",
+        description = "Soumet une demande de cloture manuelle d'un credit pour approbation superviseur"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "202", description = "Cloture de credit soumise en attente de validation"),
+        @ApiResponse(responseCode = "400", description = "Donnees invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Acces interdit", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Credit introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
+    @PutMapping("/{referenceCredit}/cloture")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR, T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_MANAGE)")
+    @AuditLog(action = "CREDIT_CLOSE_SUBMIT", resource = "CREDIT")
+    public ResponseEntity<ActionEnAttenteResponseDTO> soumettreClotureCredit(
+            @PathVariable String referenceCredit,
+            @Valid @RequestBody ClotureCreditRequestDTO requestDTO
+    ) {
+        ActionEnAttente action = pendingActionSubmissionService.submit("CLOTURE_CREDIT", "CREDIT", referenceCredit, requestDTO, "Cloture de credit soumise : " + requestDTO.getCommentaire());
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
+    }
+
     @Operation(summary = "Lister les crédits", description = "Retourne la liste de tous les crédits accordés dans l'institution. Permet de visualiser l'encours global, le statut de chaque crédit, le capital restant dû et les mensualités.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Liste des crédits retournée avec succès", content = @Content(schema = @Schema(implementation = CreditResponseDTO.class))),
@@ -276,6 +300,30 @@ public class CreditExtensionController {
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_VIEW)")
     public ResponseEntity<List<GarantieCreditResponseDTO>> listerGaranties(@PathVariable Long idCredit) {
         return ResponseEntity.ok(creditExtensionService.listerGaranties(idCredit).stream().map(this::toDto).toList());
+    }
+
+    @Operation(
+        summary = "Soumettre un remboursement anticipé de crédit",
+        description = "Soumet un remboursement anticipé total d'un crédit avec pénalité. Le capital restant dû est remboursé intégralement majoré d'une pénalité. Transit par le workflow Maker-Checker pour validation."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "202", description = "Remboursement anticipé soumis en attente de validation"),
+        @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Authentification requise", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Accès refus - permissions insuffisantes", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Crédit introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
+    @PostMapping("/{idCredit}/remboursement-anticipe")
+    @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN,T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR,T(com.microfinance.core_banking.service.security.SecurityConstants).PERM_CREDIT_MANAGE)")
+    @AuditLog(action = "CREDIT_EARLY_REPAYMENT_SUBMIT", resource = "CREDIT")
+    public ResponseEntity<ActionEnAttenteResponseDTO> soumettreRemboursementAnticipe(
+            @PathVariable Long idCredit,
+            @Valid @RequestBody RembourserAnticipeCreditRequestDTO dto) {
+        ActionEnAttente action = pendingActionSubmissionService.submit(
+                "REMBOURSEMENT_ANTICIPE_CREDIT", "CREDIT", String.valueOf(idCredit), dto,
+                "Remboursement anticipe credit soumis");
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
     }
 
     @Operation(summary = "Rembourser un crédit", description = "Effectue un remboursement sur un crédit en répartissant le paiement entre le capital, les intérêts et l'assurance. Précondition : le crédit doit être en cours. Effet comptable : génération d'une écriture comptable au crédit du compte de trésorerie et au débit des comptes de créance et produits. Met à jour le plan d'amortissement.")

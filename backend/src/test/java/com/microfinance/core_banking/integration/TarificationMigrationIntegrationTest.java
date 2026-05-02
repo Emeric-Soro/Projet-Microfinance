@@ -50,14 +50,6 @@ class TarificationMigrationIntegrationTest {
                     )
             );
 
-            try (Connection connection = DriverManager.getConnection(
-                    oracle.getJdbcUrl(),
-                    oracle.getUsername(),
-                    oracle.getPassword()
-            ); Statement statement = connection.createStatement()) {
-                statement.executeUpdate("DELETE FROM flyway_schema_history WHERE version = '1'");
-            }
-
             flyway.migrate();
             assertTarificationKeys(
                     oracle,

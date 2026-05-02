@@ -35,4 +35,10 @@ public class SouscrireDatRequestDTO {
 
     @Schema(description = "Identifiant du guichetier (optionnel)", example = "1")
     private Long idGuichetier;
+
+    @Schema(description = "Renouvellement automatique (optionnel)", example = "true")
+    private Boolean renouvellementAuto;
+
+    @Schema(description = "Numéro de compte support (optionnel)", example = "MICR-001-00001")
+    private String numCompteSupport;
 }

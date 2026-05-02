@@ -7,14 +7,11 @@ CREATE TABLE carte_visa (
     plafond_journalier NUMBER(19,2) NOT NULL,
     id_compte NUMBER(19,0) NOT NULL,
     created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL,
-    CONSTRAINT fk_carte_visa_compte FOREIGN KEY (id_compte) REFERENCES compte(id_compte)
+    updated_at TIMESTAMP NOT NULL
 );
 
 CREATE TABLE utilisateur_role (
     id_user NUMBER(19,0) NOT NULL,
     id_role NUMBER(19,0) NOT NULL,
-    PRIMARY KEY (id_user, id_role),
-    CONSTRAINT fk_utilisateur_role_user FOREIGN KEY (id_user) REFERENCES utilisateur(id_user),
-    CONSTRAINT fk_utilisateur_role_role FOREIGN KEY (id_role) REFERENCES role_utilisateur(id_role)
+    PRIMARY KEY (id_user, id_role)
 );

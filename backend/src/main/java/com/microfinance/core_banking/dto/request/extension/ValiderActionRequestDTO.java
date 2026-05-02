@@ -19,7 +19,14 @@ public class ValiderActionRequestDTO {
     public static ValiderActionRequestDTO fromMap(java.util.Map<String, Object> payload) {
         ValiderActionRequestDTO dto = new ValiderActionRequestDTO();
         dto.setStatut((String) payload.get("statut"));
-        dto.setCommentaireValidation((String) payload.get("commentaireValidation"));
+        Object commentaire = payload.get("commentaireValidation");
+        if (commentaire == null) {
+            commentaire = payload.get("commentaireChecker");
+        }
+        if (commentaire == null) {
+            commentaire = payload.get("commentaire");
+        }
+        dto.setCommentaireValidation(commentaire == null ? null : commentaire.toString());
         return dto;
     }
 }

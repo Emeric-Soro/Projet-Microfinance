@@ -12,8 +12,7 @@ BEGIN
             date_consultation DATE NOT NULL,
             client_id NUMBER(19,0),
             created_at TIMESTAMP NOT NULL,
-            updated_at TIMESTAMP NOT NULL,
-            CONSTRAINT fk_consultation_bic_client FOREIGN KEY (client_id) REFERENCES client(id_client)
+            updated_at TIMESTAMP NOT NULL
         )';
 EXCEPTION
     WHEN OTHERS THEN

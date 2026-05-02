@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.service.compte;
 
+import com.microfinance.core_banking.entity.Agence;
 import com.microfinance.core_banking.entity.Client;
 import com.microfinance.core_banking.entity.Compte;
 import com.microfinance.core_banking.entity.LigneEcritureComptable;
@@ -15,6 +16,7 @@ import com.microfinance.core_banking.repository.extension.LigneEcritureComptable
 import com.microfinance.core_banking.repository.extension.EcritureComptableRepository;
 import com.microfinance.core_banking.repository.extension.JournalComptableRepository;
 import com.microfinance.core_banking.repository.extension.CompteComptableRepository;
+import com.microfinance.core_banking.service.security.AuthenticatedUserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -58,6 +60,9 @@ class CompteServiceImplTest {
     @Mock
     private CompteComptableRepository compteComptableRepository;
 
+    @Mock
+    private AuthenticatedUserService authenticatedUserService;
+
     @InjectMocks
     private CompteServiceImpl compteService;
 
@@ -95,8 +100,12 @@ class CompteServiceImplTest {
 
     @Test
     void shouldBlockAndUnblockAccountByAddingStatusHistory() {
+        Agence agence = new Agence();
+        agence.setIdAgence(1L);
+
         Compte compte = new Compte();
         compte.setNumCompte("CPT-001");
+        compte.setAgence(agence);
         compte.getStatutsCompte().add(statut("ACTIF"));
 
         when(compteRepository.findByNumCompte("CPT-001")).thenReturn(Optional.of(compte));
@@ -111,8 +120,12 @@ class CompteServiceImplTest {
 
     @Test
     void shouldRefuseClosingAccountWhenLedgerBalanceIsNotZero() {
+        Agence agence = new Agence();
+        agence.setIdAgence(1L);
+
         Compte compte = new Compte();
         compte.setNumCompte("CPT-002");
+        compte.setAgence(agence);
         compte.setDecouvertAutorise(new BigDecimal("1000"));
         compte.getStatutsCompte().add(statut("ACTIF"));
 

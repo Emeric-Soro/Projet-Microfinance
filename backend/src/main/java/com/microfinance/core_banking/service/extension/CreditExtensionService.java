@@ -1,6 +1,8 @@
 package com.microfinance.core_banking.service.extension;
 
+import com.microfinance.core_banking.audit.AuditLog;
 import com.microfinance.core_banking.dto.request.extension.CalculerProvisionsRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.ClotureCreditRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.CreerDemandeCreditRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.CreerProduitCreditRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.DebloquerCreditRequestDTO;
@@ -9,6 +11,7 @@ import com.microfinance.core_banking.dto.request.extension.DetecterImpayesReques
 import com.microfinance.core_banking.dto.request.extension.EnregistrerGarantieRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.PassagePerteCreditRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.ReportEcheanceCreditRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.RembourserAnticipeCreditRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.RembourserCreditRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.RestructurationCreditRequestDTO;
 import com.microfinance.core_banking.entity.Agence;
@@ -463,6 +466,89 @@ public class CreditExtensionService {
                 .orElse(dto.getNouvelleDateEcheance()));
         creditRepository.save(credit);
         return echeance;
+    }
+
+    @AuditLog(action = "CREDIT_CLOSE", resource = "CREDIT")
+    @Transactional
+    public Credit cloturerCredit(String referenceCredit, String commentaire) {
+        Credit credit = creditRepository.findByReferenceCredit(referenceCredit)
+                .orElseThrow(() -> new EntityNotFoundException("Crédit introuvable avec la référence : " + referenceCredit));
+        if ("REMBOURSE".equalsIgnoreCase(credit.getStatut()) || "PERTE".equalsIgnoreCase(credit.getStatut())) {
+            throw new IllegalStateException("Le crédit est déjà dans un état final (" + credit.getStatut() + ")");
+        }
+        if (credit.getCapitalRestantDu().compareTo(BigDecimal.ZERO) > 0) {
+            throw new IllegalStateException("Le crédit n'est pas soldé. Capital restant dû : " + credit.getCapitalRestantDu());
+        }
+        credit.setStatut("REMBOURSE");
+        return creditRepository.save(credit);
+    }
+
+    @Transactional
+    public RemboursementCredit rembourserAnticipeCredit(Long idCredit, RembourserAnticipeCreditRequestDTO dto) {
+        Credit credit = creditRepository.findById(idCredit)
+                .orElseThrow(() -> new EntityNotFoundException("Credit introuvable"));
+        verifierPerimetreClient(credit.getClient());
+        if ("REMBOURSE".equalsIgnoreCase(credit.getStatut()) || "PERTE".equalsIgnoreCase(credit.getStatut())) {
+            throw new IllegalStateException("Le credit est deja solde ou passe en perte");
+        }
+
+        BigDecimal capitalRestant = credit.getCapitalRestantDu();
+        if (capitalRestant == null || capitalRestant.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalStateException("Le credit ne comporte plus de capital restant");
+        }
+
+        BigDecimal penaliteTaux = dto.getPenaliteTaux() != null ? dto.getPenaliteTaux() : BigDecimal.valueOf(2.0);
+        BigDecimal penalite = capitalRestant.multiply(penaliteTaux).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        BigDecimal montantTotal = capitalRestant.add(penalite);
+
+        String referenceTransaction = dto.getReferenceTransaction() != null ? dto.getReferenceTransaction()
+                : "ANT-REM-" + UUID.randomUUID().toString().replace("-", "").substring(0, 14).toUpperCase();
+
+        RemboursementCredit remboursement = new RemboursementCredit();
+        remboursement.setCredit(credit);
+        remboursement.setReferenceRemboursement(dto.getReferenceRemboursement() != null ? dto.getReferenceRemboursement()
+                : "ANT-" + UUID.randomUUID().toString().replace("-", "").substring(0, 14).toUpperCase());
+        remboursement.setMontant(montantTotal);
+        remboursement.setCapitalPaye(capitalRestant);
+        remboursement.setInteretPaye(BigDecimal.ZERO);
+        remboursement.setAssurancePayee(BigDecimal.ZERO);
+        remboursement.setReferenceTransaction(referenceTransaction);
+        remboursement.setDatePaiement(dto.getDatePaiement() != null ? dto.getDatePaiement() : LocalDate.now());
+        remboursement.setStatut("COMPTABILISE");
+        remboursementCreditRepository.save(remboursement);
+
+        Long idUtilisateurOperateur = dto.getIdUtilisateurOperateur() != null
+                ? dto.getIdUtilisateurOperateur()
+                : authenticatedUserService.getCurrentUserOrThrow().getIdUser();
+
+        transactionService.posterRetraitSysteme(
+                dto.getNumCompteSource(),
+                montantTotal,
+                BigDecimal.ZERO,
+                idUtilisateurOperateur,
+                referenceTransaction,
+                "CREDIT_REMBOURSEMENT"
+        );
+
+        List<EcheanceCredit> echeances = echeanceCreditRepository.findByCredit_IdCreditOrderByDateEcheanceAsc(idCredit);
+        LocalDate dateRegularisation = dto.getDatePaiement() != null ? dto.getDatePaiement() : LocalDate.now();
+        for (EcheanceCredit echeance : echeances) {
+            if (!"REGLEE".equalsIgnoreCase(echeance.getStatut())) {
+                echeance.setStatut("REGLEE");
+                echeance.setDateDerniereRegularisation(dateRegularisation);
+                echeance.setCapitalPaye(echeance.getCapitalPrevu());
+                echeance.setInteretPaye(echeance.getInteretPrevu());
+                echeance.setAssurancePayee(echeance.getAssurancePrevue());
+                echeanceCreditRepository.save(echeance);
+            }
+        }
+
+        credit.setCapitalRestantDu(BigDecimal.ZERO);
+        credit.setStatut("REMBOURSE");
+        credit.setDateProchaineEcheance(null);
+        creditRepository.save(credit);
+
+        return remboursement;
     }
 
     @Transactional

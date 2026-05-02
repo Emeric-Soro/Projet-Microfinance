@@ -41,7 +41,6 @@ BEGIN
             CONSTRAINT fk_mutation_employe FOREIGN KEY (id_employe) REFERENCES employe(id_employe),
             CONSTRAINT fk_mutation_agence_source FOREIGN KEY (id_agence_source) REFERENCES agence(id_agence),
             CONSTRAINT fk_mutation_agence_destination FOREIGN KEY (id_agence_destination) REFERENCES agence(id_agence),
-            CONSTRAINT fk_mutation_validateur FOREIGN KEY (id_validateur) REFERENCES utilisateur(id_user),
             CONSTRAINT ck_mutation_agences_diff CHECK (id_agence_source <> id_agence_destination)
         )';
 EXCEPTION
@@ -89,7 +88,6 @@ BEGIN
             commentaire VARCHAR2(500 CHAR),
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL,
-            CONSTRAINT fk_operation_deplacee_transaction FOREIGN KEY (id_transaction) REFERENCES bank_transaction(id_transaction),
             CONSTRAINT fk_operation_deplacee_origine FOREIGN KEY (id_agence_origine) REFERENCES agence(id_agence),
             CONSTRAINT fk_operation_deplacee_operante FOREIGN KEY (id_agence_operante) REFERENCES agence(id_agence),
             CONSTRAINT uk_operation_deplacee_transaction UNIQUE (id_transaction),
@@ -144,7 +142,6 @@ BEGIN
             updated_at TIMESTAMP NOT NULL,
             CONSTRAINT fk_rapprochement_source FOREIGN KEY (id_agence_source) REFERENCES agence(id_agence),
             CONSTRAINT fk_rapprochement_destination FOREIGN KEY (id_agence_destination) REFERENCES agence(id_agence),
-            CONSTRAINT fk_rapprochement_validateur FOREIGN KEY (id_validateur) REFERENCES utilisateur(id_user),
             CONSTRAINT ck_rapprochement_agences_diff CHECK (id_agence_source <> id_agence_destination),
             CONSTRAINT ck_rapprochement_periode CHECK (periode_fin >= periode_debut)
         )';

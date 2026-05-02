@@ -23,21 +23,6 @@ END;
 DECLARE
     v_count NUMBER := 0;
 BEGIN
-    SELECT COUNT(*) INTO v_count FROM user_tab_cols WHERE table_name = 'BANK_TRANSACTION' AND column_name = 'ID_SESSION_CAISSE';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'ALTER TABLE bank_transaction ADD (id_session_caisse NUMBER(19,0) NULL)';
-    END IF;
-
-    SELECT COUNT(*) INTO v_count FROM user_constraints WHERE table_name = 'BANK_TRANSACTION' AND constraint_name = 'FK_TX_SESSION_CAISSE';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'ALTER TABLE bank_transaction ADD CONSTRAINT fk_tx_session_caisse FOREIGN KEY (id_session_caisse) REFERENCES session_caisse(id_session_caisse)';
-    END IF;
-END;
-/
-
-DECLARE
-    v_count NUMBER := 0;
-BEGIN
     SELECT COUNT(*) INTO v_count FROM user_tab_cols WHERE table_name = 'CREDIT' AND column_name = 'REFERENCE_TRANSACTION_DEBLOCAGE';
     IF v_count = 0 THEN
         EXECUTE IMMEDIATE 'ALTER TABLE credit ADD (reference_transaction_deblocage VARCHAR2(80 CHAR) NULL)';
@@ -56,11 +41,6 @@ BEGIN
     SELECT COUNT(*) INTO v_count FROM user_tab_cols WHERE table_name = 'DEPOT_A_TERME' AND column_name = 'ID_COMPTE_SUPPORT';
     IF v_count = 0 THEN
         EXECUTE IMMEDIATE 'ALTER TABLE depot_a_terme ADD (id_compte_support NUMBER(19,0) NULL)';
-    END IF;
-
-    SELECT COUNT(*) INTO v_count FROM user_constraints WHERE table_name = 'DEPOT_A_TERME' AND constraint_name = 'FK_DAT_COMPTE_SUPPORT';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'ALTER TABLE depot_a_terme ADD CONSTRAINT fk_dat_compte_support FOREIGN KEY (id_compte_support) REFERENCES compte(id_compte)';
     END IF;
 
     SELECT COUNT(*) INTO v_count FROM user_tab_cols WHERE table_name = 'DEPOT_A_TERME' AND column_name = 'REFERENCE_TRANSACTION_SOUSCRIPTION';

@@ -22,6 +22,8 @@ public class DoubleEntryServiceImpl implements DoubleEntryService {
 
         BigDecimal totalDebit = BigDecimal.ZERO;
         BigDecimal totalCredit = BigDecimal.ZERO;
+        int nombreDebits = 0;
+        int nombreCredits = 0;
 
         for (BalanceLine line : balanceLines) {
             String compte = line.numeroCompte();
@@ -36,11 +38,16 @@ public class DoubleEntryServiceImpl implements DoubleEntryService {
             }
             if (line.sens() == SensEcriture.DEBIT) {
                 totalDebit = totalDebit.add(line.montant());
+                nombreDebits++;
             } else {
                 totalCredit = totalCredit.add(line.montant());
+                nombreCredits++;
             }
         }
 
+        if (nombreDebits == 0 || nombreCredits == 0) {
+            throw new IllegalStateException("Une piece comptable doit contenir au moins une ligne debit et une ligne credit");
+        }
         if (totalDebit.compareTo(totalCredit) != 0) {
             throw new IllegalStateException("La piece comptable n'est pas equilibree");
         }

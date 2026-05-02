@@ -14,8 +14,7 @@ BEGIN
             refresh_token_hash VARCHAR2(255 CHAR),
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL,
-            CONSTRAINT fk_consentement_partenaire FOREIGN KEY (id_partenaire_api) REFERENCES partenaire_api(id_partenaire_api),
-            CONSTRAINT fk_consentement_client FOREIGN KEY (client_id) REFERENCES client(id_client)
+            CONSTRAINT fk_consentement_partenaire FOREIGN KEY (id_partenaire_api) REFERENCES partenaire_api(id_partenaire_api)
         )';
 EXCEPTION
     WHEN OTHERS THEN

@@ -1,5 +1,7 @@
 package com.microfinance.core_banking.api.controller.extension;
 
+import com.microfinance.core_banking.dto.request.extension.ConsentementOpenBankingRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.RevocationConsentementRequestDTO;
 import com.microfinance.core_banking.entity.Compte;
 import com.microfinance.core_banking.entity.ConsentementOpenBanking;
 import com.microfinance.core_banking.service.extension.OpenBankingService;
@@ -11,12 +13,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import com.microfinance.core_banking.dto.response.common.ErrorResponseDTO;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/open-banking")
@@ -41,12 +43,12 @@ public class OpenBankingController {
         @ApiResponse(responseCode = "409", description = "Conflit - consentement déjà existant", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
         @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
-    public ResponseEntity<ConsentementOpenBanking> consentir(@RequestBody Map<String, Object> request) {
-        Long partenaireId = Long.valueOf(request.get("idPartenaire").toString());
-        Long clientId = Long.valueOf(request.get("idClient").toString());
-        String type = (String) request.get("typeConsentement");
-        String scope = (String) request.get("scope");
-        return ResponseEntity.ok(openBankingService.consentir(partenaireId, clientId, type, scope));
+    public ResponseEntity<ConsentementOpenBanking> consentir(@Valid @RequestBody ConsentementOpenBankingRequestDTO request) {
+        return ResponseEntity.ok(openBankingService.consentir(
+                request.getIdPartenaire(),
+                request.getIdClient(),
+                request.getTypeConsentement(),
+                request.getScope()));
     }
 
     @DeleteMapping("/consentements/{ref}")
@@ -61,8 +63,8 @@ public class OpenBankingController {
         @ApiResponse(responseCode = "404", description = "Consentement non trouvé", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
         @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
-    public ResponseEntity<Void> revoguer(@PathVariable String ref, @RequestBody Map<String, String> request) {
-        openBankingService.revoguer(ref, request.get("motif"));
+    public ResponseEntity<Void> revoguer(@PathVariable String ref, @Valid @RequestBody RevocationConsentementRequestDTO request) {
+        openBankingService.revoguer(ref, request.getMotif());
         return ResponseEntity.noContent().build();
     }
 

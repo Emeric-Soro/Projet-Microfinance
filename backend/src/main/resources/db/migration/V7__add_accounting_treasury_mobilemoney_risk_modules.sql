@@ -236,9 +236,7 @@ BEGIN
             statut VARCHAR2(30 CHAR) DEFAULT ''ACTIF'' NOT NULL,
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL,
-            CONSTRAINT fk_wallet_client FOREIGN KEY (id_client) REFERENCES client(id_client),
-            CONSTRAINT fk_wallet_operateur FOREIGN KEY (id_operateur_mobile_money) REFERENCES operateur_mobile_money(id_operateur_mobile_money),
-            CONSTRAINT fk_wallet_compte FOREIGN KEY (id_compte) REFERENCES compte(id_compte)
+            CONSTRAINT fk_wallet_operateur FOREIGN KEY (id_operateur_mobile_money) REFERENCES operateur_mobile_money(id_operateur_mobile_money)
         )';
 EXCEPTION
     WHEN OTHERS THEN

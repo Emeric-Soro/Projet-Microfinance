@@ -142,6 +142,55 @@ class ValidationExtensionServiceTest {
         verify(pendingActionExecutionService, never()).execute(any());
     }
 
+    @Test
+    void validerAction_approuveeExecuteLeHandler() {
+        Utilisateur maker = utilisateur(1L, "GUICHETIER");
+        Utilisateur checker = utilisateur(2L, "SUPERVISEUR");
+        ActionEnAttente action = new ActionEnAttente();
+        action.setIdActionEnAttente(10L);
+        action.setMaker(maker);
+        action.setStatut("EN_ATTENTE");
+
+        when(actionEnAttenteRepository.findById(10L)).thenReturn(Optional.of(action));
+        when(authenticatedUserService.getCurrentUserOrThrow()).thenReturn(checker);
+        when(authenticatedUserService.hasAnyRoleOrPermission(any(String[].class), any(String[].class))).thenReturn(true);
+        when(pendingActionExecutionService.execute(any())).thenReturn("REF-123");
+        when(actionEnAttenteRepository.save(any(ActionEnAttente.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ValiderActionRequestDTO dto = ValiderActionRequestDTO.fromMap(Map.of("statut", "APPROUVEE"));
+
+        ActionEnAttente resultat = validationExtensionService.validerAction(10L, dto);
+
+        assertThat(resultat.getStatut()).isEqualTo("APPROUVEE");
+        assertThat(resultat.getReferenceRessource()).isEqualTo("REF-123");
+        verify(pendingActionExecutionService, org.mockito.Mockito.times(1)).execute(any());
+    }
+
+    @Test
+    void validerAction_rejeteeNExecutePasLeHandler() {
+        Utilisateur maker = utilisateur(1L, "GUICHETIER");
+        Utilisateur checker = utilisateur(2L, "SUPERVISEUR");
+        ActionEnAttente action = new ActionEnAttente();
+        action.setIdActionEnAttente(10L);
+        action.setMaker(maker);
+        action.setStatut("EN_ATTENTE");
+
+        when(actionEnAttenteRepository.findById(10L)).thenReturn(Optional.of(action));
+        when(authenticatedUserService.getCurrentUserOrThrow()).thenReturn(checker);
+        when(authenticatedUserService.hasAnyRoleOrPermission(any(String[].class), any(String[].class))).thenReturn(true);
+        when(actionEnAttenteRepository.save(any(ActionEnAttente.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ValiderActionRequestDTO dto = ValiderActionRequestDTO.fromMap(Map.of(
+                "statut", "REJETEE",
+                "commentaireChecker", "Motif documente"
+        ));
+
+        ActionEnAttente resultat = validationExtensionService.validerAction(10L, dto);
+
+        assertThat(resultat.getStatut()).isEqualTo("REJETEE");
+        verify(pendingActionExecutionService, never()).execute(any());
+    }
+
     private Utilisateur utilisateur(Long idUser, String roleCode) {
         RoleUtilisateur role = new RoleUtilisateur();
         role.setCodeRoleUtilisateur(roleCode);

@@ -118,7 +118,7 @@ public class PaiementExterneService {
         transactionMobileMoney.setTypeTransaction(dto.getTypeTransaction());
         transactionMobileMoney.setMontant(dto.getMontant());
         transactionMobileMoney.setFrais(dto.getFrais());
-        transactionMobileMoney.setStatut(dto.getStatut());
+        transactionMobileMoney.setStatut(dto.getStatut() == null || dto.getStatut().isBlank() ? "INITIEE" : dto.getStatut());
         return transactionMobileMoneyRepository.save(transactionMobileMoney);
     }
 

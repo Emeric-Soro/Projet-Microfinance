@@ -48,6 +48,39 @@ public final class SecurityConstants {
     public static final String PERM_SECURITY_PERMISSION_VIEW = "SECURITY_PERMISSION_VIEW";
     public static final String PERM_SECURITY_PERMISSION_MANAGE = "SECURITY_PERMISSION_MANAGE";
 
+    // Monétique / Cartes
+    public static final String PERM_CREATE_CARTE = "CREATE_CARTE";
+    public static final String PERM_UPDATE_CARTE = "UPDATE_CARTE";
+    public static final String PERM_PAYMENT_CARTE = "PAYMENT_CARTE";
+
+    // Client view
+    public static final String PERM_VIEW_CLIENT = "VIEW_CLIENT";
+
+    // Account management
+    public static final String PERM_ACCOUNT_VIEW = "ACCOUNT_VIEW";
+    public static final String PERM_ACCOUNT_MANAGE = "ACCOUNT_MANAGE";
+
+    // Transaction permissions
+    public static final String PERM_TRANSACTION_CREATE = "TRANSACTION_CREATE";
+    public static final String PERM_TRANSACTION_VALIDATE = "TRANSACTION_VALIDATE";
+
+    // User management
+    public static final String PERM_USER_VIEW = "USER_VIEW";
+    public static final String PERM_USER_MANAGE = "USER_MANAGE";
+
+    // Role management
+    public static final String PERM_ROLE_MANAGE = "ROLE_MANAGE";
+
+    // Parameter management
+    public static final String PERM_PARAMETER_MANAGE = "PARAMETER_MANAGE";
+
+    // Cash desk management
+    public static final String PERM_CASH_VIEW = "CASH_VIEW";
+    public static final String PERM_CASH_MANAGE = "CASH_MANAGE";
+
+    // Audit
+    public static final String PERM_AUDIT_VIEW = "AUDIT_VIEW";
+
     // ============================================================
     // COMMON AUTHORITY EXPRESSIONS (for @PreAuthorize)
     // ============================================================

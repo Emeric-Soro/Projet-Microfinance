@@ -128,7 +128,7 @@ class TransactionServiceImplTest {
         when(utilisateurRepository.findById(20L)).thenReturn(Optional.of(superviseur));
         when(compteRepository.findById(1L)).thenReturn(Optional.of(sourceStocke));
         when(compteRepository.findById(2L)).thenReturn(Optional.of(destinationStocke));
-        when(ligneEcritureComptableRepository.findByReferenceAuxiliaire("CPT-SRC")).thenReturn(List.of(ligneComptable("CREDIT", "1000000.00")));
+        when(comptabiliteExtensionService.calculerSoldeComptable("CPT-SRC")).thenReturn(new BigDecimal("1000000.00"));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Transaction resultat = transactionService.approuverTransaction("TX-REF-001", 20L);
@@ -138,6 +138,7 @@ class TransactionServiceImplTest {
         assertThat(resultat.getDateValidation()).isNotNull();
         assertThat(resultat.getDateExecution()).isNotNull();
         verify(ligneEcritureRepository, times(2)).save(ArgumentMatchers.any());
+        verify(comptabiliteExtensionService).comptabiliserTransaction(ArgumentMatchers.any(Transaction.class));
         verify(eventPublisher).publishEvent(ArgumentMatchers.any(VirementEffectueEvent.class));
     }
 
@@ -165,7 +166,7 @@ class TransactionServiceImplTest {
         when(utilisateurRepository.findById(20L)).thenReturn(Optional.of(validateur));
         when(compteRepository.findById(1L)).thenReturn(Optional.of(sourceStocke));
         when(compteRepository.findById(2L)).thenReturn(Optional.of(destinationStocke));
-        when(ligneEcritureComptableRepository.findByReferenceAuxiliaire("CPT-SRC")).thenReturn(List.of(ligneComptable("CREDIT", "1000000.00")));
+        when(comptabiliteExtensionService.calculerSoldeComptable("CPT-SRC")).thenReturn(new BigDecimal("1000000.00"));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Transaction resultat = transactionService.approuverTransaction("TX-REF-002", 20L);
@@ -224,9 +225,9 @@ class TransactionServiceImplTest {
         when(utilisateurRepository.findById(20L)).thenReturn(Optional.of(superviseur));
         when(compteRepository.findByNumCompte("CPT-DST")).thenReturn(Optional.of(destination));
         when(compteRepository.findById(2L)).thenReturn(Optional.of(destination));
+        when(comptabiliteExtensionService.calculerSoldeComptable("CPT-DST")).thenReturn(new BigDecimal("90000.00"));
         when(typeTransactionRepository.findByCodeTypeTransaction("RETRAIT")).thenReturn(Optional.of(typeRetrait));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(ligneEcritureComptableRepository.findByReferenceAuxiliaire("CPT-DST")).thenReturn(List.of(ligneComptable("CREDIT", "90000.00")));
 
         Transaction resultat = transactionService.extournerTransaction("TX-EXEC-01", 20L, "extourne");
 

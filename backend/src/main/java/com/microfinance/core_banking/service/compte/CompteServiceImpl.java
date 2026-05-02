@@ -19,6 +19,7 @@ import com.microfinance.core_banking.repository.extension.EcritureComptableRepos
 import com.microfinance.core_banking.repository.extension.JournalComptableRepository;
 import com.microfinance.core_banking.repository.extension.CompteComptableRepository;
 import com.microfinance.core_banking.repository.extension.LigneEcritureComptableRepository;
+import com.microfinance.core_banking.service.security.AuthenticatedUserService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,7 @@ public class CompteServiceImpl implements CompteService {
     private final EcritureComptableRepository ecritureComptableRepository;
     private final JournalComptableRepository journalComptableRepository;
     private final CompteComptableRepository compteComptableRepository;
+    private final AuthenticatedUserService authenticatedUserService;
 
     public CompteServiceImpl(
             CompteRepository compteRepository,
@@ -50,7 +52,8 @@ public class CompteServiceImpl implements CompteService {
             LigneEcritureComptableRepository ligneEcritureComptableRepository,
             EcritureComptableRepository ecritureComptableRepository,
             JournalComptableRepository journalComptableRepository,
-            CompteComptableRepository compteComptableRepository
+            CompteComptableRepository compteComptableRepository,
+            AuthenticatedUserService authenticatedUserService
     ) {
         this.compteRepository = compteRepository;
         this.clientRepository = clientRepository;
@@ -60,6 +63,7 @@ public class CompteServiceImpl implements CompteService {
         this.ecritureComptableRepository = ecritureComptableRepository;
         this.journalComptableRepository = journalComptableRepository;
         this.compteComptableRepository = compteComptableRepository;
+        this.authenticatedUserService = authenticatedUserService;
     }
 
     @Override
@@ -175,6 +179,8 @@ public class CompteServiceImpl implements CompteService {
         Compte compte = compteRepository.findByNumCompte(numCompte)
                 .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
 
+        authenticatedUserService.assertAgencyAccess(compte.getAgence().getIdAgence());
+
         compte.setDecouvertAutorise(nouveauPlafond);
         return compteRepository.save(compte);
     }
@@ -185,11 +191,14 @@ public class CompteServiceImpl implements CompteService {
         Compte compte = compteRepository.findByNumCompte(numCompte)
                 .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
 
+        authenticatedUserService.assertAgencyAccess(compte.getAgence().getIdAgence());
+
         if ("FERME".equals(statutCourant(compte))) {
-            return compte;
+            throw new IllegalStateException("Impossible de clôturer un compte déjà fermé");
         }
 
-        if (calculerSoldeGrandLivre(numCompte).compareTo(BigDecimal.ZERO) != 0) {
+        BigDecimal solde = calculerSoldeGrandLivre(numCompte);
+        if (solde.compareTo(BigDecimal.ZERO) != 0) {
             throw new IllegalStateException("Impossible de clôturer un compte avec un solde non nul");
         }
 
@@ -202,6 +211,7 @@ public class CompteServiceImpl implements CompteService {
     public Compte bloquerCompte(String numCompte, String motif) {
         Compte compte = compteRepository.findByNumCompte(numCompte)
                 .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
+        authenticatedUserService.assertAgencyAccess(compte.getAgence().getIdAgence());
         if ("FERME".equals(statutCourant(compte))) {
             throw new IllegalStateException("Impossible de bloquer un compte deja ferme");
         }
@@ -216,6 +226,7 @@ public class CompteServiceImpl implements CompteService {
     public Compte debloquerCompte(String numCompte, String motif) {
         Compte compte = compteRepository.findByNumCompte(numCompte)
                 .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
+        authenticatedUserService.assertAgencyAccess(compte.getAgence().getIdAgence());
         if ("FERME".equals(statutCourant(compte))) {
             throw new IllegalStateException("Impossible de debloquer un compte deja ferme");
         }

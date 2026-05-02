@@ -147,6 +147,28 @@ public class CompteController {
 	}
 
 	@Operation(
+			summary = "Soumettre une modification de decouvert",
+			description = "Soumet une demande de modification du plafond de decouvert d'un compte pour approbation superviseur"
+	)
+	@ApiResponses({
+			@ApiResponse(responseCode = "202", description = "Modification de decouvert soumise en attente de validation"),
+			@ApiResponse(responseCode = "400", description = "Donnees invalides", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "401", description = "Authentification requise - token JWT manquant ou invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "403", description = "Accès refusé - permissions insuffisantes pour cette ressource", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "404", description = "Compte introuvable", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+			@ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+	})
+	@PutMapping("/decouvert/soumettre")
+	@PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_SUPERVISEUR, T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_GUICHETIER)")
+	@AuditLog(action = "ACCOUNT_OVERDRAFT_SUBMIT", resource = "COMPTE")
+	public ResponseEntity<ActionEnAttenteResponseDTO> soumettreModificationDecouvert(
+			@Valid @RequestBody ChangementDecouvertRequestDTO requestDTO
+	) {
+		ActionEnAttente action = pendingActionSubmissionService.submit("MODIFY_DECOUVERT", "COMPTE", requestDTO.getNumCompte(), requestDTO, "Modification de decouvert soumise");
+		return ResponseEntity.status(HttpStatus.ACCEPTED).body(toActionDto(action));
+	}
+
+	@Operation(
 			summary = "Cloturer un compte",
 			description = "Cloture un compte si les conditions metier sont respectees"
 	)

@@ -1,12 +1,4 @@
 BEGIN
-    EXECUTE IMMEDIATE 'ALTER TABLE bank_transaction ADD (code_operation_metier VARCHAR2(40 CHAR))';
-EXCEPTION
-    WHEN OTHERS THEN
-        IF SQLCODE != -1430 THEN RAISE; END IF;
-END;
-/
-
-BEGIN
     EXECUTE IMMEDIATE 'ALTER TABLE echeance_credit ADD (
         capital_paye NUMBER(19,2) DEFAULT 0 NOT NULL,
         interet_paye NUMBER(19,2) DEFAULT 0 NOT NULL,
@@ -141,7 +133,6 @@ BEGIN
             statut VARCHAR2(30 CHAR) DEFAULT ''INITIE'' NOT NULL,
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL,
-            CONSTRAINT fk_ordre_paiement_compte FOREIGN KEY (id_compte) REFERENCES compte(id_compte),
             CONSTRAINT fk_ordre_paiement_lot FOREIGN KEY (id_lot_compensation) REFERENCES lot_compensation(id_lot_compensation)
         )';
 EXCEPTION

@@ -1,5 +1,10 @@
 package com.microfinance.core_banking.api.controller.extension;
 
+import com.microfinance.core_banking.dto.request.extension.BlocageCarteRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.EmettreCarteRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.PaiementPosRequestDTO;
+import com.microfinance.core_banking.dto.request.extension.PinRequestDTO;
+import com.microfinance.core_banking.dto.response.extension.TokenCarteResponseDTO;
 import com.microfinance.core_banking.entity.CarteVisa;
 import com.microfinance.core_banking.service.extension.MonetiqueService;
 import com.microfinance.core_banking.service.security.SecurityConstants;
@@ -10,11 +15,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import com.microfinance.core_banking.dto.response.common.ErrorResponseDTO;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.Map;
 
 @RestController
@@ -39,14 +44,12 @@ public class MonetiqueController {
         @ApiResponse(responseCode = "403", description = "Accès interdit", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
         @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
-    public ResponseEntity<CarteVisa> emettreCarte(@RequestBody Map<String, Object> request) {
-        Long idCompte = Long.valueOf(request.get("idCompte").toString());
-        String typeCarte = (String) request.get("typeCarte");
-        BigDecimal plafondJournalier = request.get("plafondJournalier") != null
-                ? new BigDecimal(request.get("plafondJournalier").toString()) : null;
-        BigDecimal plafondMensuel = request.get("plafondMensuel") != null
-                ? new BigDecimal(request.get("plafondMensuel").toString()) : null;
-        return ResponseEntity.ok(monetiqueService.emettreCarte(idCompte, typeCarte, plafondJournalier, plafondMensuel));
+    public ResponseEntity<CarteVisa> emettreCarte(@Valid @RequestBody EmettreCarteRequestDTO request) {
+        return ResponseEntity.ok(monetiqueService.emettreCarte(
+                request.getIdCompte(),
+                request.getTypeCarte(),
+                request.getPlafondJournalier(),
+                request.getPlafondMensuel()));
     }
 
     @PostMapping("/cartes/{id}/pin")
@@ -61,8 +64,8 @@ public class MonetiqueController {
         @ApiResponse(responseCode = "404", description = "Carte non trouvée", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
         @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
-    public ResponseEntity<Void> definirPin(@PathVariable Long id, @RequestBody Map<String, String> request) {
-        monetiqueService.definirPin(id, request.get("pin"));
+    public ResponseEntity<Void> definirPin(@PathVariable Long id, @Valid @RequestBody PinRequestDTO request) {
+        monetiqueService.definirPin(id, request.getPin());
         return ResponseEntity.ok().build();
     }
 
@@ -78,10 +81,8 @@ public class MonetiqueController {
         @ApiResponse(responseCode = "404", description = "Carte non trouvée", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
         @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
-    public ResponseEntity<Map<String, Object>> paiementPos(@RequestBody Map<String, Object> request) {
-        Long idCarte = Long.valueOf(request.get("idCarte").toString());
-        String pin = (String) request.get("pin");
-        if (!monetiqueService.verifierPin(idCarte, pin)) {
+    public ResponseEntity<Map<String, Object>> paiementPos(@Valid @RequestBody PaiementPosRequestDTO request) {
+        if (!monetiqueService.verifierPin(request.getIdCarte(), request.getPin())) {
             return ResponseEntity.status(403).body(Map.of("erreur", "PIN invalide ou carte bloquee"));
         }
         return ResponseEntity.ok(Map.of("statut", "OK", "message", "Paiement autorise"));
@@ -99,8 +100,8 @@ public class MonetiqueController {
         @ApiResponse(responseCode = "404", description = "Carte non trouvée", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
         @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
-    public ResponseEntity<CarteVisa> bloquerCarte(@PathVariable Long id, @RequestBody Map<String, String> request) {
-        return ResponseEntity.ok(monetiqueService.bloquerCarte(id, request.get("motif")));
+    public ResponseEntity<CarteVisa> bloquerCarte(@PathVariable Long id, @Valid @RequestBody BlocageCarteRequestDTO request) {
+        return ResponseEntity.ok(monetiqueService.bloquerCarte(id, request.getMotif()));
     }
 
     @PutMapping("/cartes/{id}/deblocage")
@@ -123,15 +124,15 @@ public class MonetiqueController {
     @PreAuthorize("hasAnyAuthority(T(com.microfinance.core_banking.service.security.SecurityConstants).ROLE_ADMIN)")
     @Operation(summary = "Tokeniser une carte bancaire", description = "Génère un token de remplacement pour une carte bancaire, utilisé pour les paiements sans contact ou mobiles")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Token généré avec succès", content = @Content(schema = @Schema(implementation = Map.class))),
+        @ApiResponse(responseCode = "200", description = "Token généré avec succès", content = @Content(schema = @Schema(implementation = TokenCarteResponseDTO.class))),
         @ApiResponse(responseCode = "400", description = "Requête invalide", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
         @ApiResponse(responseCode = "401", description = "Non authentifié", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
         @ApiResponse(responseCode = "403", description = "Accès interdit", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
         @ApiResponse(responseCode = "404", description = "Carte non trouvée", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
         @ApiResponse(responseCode = "500", description = "Erreur interne du serveur", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
-    public ResponseEntity<Map<String, String>> tokeniserCarte(@PathVariable Long id) {
+    public ResponseEntity<TokenCarteResponseDTO> tokeniserCarte(@PathVariable Long id) {
         String token = monetiqueService.tokeniserCarte(id);
-        return ResponseEntity.ok(Map.of("token", token));
+        return ResponseEntity.ok(new TokenCarteResponseDTO(token));
     }
 }

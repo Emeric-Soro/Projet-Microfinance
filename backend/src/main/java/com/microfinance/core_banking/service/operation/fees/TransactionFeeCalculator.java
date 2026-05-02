@@ -1,6 +1,7 @@
 package com.microfinance.core_banking.service.operation.fees;
 
 import com.microfinance.core_banking.service.extension.FiscaliteService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -17,6 +18,7 @@ public class TransactionFeeCalculator {
     private final Map<String, TransactionFeeStrategy> strategyByCode;
     private final FiscaliteService fiscaliteService;
 
+    @Autowired
     public TransactionFeeCalculator(List<TransactionFeeStrategy> strategies, FiscaliteService fiscaliteService) {
         this.strategyByCode = strategies.stream()
                 .collect(Collectors.toMap(TransactionFeeStrategy::codeTypeTransaction, Function.identity()));

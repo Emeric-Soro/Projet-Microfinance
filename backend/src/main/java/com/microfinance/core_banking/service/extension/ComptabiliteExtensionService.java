@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.service.extension;
 
+import com.microfinance.core_banking.audit.AuditLog;
 import com.microfinance.core_banking.dto.request.extension.CalculerProvisionsRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.ClotureComptableRequestDTO;
 import com.microfinance.core_banking.dto.request.extension.CreerClasseComptableRequestDTO;
@@ -116,6 +117,7 @@ public class ComptabiliteExtensionService {
     }
 
     @Transactional
+    @AuditLog(action = "ACCOUNTING_BASELINE_BOOTSTRAP", resource = "PLAN_COMPTABLE")
     public BootstrapResponseDTO bootstrapReferentiel() {
         bootstrapSiNecessaire();
         BootstrapResponseDTO response = new BootstrapResponseDTO();
@@ -127,6 +129,7 @@ public class ComptabiliteExtensionService {
     }
 
     @Transactional
+    @AuditLog(action = "ACCOUNTING_CLASS_CREATE", resource = "CLASSE_COMPTABLE")
     public ClasseComptable creerClasse(CreerClasseComptableRequestDTO payload) {
         ClasseComptable classe = new ClasseComptable();
         classe.setCodeClasse(payload.getCodeClasse());
@@ -136,6 +139,7 @@ public class ComptabiliteExtensionService {
     }
 
     @Transactional
+    @AuditLog(action = "ACCOUNTING_ACCOUNT_CREATE", resource = "COMPTE_COMPTABLE")
     public CompteComptable creerCompte(CreerCompteComptableRequestDTO payload) {
         ClasseComptable classe = classeComptableRepository.findByCodeClasse(payload.getCodeClasse())
                 .orElseThrow(() -> new EntityNotFoundException("Classe comptable introuvable"));
@@ -155,6 +159,7 @@ public class ComptabiliteExtensionService {
     }
 
     @Transactional
+    @AuditLog(action = "ACCOUNTING_JOURNAL_CREATE", resource = "JOURNAL_COMPTABLE")
     public JournalComptable creerJournal(CreerJournalComptableRequestDTO payload) {
         JournalComptable journal = new JournalComptable();
         journal.setCodeJournal(payload.getCodeJournal());
@@ -165,6 +170,7 @@ public class ComptabiliteExtensionService {
     }
 
     @Transactional
+    @AuditLog(action = "ACCOUNTING_SCHEMA_CREATE", resource = "SCHEMA_COMPTABLE")
     public SchemaComptable creerSchema(CreerSchemaComptableRequestDTO payload) {
         SchemaComptable schema = new SchemaComptable();
         schema.setCodeOperation(payload.getCodeOperation());
@@ -177,6 +183,7 @@ public class ComptabiliteExtensionService {
     }
 
     @Transactional
+    @AuditLog(action = "ACCOUNTING_MANUAL_ENTRY_CREATE", resource = "ECRITURE_COMPTABLE")
     public EcritureComptable creerEcritureManuelle(CreerEcritureManuelleRequestDTO payload) {
         bootstrapSiNecessaire();
         List<LigneEcritureDTO> lignes = payload.getLignes();
@@ -208,6 +215,7 @@ public class ComptabiliteExtensionService {
     }
 
     @Transactional
+    @AuditLog(action = "ACCOUNTING_TRANSACTION_POST", resource = "TRANSACTION")
     public EcritureComptable comptabiliserTransaction(Transaction transaction) {
         if (transaction == null || transaction.getReferenceUnique() == null) {
             throw new IllegalArgumentException("Transaction comptable invalide");
@@ -232,6 +240,7 @@ public class ComptabiliteExtensionService {
     }
 
     @Transactional
+    @AuditLog(action = "ACCOUNTING_TREASURY_POST", resource = "MOUVEMENT_TRESORERIE")
     public EcritureComptable comptabiliserMouvementTresorerie(
             String operationCode,
             String sourceReference,
@@ -252,6 +261,7 @@ public class ComptabiliteExtensionService {
     }
 
     @Transactional
+    @AuditLog(action = "ACCOUNTING_PROVISION_POST", resource = "PROVISION_CREDIT")
     public EcritureComptable comptabiliserProvisionCredit(ProvisionCredit provisionCredit) {
         bootstrapSiNecessaire();
         if (provisionCredit.getReferencePieceComptable() != null) {
@@ -468,6 +478,24 @@ public class ComptabiliteExtensionService {
     }
 
     @Transactional(readOnly = true)
+    public BigDecimal calculerSoldeComptable(String numeroCompte) {
+        if (numeroCompte == null || numeroCompte.isBlank()) {
+            throw new IllegalArgumentException("Le numero de compte comptable est obligatoire");
+        }
+        BigDecimal debit = BigDecimal.ZERO;
+        BigDecimal credit = BigDecimal.ZERO;
+        for (LigneEcritureComptable ligne : ligneEcritureComptableRepository.findByReferenceAuxiliaire(numeroCompte)) {
+            BigDecimal montant = ligne.getMontant() == null ? BigDecimal.ZERO : ligne.getMontant();
+            if ("DEBIT".equalsIgnoreCase(ligne.getSens())) {
+                debit = debit.add(montant);
+            } else if ("CREDIT".equalsIgnoreCase(ligne.getSens())) {
+                credit = credit.add(montant);
+            }
+        }
+        return credit.subtract(debit);
+    }
+
+    @Transactional(readOnly = true)
     public List<BalanceLineDTO> consulterBalance(LocalDate dateDebut, LocalDate dateFin) {
         bootstrapSiNecessaire();
         LocalDate debut = dateDebut == null ? LocalDate.now().minusMonths(1) : dateDebut;
@@ -499,6 +527,7 @@ public class ComptabiliteExtensionService {
     }
 
     @Transactional
+    @AuditLog(action = "ACCOUNTING_PERIOD_CLOSE", resource = "CLOTURE_COMPTABLE")
     public ClotureComptable cloturerPeriode(ClotureComptableRequestDTO payload) {
         LocalDate dateDebut = payload.getDateDebut() != null ? payload.getDateDebut() : LocalDate.now();
         LocalDate dateFin = payload.getDateFin() != null ? payload.getDateFin() : LocalDate.now();
@@ -618,6 +647,15 @@ public class ComptabiliteExtensionService {
                 yield lines;
             }
             case "CREDIT_REMBOURSEMENT" -> construireLignesRemboursement(transaction, schema);
+            case "INTERET_EPARGNE_MENSUEL" -> {
+                List<ManualLine> lines = new ArrayList<>();
+                lines.add(new ManualLine(schema.getCompteDebit(), SensEcriture.DEBIT, montant, transaction.getReferenceUnique(), "Interets epargne mensuels"));
+                lines.add(new ManualLine(schema.getCompteCredit(), SensEcriture.CREDIT, net, referenceCompte(transaction.getCompteDestination()), libelleCompte(transaction.getCompteDestination())));
+                if (frais.compareTo(BigDecimal.ZERO) > 0) {
+                    lines.add(new ManualLine(schema.getCompteFrais(), SensEcriture.CREDIT, frais, transaction.getReferenceUnique(), "Retenue interets"));
+                }
+                yield lines;
+            }
             default -> throw new IllegalStateException("Aucun schema de construction des lignes n'est defini pour " + operationCode);
         };
     }
@@ -766,6 +804,7 @@ public class ComptabiliteExtensionService {
         ensureSchema("CHEQUE_ENCAISSEMENT", "273000", "251000", "701300", "PAY");
         ensureSchema("MONETIQUE_REGLEMENT", "251000", "273000", "701300", "PAY");
         ensureSchema("PROVISION_CREDIT", "681000", "281000", null, "OD");
+        ensureSchema("DAT_CLOTURE", "271000", "251000", "701200", "EPA");
 
         ensureCompte("579000", "Caisse - comptes de passage", classe5, true);
         ensureCompte("778000", "Produits exceptionnels", classe7, true);
@@ -776,6 +815,8 @@ public class ComptabiliteExtensionService {
         ensureSchema("ECART_CAISSE_EXCEDENT", "571000", "778000", null, "OD");
         ensureSchema("ECART_CAISSE_DEFICIT", "678000", "571000", null, "OD");
         ensureSchema("DEPOT_OUVERTURE", "571000", "251000", null, "CAI");
+
+        ensureSchema("INTERET_EPARGNE_MENSUEL", "681000", "251000", null, "EPA");
     }
 
     private ClasseComptable ensureClasse(String codeClasse, String libelle, int ordre) {

@@ -15,8 +15,7 @@ BEGIN
                 date_changement TIMESTAMP NOT NULL,
                 motif VARCHAR2(255 CHAR),
                 created_at TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
-                updated_at TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
-                CONSTRAINT fk_hist_mdp_user FOREIGN KEY (id_user) REFERENCES utilisateur(id_user)
+                updated_at TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL
             )
         ]';
 
