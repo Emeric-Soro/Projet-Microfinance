@@ -1,0 +1,61 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Rapprochement cartes{% endblock %}
+{% block current_menu %}paiements_cartes{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+{% embed 'components/MfCard.html.twig' with {title: 'Rapprochement des transactions cartes'} %}
+    {% block card_content %}
+        {% include 'partials/_table_toolbar.html.twig' with {
+            search_placeholder: 'Rechercher...',
+            filters: [
+                {label: 'Statut', options: [
+                    {value: 'RAPPROCHE', label: 'Rapproché'},
+                    {value: 'EN_ATTENTE', label: 'En attente'},
+                    {value: 'ECART', label: 'Écart'},
+                ]}
+            ]
+        } %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                {key: 'id', label: 'N°'},
+                {key: 'dateTransaction', label: 'Date'},
+                {key: 'carte', label: 'Carte'},
+                {key: 'montantSysteme', label: 'Montant système'},
+                {key: 'montantBanque', label: 'Montant banque'},
+                {key: 'ecart', label: 'Écart'},
+                {key: 'statut', label: 'Statut'},
+                {key: 'actions', label: 'Actions'},
+            ],
+            rows: rapprochement
+        } %}
+            {% block card_content %}
+                {% for item in rapprochement %}
+                    <tr class="{{ item.ecart > 0 ? 'bg-red-50' : '' }}">
+                        <td>{{ item.id }}</td>
+                        <td>{{ item.dateTransaction|date('d/m/Y') }}</td>
+                        <td class="font-mono text-sm">{{ item.carte }}</td>
+                        <td>{{ item.montantSysteme|number_format(0, ',', ' ') }} FCFA</td>
+                        <td>{{ item.montantBanque|number_format(0, ',', ' ') }} FCFA</td>
+                        <td class="font-medium {{ item.ecart > 0 ? 'text-red-600' : 'text-green-600' }}">
+                            {{ item.ecart|number_format(0, ',', ' ') }} FCFA
+                        </td>
+                        <td>{% include 'components/MfStatusBadge.html.twig' with {status: item.statut} %}</td>
+                        <td class="text-right">
+                            <a href="#" class="text-sm text-primary hover:text-primary-600">Détails</a>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-8">
+                            {% include 'partials/_empty_state.html.twig' with {title: 'Aucune donnée', message: 'Aucune transaction à rapprocher.'} %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

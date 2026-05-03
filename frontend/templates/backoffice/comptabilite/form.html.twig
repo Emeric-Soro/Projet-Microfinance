@@ -1,0 +1,93 @@
+{% macro input(name, label, value, options) %}
+    <div class="{{ options.wrapper_class|default('') }}">
+        {% if label %}
+            <label for="{{ name }}" class="mf-label">{{ label }}{{ options.required ? ' <span class="text-red-500">*</span>' : '' }}</label>
+        {% endif %}
+        {% if options.type == 'select' %}
+            <select name="{{ name }}" id="{{ name }}" class="mf-input" {{ options.required ? 'required' }} {{ options.attributes|default('') }}>
+                {% if options.placeholder %}
+                    <option value="">{{ options.placeholder }}</option>
+                {% endif %}
+                {% for opt_value, opt_label in options.choices|default([]) %}
+                    <option value="{{ opt_value }}" {{ value == opt_value ? 'selected' }}>{{ opt_label }}</option>
+                {% endfor %}
+            </select>
+        {% elseif options.type == 'textarea' %}
+            <textarea name="{{ name }}" id="{{ name }}" class="mf-input" rows="{{ options.rows|default(3) }}" {{ options.required ? 'required' }} {{ options.attributes|default('') }}>{{ value|default('') }}</textarea>
+        {% elseif options.type == 'date' %}
+            <input type="date" name="{{ name }}" id="{{ name }}" value="{{ value|default('') }}" class="mf-input" {{ options.required ? 'required' }} {{ options.attributes|default('') }}>
+        {% elseif options.type == 'number' %}
+            <input type="number" step="{{ options.step|default('0.01') }}" name="{{ name }}" id="{{ name }}" value="{{ value|default('') }}" class="mf-input text-right" placeholder="{{ options.placeholder|default('0') }}" {{ options.required ? 'required' }} {{ options.attributes|default('') }}>
+        {% else %}
+            <input type="text" name="{{ name }}" id="{{ name }}" value="{{ value|default('') }}" class="mf-input" placeholder="{{ options.placeholder|default('') }}" {{ options.required ? 'required' }} {{ options.attributes|default('') }}>
+        {% endif %}
+        {% if options.help %}
+            <p class="text-xs text-on-surface-variant mt-1">{{ options.help }}</p>
+        {% endif %}
+    </div>
+{% endmacro %}
+
+{% macro date_range(name_prefix, date_debut, date_fin) %}
+    <div class="flex gap-4 items-end">
+        <div>
+            <label class="mf-label">Date début</label>
+            <input type="date" name="{{ name_prefix }}_date_debut" value="{{ date_debut|default('now'|date('Y-01-01')) }}" class="mf-input">
+        </div>
+        <div>
+            <label class="mf-label">Date fin</label>
+            <input type="date" name="{{ name_prefix }}_date_fin" value="{{ date_fin|default('now'|date('Y-m-d')) }}" class="mf-input">
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro filter_bar(form_action, fields) %}
+    <form method="get" action="{{ form_action }}" class="flex flex-wrap gap-4 items-end">
+        {% for field in fields %}
+            {% if field.type == 'search' %}
+                <div class="flex-1 min-w-[200px]">
+                    <label class="mf-label">{{ field.label }}</label>
+                    <input type="text" name="{{ field.name }}" value="{{ field.value|default('') }}" class="mf-input" placeholder="{{ field.placeholder|default('Rechercher...') }}">
+                </div>
+            {% elseif field.type == 'select' %}
+                <div class="{{ field.width|default('w-48') }}">
+                    <label class="mf-label">{{ field.label }}</label>
+                    <select name="{{ field.name }}" class="mf-input">
+                        <option value="">{{ field.placeholder|default('Tous') }}</option>
+                        {% for opt_value, opt_label in field.choices|default([]) %}
+                            <option value="{{ opt_value }}" {{ field.value|default('') == opt_value ? 'selected' }}>{{ opt_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% elseif field.type == 'date' %}
+                <div>
+                    <label class="mf-label">{{ field.label }}</label>
+                    <input type="date" name="{{ field.name }}" value="{{ field.value|default('') }}" class="mf-input">
+                </div>
+            {% endif %}
+        {% endfor %}
+        <button type="submit" class="mf-btn-primary">Filtrer</button>
+        {% if field.reset_path is defined %}
+            <a href="{{ field.reset_path }}" class="mf-btn-secondary">Réinitialiser</a>
+        {% endif %}
+    </form>
+{% endmacro %}
+
+{% macro submit_row(cancel_url, submit_label) %}
+    <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+        {% if cancel_url %}
+            <a href="{{ cancel_url }}" class="mf-btn-secondary">Annuler</a>
+        {% endif %}
+        <button type="submit" class="mf-btn-primary">{{ submit_label|default('Enregistrer') }}</button>
+    </div>
+{% endmacro %}
+
+{% macro stats_cards(items) %}
+    <div class="grid grid-cols-1 md:grid-cols-{{ items|length > 4 ? 4 : items|length }} gap-4 mb-6">
+        {% for item in items %}
+        <div class="mf-card p-4 {{ item.border_class|default('') }}">
+            <p class="text-sm text-on-surface-variant">{{ item.label }}</p>
+            <p class="text-xl font-heading font-bold {{ item.value_class|default('text-on-surface') }}">{{ item.value }}</p>
+        </div>
+        {% endfor %}
+    </div>
+{% endmacro %}

@@ -1,0 +1,66 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Fournisseurs - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Support', url: path('support_fournisseurs') }, { label: 'Fournisseurs' }] %}
+
+{% if mode == 'list' %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Fournisseurs</h1>
+    <a href="{{ path('support_fournisseurs_create') }}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Nouveau fournisseur</a>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Liste des fournisseurs' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'nom', label: 'Nom' },
+                { key: 'contact', label: 'Contact' },
+                { key: 'email', label: 'Email' },
+                { key: 'ville', label: 'Ville' },
+                { key: 'statut', label: 'Statut' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% include 'partials/_pagination.html.twig' with { current_page: page, total_pages: pages, total_items: total, route: 'support_fournisseurs', query: {} } %}
+
+{% elseif mode == 'create' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Nouveau fournisseur</h1></div>
+{% embed 'components/MfFormCard.html.twig' with { title: 'Création' } %}
+    {% block form_fields %}
+    <form method="post" action="{{ path('support_fournisseurs_create') }}">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'nom', label: 'Nom', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'contact', label: 'Contact' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'email', label: 'Email', type: 'email' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'ville', label: 'Ville' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'adresse', label: 'Adresse' } %}
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Enregistrer</button>
+            <a href="{{ path('support_fournisseurs') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+        </div>
+    </form>
+    {% endblock %}
+{% endembed %}
+
+{% elseif mode == 'show' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">{{ item.nom ?? 'Fournisseur' }}</h1></div>
+{% embed 'components/MfCard.html.twig' with { title: 'Détails' } %}
+    {% block card_content %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><strong>Nom:</strong> {{ item.nom ?? '—' }}</div>
+        <div><strong>Contact:</strong> {{ item.contact ?? '—' }}</div>
+        <div><strong>Email:</strong> {{ item.email ?? '—' }}</div>
+        <div><strong>Ville:</strong> {{ item.ville ?? '—' }}</div>
+        <div><strong>Adresse:</strong> {{ item.adresse ?? '—' }}</div>
+    </div>
+    <div class="mt-6"><a href="{{ path('support_fournisseurs') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Retour</a></div>
+    {% endblock %}
+{% endembed %}
+{% endif %}
+{% endblock %}

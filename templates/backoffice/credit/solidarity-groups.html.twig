@@ -1,0 +1,17 @@
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Groupes de solidarité'] } %}
+{% include 'partials/_flash.html.twig' %}
+
+<h1>Groupes de solidarité</h1>
+
+<section class="MfTable">
+    <h2>Liste des groupes</h2>
+    {% if groups is defined %}
+        <ul>
+        {% for g in groups %}
+            <li>{{ g.name ?? 'Groupe' }} - {{ g.members|length ?? 0 }} membres</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>Aucun groupe.</p>
+    {% endif %}
+    </section>

@@ -1,0 +1,57 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Coffre - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Gestion du coffre</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Consultation et gestion du coffre principal</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1">
+        {% embed component('MfCard') with { title: 'Solde du coffre' } %}
+            {% block card_content %}
+                <p class="text-3xl font-heading font-bold text-primary">{{ vault.solde|default(0)|montant }}</p>
+                <p class="text-sm text-on-surface-variant mt-1">Dernière mise à jour: {{ vault.dateMaj|default('now')|date_fr }}</p>
+            {% endblock %}
+        {% endembed %}
+
+        {% embed component('MfFormCard') with { title: 'Opération', description: 'Mouvement sur le coffre', class: 'mt-6' } %}
+            {% block form_fields %}
+                <div class="space-y-4">
+                    {% include component('MfSelect') with { name: 'type', label: 'Type', required: true, options: [
+                        { value: 'DEPOT', label: 'Dépôt dans le coffre' },
+                        { value: 'RETRAIT', label: 'Retrait du coffre' },
+                    ]} %}
+                    {% include component('MfMoneyInput') with { name: 'montant', label: 'Montant', required: true } %}
+                    {% include component('MfInput') with { name: 'motif', label: 'Motif', required: true } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-2">
+        {% embed component('MfCard') with { title: 'Mouvements du coffre' } %}
+            {% block card_content %}
+                {% embed component('MfDataTable') with {
+                    headers: [
+                        { key: 'date', label: 'Date', sortable: true },
+                        { key: 'type', label: 'Type' },
+                        { key: 'montant', label: 'Montant', sortable: true },
+                        { key: 'motif', label: 'Motif' },
+                        { key: 'utilisateur', label: 'Utilisateur' },
+                    ],
+                    rows: vault.mouvements|default([]),
+                    empty_title: 'Aucun mouvement',
+                    empty_message: 'Aucun mouvement enregistré.',
+                } %}
+                    {% block card_content %}
+                        {{ parent() }}
+                    {% endblock %}
+                {% endembed %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

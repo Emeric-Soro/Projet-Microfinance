@@ -1,0 +1,132 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Contrôles comptables - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Contrôles comptables</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Vérification de la cohérence des écritures</p>
+    </div>
+</div>
+
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+<div class="mf-card p-6 mb-6">
+    <form method="get" action="" class="flex flex-wrap gap-4 items-end">
+        <div class="w-64">
+            <label class="mf-label">Type de contrôle</label>
+            <select name="type" class="mf-input">
+                <option value="">Tous</option>
+                <option value="equilibre" {{ type == 'equilibre' ? 'selected' }}>Équilibre débit/crédit</option>
+                <option value="coherence" {{ type == 'coherence' ? 'selected' }}>Cohérence des comptes</option>
+                <option value="lettrage" {{ type == 'lettrage' ? 'selected' }}>Lettrage</option>
+                <option value="cumul" {{ type == 'cumul' ? 'selected' }}>Cumul périodique</option>
+            </select>
+        </div>
+        <button type="submit" class="mf-btn-primary">Lancer le contrôle</button>
+    </form>
+</div>
+
+{% if stats is not empty %}
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="mf-card p-4 border-l-4 border-green-500">
+        <p class="text-sm text-on-surface-variant">Équilibre</p>
+        <p class="text-xl font-heading font-bold text-green-600">{{ stats.equilibre|default(0) }}</p>
+    </div>
+    <div class="mf-card p-4 border-l-4 border-blue-500">
+        <p class="text-sm text-on-surface-variant">Cohérence</p>
+        <p class="text-xl font-heading font-bold text-blue-600">{{ stats.coherence|default(0) }}</p>
+    </div>
+    <div class="mf-card p-4 border-l-4 border-yellow-500">
+        <p class="text-sm text-on-surface-variant">Non lettré</p>
+        <p class="text-xl font-heading font-bold text-yellow-600">{{ stats.non_lettre|default(0) }}</p>
+    </div>
+    <div class="mf-card p-4 border-l-4 border-red-500">
+        <p class="text-sm text-on-surface-variant">Anomalies</p>
+        <p class="text-xl font-heading font-bold text-red-600">{{ stats.anomalies|default(0) }}</p>
+    </div>
+</div>
+{% endif %}
+
+{% if anomalies is not empty %}
+<div class="mf-card overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="font-heading font-semibold text-on-surface text-lg">Anomalies détectées</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="mf-table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Référence</th>
+                    <th>Gravité</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for anomaly in anomalies %}
+                <tr>
+                    <td><span class="text-xs font-mono bg-gray-100 px-2 py-0.5 rounded">{{ anomaly.type }}</span></td>
+                    <td>{{ anomaly.description }}</td>
+                    <td class="font-mono">{{ anomaly.reference|default('-') }}</td>
+                    <td>
+                        {% include 'partials/_status_badge.html.twig' with {
+                            status: anomaly.gravite,
+                            label: anomaly.gravite == 'HAUTE' ? 'Haute' : (anomaly.gravite == 'MOYENNE' ? 'Moyenne' : 'Basse')
+                        } %}
+                    </td>
+                    <td class="text-center">
+                        <a href="#" class="text-primary text-sm hover:underline">Corriger</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center py-8 text-on-surface-variant">
+                        <span class="text-green-600 font-medium">✓ Aucune anomalie détectée</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if controles is not empty %}
+<div class="mf-card overflow-hidden mt-6">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="font-heading font-semibold text-on-surface">Résultats des contrôles</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="mf-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Résultat</th>
+                    <th>Détails</th>
+                    <th>Utilisateur</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for controle in controles %}
+                <tr>
+                    <td>{{ controle.date_controle|date('d/m/Y H:i') }}</td>
+                    <td>{{ controle.type_controle }}</td>
+                    <td>{% include 'partials/_status_badge.html.twig' with {status: controle.resultat} %}</td>
+                    <td class="text-sm text-on-surface-variant">{{ controle.details|default('-') }}</td>
+                    <td>{{ controle.utilisateur|default('-') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center py-8 text-on-surface-variant">Aucun contrôle effectué</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

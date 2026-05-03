@@ -1,0 +1,71 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Tests de Résistance - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Simulation de Stress Test' } %}
+        {% block card_content %}
+            <form method="post" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Scénario</label>
+                    <select name="scenario[type]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                        <option value="credit">Choc de Crédit</option>
+                        <option value="liquidite">Choc de Liquidité</option>
+                        <option value="taux">Choc de Taux</option>
+                        <option value="change">Choc de Change</option>
+                        <option value="combine">Scénario Combiné</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Intensité du Choc (%)</label>
+                    <input type="number" name="scenario[intensite]" min="1" max="100" value="10" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Période (mois)</label>
+                    <input type="number" name="scenario[periode]" min="1" max="60" value="12" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="mf-btn-primary">Lancer la Simulation</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+
+    {% if simulation_result is defined and simulation_result is not empty %}
+        {% embed 'components/MfCard.html.twig' with { title: 'Résultat de la Simulation' } %}
+            {% block card_content %}
+                {% embed 'components/MfDataTable.html.twig' with {
+                    headers: [
+                        { key: 'indicateur', label: 'Indicateur' },
+                        { key: 'avant', label: 'Avant Choc' },
+                        { key: 'apres', label: 'Après Choc' },
+                        { key: 'variation', label: 'Variation' },
+                        { key: 'impact', label: 'Impact' },
+                    ],
+                    rows: simulation_result,
+                    actions: false,
+                } %}{% endembed %}
+            {% endblock %}
+        {% endembed %}
+    {% endif %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Historique des Simulations' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'date', label: 'Date' },
+                    { key: 'scenario', label: 'Scénario' },
+                    { key: 'intensite', label: 'Intensité' },
+                    { key: 'impact', label: 'Impact' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: data.historique|default([]),
+                actions: [{ label: 'Voir', url: row => '#', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' }],
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Contre-passation - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Contre-passation</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Extourne d'écritures comptables</p>
+    </div>
+</div>
+
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+<div class="mf-card p-6 mb-6">
+    <h3 class="font-heading font-semibold text-lg text-on-surface mb-4">Nouvelle contre-passation</h3>
+    <form method="post" action="{{ path('comptabilite_reversal') }}" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="mf-label">Écriture à extourner</label>
+                <select name="ecriture_id" class="mf-input" required>
+                    <option value="">Sélectionner</option>
+                    {% for ecriture in ecritures %}
+                        <option value="{{ ecriture.id }}">#{{ ecriture.id }} - {{ ecriture.libelle }} ({{ ecriture.date_operation|date('d/m/Y') }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="mf-label">Date d'extourne</label>
+                <input type="date" name="date_extourne" value="{{ 'now'|date('Y-m-d') }}" class="mf-input" required>
+            </div>
+            <div>
+                <label class="mf-label">Motif</label>
+                <input type="text" name="motif" class="mf-input" placeholder="Motif de l'extourne" required>
+            </div>
+        </div>
+        <div class="flex justify-end">
+            <button type="submit" class="mf-btn-primary">Effectuer la contre-passation</button>
+        </div>
+    </form>
+</div>
+
+<div class="mf-card overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="font-heading font-semibold text-on-surface">Historique des contre-passations</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="mf-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Écriture originale</th>
+                    <th>Nouvelle écriture</th>
+                    <th>Motif</th>
+                    <th>Utilisateur</th>
+                    <th class="text-center">Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ecriture in ecritures %}
+                <tr>
+                    <td>{{ ecriture.date_extourne|default(ecriture.date_operation)|date('d/m/Y') }}</td>
+                    <td class="font-mono">#{{ ecriture.ecriture_originale_id|default(ecriture.id) }}</td>
+                    <td class="font-mono">#{{ ecriture.nouvelle_ecriture_id|default('-') }}</td>
+                    <td>{{ ecriture.motif_extourne|default('-') }}</td>
+                    <td>{{ ecriture.utilisateur|default('-') }}</td>
+                    <td class="text-center">{% include 'partials/_status_badge.html.twig' with {status: ecriture.statut} %}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-8 text-on-surface-variant">Aucune contre-passation trouvée</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'partials/_pagination.html.twig' with {route: 'comptabilite_reversal'} %}
+</div>
+{% endblock %}

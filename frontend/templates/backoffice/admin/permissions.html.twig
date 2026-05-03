@@ -1,0 +1,40 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Permissions - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Administration', url: path('admin_permissions') }, { label: 'Permissions' }] %}
+
+{% if mode == 'list' %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Permissions</h1>
+    <a href="{{ path('admin_permissions_matrix') }}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Matrice des permissions</a>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Liste des permissions' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'ressource', label: 'Ressource' },
+                { key: 'action', label: 'Action' },
+                { key: 'description', label: 'Description' },
+            ],
+            rows: items,
+            actions: false,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+
+{% elseif mode == 'matrix' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Matrice des permissions</h1></div>
+{% embed 'components/MfCard.html.twig' with { title: 'Rôles vs Permissions' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: matrix.headers ?? [],
+            rows: matrix.rows ?? [],
+            actions: false,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+<div class="mt-4"><a href="{{ path('admin_permissions') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Retour</a></div>
+{% endif %}
+{% endblock %}

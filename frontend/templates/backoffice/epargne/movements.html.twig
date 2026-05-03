@@ -1,0 +1,38 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Mouvements épargne - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Mouvements du compte</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Compte: {{ account.numero }} - {{ account.client_nom }}</p>
+</div>
+
+{% embed component('MfCard') with { title: 'Solde actuel' } %}
+    {% block card_content %}
+        <p class="text-3xl font-heading font-bold text-primary">{{ account.solde|montant }}</p>
+    {% endblock %}
+{% endembed %}
+
+{% embed component('MfDataTable') with { headers: [
+    { key: 'date', label: 'Date', sortable: true },
+    { key: 'description', label: 'Description', sortable: true },
+    { key: 'montant', label: 'Montant', sortable: true },
+    { key: 'type', label: 'Type' },
+    { key: 'soldeApres', label: 'Solde après', sortable: true },
+    { key: 'reference', label: 'Référence' },
+], rows: movements, class: 'mt-6', empty_title: 'Aucun mouvement', empty_message: 'Aucun mouvement sur ce compte.' } %}
+    {% block card_content %}
+        {{ parent() }}
+    {% endblock %}
+{% endembed %}
+
+{% include 'partials/_pagination.html.twig' with {
+    route: 'epargne_movements',
+    query: app.request.query.all,
+    total_pages: total_pages,
+    current_page: current_page,
+    total_items: total_items,
+    page_size: page_size,
+} %}
+{% endblock %}

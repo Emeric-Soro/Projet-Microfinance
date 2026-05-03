@@ -1,1 +1,5 @@
 /.idea/
+/frontend/vendor/
+/frontend/var/
+/frontend/node_modules/
+/frontend/public/build/

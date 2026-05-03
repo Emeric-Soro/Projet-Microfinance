@@ -1,0 +1,39 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Opération déplacée - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Opération déplacée</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Enregistrer une opération avec une date antérieure</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        {% embed component('MfFormCard') with { title: 'Formulaire', description: 'Saisissez les informations de l\'opération déplacée' } %}
+            {% block form_fields %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% include component('MfSelect') with { name: 'compte_source', label: 'Compte source', required: true, options: accounts|map(a => { value: a.numero, label: a.numero ~ ' - ' ~ a.client_nom }) } %}
+                    {% include component('MfSelect') with { name: 'compte_destination', label: 'Compte destination', options: accounts|map(a => { value: a.numero, label: a.numero ~ ' - ' ~ a.client_nom }) } %}
+                    {% include component('MfMoneyInput') with { name: 'montant', label: 'Montant', required: true } %}
+                    {% include component('MfDatePicker') with { name: 'date_operation', label: 'Date effective', required: true } %}
+                    {% include component('MfInput') with { name: 'guichet', label: 'Guichet' } %}
+                    {% include component('MfInput') with { name: 'description', label: 'Description' } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-1">
+        {% embed component('MfCard') with { title: 'Règles' } %}
+            {% block card_content %}
+                <div class="text-sm text-on-surface-variant space-y-3">
+                    {% include component('MfAlertBanner') with { type: 'warning', message: 'Les opérations déplacées nécessitent une validation superviseur.' } %}
+                    <p>La date ne peut pas être antérieure à la dernière clôture de journée.</p>
+                    <p>Un motif valide doit être fourni.</p>
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

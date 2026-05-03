@@ -1,0 +1,23 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Ouverture caisse - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Ouverture de session</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Démarrer une nouvelle session de caisse</p>
+</div>
+
+<div class="max-w-2xl">
+    {% embed component('MfFormCard') with { title: 'Nouvelle session', description: 'Saisissez les informations d\'ouverture' } %}
+        {% block form_fields %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% include component('MfSelect') with { name: 'guichet', label: 'Guichet', required: true, options: guichets|map(g => { value: g.id, label: g.libelle }) } %}
+                {% include component('MfMoneyInput') with { name: 'solde_initial', label: 'Solde initial', required: true } %}
+                {% include component('MfSelect') with { name: 'devise', label: 'Devise', value: 'XOF', options: [{ value: 'XOF', label: 'XOF' }] } %}
+                {% include component('MfInput') with { name: 'observations', label: 'Observations' } %}
+            </div>
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

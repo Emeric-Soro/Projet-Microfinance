@@ -1,0 +1,50 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Reporting Organisation - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    <div class="mf-card p-6">
+        <form method="get" action="" class="flex flex-wrap gap-4 items-end">
+            <div>
+                <label class="block text-sm font-medium text-on-surface mb-1">Date début</label>
+                <input type="date" name="date_debut" value="{{ app.request.query.get('date_debut', date('Y-m-01')) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-on-surface mb-1">Date fin</label>
+                <input type="date" name="date_fin" value="{{ app.request.query.get('date_fin', date('Y-m-d')) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+            </div>
+            <button type="submit" class="mf-btn-primary">Générer</button>
+        </form>
+    </div>
+
+    {% if data is not empty %}
+        {% embed 'components/MfStatsGrid.html.twig' with { stats: [
+            { label: 'Régions', value: data.nbRegions|default('—'), icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', icon_bg: 'bg-primary-50', icon_color: 'text-primary' },
+            { label: 'Agences', value: data.nbAgences|default('—'), icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+            { label: 'Guichets', value: data.nbGuichets|default('—'), icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+            { label: 'Personnel', value: data.nbPersonnel|default('—'), icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', icon_bg: 'bg-teal-50', icon_color: 'text-teal-600' },
+        ] } %}{% endembed %}
+
+        {% embed 'components/MfCard.html.twig' with { title: 'Synthèse par Région' } %}
+            {% block card_content %}
+                {% embed 'components/MfDataTable.html.twig' with {
+                    headers: [
+                        { key: 'region', label: 'Région' },
+                        { key: 'nbAgences', label: 'Agences' },
+                        { key: 'nbGuichets', label: 'Guichets' },
+                        { key: 'nbPersonnel', label: 'Personnel' },
+                        { key: 'nbClients', label: 'Clients' },
+                    ],
+                    rows: data.regions|default([]),
+                    actions: false,
+                } %}{% endembed %}
+            {% endblock %}
+        {% endembed %}
+    {% else %}
+        {% include 'partials/_empty_state.html.twig' with { title: 'Aucun rapport', message: 'Sélectionnez une période pour générer le rapport.', action_url: path('organisation_dashboard'), action_label: 'Voir le tableau de bord' } %}
+    {% endif %}
+</div>
+{% endblock %}

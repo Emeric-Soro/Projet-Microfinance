@@ -1,0 +1,84 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Employés - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Support RH', url: path('support_employes') }, { label: 'Employés' }] %}
+
+{% if mode == 'list' %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Employés</h1>
+    <a href="{{ path('support_employes_create') }}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Nouvel employé</a>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Liste des employés' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'matricule', label: 'Matricule' },
+                { key: 'nom', label: 'Nom' },
+                { key: 'prenom', label: 'Prénom' },
+                { key: 'poste', label: 'Poste' },
+                { key: 'service', label: 'Service' },
+                { key: 'statut', label: 'Statut' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% include 'partials/_pagination.html.twig' with { current_page: page, total_pages: pages, total_items: total, route: 'support_employes', query: {} } %}
+
+{% elseif mode == 'create' or mode == 'edit' %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">{{ mode == 'create' ? 'Nouvel employé' : 'Modifier employé' }}</h1>
+</div>
+{% embed 'components/MfFormCard.html.twig' with { title: mode == 'create' ? 'Création' : 'Édition' } %}
+    {% block form_fields %}
+    <form method="post" action="{{ path(mode == 'create' ? 'support_employes_create' : 'support_employes_edit', { id: item.id ?? 0 }) }}">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'matricule', label: 'Matricule', value: item.matricule ?? '', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'nom', label: 'Nom', value: item.nom ?? '', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'prenom', label: 'Prénom', value: item.prenom ?? '', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'poste', label: 'Poste', value: item.poste ?? '' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'service', label: 'Service', value: item.service ?? '' } %}
+            {% include 'components/MfSelect.html.twig' with { name: 'statut', label: 'Statut', value: item.statut ?? 'ACTIF', options: [
+                { value: 'ACTIF', label: 'Actif' }, { value: 'INACTIF', label: 'Inactif' }, { value: 'SUSPENDU', label: 'Suspendu' }
+            ]} %}
+            {% include 'components/MfInput.html.twig' with { name: 'email', label: 'Email', value: item.email ?? '' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'telephone', label: 'Téléphone', value: item.telephone ?? '' } %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'dateEmbauche', label: "Date d'embauche", value: item.dateEmbauche ?? '' } %}
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Enregistrer</button>
+            <a href="{{ path('support_employes') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+        </div>
+    </form>
+    {% endblock %}
+{% endembed %}
+
+{% elseif mode == 'show' %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">{{ item.nom ?? '' }} {{ item.prenom ?? '' }}</h1>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Détails employé' } %}
+    {% block card_content %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><strong>Matricule:</strong> {{ item.matricule ?? '—' }}</div>
+        <div><strong>Nom:</strong> {{ item.nom ?? '—' }}</div>
+        <div><strong>Prénom:</strong> {{ item.prenom ?? '—' }}</div>
+        <div><strong>Poste:</strong> {{ item.poste ?? '—' }}</div>
+        <div><strong>Service:</strong> {{ item.service ?? '—' }}</div>
+        <div><strong>Statut:</strong> {% include 'components/MfStatusBadge.html.twig' with { status: item.statut ?? 'ACTIF' } %}</div>
+        <div><strong>Email:</strong> {{ item.email ?? '—' }}</div>
+        <div><strong>Téléphone:</strong> {{ item.telephone ?? '—' }}</div>
+        <div><strong>Date embauche:</strong> {{ item.dateEmbauche ?? '—' }}</div>
+    </div>
+    <div class="mt-6">
+        <a href="{{ path('support_employes_edit', { id: item.id }) }}" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Modifier</a>
+        <a href="{{ path('support_employes') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors ml-2">Retour</a>
+    </div>
+    {% endblock %}
+{% endembed %}
+{% endif %}
+{% endblock %}

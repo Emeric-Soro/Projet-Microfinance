@@ -1,0 +1,34 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Paramètres caisse - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Paramètres caisse</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Configuration des règles et limites de caisse</p>
+</div>
+
+<div class="max-w-2xl">
+    {% embed component('MfFormCard') with { title: 'Configuration', description: 'Paramètres généraux de la caisse' } %}
+        {% block form_fields %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% include component('MfMoneyInput') with { name: 'plafond_depot', label: 'Plafond dépôt', value: params.plafond_depot|default('') } %}
+                {% include component('MfMoneyInput') with { name: 'plafond_retrait', label: 'Plafond retrait', value: params.plafond_retrait|default('') } %}
+                {% include component('MfMoneyInput') with { name: 'seuil_alerte', label: 'Seuil d\'alerte', value: params.seuil_alerte|default('') } %}
+                {% include component('MfInput') with { name: 'devise_principale', label: 'Devise principale', value: params.devise_principale|default('XOF') } %}
+            </div>
+            <div class="space-y-3 pt-4 border-t border-gray-100">
+                <h4 class="text-sm font-semibold text-on-surface">Options</h4>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="billetage_obligatoire" name="billetage_obligatoire" class="rounded border-gray-300" {{ params.billetage_obligatoire|default(false) ? 'checked' : '' }}>
+                    <label for="billetage_obligatoire" class="text-sm text-on-surface">Billetage obligatoire à la fermeture</label>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="double_validation" name="double_validation" class="rounded border-gray-300" {{ params.double_validation|default(false) ? 'checked' : '' }}>
+                    <label for="double_validation" class="text-sm text-on-surface">Double validation requise</label>
+                </div>
+            </div>
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

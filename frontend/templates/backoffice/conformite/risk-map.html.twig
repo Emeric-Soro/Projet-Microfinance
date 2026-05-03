@@ -1,0 +1,48 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Cartographie des risques conformité - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfStatsGrid.html.twig' with { stats: [
+        { label: 'Risques critiques', value: data.critiques|default('—'), icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z', icon_bg: 'bg-red-50', icon_color: 'text-red-600' },
+        { label: 'Risques élevés', value: data.eleves|default('—'), icon: 'M12 9v2m0 4h.01', icon_bg: 'bg-orange-50', icon_color: 'text-orange-600' },
+        { label: 'Risques moyens', value: data.moyens|default('—'), icon: 'M12 9v2m0 4h.01', icon_bg: 'bg-yellow-50', icon_color: 'text-yellow-600' },
+        { label: 'Risques faibles', value: data.faibles|default('—'), icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+    ] } %}{% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Matrice des risques conformité' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'risque', label: 'Risque' },
+                    { key: 'categorie', label: 'Catégorie' },
+                    { key: 'probabilite', label: 'Probabilité' },
+                    { key: 'impact', label: 'Impact' },
+                    { key: 'niveau', label: 'Niveau' },
+                    { key: 'controles', label: 'Contrôles' },
+                ],
+                rows: data.matrice|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Plan d\'action' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'action', label: 'Action' },
+                    { key: 'responsable', label: 'Responsable' },
+                    { key: 'echeance', label: 'Échéance' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: data.plan_action|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

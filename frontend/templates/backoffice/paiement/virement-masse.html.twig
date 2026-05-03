@@ -1,0 +1,62 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Virements de masse{% endblock %}
+{% block current_menu %}paiements_virements_masse{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+{% embed 'components/MfCard.html.twig' with {title: 'Virements de masse', action: {url: '#', label: 'Nouveau virement masse'}} %}
+    {% block card_content %}
+        {% include 'partials/_table_toolbar.html.twig' with {
+            search_placeholder: 'Rechercher...',
+            filters: [
+                {label: 'Statut', options: [
+                    {value: 'BROUILLON', label: 'Brouillon'},
+                    {value: 'EN_ATTENTE', label: 'En attente'},
+                    {value: 'EXECUTE', label: 'Exécuté'},
+                    {value: 'ECHOUE', label: 'Échoué'},
+                ]}
+            ]
+        } %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                {key: 'id', label: 'N°'},
+                {key: 'libelle', label: 'Libellé'},
+                {key: 'nbBeneficiaires', label: 'Bénéficiaires'},
+                {key: 'montantTotal', label: 'Montant total'},
+                {key: 'dateExecution', label: 'Date exécution'},
+                {key: 'statut', label: 'Statut'},
+                {key: 'actions', label: 'Actions'},
+            ],
+            rows: virements
+        } %}
+            {% block card_content %}
+                {% for virement in virements %}
+                    <tr>
+                        <td>{{ virement.id }}</td>
+                        <td class="font-medium">{{ virement.libelle }}</td>
+                        <td>{{ virement.nbBeneficiaires }}</td>
+                        <td class="font-medium">{{ virement.montantTotal|number_format(0, ',', ' ') }} FCFA</td>
+                        <td>{{ virement.dateExecution|date('d/m/Y H:i') }}</td>
+                        <td>{% include 'components/MfStatusBadge.html.twig' with {status: virement.statut} %}</td>
+                        <td class="text-right">
+                            {% if virement.statut == 'EN_ATTENTE' or virement.statut == 'BROUILLON' %}
+                                <form method="post" action="{{ path('paiements_virements_masse_execute', {id: virement.id}) }}" class="inline" onsubmit="return confirm('Exécuter ce virement de masse?')">
+                                    <button type="submit" class="text-sm font-medium text-primary hover:text-primary-600">Exécuter</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-8">
+                            {% include 'partials/_empty_state.html.twig' with {title: 'Aucun virement', message: 'Aucun virement de masse trouvé.'} %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

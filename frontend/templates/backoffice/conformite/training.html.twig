@@ -1,0 +1,57 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Formation conformité - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Nouvelle session de formation' } %}
+        {% block card_content %}
+            <form method="post" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Thème de la formation</label>
+                    <input type="text" name="formation[theme]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required placeholder="Ex: LCB-FT, KYC, Code de conduite...">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Date de début</label>
+                        <input type="date" name="formation[date_debut]" value="{{ 'now'|date('Y-m-d') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Date de fin</label>
+                        <input type="date" name="formation[date_fin]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Nombre de participants</label>
+                        <input type="number" name="formation[participants]" min="1" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Description</label>
+                    <textarea name="formation[description]" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="mf-btn-primary">Enregistrer la formation</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Sessions de formation' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'theme', label: 'Thème' },
+                    { key: 'date_debut', label: 'Début' },
+                    { key: 'date_fin', label: 'Fin' },
+                    { key: 'participants', label: 'Participants' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: formations.liste|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

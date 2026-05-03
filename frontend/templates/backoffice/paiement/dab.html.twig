@@ -1,0 +1,59 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Distributeurs automatiques (DAB){% endblock %}
+{% block current_menu %}paiements_dab{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+{% embed 'components/MfStatsGrid.html.twig' with {stats: [
+    {label: 'DAB actifs', value: stats.dabActifs|default(0), icon: 'M9 12l2 2 4-4', icon_bg: 'bg-green-50', icon_color: 'text-green-600'},
+    {label: 'Transactions jour', value: stats.transactionsJour|default(0), icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600'},
+    {label: 'Volume retraits', value: (stats.volumeRetraits|default(0))|number_format(0, ',', ' ') ~ ' FCFA', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', icon_bg: 'bg-primary-50', icon_color: 'text-primary'},
+    {label: 'Disponibilité', value: stats.disponibilite|default(0) ~ '%', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-teal-50', icon_color: 'text-teal-600'},
+]} %}{% endembed %}
+
+{% embed 'components/MfCard.html.twig' with {title: 'Opérations DAB'} %}
+    {% block card_content %}
+        {% include 'partials/_table_toolbar.html.twig' with {
+            search_placeholder: 'Rechercher une opération...',
+        } %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                {key: 'id', label: 'N°'},
+                {key: 'dateOperation', label: 'Date'},
+                {key: 'carte', label: 'Carte'},
+                {key: 'type', label: 'Type'},
+                {key: 'montant', label: 'Montant'},
+                {key: 'dab', label: 'DAB'},
+                {key: 'statut', label: 'Statut'},
+            ],
+            rows: operations
+        } %}
+            {% block card_content %}
+                {% for op in operations %}
+                    <tr>
+                        <td>{{ op.id }}</td>
+                        <td>{{ op.dateOperation|date('d/m/Y H:i') }}</td>
+                        <td class="font-mono text-sm">{{ op.carte }}</td>
+                        <td>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ op.type == 'RETRAIT' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' }}">
+                                {{ op.type }}
+                            </span>
+                        </td>
+                        <td class="font-medium">{{ op.montant|number_format(0, ',', ' ') }} FCFA</td>
+                        <td>{{ op.dab }}</td>
+                        <td>{% include 'components/MfStatusBadge.html.twig' with {status: op.statut} %}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-8">
+                            {% include 'partials/_empty_state.html.twig' with {title: 'Aucune opération', message: 'Aucune opération DAB trouvée.'} %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

@@ -1,0 +1,9 @@
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Fichier'] } %}
+{% include 'partials/_flash.html.twig' %}
+
+<h1>Dossier Crédit - Fichier</h1>
+
+<section class="MfCard">
+    <header>Fichier complet</header>
+    <div class="MfDocumentViewer">{{ fileContent ?? 'Aucun fichier chargé' }}</div>
+    </section>

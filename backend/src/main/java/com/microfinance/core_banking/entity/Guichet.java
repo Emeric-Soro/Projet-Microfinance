@@ -35,5 +35,8 @@ public class Guichet extends BaseAuditEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_agence", nullable = false)
     private Agence agence;
-}
 
+    public String getLibelle() {
+        return nomGuichet;
+    }
+}

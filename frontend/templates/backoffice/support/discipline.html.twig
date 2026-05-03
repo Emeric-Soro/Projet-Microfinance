@@ -1,0 +1,52 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Discipline - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Support RH', url: path('support_discipline') }, { label: 'Discipline' }] %}
+
+{% if mode == 'list' %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Sanctions disciplinaires</h1>
+    <a href="{{ path('support_discipline_create') }}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Nouvelle sanction</a>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Liste des sanctions' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'employe', label: 'Employé' },
+                { key: 'type', label: 'Type' },
+                { key: 'date', label: 'Date' },
+                { key: 'motif', label: 'Motif' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% include 'partials/_pagination.html.twig' with { current_page: page, total_pages: pages, total_items: total, route: 'support_discipline', query: {} } %}
+
+{% elseif mode == 'create' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Nouvelle sanction</h1></div>
+{% embed 'components/MfFormCard.html.twig' with { title: 'Enregistrement' } %}
+    {% block form_fields %}
+    <form method="post" action="{{ path('support_discipline_create') }}">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'employe', label: 'Employé', required: true } %}
+            {% include 'components/MfSelect.html.twig' with { name: 'type', label: 'Type', options: [
+                { value: 'AVERTISSEMENT', label: 'Avertissement' }, { value: 'BLAME', label: 'Blâme' },
+                { value: 'MISE_A_PIED', label: 'Mise à pied' }, { value: 'LICENCIEMENT', label: 'Licenciement' }
+            ]} %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'date', label: 'Date', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'motif', label: 'Motif' } %}
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Enregistrer</button>
+            <a href="{{ path('support_discipline') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+        </div>
+    </form>
+    {% endblock %}
+{% endembed %}
+{% endif %}
+{% endblock %}

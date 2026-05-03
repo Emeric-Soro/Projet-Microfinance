@@ -1,0 +1,42 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Logs - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Administration', url: path('admin_logs') }, { label: 'Logs' }] %}
+
+{% if mode == 'list' %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Logs système</h1>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Journal système' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'date', label: 'Date' },
+                { key: 'niveau', label: 'Niveau' },
+                { key: 'message', label: 'Message' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% include 'partials/_pagination.html.twig' with { current_page: page, total_pages: pages, total_items: total, route: 'admin_logs', query: {} } %}
+
+{% elseif mode == 'show' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Détail log</h1></div>
+{% embed 'components/MfCard.html.twig' with { title: 'Informations' } %}
+    {% block card_content %}
+    <div class="grid grid-cols-1 gap-4">
+        <div><strong>Date:</strong> {{ item.date ?? '—' }}</div>
+        <div><strong>Niveau:</strong> {% include 'components/MfStatusBadge.html.twig' with { status: item.niveau ?? 'INFO' } %}</div>
+        <div><strong>Message:</strong> {{ item.message ?? '—' }}</div>
+        <div><strong>Contexte:</strong> <pre class="mt-2 p-3 bg-gray-50 rounded text-xs overflow-x-auto">{{ item.contexte|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre></div>
+    </div>
+    <div class="mt-6"><a href="{{ path('admin_logs') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Retour</a></div>
+    {% endblock %}
+{% endembed %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Compte de résultat - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Compte de résultat</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Analyse des produits et charges</p>
+    </div>
+</div>
+
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+<div class="mf-card p-6 mb-6">
+    <form method="get" action="" class="flex flex-wrap gap-4 items-end">
+        <div class="w-64">
+            <label class="mf-label">Exercice</label>
+            <select name="exercice_id" class="mf-input">
+                <option value="">Sélectionner</option>
+                {% for exercice in exercices %}
+                    <option value="{{ exercice.id }}" {{ exercice_id == exercice.id ? 'selected' }}>{{ exercice.code }} - {{ exercice.libelle }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="mf-btn-primary">Afficher</button>
+    </form>
+</div>
+
+{% if resultat is not empty %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="mf-card p-6">
+        <h3 class="font-heading font-semibold text-lg text-on-surface mb-4">Charges</h3>
+        <table class="mf-table">
+            <tbody>
+                {% for charge in resultat.charges|default([]) %}
+                <tr>
+                    <td class="font-mono text-sm">{{ charge.numero }}</td>
+                    <td>{{ charge.libelle }}</td>
+                    <td class="text-right font-mono">{{ charge.montant|number_format(0, ',', ' ') }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="text-center py-4 text-on-surface-variant">Aucune charge</td></tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="font-bold border-t-2 border-gray-300">
+                    <td colspan="2">Total charges</td>
+                    <td class="text-right font-mono">{{ resultat.total_charges|default(0)|number_format(0, ',', ' ') }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="mf-card p-6">
+        <h3 class="font-heading font-semibold text-lg text-on-surface mb-4">Produits</h3>
+        <table class="mf-table">
+            <tbody>
+                {% for produit in resultat.produits|default([]) %}
+                <tr>
+                    <td class="font-mono text-sm">{{ produit.numero }}</td>
+                    <td>{{ produit.libelle }}</td>
+                    <td class="text-right font-mono">{{ produit.montant|number_format(0, ',', ' ') }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="text-center py-4 text-on-surface-variant">Aucun produit</td></tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="font-bold border-t-2 border-gray-300">
+                    <td colspan="2">Total produits</td>
+                    <td class="text-right font-mono">{{ resultat.total_produits|default(0)|number_format(0, ',', ' ') }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<div class="mf-card p-6 mt-6">
+    <div class="flex justify-between items-center">
+        <span class="text-lg font-heading font-semibold">Résultat net</span>
+        <span class="text-2xl font-heading font-bold {{ resultat.resultat_net|default(0) >= 0 ? 'text-green-600' : 'text-red-600' }}">
+            {{ resultat.resultat_net|default(0)|number_format(0, ',', ' ') }}
+        </span>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Historique crédit - {{ client.nom|default(client.raisonSociale|default('Client')) }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Crédit', url: path('credit_dashboard') }, { label: 'Historique crédit - ' ~ (client.nom|default(client.raisonSociale|default('Client'))) }] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Historique crédit</h1>
+    <p class="text-sm text-on-surface-variant mt-1">{{ client.nom|default('') }} {{ client.prenom|default('') }}{{ client.raisonSociale|default('') }}</p>
+</div>
+
+<div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <table class="w-full text-sm">
+        <thead>
+            <tr class="bg-gray-50 text-left">
+                <th class="px-4 py-3 font-medium text-on-surface-variant">N° crédit</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Produit</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Montant</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Date accord</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Statut</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in historique %}
+                <tr class="border-t border-gray-100 hover:bg-gray-50">
+                    <td class="px-4 py-3 font-medium">{{ h.id }}</td>
+                    <td class="px-4 py-3">{{ h.produitLibelle|default('') }}</td>
+                    <td class="px-4 py-3">{{ h.montant|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="px-4 py-3">{{ h.dateAccord|default('')|date('d/m/Y') }}</td>
+                    <td class="px-4 py-3">
+                        <span class="inline-block px-2 py-0.5 text-xs rounded-full {{ h.statut == 'REMBOURSE' ? 'bg-green-100 text-green-800' : h.statut == 'IMPAYE' ? 'bg-red-100 text-red-800' : h.statut == 'EN_COURS' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600' }}">
+                            {{ h.statut|default('')|replace({'_': ' '}) }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <a href="{{ path('credit_detail', { id: h.id }) }}" class="text-teal-600 hover:text-teal-800 text-xs">Voir</a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="6" class="px-4 py-8 text-center text-on-surface-variant">Aucun historique crédit trouvé pour ce client.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

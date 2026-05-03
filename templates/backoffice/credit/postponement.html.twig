@@ -1,0 +1,15 @@
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Report de paiement'] } %}
+{% include 'partials/_flash.html.twig' %}
+
+<h1>Report de paiement</h1>
+
+<section class="MfCard">
+    <header>Demande de report</header>
+    <form method="post" action="">
+        <div class="MfFormRow">
+            <label>Motif</label>
+            <input class="MfInput" name="reason" type="text" />
+        </div>
+        <button class="MfButton" type="submit">Soumettre</button>
+    </form>
+    </section>

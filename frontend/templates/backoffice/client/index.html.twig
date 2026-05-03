@@ -1,0 +1,59 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Liste des clients - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Clients', url: path('client_list') }, { label: 'Liste' }] %}
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Clients</h1>
+    <div class="flex items-center gap-2">
+        <a href="{{ path('client_search') }}" class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm">Recherche avancée</a>
+        <a href="{{ path('client_create') }}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors text-sm">Nouveau client</a>
+    </div>
+</div>
+
+{% include 'partials/_table_toolbar.html.twig' with {
+    search_placeholder: 'Rechercher un client...',
+    export_actions: true,
+    action_button: { url: path('client_create'), label: 'Nouveau client' },
+    filters: [
+        { label: 'Statut', options: [
+            { value: 'ACTIF', label: 'Actif' },
+            { value: 'SUSPENDU', label: 'Suspendu' },
+            { value: 'INACTIF', label: 'Inactif' },
+            { value: 'ARCHIVE', label: 'Archivé' },
+        ]},
+        { label: 'Type', options: [
+            { value: 'PHYSIQUE', label: 'Physique' },
+            { value: 'MORAL', label: 'Morale' },
+        ]},
+    ],
+} %}
+
+{% embed 'components/MfDataTable.html.twig' with {
+    headers: [
+        { key: 'nom', label: 'Nom', sortable: true },
+        { key: 'prenom', label: 'Prénom', sortable: true },
+        { key: 'telephone', label: 'Téléphone' },
+        { key: 'email', label: 'Email' },
+        { key: 'type', label: 'Type' },
+        { key: 'statut', label: 'Statut' },
+        { key: 'agence', label: 'Agence' },
+    ],
+    rows: clients,
+    actions: [
+        { label: 'Voir', url: function(row) { return path('client_detail', { id: row.id }) }, icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
+        { label: 'Modifier', url: function(row) { return path('client_edit', { id: row.id }) }, icon: 'M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z' },
+    ],
+} %}{% endembed %}
+
+{% include 'partials/_pagination.html.twig' with {
+    current_page: current_page,
+    total_pages: total_pages,
+    total_items: total_items,
+    page_size: page_size,
+    route: 'client_list',
+    query: { q: search_query },
+} %}
+{% endblock %}

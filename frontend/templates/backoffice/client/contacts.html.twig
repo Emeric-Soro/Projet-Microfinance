@@ -1,0 +1,72 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Contacts - {{ client.nom ?? client.raisonSociale ?? 'Client' }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [
+    { label: 'Clients', url: path('client_list') },
+    { label: client.nom ?? client.raisonSociale ?? 'Client', url: path('client_detail', { id: client.id }) },
+    { label: 'Contacts' }
+] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Contacts</h1>
+    <p class="text-sm text-on-surface-variant mt-1">{{ client.nom ?? client.raisonSociale ?? 'Client' }} {{ client.prenom ?? '' }}</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div>
+        {% embed 'components/MfCard.html.twig' with { title: 'Ajouter un contact' } %}
+            {% block card_content %}
+            <form method="post" action="{{ path('client_contacts', { id: client.id }) }}">
+                {% include 'components/MfInput.html.twig' with { name: 'nom', label: 'Nom', required: true } %}
+                {% include 'components/MfInput.html.twig' with { name: 'prenom', label: 'Prénom' } %}
+                {% include 'components/MfInput.html.twig' with { name: 'telephone', label: 'Téléphone', required: true } %}
+                {% include 'components/MfInput.html.twig' with { name: 'email', label: 'Email' } %}
+                {% include 'components/MfSelect.html.twig' with { name: 'typeRelation', label: 'Relation', options: [
+                    { value: 'CONJOINT', label: 'Conjoint(e)' },
+                    { value: 'ENFANT', label: 'Enfant' },
+                    { value: 'PARENT', label: 'Parent' },
+                    { value: 'FRERE_SOEUR', label: 'Frère/Soeur' },
+                    { value: 'AMI', label: 'Ami(e)' },
+                    { value: 'COLLEGUE', label: 'Collègue' },
+                    { value: 'VOISIN', label: 'Voisin(e)' },
+                    { value: 'AUTRE', label: 'Autre' },
+                ]} %}
+                <div class="mt-4">
+                    <button type="submit" class="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Ajouter</button>
+                </div>
+            </form>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-2">
+        {% embed 'components/MfCard.html.twig' with { title: 'Liste des contacts (' ~ contacts|length ~ ')' } %}
+            {% block card_content %}
+                {% if contacts is not empty %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for contact in contacts %}
+                        <div class="flex items-start gap-4 p-4 rounded-lg border border-gray-200">
+                            <div class="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
+                                <span class="text-sm font-bold text-primary">{{ contact.nom|first }}{{ contact.prenom|first }}</span>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-on-surface">{{ contact.nom }} {{ contact.prenom ?? '' }}</p>
+                                <p class="text-xs text-on-surface-variant">{{ contact.telephone }}</p>
+                                {% if contact.email is defined and contact.email %}
+                                    <p class="text-xs text-on-surface-variant">{{ contact.email }}</p>
+                                {% endif %}
+                                <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700 mt-1">{{ contact.typeRelation ?? 'Contact' }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {% include 'partials/_empty_state.html.twig' with { title: 'Aucun contact', message: 'Aucun contact enregistré pour ce client.' } %}
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

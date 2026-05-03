@@ -1,0 +1,46 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block backoffice_content %}
+<div class="mf-card p-0 overflow-hidden">
+    <div class="p-6 border-b border-teal-100">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-xl font-heading font-semibold text-on-surface">Comptes en attente</h2>
+                <p class="text-sm text-on-surface-variant mt-1">{{ total_items }} compte(s) en attente de validation</p>
+            </div>
+            <a href="{{ path('account_open') }}" class="mf-btn-primary flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Nouveau compte
+            </a>
+        </div>
+    </div>
+
+    <div class="p-6 border-b border-teal-100 bg-surface">
+        <p class="text-sm text-on-surface-variant flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Comptes en attente d'activation ou de validation
+        </p>
+    </div>
+
+    {% include 'components/MfDataTable.html.twig' with {
+        headers: [
+            { key: 'numero', label: 'Numéro' },
+            { key: 'client', label: 'Client' },
+            { key: 'produit', label: 'Produit' },
+            { key: 'solde', label: 'Solde' },
+            { key: 'dateCreation', label: 'Date demande' },
+            { key: 'statut', label: 'Statut' },
+        ],
+        rows: comptes,
+        actions: [
+            { label: 'Détail', url: (row) => path('account_detail', { num: row.numero }), icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
+        ],
+        empty_title: 'Aucun compte en attente',
+        empty_message: 'Tous les comptes ont été traités.',
+    } %}
+
+    {% include 'partials/_pagination.html.twig' with {
+        route: 'account_pending',
+    } %}
+</div>
+{% endblock %}

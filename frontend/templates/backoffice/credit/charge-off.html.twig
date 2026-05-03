@@ -1,0 +1,85 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Passage en perte - Crédit N°{{ credit.id }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Crédit', url: path('credit_dashboard') }, { label: 'Impayés', url: path('credit_arrears') }, { label: 'N°' ~ credit.id ~ ' - Passage en perte' }] %}
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Passage en perte - Crédit N°{{ credit.id }}</h1>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Récapitulatif</h3>
+            </div>
+            <div class="p-4 space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Client</span>
+                    <span class="font-medium">{{ credit.clientNom|default('') }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Encours total</span>
+                    <span class="font-semibold">{{ credit.encours|default(0)|number_format(0, ',', ' ') }} FCFA</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Arriéré</span>
+                    <span class="font-semibold text-red-600">{{ credit.arriere|default(0)|number_format(0, ',', ' ') }} FCFA</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Jours d'impayé</span>
+                    <span class="font-medium">{{ credit.joursImpaye|default(0) }} jours</span>
+                </div>
+                {% if provisions is defined and provisions is not empty %}
+                <div class="pt-2 mt-2 border-t border-gray-100">
+                    <div class="flex justify-between">
+                        <span class="text-on-surface-variant">Provision constituée</span>
+                        <span class="font-medium text-orange-600">{{ provisions.montant|default(0)|number_format(0, ',', ' ') }} FCFA</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Passage en perte</h3>
+            </div>
+            <div class="p-4">
+                <form method="post" action="{{ path('credit_charge_off', { id: credit.id }) }}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Montant à passer en perte (FCFA)</label>
+                            <input type="number" name="montant" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value="{{ credit.arriere|default(0) }}" min="0" step="1000" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Date de passage en perte</label>
+                            <input type="date" name="datePassage" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value="{{ 'now'|date('Y-m-d') }}">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-on-surface mb-1">Motif de la décision</label>
+                        <textarea name="motif" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" required></textarea>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-on-surface mb-1">Approbation requise</label>
+                        <select name="approbation" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            <option value="DIRECTEUR">Directeur général</option>
+                            <option value="COMITE_CREDIT">Comité de crédit</option>
+                            <option value="CONSEIL">Conseil d'administration</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center justify-end gap-3 mt-6">
+                        <a href="{{ path('credit_arrears') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">Annuler</a>
+                        <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm" onclick="return confirm('Confirmer le passage en perte de {{ credit.arriere|default(0)|number_format(0, ',', ' ') }} FCFA ? Cette action est irréversible.')">Confirmer le passage en perte</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Limites de validation - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Configurer les limites' } %}
+        {% block card_content %}
+            <form method="post" class="space-y-4">
+                {% for limite in limites|default([]) %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b border-gray-100 pb-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">{{ limite.libelle }}</label>
+                        <input type="hidden" name="limites[{{ loop.index0 }}][id]" value="{{ limite.id }}">
+                    </div>
+                    <div>
+                        <input type="number" name="limites[{{ loop.index0 }}][valeur]" value="{{ limite.valeur }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-on-surface-variant text-sm">Aucune limite configurée.</p>
+                {% endfor %}
+                <div class="flex justify-end">
+                    <button type="submit" class="mf-btn-primary">Enregistrer les limites</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

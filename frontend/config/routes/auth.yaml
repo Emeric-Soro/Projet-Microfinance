@@ -1,0 +1,43 @@
+login:
+    path: /login
+    controller: App\Controller\Auth\LoginController::index
+    methods: [GET, POST]
+
+login_otp:
+    path: /login/otp
+    controller: App\Controller\Auth\OtpController::index
+    methods: [GET, POST]
+
+setup_2fa:
+    path: /setup-2fa
+    controller: App\Controller\Auth\TwoFactorController::setup
+    methods: [GET, POST]
+
+forgot_password:
+    path: /forgot-password
+    controller: App\Controller\Auth\ForgotPasswordController::index
+    methods: [GET, POST]
+
+reset_password:
+    path: /reset-password/{token}
+    controller: App\Controller\Auth\ResetPasswordController::index
+    methods: [GET, POST]
+
+change_expired_password:
+    path: /change-expired-password
+    controller: App\Controller\Auth\SecurityController::changeExpiredPassword
+    methods: [GET, POST]
+
+account_locked:
+    path: /account-locked
+    controller: App\Controller\Auth\SecurityController::accountLocked
+    methods: [GET]
+
+select_agency:
+    path: /select-agency
+    controller: App\Controller\Auth\AgencySelectionController::index
+    methods: [GET, POST]
+
+logout:
+    path: /logout
+    methods: [POST]

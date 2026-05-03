@@ -1,0 +1,37 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Forçage superviseur - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Forçage superviseur</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Effectuer une opération nécessitant une autorisation spéciale</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        {% embed component('MfFormCard') with { title: 'Formulaire de forçage', description: 'Saisissez les informations requises' } %}
+            {% block form_fields %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% include component('MfInput') with { name: 'reference', label: 'Référence opération', required: true, placeholder: 'MFN-...' } %}
+                    {% include component('MfMoneyInput') with { name: 'montant', label: 'Montant', required: true } %}
+                    {% include component('MfInput') with { name: 'code_superviseur', label: 'Code superviseur', required: true, type: 'password' } %}
+                    {% include component('MfInput') with { name: 'motif', label: 'Motif du forçage', required: true } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-1">
+        {% embed component('MfCard') with { title: 'Règles' } %}
+            {% block card_content %}
+                <div class="text-sm text-on-surface-variant space-y-3">
+                    {% include component('MfAlertBanner') with { type: 'error', message: 'Le forçage est une action sensible. Toute opération est tracée.' } %}
+                    <p>Nécessite un code superviseur valide.</p>
+                    <p>Un motif détaillé est obligatoire.</p>
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

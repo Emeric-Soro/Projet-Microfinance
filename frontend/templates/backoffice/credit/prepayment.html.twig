@@ -1,0 +1,92 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Remboursement anticipé - Crédit N°{{ credit.id }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Crédit', url: path('credit_dashboard') }, { label: 'Crédits actifs', url: path('credit_active') }, { label: 'N°' ~ credit.id ~ ' - Remb. anticipé' }] %}
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Remboursement anticipé - Crédit N°{{ credit.id }}</h1>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Informations</h3>
+            </div>
+            <div class="p-4 space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Encours actuel</span>
+                    <span class="font-semibold">{{ credit.encours|default(0)|number_format(0, ',', ' ') }} FCFA</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Échéances restantes</span>
+                    <span class="font-medium">{{ credit.echeancesRestantes|default(0) }}</span>
+                </div>
+                {% if simulation is defined and simulation is not empty %}
+                    <div class="pt-2 mt-2 border-t border-gray-100">
+                        <div class="flex justify-between">
+                            <span class="text-on-surface-variant">Pénalité de remb. anticipé</span>
+                            <span class="font-medium text-orange-600">{{ simulation.penalite|default(0)|number_format(0, ',', ' ') }} FCFA</span>
+                        </div>
+                        <div class="flex justify-between mt-1">
+                            <span class="text-on-surface-variant">Total à payer</span>
+                            <span class="font-bold text-teal-600">{{ simulation.totalAPayer|default(0)|number_format(0, ',', ' ') }} FCFA</span>
+                        </div>
+                        <div class="flex justify-between mt-1">
+                            <span class="text-on-surface-variant">Économie d'intérêts</span>
+                            <span class="font-medium text-green-600">{{ simulation.economieInterets|default(0)|number_format(0, ',', ' ') }} FCFA</span>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Confirmer le remboursement anticipé</h3>
+            </div>
+            <div class="p-4">
+                <form method="post" action="{{ path('credit_prepayment', { id: credit.id }) }}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Montant à rembourser (FCFA)</label>
+                            <input type="number" name="montant" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value="{{ simulation.totalAPayer|default(credit.encours|default(0)) }}" min="0" step="100">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Date de remboursement</label>
+                            <input type="date" name="dateRemboursement" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value="{{ 'now'|date('Y-m-d') }}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Type de remb. anticipé</label>
+                            <select name="type" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="TOTAL">Total</option>
+                                <option value="PARTIEL">Partiel</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Mode de paiement</label>
+                            <select name="modePaiement" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="ESPECES">Espèces</option>
+                                <option value="VIREMENT">Virement</option>
+                                <option value="CHEQUE">Chèque</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-on-surface mb-1">Motif du remboursement anticipé</label>
+                        <textarea name="motif" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"></textarea>
+                    </div>
+                    <div class="flex items-center justify-end gap-3 mt-6">
+                        <a href="{{ path('credit_detail', { id: credit.id }) }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">Annuler</a>
+                        <button type="submit" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm">Confirmer le remboursement</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

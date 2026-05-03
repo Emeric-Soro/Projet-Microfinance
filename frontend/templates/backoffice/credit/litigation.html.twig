@@ -1,0 +1,117 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Contentieux - Crédit N°{{ credit.id }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Crédit', url: path('credit_dashboard') }, { label: 'Impayés', url: path('credit_arrears') }, { label: 'N°' ~ credit.id ~ ' - Contentieux' }] %}
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Contentieux - Crédit N°{{ credit.id }}</h1>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Informations</h3>
+            </div>
+            <div class="p-4 space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Client</span>
+                    <span class="font-medium">{{ credit.clientNom|default('') }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Encours</span>
+                    <span class="font-semibold">{{ credit.encours|default(0)|number_format(0, ',', ' ') }} FCFA</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Arriéré</span>
+                    <span class="font-semibold text-red-600">{{ credit.arriere|default(0)|number_format(0, ',', ' ') }} FCFA</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Jours d'impayé</span>
+                    <span class="font-medium">{{ credit.joursImpaye|default(0) }} jours</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Action contentieuse</h3>
+            </div>
+            <div class="p-4">
+                <form method="post" action="{{ path('credit_litigation', { id: credit.id }) }}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Type d'action</label>
+                            <select name="typeAction" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="MISE_DEMEURE">Mise en demeure</option>
+                                <option value="SAISIE">Saisie</option>
+                                <option value="POURSUITE_JUDICIAIRE">Poursuite judiciaire</option>
+                                <option value="INJONCTION_PAYER">Injonction de payer</option>
+                                <option value="MEDIATION">Médiation</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Date de l'action</label>
+                            <input type="date" name="dateAction" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value="{{ 'now'|date('Y-m-d') }}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Montant concerné (FCFA)</label>
+                            <input type="number" name="montantConcerne" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" min="0" step="1000">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Frais engagés (FCFA)</label>
+                            <input type="number" name="fraisEngages" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" min="0" step="100" value="0">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-on-surface mb-1">Avocat / Cabinet mandaté</label>
+                        <input type="text" name="avocat" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-on-surface mb-1">Observations</label>
+                        <textarea name="observations" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"></textarea>
+                    </div>
+                    <div class="flex items-center justify-end gap-3 mt-6">
+                        <a href="{{ path('credit_arrears') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">Retour</a>
+                        <button type="submit" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if contentieux.historique|default([]) is not empty %}
+        <div class="bg-white rounded-lg border border-gray-200 mt-4">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Historique contentieux</h3>
+            </div>
+            <div class="p-4">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-on-surface-variant border-b border-gray-100">
+                            <th class="pb-2">Date</th>
+                            <th class="pb-2">Action</th>
+                            <th class="pb-2">Statut</th>
+                            <th class="pb-2">Observations</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in contentieux.historique %}
+                        <tr class="border-b border-gray-50">
+                            <td class="py-2">{{ h.date|default('')|date('d/m/Y') }}</td>
+                            <td class="py-2">{{ h.typeAction|default('') }}</td>
+                            <td class="py-2">{{ h.statut|default('')|replace({'_': ' '}) }}</td>
+                            <td class="py-2">{{ h.observations|default('') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

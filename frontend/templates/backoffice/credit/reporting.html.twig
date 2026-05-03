@@ -1,0 +1,92 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Reporting crédit - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Crédit', url: path('credit_dashboard') }, { label: 'Reporting' }] %}
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Reporting crédit</h1>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-lg border border-gray-200 p-4">
+        <p class="text-sm text-on-surface-variant">Total encours</p>
+        <p class="text-xl font-bold text-on-surface mt-1">{{ data.totalEncours|default(0)|number_format(0, ',', ' ') }} FCFA</p>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200 p-4">
+        <p class="text-sm text-on-surface-variant">Nombre de crédits</p>
+        <p class="text-xl font-bold text-on-surface mt-1">{{ data.nombreCredits|default(0)|number_format(0, ',', ' ') }}</p>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200 p-4">
+        <p class="text-sm text-on-surface-variant">Taux d'impayé</p>
+        <p class="text-xl font-bold text-red-600 mt-1">{{ data.tauxImpaye|default(0) }}%</p>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200 p-4">
+        <p class="text-sm text-on-surface-variant">Taux de recouvrement</p>
+        <p class="text-xl font-bold text-green-600 mt-1">{{ data.tauxRecouvrement|default(0) }}%</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-lg border border-gray-200">
+        <div class="px-4 py-3 border-b border-gray-200">
+            <h3 class="font-semibold text-on-surface">Répartition par produit</h3>
+        </div>
+        <div class="p-4">
+            {% if data.repartitionProduit|default([]) is not empty %}
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-on-surface-variant border-b border-gray-100">
+                            <th class="pb-2">Produit</th>
+                            <th class="pb-2">Nombre</th>
+                            <th class="pb-2">Encours</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in data.repartitionProduit %}
+                            <tr class="border-b border-gray-50">
+                                <td class="py-2">{{ r.produit|default('') }}</td>
+                                <td class="py-2">{{ r.nombre|default(0) }}</td>
+                                <td class="py-2">{{ r.encours|default(0)|number_format(0, ',', ' ') }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="text-sm text-on-surface-variant text-center py-4">Aucune donnée disponible.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg border border-gray-200">
+        <div class="px-4 py-3 border-b border-gray-200">
+            <h3 class="font-semibold text-on-surface">Répartition par agence</h3>
+        </div>
+        <div class="p-4">
+            {% if data.repartitionAgence|default([]) is not empty %}
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-on-surface-variant border-b border-gray-100">
+                            <th class="pb-2">Agence</th>
+                            <th class="pb-2">Nombre</th>
+                            <th class="pb-2">Encours</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in data.repartitionAgence %}
+                            <tr class="border-b border-gray-50">
+                                <td class="py-2">{{ r.agence|default('') }}</td>
+                                <td class="py-2">{{ r.nombre|default(0) }}</td>
+                                <td class="py-2">{{ r.encours|default(0)|number_format(0, ',', ' ') }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="text-sm text-on-surface-variant text-center py-4">Aucune donnée disponible.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

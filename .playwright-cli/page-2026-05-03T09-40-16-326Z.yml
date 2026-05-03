@@ -1,0 +1,1243 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - heading "Symfony Exception" [level=1] [ref=e4]:
+        - img [ref=e5]
+        - text: Symfony Exception
+      - link "Symfony Docs" [ref=e8] [cursor=pointer]:
+        - /url: https://symfony.com/doc/7.4.8/index.html
+        - img [ref=e10]
+        - text: Symfony Docs
+  - generic [ref=e12]:
+    - generic [ref=e14]:
+      - heading "SyntaxError" [level=2] [ref=e15]:
+        - link "SyntaxError" [ref=e16] [cursor=pointer]:
+          - /url: "#trace-box-1"
+      - heading "HTTP 500 Internal Server Error" [level=2] [ref=e17]
+    - generic [ref=e19]:
+      - heading "Unexpected token \"name\" of value \"if\" (\"end of statement block\" expected) in components/MfDataTable.html.twig at line 40." [level=1] [ref=e20]
+      - img [ref=e22]
+  - generic [ref=e25]:
+    - tablist [ref=e26]:
+      - tab "Exception" [selected] [ref=e27] [cursor=pointer]
+      - tab "Logs 1" [ref=e28] [cursor=pointer]:
+        - text: Logs
+        - generic [ref=e29]: "1"
+      - tab "Stack Trace" [ref=e30] [cursor=pointer]
+    - tabpanel [ref=e31]:
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - generic [ref=e36] [cursor=pointer]:
+            - img [ref=e38]
+            - heading "Twig\\Error\\ SyntaxError" [level=3] [ref=e40]:
+              - generic [ref=e41]: Twig\Error\
+              - text: SyntaxError
+          - group [ref=e42]:
+            - generic "Show exception properties" [ref=e43] [cursor=pointer]
+        - generic [ref=e44]:
+          - generic [ref=e45]:
+            - generic [ref=e46] [cursor=pointer]:
+              - img [ref=e48]
+              - generic [ref=e50]:
+                - text: in
+                - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\templates\\components\\MfDataTable.html.twig" [ref=e51]:
+                  - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\templates\components\MfDataTable.html.twig#L40
+                  - text: C:\wamp64\www\Projet-Microfinance\frontend\templates\components\
+                  - strong [ref=e52]: MfDataTable.html.twig
+                - text: (line 40)
+            - list [ref=e54]:
+              - listitem [ref=e55]:
+                - code [ref=e56]: "<td>{{ row[header.key]|default('-') }}</td>"
+              - listitem [ref=e57]:
+                - code [ref=e58]: "{% endfor %}"
+              - listitem [ref=e59]:
+                - code [ref=e60]: "{% if actions is defined and actions %}"
+              - listitem [ref=e61]:
+                - code [ref=e62]: <td class="text-right">
+              - listitem [ref=e63]:
+                - code [ref=e64]: <div class="flex items-center justify-end gap-2">
+              - listitem [ref=e65]:
+                - code [ref=e66]: "{% for action in actions if action.url is defined %}"
+              - listitem [ref=e67]:
+                - code [ref=e68]: "<a href=\"{{ action.url }}\" class=\"text-sm text-primary hover:text-primary-600\" title=\"{{ action.label|default('Action') }}\">"
+              - listitem [ref=e69]:
+                - code [ref=e70]: "{% if action.icon is defined and action.icon %}"
+              - listitem [ref=e71]:
+                - code [ref=e72]: "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"{{ action.icon }}\"/></svg>"
+              - listitem [ref=e73]:
+                - code [ref=e74]: "{% else %}"
+              - listitem [ref=e75]:
+                - code [ref=e76]: "{{ action.label|default('Action') }}"
+          - generic [ref=e78] [cursor=pointer]:
+            - img [ref=e80]
+            - generic [ref=e82]: TokenStream
+            - text: "->expect(3)"
+            - generic [ref=e83]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\TokenParser\\ForTokenParser.php" [ref=e84]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\TokenParser\ForTokenParser.php#L42
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\TokenParser\
+                - strong [ref=e85]: ForTokenParser.php
+              - text: (line 42)
+          - generic [ref=e87] [cursor=pointer]:
+            - img [ref=e89]
+            - generic [ref=e91]: ForTokenParser
+            - text: "->parse"
+            - generic [ref=e92]:
+              - text: (
+              - emphasis [ref=e93]: object
+              - text: (Token))
+            - generic [ref=e94]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Parser.php" [ref=e95]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Parser.php#L224
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e96]: Parser.php
+              - text: (line 224)
+          - generic [ref=e98] [cursor=pointer]:
+            - img [ref=e100]
+            - generic [ref=e102]: Parser
+            - text: "->subparse"
+            - generic [ref=e103]:
+              - text: (
+              - emphasis [ref=e104]: array
+              - text: (
+              - emphasis [ref=e105]: object
+              - text: (IfTokenParser), 'decideIfFork'))
+            - generic [ref=e106]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\TokenParser\\IfTokenParser.php" [ref=e107]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\TokenParser\IfTokenParser.php#L42
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\TokenParser\
+                - strong [ref=e108]: IfTokenParser.php
+              - text: (line 42)
+          - generic [ref=e110] [cursor=pointer]:
+            - img [ref=e112]
+            - generic [ref=e114]: IfTokenParser
+            - text: "->parse"
+            - generic [ref=e115]:
+              - text: (
+              - emphasis [ref=e116]: object
+              - text: (Token))
+            - generic [ref=e117]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Parser.php" [ref=e118]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Parser.php#L224
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e119]: Parser.php
+              - text: (line 224)
+          - generic [ref=e121] [cursor=pointer]:
+            - img [ref=e123]
+            - generic [ref=e125]: Parser
+            - text: "->subparse"
+            - generic [ref=e126]:
+              - text: (
+              - emphasis [ref=e127]: array
+              - text: (
+              - emphasis [ref=e128]: object
+              - text: (ForTokenParser), 'decideForFork'))
+            - generic [ref=e129]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\TokenParser\\ForTokenParser.php" [ref=e130]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\TokenParser\ForTokenParser.php#L43
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\TokenParser\
+                - strong [ref=e131]: ForTokenParser.php
+              - text: (line 43)
+          - generic [ref=e133] [cursor=pointer]:
+            - img [ref=e135]
+            - generic [ref=e137]: ForTokenParser
+            - text: "->parse"
+            - generic [ref=e138]:
+              - text: (
+              - emphasis [ref=e139]: object
+              - text: (Token))
+            - generic [ref=e140]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Parser.php" [ref=e141]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Parser.php#L224
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e142]: Parser.php
+              - text: (line 224)
+          - generic [ref=e144] [cursor=pointer]:
+            - img [ref=e146]
+            - generic [ref=e148]: Parser
+            - text: "->subparse"
+            - generic [ref=e149]:
+              - text: (
+              - emphasis [ref=e150]: array
+              - text: (
+              - emphasis [ref=e151]: object
+              - text: (IfTokenParser), 'decideIfFork'))
+            - generic [ref=e152]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\TokenParser\\IfTokenParser.php" [ref=e153]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\TokenParser\IfTokenParser.php#L42
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\TokenParser\
+                - strong [ref=e154]: IfTokenParser.php
+              - text: (line 42)
+          - generic [ref=e156] [cursor=pointer]:
+            - img [ref=e158]
+            - generic [ref=e160]: IfTokenParser
+            - text: "->parse"
+            - generic [ref=e161]:
+              - text: (
+              - emphasis [ref=e162]: object
+              - text: (Token))
+            - generic [ref=e163]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Parser.php" [ref=e164]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Parser.php#L224
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e165]: Parser.php
+              - text: (line 224)
+          - generic [ref=e167] [cursor=pointer]:
+            - img [ref=e169]
+            - generic [ref=e171]: Parser
+            - text: "->subparse"
+            - generic [ref=e172]:
+              - text: (
+              - emphasis [ref=e173]: "null"
+              - text: ","
+              - emphasis [ref=e174]: "false"
+              - text: )
+            - generic [ref=e175]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Parser.php" [ref=e176]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Parser.php#L104
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e177]: Parser.php
+              - text: (line 104)
+          - generic [ref=e179] [cursor=pointer]:
+            - img [ref=e181]
+            - generic [ref=e183]: Parser
+            - text: "->parse"
+            - generic [ref=e184]:
+              - text: (
+              - emphasis [ref=e185]: object
+              - text: (TokenStream))
+            - generic [ref=e186]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Environment.php" [ref=e187]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Environment.php#L558
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e188]: Environment.php
+              - text: (line 558)
+          - generic [ref=e190] [cursor=pointer]:
+            - img [ref=e192]
+            - generic [ref=e194]: Environment
+            - text: "->parse"
+            - generic [ref=e195]:
+              - text: (
+              - emphasis [ref=e196]: object
+              - text: (TokenStream))
+            - generic [ref=e197]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Environment.php" [ref=e198]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Environment.php#L589
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e199]: Environment.php
+              - text: (line 589)
+          - generic [ref=e201] [cursor=pointer]:
+            - img [ref=e203]
+            - generic [ref=e205]: Environment
+            - text: "->compileSource"
+            - generic [ref=e206]:
+              - text: (
+              - emphasis [ref=e207]: object
+              - text: (Source))
+            - generic [ref=e208]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Environment.php" [ref=e209]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Environment.php#L408
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e210]: Environment.php
+              - text: (line 408)
+          - generic [ref=e212] [cursor=pointer]:
+            - img [ref=e214]
+            - generic [ref=e216]: Environment
+            - text: "->loadTemplate"
+            - generic [ref=e217]:
+              - text: ('__TwigTemplate_6691be434ffbfa23c8e3f6842a943963', 'components/MfDataTable.html.twig',
+              - emphasis [ref=e218]: "null"
+              - text: )
+            - generic [ref=e219]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Template.php" [ref=e220]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Template.php#L293
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e221]: Template.php
+              - text: (line 293)
+          - generic [ref=e223] [cursor=pointer]:
+            - img [ref=e225]
+            - generic [ref=e227]: Template
+            - text: "->load('components/MfDataTable.html.twig', 35)"
+            - generic [ref=e228]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\var\\cache\\dev\\twig\\f1\\f16feb7e63bdaeb0176586b1c72782ce.php" [ref=e229]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\var\cache\dev\twig\f1\f16feb7e63bdaeb0176586b1c72782ce.php#L340
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\var\cache\dev\twig\f1\
+                - strong [ref=e230]: f16feb7e63bdaeb0176586b1c72782ce.php
+              - text: (line 340)
+          - generic [ref=e232] [cursor=pointer]:
+            - img [ref=e234]
+            - generic [ref=e236]: __TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102___135132153
+            - text: "->block_card_content"
+            - generic [ref=e237]:
+              - text: (
+              - emphasis [ref=e238]: array
+              - text: ('data' =>
+              - emphasis [ref=e239]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e240]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e241]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e242]: array
+              - text: (
+              - emphasis [ref=e243]: array
+              - text: ('label' => 'Tableau de bord')), 'app' =>
+              - emphasis [ref=e244]: object
+              - text: (AppVariable), 'app_name' => 'MicroFin', 'app_version' => '1.0.0', 'design_system' =>
+              - emphasis [ref=e245]: array
+              - text: ('primary_color' => '#004D61', 'surface' => '#F0F4F5', 'max_width' => 1440), 'title' => 'Dernières opérations', 'action' =>
+              - emphasis [ref=e246]: array
+              - text: ('url' => '/operations/history', 'label' => 'Voir tout'), 'headers' =>
+              - emphasis [ref=e247]: array
+              - text: (
+              - emphasis [ref=e248]: array
+              - text: ('label' => 'Réf', 'key' => 'reference'),
+              - emphasis [ref=e249]: array
+              - text: ('label' => 'Type', 'key' => 'type'),
+              - emphasis [ref=e250]: array
+              - text: ('label' => 'Montant', 'key' => 'montant'),
+              - emphasis [ref=e251]: array
+              - text: ('label' => 'Statut', 'key' => 'statut')), 'rows' =>
+              - emphasis [ref=e252]: array
+              - text: ()),
+              - emphasis [ref=e253]: array
+              - text: ('card_content' =>
+              - emphasis [ref=e254]: array
+              - text: (
+              - emphasis [ref=e255]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102___135132153), 'block_card_content')))
+            - generic [ref=e256]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Template.php" [ref=e257]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Template.php#L446
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e258]: Template.php
+              - text: (line 446)
+          - generic [ref=e260] [cursor=pointer]:
+            - img [ref=e262]
+            - generic [ref=e264]: Template
+            - text: "->yieldBlock"
+            - generic [ref=e265]:
+              - text: ('card_content',
+              - emphasis [ref=e266]: array
+              - text: ('data' =>
+              - emphasis [ref=e267]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e268]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e269]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e270]: array
+              - text: (
+              - emphasis [ref=e271]: array
+              - text: ('label' => 'Tableau de bord')), 'app' =>
+              - emphasis [ref=e272]: object
+              - text: (AppVariable), 'app_name' => 'MicroFin', 'app_version' => '1.0.0', 'design_system' =>
+              - emphasis [ref=e273]: array
+              - text: ('primary_color' => '#004D61', 'surface' => '#F0F4F5', 'max_width' => 1440), 'title' => 'Dernières opérations', 'action' =>
+              - emphasis [ref=e274]: array
+              - text: ('url' => '/operations/history', 'label' => 'Voir tout')),
+              - emphasis [ref=e275]: array
+              - text: ('card_content' =>
+              - emphasis [ref=e276]: array
+              - text: (
+              - emphasis [ref=e277]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102___135132153), 'block_card_content')))
+            - generic [ref=e278]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\var\\cache\\dev\\twig\\a3\\a365f00a4da4345539e0589b5cea9760.php" [ref=e279]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\var\cache\dev\twig\a3\a365f00a4da4345539e0589b5cea9760.php#L80
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\var\cache\dev\twig\a3\
+                - strong [ref=e280]: a365f00a4da4345539e0589b5cea9760.php
+              - text: (line 80)
+          - generic [ref=e282] [cursor=pointer]:
+            - img [ref=e284]
+            - generic [ref=e286]: __TwigTemplate_b0af4d345fc60272f2892d515681d424
+            - text: "->doDisplay"
+            - generic [ref=e287]:
+              - text: (
+              - emphasis [ref=e288]: array
+              - text: ('data' =>
+              - emphasis [ref=e289]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e290]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e291]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e292]: array
+              - text: (
+              - emphasis [ref=e293]: array
+              - text: ('label' => 'Tableau de bord')), 'app' =>
+              - emphasis [ref=e294]: object
+              - text: (AppVariable), 'app_name' => 'MicroFin', 'app_version' => '1.0.0', 'design_system' =>
+              - emphasis [ref=e295]: array
+              - text: ('primary_color' => '#004D61', 'surface' => '#F0F4F5', 'max_width' => 1440), 'title' => 'Dernières opérations', 'action' =>
+              - emphasis [ref=e296]: array
+              - text: ('url' => '/operations/history', 'label' => 'Voir tout')),
+              - emphasis [ref=e297]: array
+              - text: ('card_content' =>
+              - emphasis [ref=e298]: array
+              - text: (
+              - emphasis [ref=e299]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102___135132153), 'block_card_content')))
+            - generic [ref=e300]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Template.php" [ref=e301]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Template.php#L402
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e302]: Template.php
+              - text: (line 402)
+          - generic [ref=e304] [cursor=pointer]:
+            - img [ref=e306]
+            - generic [ref=e308]: Template
+            - text: "->yield"
+            - generic [ref=e309]:
+              - text: (
+              - emphasis [ref=e310]: array
+              - text: ('data' =>
+              - emphasis [ref=e311]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e312]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e313]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e314]: array
+              - text: (
+              - emphasis [ref=e315]: array
+              - text: ('label' => 'Tableau de bord')), 'app' =>
+              - emphasis [ref=e316]: object
+              - text: (AppVariable), 'app_name' => 'MicroFin', 'app_version' => '1.0.0', 'design_system' =>
+              - emphasis [ref=e317]: array
+              - text: ('primary_color' => '#004D61', 'surface' => '#F0F4F5', 'max_width' => 1440), 'title' => 'Dernières opérations', 'action' =>
+              - emphasis [ref=e318]: array
+              - text: ('url' => '/operations/history', 'label' => 'Voir tout')),
+              - emphasis [ref=e319]: array
+              - text: ('card_content' =>
+              - emphasis [ref=e320]: array
+              - text: (
+              - emphasis [ref=e321]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102___135132153), 'block_card_content')))
+            - generic [ref=e322]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\var\\cache\\dev\\twig\\f1\\f16feb7e63bdaeb0176586b1c72782ce.php" [ref=e323]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\var\cache\dev\twig\f1\f16feb7e63bdaeb0176586b1c72782ce.php#L310
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\var\cache\dev\twig\f1\
+                - strong [ref=e324]: f16feb7e63bdaeb0176586b1c72782ce.php
+              - text: (line 310)
+          - generic [ref=e326] [cursor=pointer]:
+            - img [ref=e328]
+            - generic [ref=e330]: __TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102___135132153
+            - text: "->doDisplay"
+            - generic [ref=e331]:
+              - text: (
+              - emphasis [ref=e332]: array
+              - text: ('data' =>
+              - emphasis [ref=e333]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e334]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e335]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e336]: array
+              - text: (
+              - emphasis [ref=e337]: array
+              - text: ('label' => 'Tableau de bord')), 'app' =>
+              - emphasis [ref=e338]: object
+              - text: (AppVariable), 'app_name' => 'MicroFin', 'app_version' => '1.0.0', 'design_system' =>
+              - emphasis [ref=e339]: array
+              - text: ('primary_color' => '#004D61', 'surface' => '#F0F4F5', 'max_width' => 1440), 'title' => 'Dernières opérations', 'action' =>
+              - emphasis [ref=e340]: array
+              - text: ('url' => '/operations/history', 'label' => 'Voir tout')),
+              - emphasis [ref=e341]: array
+              - text: ('card_content' =>
+              - emphasis [ref=e342]: array
+              - text: (
+              - emphasis [ref=e343]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102___135132153), 'block_card_content')))
+            - generic [ref=e344]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Template.php" [ref=e345]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Template.php#L402
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e346]: Template.php
+              - text: (line 402)
+          - generic [ref=e348] [cursor=pointer]:
+            - img [ref=e350]
+            - generic [ref=e352]: Template
+            - text: "->yield"
+            - generic [ref=e353]:
+              - text: (
+              - emphasis [ref=e354]: array
+              - text: ('data' =>
+              - emphasis [ref=e355]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e356]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e357]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e358]: array
+              - text: (
+              - emphasis [ref=e359]: array
+              - text: ('label' => 'Tableau de bord')), 'app' =>
+              - emphasis [ref=e360]: object
+              - text: (AppVariable), 'app_name' => 'MicroFin', 'app_version' => '1.0.0', 'design_system' =>
+              - emphasis [ref=e361]: array
+              - text: ('primary_color' => '#004D61', 'surface' => '#F0F4F5', 'max_width' => 1440), 'title' => 'Dernières opérations', 'action' =>
+              - emphasis [ref=e362]: array
+              - text: ('url' => '/operations/history', 'label' => 'Voir tout')))
+            - generic [ref=e363]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\var\\cache\\dev\\twig\\f1\\f16feb7e63bdaeb0176586b1c72782ce.php" [ref=e364]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\var\cache\dev\twig\f1\f16feb7e63bdaeb0176586b1c72782ce.php#L134
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\var\cache\dev\twig\f1\
+                - strong [ref=e365]: f16feb7e63bdaeb0176586b1c72782ce.php
+              - text: (line 134)
+          - generic [ref=e367] [cursor=pointer]:
+            - img [ref=e369]
+            - generic [ref=e371]: __TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102
+            - text: "->block_backoffice_content"
+            - generic [ref=e372]:
+              - text: (
+              - emphasis [ref=e373]: array
+              - text: ('data' =>
+              - emphasis [ref=e374]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e375]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e376]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e377]: array
+              - text: (
+              - emphasis [ref=e378]: array
+              - text: ('label' => 'Tableau de bord')), 'app' =>
+              - emphasis [ref=e379]: object
+              - text: (AppVariable), 'app_name' => 'MicroFin', 'app_version' => '1.0.0', 'design_system' =>
+              - emphasis [ref=e380]: array
+              - text: ('primary_color' => '#004D61', 'surface' => '#F0F4F5', 'max_width' => 1440)),
+              - emphasis [ref=e381]: array
+              - text: ('title' =>
+              - emphasis [ref=e382]: array
+              - text: (
+              - emphasis [ref=e383]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_title'), 'stylesheets' =>
+              - emphasis [ref=e384]: array
+              - text: (
+              - emphasis [ref=e385]: object
+              - text: (__TwigTemplate_4c465d801a915a4bab887ae7dc6bc9f1), 'block_stylesheets'), 'body' =>
+              - emphasis [ref=e386]: array
+              - text: (
+              - emphasis [ref=e387]: object
+              - text: (__TwigTemplate_8cbc3cef379e3e0a50f28fb389b43603), 'block_body'), 'javascripts' =>
+              - emphasis [ref=e388]: array
+              - text: (
+              - emphasis [ref=e389]: object
+              - text: (__TwigTemplate_4c465d801a915a4bab887ae7dc6bc9f1), 'block_javascripts'), 'backoffice_content' =>
+              - emphasis [ref=e390]: array
+              - text: (
+              - emphasis [ref=e391]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_backoffice_content')))
+            - generic [ref=e392]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Template.php" [ref=e393]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Template.php#L446
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e394]: Template.php
+              - text: (line 446)
+          - generic [ref=e396] [cursor=pointer]:
+            - img [ref=e398]
+            - generic [ref=e400]: Template
+            - text: "->yieldBlock"
+            - generic [ref=e401]:
+              - text: ('backoffice_content',
+              - emphasis [ref=e402]: array
+              - text: ('data' =>
+              - emphasis [ref=e403]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e404]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e405]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e406]: array
+              - text: (
+              - emphasis [ref=e407]: array
+              - text: ('label' => 'Tableau de bord')), 'app' =>
+              - emphasis [ref=e408]: object
+              - text: (AppVariable), 'app_name' => 'MicroFin', 'app_version' => '1.0.0', 'design_system' =>
+              - emphasis [ref=e409]: array
+              - text: ('primary_color' => '#004D61', 'surface' => '#F0F4F5', 'max_width' => 1440)),
+              - emphasis [ref=e410]: array
+              - text: ('title' =>
+              - emphasis [ref=e411]: array
+              - text: (
+              - emphasis [ref=e412]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_title'), 'stylesheets' =>
+              - emphasis [ref=e413]: array
+              - text: (
+              - emphasis [ref=e414]: object
+              - text: (__TwigTemplate_4c465d801a915a4bab887ae7dc6bc9f1), 'block_stylesheets'), 'body' =>
+              - emphasis [ref=e415]: array
+              - text: (
+              - emphasis [ref=e416]: object
+              - text: (__TwigTemplate_8cbc3cef379e3e0a50f28fb389b43603), 'block_body'), 'javascripts' =>
+              - emphasis [ref=e417]: array
+              - text: (
+              - emphasis [ref=e418]: object
+              - text: (__TwigTemplate_4c465d801a915a4bab887ae7dc6bc9f1), 'block_javascripts'), 'backoffice_content' =>
+              - emphasis [ref=e419]: array
+              - text: (
+              - emphasis [ref=e420]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_backoffice_content')))
+            - generic [ref=e421]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\var\\cache\\dev\\twig\\00\\0027421ec1632bda90645fe36b7a4b50.php" [ref=e422]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\var\cache\dev\twig\00\0027421ec1632bda90645fe36b7a4b50.php#L102
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\var\cache\dev\twig\00\
+                - strong [ref=e423]: 0027421ec1632bda90645fe36b7a4b50.php
+              - text: (line 102)
+          - generic [ref=e425] [cursor=pointer]:
+            - img [ref=e427]
+            - generic [ref=e429]: __TwigTemplate_8cbc3cef379e3e0a50f28fb389b43603
+            - text: "->block_body"
+            - generic [ref=e430]:
+              - text: (
+              - emphasis [ref=e431]: array
+              - text: ('data' =>
+              - emphasis [ref=e432]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e433]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e434]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e435]: array
+              - text: (
+              - emphasis [ref=e436]: array
+              - text: ('label' => 'Tableau de bord')), 'app' =>
+              - emphasis [ref=e437]: object
+              - text: (AppVariable), 'app_name' => 'MicroFin', 'app_version' => '1.0.0', 'design_system' =>
+              - emphasis [ref=e438]: array
+              - text: ('primary_color' => '#004D61', 'surface' => '#F0F4F5', 'max_width' => 1440)),
+              - emphasis [ref=e439]: array
+              - text: ('title' =>
+              - emphasis [ref=e440]: array
+              - text: (
+              - emphasis [ref=e441]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_title'), 'stylesheets' =>
+              - emphasis [ref=e442]: array
+              - text: (
+              - emphasis [ref=e443]: object
+              - text: (__TwigTemplate_4c465d801a915a4bab887ae7dc6bc9f1), 'block_stylesheets'), 'body' =>
+              - emphasis [ref=e444]: array
+              - text: (
+              - emphasis [ref=e445]: object
+              - text: (__TwigTemplate_8cbc3cef379e3e0a50f28fb389b43603), 'block_body'), 'javascripts' =>
+              - emphasis [ref=e446]: array
+              - text: (
+              - emphasis [ref=e447]: object
+              - text: (__TwigTemplate_4c465d801a915a4bab887ae7dc6bc9f1), 'block_javascripts'), 'backoffice_content' =>
+              - emphasis [ref=e448]: array
+              - text: (
+              - emphasis [ref=e449]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_backoffice_content')))
+            - generic [ref=e450]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Template.php" [ref=e451]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Template.php#L446
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e452]: Template.php
+              - text: (line 446)
+          - generic [ref=e454] [cursor=pointer]:
+            - img [ref=e456]
+            - generic [ref=e458]: Template
+            - text: "->yieldBlock"
+            - generic [ref=e459]:
+              - text: ('body',
+              - emphasis [ref=e460]: array
+              - text: ('data' =>
+              - emphasis [ref=e461]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e462]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e463]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e464]: array
+              - text: (
+              - emphasis [ref=e465]: array
+              - text: ('label' => 'Tableau de bord')), 'app' =>
+              - emphasis [ref=e466]: object
+              - text: (AppVariable), 'app_name' => 'MicroFin', 'app_version' => '1.0.0', 'design_system' =>
+              - emphasis [ref=e467]: array
+              - text: ('primary_color' => '#004D61', 'surface' => '#F0F4F5', 'max_width' => 1440)),
+              - emphasis [ref=e468]: array
+              - text: ('title' =>
+              - emphasis [ref=e469]: array
+              - text: (
+              - emphasis [ref=e470]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_title'), 'stylesheets' =>
+              - emphasis [ref=e471]: array
+              - text: (
+              - emphasis [ref=e472]: object
+              - text: (__TwigTemplate_4c465d801a915a4bab887ae7dc6bc9f1), 'block_stylesheets'), 'body' =>
+              - emphasis [ref=e473]: array
+              - text: (
+              - emphasis [ref=e474]: object
+              - text: (__TwigTemplate_8cbc3cef379e3e0a50f28fb389b43603), 'block_body'), 'javascripts' =>
+              - emphasis [ref=e475]: array
+              - text: (
+              - emphasis [ref=e476]: object
+              - text: (__TwigTemplate_4c465d801a915a4bab887ae7dc6bc9f1), 'block_javascripts'), 'backoffice_content' =>
+              - emphasis [ref=e477]: array
+              - text: (
+              - emphasis [ref=e478]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_backoffice_content')))
+            - generic [ref=e479]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\var\\cache\\dev\\twig\\91\\91cc993c46555096e85a98ce2a848074.php" [ref=e480]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\var\cache\dev\twig\91\91cc993c46555096e85a98ce2a848074.php#L77
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\var\cache\dev\twig\91\
+                - strong [ref=e481]: 91cc993c46555096e85a98ce2a848074.php
+              - text: (line 77)
+          - generic [ref=e483] [cursor=pointer]:
+            - img [ref=e485]
+            - generic [ref=e487]: __TwigTemplate_4c465d801a915a4bab887ae7dc6bc9f1
+            - text: "->doDisplay"
+            - generic [ref=e488]:
+              - text: (
+              - emphasis [ref=e489]: array
+              - text: ('data' =>
+              - emphasis [ref=e490]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e491]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e492]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e493]: array
+              - text: (
+              - emphasis [ref=e494]: array
+              - text: ('label' => 'Tableau de bord')), 'app' =>
+              - emphasis [ref=e495]: object
+              - text: (AppVariable), 'app_name' => 'MicroFin', 'app_version' => '1.0.0', 'design_system' =>
+              - emphasis [ref=e496]: array
+              - text: ('primary_color' => '#004D61', 'surface' => '#F0F4F5', 'max_width' => 1440)),
+              - emphasis [ref=e497]: array
+              - text: ('title' =>
+              - emphasis [ref=e498]: array
+              - text: (
+              - emphasis [ref=e499]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_title'), 'stylesheets' =>
+              - emphasis [ref=e500]: array
+              - text: (
+              - emphasis [ref=e501]: object
+              - text: (__TwigTemplate_4c465d801a915a4bab887ae7dc6bc9f1), 'block_stylesheets'), 'body' =>
+              - emphasis [ref=e502]: array
+              - text: (
+              - emphasis [ref=e503]: object
+              - text: (__TwigTemplate_8cbc3cef379e3e0a50f28fb389b43603), 'block_body'), 'javascripts' =>
+              - emphasis [ref=e504]: array
+              - text: (
+              - emphasis [ref=e505]: object
+              - text: (__TwigTemplate_4c465d801a915a4bab887ae7dc6bc9f1), 'block_javascripts'), 'backoffice_content' =>
+              - emphasis [ref=e506]: array
+              - text: (
+              - emphasis [ref=e507]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_backoffice_content')))
+            - generic [ref=e508]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Template.php" [ref=e509]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Template.php#L402
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e510]: Template.php
+              - text: (line 402)
+          - generic [ref=e512] [cursor=pointer]:
+            - img [ref=e514]
+            - generic [ref=e516]: Template
+            - text: "->yield"
+            - generic [ref=e517]:
+              - text: (
+              - emphasis [ref=e518]: array
+              - text: ('data' =>
+              - emphasis [ref=e519]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e520]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e521]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e522]: array
+              - text: (
+              - emphasis [ref=e523]: array
+              - text: ('label' => 'Tableau de bord')), 'app' =>
+              - emphasis [ref=e524]: object
+              - text: (AppVariable), 'app_name' => 'MicroFin', 'app_version' => '1.0.0', 'design_system' =>
+              - emphasis [ref=e525]: array
+              - text: ('primary_color' => '#004D61', 'surface' => '#F0F4F5', 'max_width' => 1440)),
+              - emphasis [ref=e526]: array
+              - text: ('title' =>
+              - emphasis [ref=e527]: array
+              - text: (
+              - emphasis [ref=e528]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_title'), 'stylesheets' =>
+              - emphasis [ref=e529]: array
+              - text: (
+              - emphasis [ref=e530]: object
+              - text: (__TwigTemplate_4c465d801a915a4bab887ae7dc6bc9f1), 'block_stylesheets'), 'body' =>
+              - emphasis [ref=e531]: array
+              - text: (
+              - emphasis [ref=e532]: object
+              - text: (__TwigTemplate_8cbc3cef379e3e0a50f28fb389b43603), 'block_body'), 'javascripts' =>
+              - emphasis [ref=e533]: array
+              - text: (
+              - emphasis [ref=e534]: object
+              - text: (__TwigTemplate_4c465d801a915a4bab887ae7dc6bc9f1), 'block_javascripts'), 'backoffice_content' =>
+              - emphasis [ref=e535]: array
+              - text: (
+              - emphasis [ref=e536]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_backoffice_content')))
+            - generic [ref=e537]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\var\\cache\\dev\\twig\\00\\0027421ec1632bda90645fe36b7a4b50.php" [ref=e538]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\var\cache\dev\twig\00\0027421ec1632bda90645fe36b7a4b50.php#L54
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\var\cache\dev\twig\00\
+                - strong [ref=e539]: 0027421ec1632bda90645fe36b7a4b50.php
+              - text: (line 54)
+          - generic [ref=e541] [cursor=pointer]:
+            - img [ref=e543]
+            - generic [ref=e545]: __TwigTemplate_8cbc3cef379e3e0a50f28fb389b43603
+            - text: "->doDisplay"
+            - generic [ref=e546]:
+              - text: (
+              - emphasis [ref=e547]: array
+              - text: ('data' =>
+              - emphasis [ref=e548]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e549]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e550]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e551]: array
+              - text: (
+              - emphasis [ref=e552]: array
+              - text: ('label' => 'Tableau de bord')), 'app' =>
+              - emphasis [ref=e553]: object
+              - text: (AppVariable), 'app_name' => 'MicroFin', 'app_version' => '1.0.0', 'design_system' =>
+              - emphasis [ref=e554]: array
+              - text: ('primary_color' => '#004D61', 'surface' => '#F0F4F5', 'max_width' => 1440)),
+              - emphasis [ref=e555]: array
+              - text: ('body' =>
+              - emphasis [ref=e556]: array
+              - text: (
+              - emphasis [ref=e557]: object
+              - text: (__TwigTemplate_8cbc3cef379e3e0a50f28fb389b43603), 'block_body'), 'backoffice_content' =>
+              - emphasis [ref=e558]: array
+              - text: (
+              - emphasis [ref=e559]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_backoffice_content'), 'title' =>
+              - emphasis [ref=e560]: array
+              - text: (
+              - emphasis [ref=e561]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_title')))
+            - generic [ref=e562]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Template.php" [ref=e563]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Template.php#L402
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e564]: Template.php
+              - text: (line 402)
+          - generic [ref=e566] [cursor=pointer]:
+            - img [ref=e568]
+            - generic [ref=e570]: Template
+            - text: "->yield"
+            - generic [ref=e571]:
+              - text: (
+              - emphasis [ref=e572]: array
+              - text: ('data' =>
+              - emphasis [ref=e573]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e574]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e575]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e576]: array
+              - text: (
+              - emphasis [ref=e577]: array
+              - text: ('label' => 'Tableau de bord')), 'app' =>
+              - emphasis [ref=e578]: object
+              - text: (AppVariable), 'app_name' => 'MicroFin', 'app_version' => '1.0.0', 'design_system' =>
+              - emphasis [ref=e579]: array
+              - text: ('primary_color' => '#004D61', 'surface' => '#F0F4F5', 'max_width' => 1440)),
+              - emphasis [ref=e580]: array
+              - text: ('body' =>
+              - emphasis [ref=e581]: array
+              - text: (
+              - emphasis [ref=e582]: object
+              - text: (__TwigTemplate_8cbc3cef379e3e0a50f28fb389b43603), 'block_body'), 'backoffice_content' =>
+              - emphasis [ref=e583]: array
+              - text: (
+              - emphasis [ref=e584]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_backoffice_content'), 'title' =>
+              - emphasis [ref=e585]: array
+              - text: (
+              - emphasis [ref=e586]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_title')))
+            - generic [ref=e587]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\var\\cache\\dev\\twig\\f1\\f16feb7e63bdaeb0176586b1c72782ce.php" [ref=e588]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\var\cache\dev\twig\f1\f16feb7e63bdaeb0176586b1c72782ce.php#L54
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\var\cache\dev\twig\f1\
+                - strong [ref=e589]: f16feb7e63bdaeb0176586b1c72782ce.php
+              - text: (line 54)
+          - generic [ref=e591] [cursor=pointer]:
+            - img [ref=e593]
+            - generic [ref=e595]: __TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102
+            - text: "->doDisplay"
+            - generic [ref=e596]:
+              - text: (
+              - emphasis [ref=e597]: array
+              - text: ('data' =>
+              - emphasis [ref=e598]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e599]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e600]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e601]: array
+              - text: (
+              - emphasis [ref=e602]: array
+              - text: ('label' => 'Tableau de bord')), 'app' =>
+              - emphasis [ref=e603]: object
+              - text: (AppVariable), 'app_name' => 'MicroFin', 'app_version' => '1.0.0', 'design_system' =>
+              - emphasis [ref=e604]: array
+              - text: ('primary_color' => '#004D61', 'surface' => '#F0F4F5', 'max_width' => 1440)),
+              - emphasis [ref=e605]: array
+              - text: ('title' =>
+              - emphasis [ref=e606]: array
+              - text: (
+              - emphasis [ref=e607]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_title'), 'backoffice_content' =>
+              - emphasis [ref=e608]: array
+              - text: (
+              - emphasis [ref=e609]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_backoffice_content')))
+            - generic [ref=e610]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Template.php" [ref=e611]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Template.php#L402
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e612]: Template.php
+              - text: (line 402)
+          - generic [ref=e614] [cursor=pointer]:
+            - img [ref=e616]
+            - generic [ref=e618]: Template
+            - text: "->yield"
+            - generic [ref=e619]:
+              - text: (
+              - emphasis [ref=e620]: array
+              - text: ('data' =>
+              - emphasis [ref=e621]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e622]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e623]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e624]: array
+              - text: (
+              - emphasis [ref=e625]: array
+              - text: ('label' => 'Tableau de bord')), 'app' =>
+              - emphasis [ref=e626]: object
+              - text: (AppVariable), 'app_name' => 'MicroFin', 'app_version' => '1.0.0', 'design_system' =>
+              - emphasis [ref=e627]: array
+              - text: ('primary_color' => '#004D61', 'surface' => '#F0F4F5', 'max_width' => 1440)),
+              - emphasis [ref=e628]: array
+              - text: ('title' =>
+              - emphasis [ref=e629]: array
+              - text: (
+              - emphasis [ref=e630]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_title'), 'backoffice_content' =>
+              - emphasis [ref=e631]: array
+              - text: (
+              - emphasis [ref=e632]: object
+              - text: (__TwigTemplate_3b6a8a94023cabcec7546e4dbb53e102), 'block_backoffice_content')))
+            - generic [ref=e633]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Template.php" [ref=e634]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Template.php#L358
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e635]: Template.php
+              - text: (line 358)
+          - generic [ref=e637] [cursor=pointer]:
+            - img [ref=e639]
+            - generic [ref=e641]: Template
+            - text: "->display"
+            - generic [ref=e642]:
+              - text: (
+              - emphasis [ref=e643]: array
+              - text: ('data' =>
+              - emphasis [ref=e644]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e645]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e646]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e647]: array
+              - text: (
+              - emphasis [ref=e648]: array
+              - text: ('label' => 'Tableau de bord'))))
+            - generic [ref=e649]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Template.php" [ref=e650]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Template.php#L373
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e651]: Template.php
+              - text: (line 373)
+          - generic [ref=e653] [cursor=pointer]:
+            - img [ref=e655]
+            - generic [ref=e657]: Template
+            - text: "->render"
+            - generic [ref=e658]:
+              - text: (
+              - emphasis [ref=e659]: array
+              - text: ('data' =>
+              - emphasis [ref=e660]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e661]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e662]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e663]: array
+              - text: (
+              - emphasis [ref=e664]: array
+              - text: ('label' => 'Tableau de bord'))))
+            - generic [ref=e665]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\TemplateWrapper.php" [ref=e666]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\TemplateWrapper.php#L51
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e667]: TemplateWrapper.php
+              - text: (line 51)
+          - generic [ref=e669] [cursor=pointer]:
+            - img [ref=e671]
+            - generic [ref=e673]: TemplateWrapper
+            - text: "->render"
+            - generic [ref=e674]:
+              - text: (
+              - emphasis [ref=e675]: array
+              - text: ('data' =>
+              - emphasis [ref=e676]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e677]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e678]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e679]: array
+              - text: (
+              - emphasis [ref=e680]: array
+              - text: ('label' => 'Tableau de bord'))))
+            - generic [ref=e681]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\twig\\twig\\src\\Environment.php" [ref=e682]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\Environment.php#L333
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\twig\twig\src\
+                - strong [ref=e683]: Environment.php
+              - text: (line 333)
+          - generic [ref=e685] [cursor=pointer]:
+            - img [ref=e687]
+            - generic [ref=e689]: Environment
+            - text: "->render"
+            - generic [ref=e690]:
+              - text: ('backoffice/dashboard/general.html.twig',
+              - emphasis [ref=e691]: array
+              - text: ('data' =>
+              - emphasis [ref=e692]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e693]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e694]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e695]: array
+              - text: (
+              - emphasis [ref=e696]: array
+              - text: ('label' => 'Tableau de bord'))))
+            - generic [ref=e697]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\symfony\\framework-bundle\\Controller\\AbstractController.php" [ref=e698]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\symfony\framework-bundle\Controller\AbstractController.php#L431
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\symfony\framework-bundle\Controller\
+                - strong [ref=e699]: AbstractController.php
+              - text: (line 431)
+          - generic [ref=e701] [cursor=pointer]:
+            - img [ref=e703]
+            - generic [ref=e705]: AbstractController
+            - text: "->doRenderView"
+            - generic [ref=e706]:
+              - text: ('backoffice/dashboard/general.html.twig',
+              - emphasis [ref=e707]: "null"
+              - text: ","
+              - emphasis [ref=e708]: array
+              - text: ('data' =>
+              - emphasis [ref=e709]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e710]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e711]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e712]: array
+              - text: (
+              - emphasis [ref=e713]: array
+              - text: ('label' => 'Tableau de bord'))), 'render')
+            - generic [ref=e714]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\symfony\\framework-bundle\\Controller\\AbstractController.php" [ref=e715]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\symfony\framework-bundle\Controller\AbstractController.php#L436
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\symfony\framework-bundle\Controller\
+                - strong [ref=e716]: AbstractController.php
+              - text: (line 436)
+          - generic [ref=e718] [cursor=pointer]:
+            - img [ref=e720]
+            - generic [ref=e722]: AbstractController
+            - text: "->doRender"
+            - generic [ref=e723]:
+              - text: ('backoffice/dashboard/general.html.twig',
+              - emphasis [ref=e724]: "null"
+              - text: ","
+              - emphasis [ref=e725]: array
+              - text: ('data' =>
+              - emphasis [ref=e726]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e727]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e728]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e729]: array
+              - text: (
+              - emphasis [ref=e730]: array
+              - text: ('label' => 'Tableau de bord'))),
+              - emphasis [ref=e731]: "null"
+              - text: ", 'render')"
+            - generic [ref=e732]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\symfony\\framework-bundle\\Controller\\AbstractController.php" [ref=e733]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\symfony\framework-bundle\Controller\AbstractController.php#L250
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\symfony\framework-bundle\Controller\
+                - strong [ref=e734]: AbstractController.php
+              - text: (line 250)
+          - generic [ref=e736] [cursor=pointer]:
+            - img [ref=e738]
+            - generic [ref=e740]: AbstractController
+            - text: "->render"
+            - generic [ref=e741]:
+              - text: ('backoffice/dashboard/general.html.twig',
+              - emphasis [ref=e742]: array
+              - text: ('data' =>
+              - emphasis [ref=e743]: array
+              - text: ('totalClients' => 1, 'totalComptes' => 0, 'operationsJour' => 0, 'validationsEnAttente' => 0, 'dernieresOperations' =>
+              - emphasis [ref=e744]: array
+              - text: (), 'encoursParProduit' =>
+              - emphasis [ref=e745]: array
+              - text: ()), 'breadcrumbs' =>
+              - emphasis [ref=e746]: array
+              - text: (
+              - emphasis [ref=e747]: array
+              - text: ('label' => 'Tableau de bord'))))
+            - generic [ref=e748]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\src\\Controller\\Dashboard\\GeneralDashboardController.php" [ref=e749]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\src\Controller\Dashboard\GeneralDashboardController.php#L28
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\src\Controller\Dashboard\
+                - strong [ref=e750]: GeneralDashboardController.php
+              - text: (line 28)
+          - generic [ref=e752] [cursor=pointer]:
+            - img [ref=e754]
+            - generic [ref=e756]: GeneralDashboardController
+            - text: "->index"
+            - generic [ref=e757]:
+              - text: (
+              - emphasis [ref=e758]: object
+              - text: (Request))
+            - generic [ref=e759]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\symfony\\http-kernel\\HttpKernel.php" [ref=e760]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\symfony\http-kernel\HttpKernel.php#L183
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\symfony\http-kernel\
+                - strong [ref=e761]: HttpKernel.php
+              - text: (line 183)
+          - generic [ref=e763] [cursor=pointer]:
+            - img [ref=e765]
+            - generic [ref=e767]: HttpKernel
+            - text: "->handleRaw"
+            - generic [ref=e768]:
+              - text: (
+              - emphasis [ref=e769]: object
+              - text: (Request), 1)
+            - generic [ref=e770]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\symfony\\http-kernel\\HttpKernel.php" [ref=e771]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\symfony\http-kernel\HttpKernel.php#L76
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\symfony\http-kernel\
+                - strong [ref=e772]: HttpKernel.php
+              - text: (line 76)
+          - generic [ref=e774] [cursor=pointer]:
+            - img [ref=e776]
+            - generic [ref=e778]: HttpKernel
+            - text: "->handle"
+            - generic [ref=e779]:
+              - text: (
+              - emphasis [ref=e780]: object
+              - text: (Request), 1,
+              - emphasis [ref=e781]: "true"
+              - text: )
+            - generic [ref=e782]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\symfony\\http-kernel\\Kernel.php" [ref=e783]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\symfony\http-kernel\Kernel.php#L193
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\symfony\http-kernel\
+                - strong [ref=e784]: Kernel.php
+              - text: (line 193)
+          - generic [ref=e786] [cursor=pointer]:
+            - img [ref=e788]
+            - generic [ref=e790]: Kernel
+            - text: "->handle"
+            - generic [ref=e791]:
+              - text: (
+              - emphasis [ref=e792]: object
+              - text: (Request))
+            - generic [ref=e793]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\symfony\\runtime\\Runner\\Symfony\\HttpKernelRunner.php" [ref=e794]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\symfony\runtime\Runner\Symfony\HttpKernelRunner.php#L35
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\symfony\runtime\Runner\Symfony\
+                - strong [ref=e795]: HttpKernelRunner.php
+              - text: (line 35)
+          - generic [ref=e797] [cursor=pointer]:
+            - img [ref=e799]
+            - generic [ref=e801]: HttpKernelRunner
+            - text: "->run()"
+            - generic [ref=e802]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\autoload_runtime.php" [ref=e803]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\vendor\autoload_runtime.php#L32
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\vendor\
+                - strong [ref=e804]: autoload_runtime.php
+              - text: (line 32)
+          - generic [ref=e806] [cursor=pointer]:
+            - img [ref=e808]
+            - text: require_once('C:\\wamp64\\www\\Projet-Microfinance\\frontend\\vendor\\autoload_runtime.php')
+            - generic [ref=e810]:
+              - text: in
+              - link "C:\\wamp64\\www\\Projet-Microfinance\\frontend\\public\\index.php" [ref=e811]:
+                - /url: file://C:\wamp64\www\Projet-Microfinance\frontend\public\index.php#L5
+                - text: C:\wamp64\www\Projet-Microfinance\frontend\public\
+                - strong [ref=e812]: index.php
+              - text: (line 5)
+    - text: ✔ ▾ ✔ ✔ ✔ ✔ ✔ ▾

@@ -1,0 +1,49 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Ouverture d'Agence - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="max-w-2xl mx-auto">
+    {% embed 'components/MfFormCard.html.twig' with { title: 'Ouverture d\'une nouvelle agence', description: 'Saisissez les informations pour l\'ouverture d\'une nouvelle agence' } %}
+        {% block form_fields %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Code</label>
+                    <input type="text" name="code" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Libellé</label>
+                    <input type="text" name="libelle" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Région</label>
+                    <select name="region_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                        <option value="">Sélectionner</option>
+                        {% for r in regions %}
+                            <option value="{{ r.id }}">{{ r.libelle }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Téléphone</label>
+                    <input type="text" name="telephone" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Email</label>
+                    <input type="email" name="email" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Date ouverture</label>
+                    <input type="date" name="dateOuverture" value="{{ 'now'|date('Y-m-d') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-on-surface mb-1">Adresse</label>
+                <textarea name="adresse" rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"></textarea>
+            </div>
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

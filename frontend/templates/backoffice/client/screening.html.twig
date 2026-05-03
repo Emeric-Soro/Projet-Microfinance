@@ -1,0 +1,84 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Screening AML - {{ client.nom ?? client.raisonSociale ?? 'Client' }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [
+    { label: 'Clients', url: path('client_list') },
+    { label: client.nom ?? client.raisonSociale ?? 'Client', url: path('client_detail', { id: client.id }) },
+    { label: 'Screening AML' }
+] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Screening AML</h1>
+    <p class="text-sm text-on-surface-variant mt-1">{{ client.nom ?? client.raisonSociale ?? 'Client' }} {{ client.prenom ?? '' }}</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div>
+        {% embed 'components/MfCard.html.twig' with { title: 'Statut du screening' } %}
+            {% block card_content %}
+                {% set screenStatut = screening.statut ?? 'NON_EFFECTUE' %}
+                {% set screenClass = screenStatut == 'OK' ? 'bg-green-100 text-green-800' : screenStatut == 'ALERTE' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-600' %}
+                <div class="text-center py-4">
+                    <div class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium {{ screenClass }}">
+                        {% if screenStatut == 'OK' %}
+                            Aucune alerte
+                        {% elseif screenStatut == 'ALERTE' %}
+                            Alerte détectée
+                        {% else %}
+                            Non effectué
+                        {% endif %}
+                    </div>
+                    <p class="mt-2 text-xs text-on-surface-variant">Dernier screening : {{ screening.dateDernierScreening ?? 'Jamais' }}</p>
+                </div>
+            {% endblock %}
+        {% endembed %}
+
+        {% embed 'components/MfCard.html.twig' with { title: 'Listes vérifiées', class: 'mt-4' } %}
+            {% block card_content %}
+                <ul class="space-y-2">
+                    {% set listes = screening.listes ?? ['ONU', 'UE', 'FATF', 'BRI', 'PEP', 'SANCTIONS'] %}
+                    {% for liste in listes %}
+                    <li class="flex items-center justify-between py-1">
+                        <span class="text-sm">{{ liste }}</span>
+                        <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700">OK</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-2">
+        {% embed 'components/MfCard.html.twig' with { title: 'Résultats du screening' } %}
+            {% block card_content %}
+                {% if screening.resultats is defined and screening.resultats is not empty %}
+                    {% embed 'components/MfDataTable.html.twig' with {
+                        headers: [
+                            { key: 'liste', label: 'Liste' },
+                            { key: 'entite', label: 'Entité' },
+                            { key: 'type', label: 'Type' },
+                            { key: 'niveau', label: 'Niveau' },
+                            { key: 'dateVerification', label: 'Date vérification' },
+                            { key: 'resultat', label: 'Résultat' },
+                        ],
+                        rows: screening.resultats,
+                    } %}{% endembed %}
+                {% else %}
+                    {% include 'partials/_empty_state.html.twig' with { title: 'Screening non effectué', message: 'Aucun résultat de screening disponible pour ce client.' } %}
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
+
+        {% embed 'components/MfCard.html.twig' with { title: 'Actions', class: 'mt-6' } %}
+            {% block card_content %}
+            <div class="flex gap-3">
+                <a href="{{ path('conformite_screening', { clientId: client.id }) }}" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors text-sm">Lancer un screening</a>
+                <a href="{{ path('conformite_dashboard') }}" class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm">Tableau de bord conformité</a>
+            </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

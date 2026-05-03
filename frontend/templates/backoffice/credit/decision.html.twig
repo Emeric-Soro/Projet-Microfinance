@@ -1,0 +1,77 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Décision - Demande N°{{ demande.id }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Crédit', url: path('credit_dashboard') }, { label: 'Demandes', url: path('credit_requests') }, { label: 'N°' ~ demande.id ~ ' - Décision' }] %}
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Décision - Demande N°{{ demande.id }}</h1>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Récapitulatif</h3>
+            </div>
+            <div class="p-4 space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Client</span>
+                    <span class="font-medium">{{ demande.clientNom|default('') }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Montant demandé</span>
+                    <span class="font-medium">{{ demande.montant|default(0)|number_format(0, ',', ' ') }} FCFA</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Durée</span>
+                    <span class="font-medium">{{ demande.duree|default(0) }} mois</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Score</span>
+                    <span class="font-semibold text-teal-600">{{ demande.score|default('N/A') }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Décision finale</h3>
+            </div>
+            <div class="p-4">
+                <form method="post" action="{{ path('credit_decision', { id: demande.id }) }}">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Décision</label>
+                            <select name="decision" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="APPROUVEE" {{ decision.decision|default('') == 'APPROUVEE' ? 'selected' : '' }}>Approuvée</option>
+                                <option value="REFUSEE" {{ decision.decision|default('') == 'REFUSEE' ? 'selected' : '' }}>Refusée</option>
+                                <option value="CONDITIONNELLE" {{ decision.decision|default('') == 'CONDITIONNELLE' ? 'selected' : '' }}>Conditionnelle</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Montant accordé (FCFA)</label>
+                            <input type="number" name="montantAccorde" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value="{{ decision.montantAccorde|default(demande.montant|default(0)) }}" min="0" step="1000">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Durée accordée (mois)</label>
+                            <input type="number" name="dureeAccordee" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value="{{ decision.dureeAccordee|default(demande.duree|default(0)) }}" min="1">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Motif / Commentaires</label>
+                            <textarea name="motif" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">{{ decision.motif|default('') }}</textarea>
+                        </div>
+                        <div class="flex items-center justify-end gap-3">
+                            <a href="{{ path('credit_requests') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">Retour</a>
+                            <button type="submit" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm">Enregistrer la décision</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends 'auth.html.twig' %}
+
+{% block title %}Connexion - MicroFin{% endblock %}
+
+{% block auth_content %}
+<h2 class="font-heading text-xl font-semibold text-primary mb-6">Connexion</h2>
+
+<form method="post" action="{{ path('login') }}" class="space-y-5">
+    <div>
+        <label for="username" class="block text-sm font-medium text-on-surface mb-1.5">Identifiant</label>
+        <input type="text" id="username" name="username" required autocomplete="username" autofocus
+               class="w-full px-4 py-2.5 border border-teal-200 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary bg-white placeholder-gray-400"
+               placeholder="Votre identifiant">
+    </div>
+
+    <div>
+        <label for="password" class="block text-sm font-medium text-on-surface mb-1.5">Mot de passe</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password"
+               class="w-full px-4 py-2.5 border border-teal-200 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary bg-white placeholder-gray-400"
+               placeholder="Votre mot de passe">
+    </div>
+
+    <button type="submit"
+            class="w-full bg-primary text-white font-medium py-2.5 px-4 rounded-lg hover:bg-primary-600 focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors text-sm">
+        Se connecter
+    </button>
+
+    <div class="text-center">
+        <a href="{{ path('forgot_password') }}" class="text-sm text-primary hover:text-primary-600 underline">
+            Mot de passe oublié ?
+        </a>
+    </div>
+</form>
+{% endblock %}

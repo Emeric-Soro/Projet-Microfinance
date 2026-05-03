@@ -1,0 +1,89 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Cartes bancaires{% endblock %}
+{% block current_menu %}paiements_cartes{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+{% embed 'components/MfStatsGrid.html.twig' with {stats: [
+    {label: 'Cartes actives', value: stats.actives|default(0), icon: 'M9 12l2 2 4-4', icon_bg: 'bg-green-50', icon_color: 'text-green-600'},
+    {label: 'Cartes bloquées', value: stats.bloquees|default(0), icon: 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636', icon_bg: 'bg-red-50', icon_color: 'text-red-600'},
+    {label: 'Transactions jour', value: stats.transactionsJour|default(0), icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600'},
+    {label: 'Volume journalier', value: (stats.volumeJour|default(0))|number_format(0, ',', ' ') ~ ' FCFA', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-primary-50', icon_color: 'text-primary'},
+]} %}{% endembed %}
+
+<div class="mt-6">
+    {% embed 'components/MfTabs.html.twig' with {tabs: [
+        {key: 'cartes', label: 'Toutes les cartes', count: stats.total|default(0)},
+        {key: 'litiges', label: 'Litiges', count: stats.litiges|default(0)},
+        {key: 'rapprochement', label: 'Rapprochement'},
+    ]} %}
+        {% block tabs_content %}
+            <div class="tab-content" data-tabs-target="cartes">
+                {% embed 'components/MfCard.html.twig' with {title: 'Liste des cartes', action: {url: '#', label: 'Nouvelle carte'}} %}
+                    {% block card_content %}
+                        {% include 'partials/_table_toolbar.html.twig' with {
+                            search_placeholder: 'Rechercher une carte...',
+                            filters: [
+                                {label: 'Statut', options: [
+                                    {value: 'ACTIVE', label: 'Active'},
+                                    {value: 'BLOQUEE', label: 'Bloquée'},
+                                    {value: 'EXPIREE', label: 'Expirée'},
+                                ]}
+                            ]
+                        } %}
+                        {% embed 'components/MfDataTable.html.twig' with {
+                            headers: [
+                                {key: 'id', label: 'N°'},
+                                {key: 'numeroCarte', label: 'Numéro carte'},
+                                {key: 'titulaire', label: 'Titulaire'},
+                                {key: 'type', label: 'Type'},
+                                {key: 'dateExpiration', label: 'Expire le'},
+                                {key: 'plafond', label: 'Plafond'},
+                                {key: 'statut', label: 'Statut'},
+                                {key: 'actions', label: 'Actions'},
+                            ],
+                            rows: cartes
+                        } %}
+                            {% block card_content %}
+                                {% for carte in cartes %}
+                                    <tr>
+                                        <td>{{ carte.id }}</td>
+                                        <td class="font-mono text-sm">{{ carte.numeroCarte }}</td>
+                                        <td>{{ carte.titulaire }}</td>
+                                        <td>{{ carte.type }}</td>
+                                        <td>{{ carte.dateExpiration|date('m/Y') }}</td>
+                                        <td>{{ carte.plafond|number_format(0, ',', ' ') }} FCFA</td>
+                                        <td>{% include 'components/MfStatusBadge.html.twig' with {status: carte.statut} %}</td>
+                                        <td class="text-right">
+                                            <a href="#" class="text-sm text-primary hover:text-primary-600 mr-2">Détails</a>
+                                            <a href="#" class="text-sm text-red-600 hover:text-red-800">Bloquer</a>
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="8" class="text-center py-8">
+                                            {% include 'partials/_empty_state.html.twig' with {title: 'Aucune carte', message: 'Aucune carte bancaire trouvée.'} %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% endblock %}
+                        {% endembed %}
+                    {% endblock %}
+                {% endembed %}
+            </div>
+            <div class="tab-content hidden" data-tabs-target="litiges">
+                <p class="text-center py-4">
+                    <a href="{{ path('paiements_cartes_litiges') }}" class="text-primary hover:text-primary-600 font-medium">Voir les litiges →</a>
+                </p>
+            </div>
+            <div class="tab-content hidden" data-tabs-target="rapprochement">
+                <p class="text-center py-4">
+                    <a href="{{ path('paiements_cartes_rapprochement') }}" class="text-primary hover:text-primary-600 font-medium">Voir le rapprochement →</a>
+                </p>
+            </div>
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

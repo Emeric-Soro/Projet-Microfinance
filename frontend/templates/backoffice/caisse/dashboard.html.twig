@@ -1,0 +1,73 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Caisse - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Tableau de bord Caisse</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Vue d'ensemble de la gestion de caisse</p>
+</div>
+
+{% if data is defined and data is not empty %}
+    {% embed component('MfStatsGrid') with { cols: 4, stats: [
+        { label: 'Sessions ouvertes', value: data.sessionsOuvertes|default(0), icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+        { label: 'Encaisse totale', value: data.encaisseTotale|default(0)|montant, icon: 'M12 4v16m8-8H4', icon_bg: 'bg-teal-50', icon_color: 'text-teal-600' },
+        { label: 'Écarts du jour', value: data.ecartsJour|default(0)|montant, icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z', icon_bg: 'data.ecartsJour > 0 ? 'bg-red-50' : 'bg-green-50'', icon_color: 'data.ecartsJour > 0 ? 'text-red-600' : 'text-green-600'' },
+        { label: 'En transit', value: data.enTransit|default(0)|montant, icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', icon_bg: 'bg-orange-50', icon_color: 'text-orange-600' },
+    ]} %}
+        {% block card_content %}
+            {{ parent() }}
+        {% endblock %}
+    {% endembed %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {% embed component('MfCard') with { title: 'Sessions actives' } %}
+            {% block card_content %}
+                {% if data.sessions is defined and data.sessions is not empty %}
+                    <div class="space-y-3">
+                        {% for session in data.sessions %}
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div>
+                                    <p class="text-sm font-medium text-on-surface">{{ session.guichet }}</p>
+                                    <p class="text-xs text-on-surface-variant">{{ session.dateOuverture|date_fr }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-bold text-primary">{{ session.solde|montant }}</p>
+                                    <a href="{{ path('caisse_session', { id: session.id }) }}" class="text-xs text-primary hover:text-primary-600">Ouvrir</a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {% include 'partials/_empty_state.html.twig' with { title: 'Aucune session active', message: 'Aucune session de caisse ouverte.' } %}
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
+
+        {% embed component('MfCard') with { title: 'Actions rapides' } %}
+            {% block card_content %}
+                <div class="grid grid-cols-2 gap-3">
+                    <a href="{{ path('caisse_open') }}" class="p-4 border border-teal-100 rounded-lg text-center hover:bg-teal-50 transition-colors">
+                        <svg class="w-6 h-6 mx-auto mb-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        <span class="text-xs font-medium">Ouverture</span>
+                    </a>
+                    <a href="{{ path('caisse_vault') }}" class="p-4 border border-teal-100 rounded-lg text-center hover:bg-teal-50 transition-colors">
+                        <svg class="w-6 h-6 mx-auto mb-1 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                        <span class="text-xs font-medium">Coffre</span>
+                    </a>
+                    <a href="{{ path('caisse_eod') }}" class="p-4 border border-teal-100 rounded-lg text-center hover:bg-teal-50 transition-colors">
+                        <svg class="w-6 h-6 mx-auto mb-1 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <span class="text-xs font-medium">Clôture</span>
+                    </a>
+                    <a href="{{ path('caisse_variances') }}" class="p-4 border border-teal-100 rounded-lg text-center hover:bg-teal-50 transition-colors">
+                        <svg class="w-6 h-6 mx-auto mb-1 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                        <span class="text-xs font-medium">Écarts</span>
+                    </a>
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+{% else %}
+    {% include 'partials/_empty_state.html.twig' with { title: 'Chargement...', message: 'Données du tableau de bord en cours de chargement.' } %}
+{% endif %}
+{% endblock %}

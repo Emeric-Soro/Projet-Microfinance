@@ -1,0 +1,68 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}API Paiements{% endblock %}
+{% block current_menu %}paiements_api{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+{% embed 'components/MfStatsGrid.html.twig' with {stats: [
+    {label: 'Appels aujourd\'hui', value: stats.appelsAujourdhui|default(0), icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600'},
+    {label: 'Succès', value: stats.succes|default(0), icon: 'M9 12l2 2 4-4', icon_bg: 'bg-green-50', icon_color: 'text-green-600'},
+    {label: 'Échecs', value: stats.echecs|default(0), icon: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2', icon_bg: 'bg-red-50', icon_color: 'text-red-600'},
+    {label: 'Temps moyen', value: stats.tempsMoyen|default(0) ~ 'ms', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-primary-50', icon_color: 'text-primary'},
+]} %}{% endembed %}
+
+{% embed 'components/MfCard.html.twig' with {title: 'Transactions API'} %}
+    {% block card_content %}
+        {% include 'partials/_table_toolbar.html.twig' with {
+            search_placeholder: 'Rechercher une transaction...',
+            filters: [
+                {label: 'Statut', options: [
+                    {value: 'SUCCES', label: 'Succès'},
+                    {value: 'ECHEC', label: 'Échec'},
+                    {value: 'EN_COURS', label: 'En cours'},
+                ]}
+            ]
+        } %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                {key: 'id', label: 'N°'},
+                {key: 'date', label: 'Date'},
+                {key: 'endpoint', label: 'Endpoint'},
+                {key: 'methode', label: 'Méthode'},
+                {key: 'montant', label: 'Montant'},
+                {key: 'reference', label: 'Référence'},
+                {key: 'statut', label: 'Statut'},
+                {key: 'duree', label: 'Durée'},
+            ],
+            rows: transactions
+        } %}
+            {% block card_content %}
+                {% for tx in transactions %}
+                    <tr>
+                        <td>{{ tx.id }}</td>
+                        <td>{{ tx.date|date('d/m/Y H:i:s') }}</td>
+                        <td class="font-mono text-xs">{{ tx.endpoint }}</td>
+                        <td>
+                            <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium {{ tx.methode == 'POST' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800' }}">
+                                {{ tx.methode }}
+                            </span>
+                        </td>
+                        <td>{{ tx.montant|number_format(0, ',', ' ') }} FCFA</td>
+                        <td class="font-mono text-xs">{{ tx.reference }}</td>
+                        <td>{% include 'components/MfStatusBadge.html.twig' with {status: tx.statut} %}</td>
+                        <td class="text-xs">{{ tx.duree }}ms</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-8">
+                            {% include 'partials/_empty_state.html.twig' with {title: 'Aucune transaction', message: 'Aucune transaction API trouvée.'} %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

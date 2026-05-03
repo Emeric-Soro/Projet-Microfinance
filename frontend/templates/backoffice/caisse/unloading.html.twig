@@ -1,0 +1,43 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Déchargement caisse - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Déchargement de caisse</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Retirer des fonds de la caisse</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1">
+        {% embed component('MfFormCard') with { title: 'Nouveau déchargement', description: 'Saisissez les informations' } %}
+            {% block form_fields %}
+                <div class="space-y-4">
+                    {% include component('MfInput') with { name: 'guichet', label: 'Guichet', required: true } %}
+                    {% include component('MfMoneyInput') with { name: 'montant', label: 'Montant à décharger', required: true } %}
+                    {% include component('MfInput') with { name: 'motif', label: 'Motif', required: true } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-2">
+        {% embed component('MfDataTable') with {
+            headers: [
+                { key: 'date', label: 'Date', sortable: true },
+                { key: 'guichet', label: 'Guichet', sortable: true },
+                { key: 'montant', label: 'Montant', sortable: true },
+                { key: 'motif', label: 'Motif' },
+                { key: 'statut', label: 'Statut' },
+            ],
+            rows: history,
+            empty_title: 'Aucun déchargement',
+            empty_message: 'Aucun déchargement effectué.',
+        } %}
+            {% block card_content %}
+                {{ parent() }}
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Fiscal - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Gestion fiscale</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Déclarations et calculs fiscaux</p>
+    </div>
+</div>
+
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+<div class="mf-card p-6 mb-6">
+    <h3 class="font-heading font-semibold text-lg text-on-surface mb-4">Générer une déclaration</h3>
+    <form method="post" action="{{ path('comptabilite_tax') }}" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="mf-label">Type de déclaration</label>
+                <select name="type_declaration" class="mf-input" required>
+                    <option value="">Sélectionner</option>
+                    <option value="tva">TVA</option>
+                    <option value="bic">BIC</option>
+                    <option value="irs">IRS</option>
+                    <option value="taux">Impôt minimum forfaitaire</option>
+                </select>
+            </div>
+            <div>
+                <label class="mf-label">Exercice</label>
+                <select name="exercice_id" class="mf-input" required>
+                    <option value="">Sélectionner</option>
+                    {% for exercice in exercices %}
+                        <option value="{{ exercice.id }}">{{ exercice.code }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="mf-label">Période</label>
+                <select name="period" class="mf-input">
+                    <option value="mensuel">Mensuel</option>
+                    <option value="trimestriel">Trimestriel</option>
+                    <option value="annuel">Annuel</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex justify-end">
+            <button type="submit" class="mf-btn-primary">Générer la déclaration</button>
+        </div>
+    </form>
+</div>
+
+<div class="mf-card overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="font-heading font-semibold text-on-surface">Déclarations fiscales</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="mf-table">
+            <thead>
+                <tr>
+                    <th>Référence</th>
+                    <th>Type</th>
+                    <th>Période</th>
+                    <th class="text-right">Montant</th>
+                    <th>Date déclaration</th>
+                    <th class="text-center">Statut</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for decl in declarations %}
+                <tr>
+                    <td class="font-mono">{{ decl.reference }}</td>
+                    <td>{{ decl.type_declaration }}</td>
+                    <td>{{ decl.period }}</td>
+                    <td class="text-right font-mono">{{ decl.montant|number_format(0, ',', ' ') }}</td>
+                    <td>{{ decl.date_declaration|date('d/m/Y') }}</td>
+                    <td class="text-center">{% include 'partials/_status_badge.html.twig' with {status: decl.statut} %}</td>
+                    <td class="text-center">
+                        <a href="#" class="mf-btn-icon" title="Télécharger">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-8 text-on-surface-variant">Aucune déclaration trouvée</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

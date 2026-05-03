@@ -1,0 +1,28 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Règles de validation - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Règles de validation' } %}
+        {% block card_content %}
+            <form method="post" class="space-y-4">
+                {% embed 'components/MfDataTable.html.twig' with {
+                    headers: [
+                        { key: 'regle', label: 'Règle' },
+                        { key: 'description', label: 'Description' },
+                        { key: 'active', label: 'Active' },
+                    ],
+                    rows: regles|default([]),
+                    actions: false,
+                } %}{% endembed %}
+                <div class="flex justify-end">
+                    <button type="submit" class="mf-btn-primary">Mettre à jour les règles</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

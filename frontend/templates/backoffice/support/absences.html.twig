@@ -1,0 +1,51 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Absences - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Support RH', url: path('support_absences') }, { label: 'Absences' }] %}
+
+{% if mode == 'list' %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Absences</h1>
+    <a href="{{ path('support_absences_create') }}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Signaler une absence</a>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Liste des absences' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'employe', label: 'Employé' },
+                { key: 'date', label: 'Date' },
+                { key: 'motif', label: 'Motif' },
+                { key: 'justifiee', label: 'Justifiée' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% include 'partials/_pagination.html.twig' with { current_page: page, total_pages: pages, total_items: total, route: 'support_absences', query: {} } %}
+
+{% elseif mode == 'create' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Signaler une absence</h1></div>
+{% embed 'components/MfFormCard.html.twig' with { title: 'Enregistrement' } %}
+    {% block form_fields %}
+    <form method="post" action="{{ path('support_absences_create') }}">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'employe', label: 'Employé', required: true } %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'date', label: "Date d'absence", required: true } %}
+            {% include 'components/MfSelect.html.twig' with { name: 'justifiee', label: 'Justifiée', options: [
+                { value: 'OUI', label: 'Oui' }, { value: 'NON', label: 'Non' }
+            ]} %}
+            {% include 'components/MfInput.html.twig' with { name: 'motif', label: 'Motif' } %}
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Enregistrer</button>
+            <a href="{{ path('support_absences') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+        </div>
+    </form>
+    {% endblock %}
+{% endembed %}
+{% endif %}
+{% endblock %}

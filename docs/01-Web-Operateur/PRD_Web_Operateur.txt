@@ -1,0 +1,1071 @@
+================================================================================
+MICROFIN - PRD MODULE 1 : WEB OPERATEUR INTERNE (BACK-OFFICE)
+================================================================================
+Version: 1.0 | Priorité: P0 | Surface: 247 écrans | Stack: PHP/Symfony + API Java Spring Boot
+Design Reference: DESIGN.md - Teal #004D61, Manrope/Inter, 12-col grid, 1440px
+================================================================================
+
+TABLE DES MATIÈRES
+1. Architecture Technique
+2. Arborescence Complète des Menus (247 écrans)
+3. Patrons d'Écran Détaillés
+4. Écrans Critiques Détaillés
+5. Workflows Complets
+6. Permissions Matrix
+7. Exigences UX Spécifiques
+
+================================================================================
+1. ARCHITECTURE TECHNIQUE
+================================================================================
+
+1.1 Stack Frontend
+- PHP 8.2+ / Symfony 6.4+
+- Templates Twig avec héritage de layout
+- Composants Réutilisables (partials Twig + Stimulus.js)
+- Hotwired Turbo pour navigation rapide
+- Design System implémenté en SCSS avec variables CSS
+
+1.2 Layouts
+- base.php Layout racine: <html>, <head> avec assets, <body>, block content
+- auth.php Layout authentification: centré, fond #F0F4F5, max-width 480px
+- backoffice.php Layout principal: sidebar (256px collapsed: 72px), topbar (64px), content area, footer
+
+1.3 Partials Réutilisables
+- sidebar.php: Navigation principale, logo MicroFin, menu items avec icônes, badge notifications, user info en bas
+- topbar.php: Breadcrumb, search global (Ctrl+K), notifications dropdown, user avatar/dropdown, help icon
+- breadcrumb.php: Accueil > Module > Sous-module > Écran courant
+- flash.php: Messages de feedback success/error/warning/info
+- table-toolbar.php: Search input, filters dropdown, date range picker, export button, action buttons
+- pagination.php: Prev/Next, page numbers, items per page selector (10/25/50/100)
+- export-actions.php: CSV, Excel, PDF, Print buttons
+- confirm-modal.php: Modal de confirmation générique avec message personnalisable
+- empty-state.php: Icône + message + action button pour listes vides
+- form-errors.php: Error summary en haut du formulaire
+- approval-banner.php: Bandeau orange pour actions en attente d'approbation
+
+1.4 Composants Spécifiques
+- status-badge.php: Badge coloré par statut (actif=vert, inactif=gris, bloqué=rouge, en_attente=orange)
+- data-table.php: Table responsive avec tri, recherche, pagination, zebra #F8FAFA
+- modal.php: Modal overlay avec backdrop, taille sm/md/lg/xl
+- card.php: Card avec padding 24px, border 1px #E0EAEB, radius 8px
+- form-group.php: Label + input + error + help text
+- autocomplete-input.php: Input avec dropdown de suggestions AJAX
+- date-range-picker.php: Deux inputs date avec sélection rapide (aujourd'hui, 7j, 30j, ce mois)
+- file-upload.php: Drag & drop zone + preview + progress bar
+- signature-pad.php: Zone de signature canvas
+- document-viewer.php: Visualisation PDF/image inline
+- activity-timeline.php: Timeline verticale d'activités
+- audit-trail.php: Tableau d'audit avec détails avant/après
+- confirmation-flow.php: Étape de confirmation avant action critique
+- loading-spinner.php: Spinner overlay pour chargements AJAX
+- progress-steps.php: Indicateur d'étape pour workflows multi-step
+
+1.5 Architecture des Données
+- Toutes les données via API REST Java (api.microfin.ci)
+- Cache local Symfony pour les référentiels (produits, agences, utilisateurs)
+- Realtime notifications via Server-Sent Events ou polling 30s
+- Export généré côté serveur, téléchargement asynchrone
+
+1.6 Responsive Breakpoints
+- Desktop: 1280px+ (sidebar expanded)
+- Tablet: 768-1279px (sidebar collapsed, icônes seulement)
+- Mobile: <768px (sidebar off-canvas, stacked layouts)
+
+================================================================================
+2. ARBORESCENCE COMPLÈTE DES MENUS (247 ÉCRANS)
+================================================================================
+
+2.1 AUTHENTIFICATION (8 écrans)
+─────────────────────────────────
+- Connexion (login.php): Identifiant + mot de passe + "Se souvenir de moi"
+- Vérification 2FA (otp-verify.php): Code OTP 6 chiffres + "Renvoyer le code"
+- Mot de passe oublié (forgot-password.php): Identifiant ou email + "Envoyer le lien"
+- Réinitialisation mot de passe (reset-password.php): Token + Nouveau mot de passe + Confirmation
+- Mot de passe expiré (expired-password.php): Ancien + Nouveau + Confirmation + Règles
+- Compte verrouillé (locked-account.php): Message + "Contacter le support" + délai
+- Sélection agence (agency-select.php): Liste des agences (si multi-agence)
+- Session expirée (expired-session.php): Message + "Reconnecter"
+
+2.2 TABLEAUX DE BORD (8 écrans)
+─────────────────────────────────
+- Dashboard général (dashboard.php): KPIs globaux, graphiques tendances, alertes récentes
+- Dashboard par agence (dashboard-agency.php): KPIs filtrés par agence
+- Dashboard siège (dashboard-siege.php): Consolidation multi-agences, comparaisons
+- Dashboard caissier (dashboard-caissier.php): Encaisse, opérations du jour, caisse ouverte/fermée
+- Dashboard crédit (dashboard-credit.php): Portefeuille crédit, PAR, décaissements du jour
+- Dashboard conformité (dashboard-conformite.php): Alertes en cours, dossiers KYC en attente
+- Dashboard comptable (dashboard-comptable.php): Journaux du jour, écritures en attente, clôture
+- Dashboard direction (dashboard-direction.php): KPIs stratégiques, ratios prudentiels
+
+2.3 NAVIGATION GLOBALE (6 écrans)
+─────────────────────────────────
+- Recherche globale (global-search.php): Résultats combinés clients/comptes/opérations
+- Notifications (notifications.php): Liste notifications paginée
+- Détail notification (notification-detail.php): Contenu + lien contextuel + marquer lue
+- Profil utilisateur (profile.php): Infos personnelles, paramètres notification, thème
+- Préférences (preferences.php): Langue, notifications push/mail, thème clair/sombre
+- Aide (help.php): Documentation, FAQ, contact support
+
+2.4 CLIENTS (20 écrans)
+─────────────────────────────────
+- Liste clients (client-list.php): Tableau avec recherche, filtres (statut, agence, type)
+- Recherche avancée (client-search.php): Multi-critères (nom, tel, CNI, adresse)
+- Création client physique (client-create-physical.php): Formulaire complet en steps
+- Création client moral (client-create-moral.php): Formulaire société + représentants
+- Fiche client (client-detail.php): Tabs (infos, comptes, crédits, KYC, documents)
+- Modification client (client-edit.php): Formulaire pré-rempli
+- KYC (client-kyc.php): Documents, statut vérification, checklist
+- Documents (client-documents.php): Upload, visualisation, catégorisation
+- Bénéficiaires effectifs (client-beneficial-owners.php): Déclaration UEMOA
+- Mandataires (client-mandataires.php): Liste, ajout, révocation
+- Contacts (client-contacts.php): Contacts additionnels, relations
+- Évaluation risque (client-risk.php): Scoring, catégorie risque, date révision
+- Screening (client-screening.php): Liste PEP, sanctions, listes noires
+- Activité client (client-activity.php): Timeline complète des interactions
+- Suspension client (client-suspend.php): Motif, durée, documents
+- Réactivation client (client-reactivate.php): Lever suspension
+- Archivage client (client-archive.php): Confirmation + motif
+- Fusion clients (client-merge.php): Recherche doublons, sélection maître/fusionné
+- Export clients (client-export.php): Critères + format (CSV/Excel/PDF)
+- Zone de chalandise (client-zoning.php): Carte clients, heatmap par zone
+
+2.5 COMPTES (14 écrans)
+─────────────────────────────────
+- Liste comptes (account-list.php): Tableau avec filtres (type, statut, agence, client)
+- Ouverture compte (account-create.php): Type produit, client, dépôt initial, documents
+- Fiche compte (account-detail.php): Solde, titulaire, historique, produits liés
+- Mouvements compte (account-history.php): Opérations paginées + filtre date/type
+- Relevé compte (account-statement.php): Période + format PDF imprimable
+- Blocage compte (account-block.php): Motif, durée, confirmation
+- Déblocage compte (account-unblock.php): Vérification motif levé
+- Opposition compte (account-oppose.php): Opposition, mainlevée
+- Changement produit (account-product-change.php): Nouveau produit, frais éventuels
+- Paramètres produit (account-product-params.php): Seuils, frais, taux par produit
+- Comptes dormants (account-dormant.php): Liste, notification, transfert
+- Fermeture compte (account-close.php): Motif, solde nul, dernier relevé
+- Validations en attente (account-pending.php): Demandes d'ouverture/fermeture
+- Comptes par agence (account-agency.php): Répartition
+
+2.6 OPÉRATIONS (12 écrans)
+─────────────────────────────────
+- Nouveau dépôt (operation-deposit.php): Client, compte, montant, mode, références
+- Nouveau retrait (operation-withdrawal.php): Client, compte, montant, mode
+- Nouveau virement (operation-transfer.php): Compte source/dest, montant, motif
+- Opération déplacée (operation-displaced.php): Pour client hors agence
+- Journal des opérations (operation-list.php): Toutes opérations du jour
+- Détail opération (operation-detail.php): Montant, frais, validation, reçu
+- Reçu opération (operation-receipt.php): Impression PDF du reçu
+- Annulation opération (operation-cancel.php): Motif, approbation superviseur
+- Validation superviseur (operation-validate.php): File d'attente validations 4-yeux
+- Forçage superviseur (operation-supervisor-force.php): Motif, pièces justificatives
+- Opérations suspectes (operation-suspicious.php): Alertes COAF
+- Bordereau caissier (operation-teller-journal.php): Récapitulatif journée
+
+2.7 RÉSEAU MULTI-AGENCES (13 écrans)
+─────────────────────────────────
+- Régions (region-list.php): Liste régions, directeurs régionaux
+- Agences (agency-list.php): Liste, statut (ouverte/fermée), responsable
+- Paramètres agence (agency-params.php): Horaires, plafonds, produits autorisés
+- Personnel (agency-staff.php): Affectation employés par agence
+- Mutations (agency-mutation.php): Historique mouvements personnel
+- Guichets (agency-teller.php): Sessions caissier, statut
+- Opérations inter-agences (agency-inter.php): Transferts entre agences
+- Rapprochements (agency-reconciliation.php): Soldes inter-agences
+- Performance agences (agency-performance.php): KPIs comparatifs
+- Inventaire agence (agency-inventory.php): Matériel, valeurs
+- Fermeture agence (agency-close.php): Procédure fermeture définitive
+- Ouverture nouvelle agence (agency-open.php): Formulaire création
+- Reporting agences (agency-reporting.php): Rapports consolidés
+
+2.8 COMPTABILITÉ (22 écrans)
+─────────────────────────────────
+- Plan comptable (chart-of-accounts.php): Arborescence comptes PC UEMOA
+- Journaux (journal-list.php): Liste journaux (Banque, Caisse, OD, etc.)
+- Opérations diverses (accounting-diverse.php): Saisie OD, pièce comptable
+- Brouillard comptable (accounting-draft.php): Écritures en attente
+- Journal des opérations (accounting-ledger.php): Écritures par journal
+- Grand livre (general-ledger.php): Synthèse par compte
+- Balance (balance-sheet.php): Balance générale, balance âgée
+- Balance âgée (aged-balance.php): Échéancier créances/dettes
+- Compte de résultat (pnl.php): Produits/charges par nature
+- Tableau flux trésorerie (cash-flow.php): Flux trésorerie méthode directe/indirecte
+- Schémas comptables (accounting-schemas.php): Règles imputation automatique
+- Test schémas (accounting-schema-test.php): Simulation imputation
+- Lettrage (accounting-lettering.php): Lettrage manuel/automatique
+- Contre-passation (accounting-reversal.php): Annulation écriture
+- Clôture périodique (accounting-closing.php): Clôture mois/exercice
+- Exercices (accounting-fiscal-year.php): Ouverture/clôture exercice
+- Pièces comptables (accounting-documents.php): Saisie et gestion
+- Contrôles comptables (accounting-controls.php): Cohérence, balance, ratios
+- Déclarations fiscales (accounting-tax.php): TVA, BIC, IRVM
+- Reportings (accounting-reports.php): États financiers réglementaires
+- Immobilisations (accounting-fixed-assets.php): Suivi amortissements
+- Engagements hors-bilan (accounting-off-balance.php): Garanties, cautions
+
+2.9 CRÉDIT (31 écrans)
+─────────────────────────────────
+- Dashboard crédit (credit-dashboard.php): KPIs, alertes, actions prioritaires
+- Produits de crédit (credit-products.php): Liste, caractéristiques, conditions
+- Simulation crédit (credit-simulation.php): Montant, durée, taux → échéancier
+- Demandes de crédit (credit-requests.php): File d'attente des demandes
+- Nouvelle demande (credit-request-create.php): Client, produit, montant, objet
+- Pièces demande (credit-request-documents.php): Upload, checklist
+- Analyse crédit (credit-analysis.php): Capacité remboursement, scoring
+- Scoring crédit (credit-scoring.php): Score automatique, grille décision
+- Garanties (credit-guarantees.php): Type garantie, valorisation, documents
+- Comité crédit (credit-committee.php): Composition, avis, décision collégiale
+- Décision crédit (credit-decision.php): Accord/refus, conditions, motifs
+- Contrat crédit (credit-contract.php): Génération contrat, signature
+- Décaissement (credit-disbursement.php): Validation, mise en place, frais
+- Crédits en cours (credit-active.php): Liste crédits actifs
+- Fiche crédit (credit-detail.php): Échéancier, remboursements, impayés
+- Échéancier (credit-schedule.php): Tableau amortissement complet
+- Remboursement (credit-repayment.php): Saisie remboursement (manuel)
+- Remboursement anticipé (credit-prepayment.php): Calcul pénalités, validation
+- Report échéance (credit-postponement.php): Motif, durée, impact
+- Rééchelonnement (credit-restructuring.php): Nouvel échéancier, validation
+- Impayés (credit-arrears.php): Liste, jours de retard, actions
+- Recouvrement (credit-recovery.php): Actions, visites, suivi
+- Contentieux (credit-litigation.php): Procédure juridique, suivi
+- Provisions (credit-provisions.php): Calcul provisions réglementaires
+- Passage en perte (credit-charge-off.php): Décision, écriture comptable
+- Groupes solidaires (credit-solidarity-groups.php): Membres, caution solidaire
+- Collectes groupe (credit-group-collection.php): Saisie collecte, répartition
+- Reporting crédit (credit-reporting.php): PAR, rendement, qualité portefeuille
+- Alertes crédit (credit-alerts.php): Échéances, dépassements, dégradations
+- Dossier détail complet (credit-file.php): Synthèse dossier complet
+- Historique crédit client (credit-client-history.php): Tous crédits du client
+
+2.10 ÉPARGNE (17 écrans)
+─────────────────────────────────
+- Produits épargne (savings-products.php): Compte épargne, DAT, PEP
+- Dépôt à terme (savings-dat.php): Ouverture DAT, taux, échéance
+- Barème taux (savings-rates.php): Grille taux par produit et montant
+- Calcul intérêts (savings-interest.php): Calcul et capitalisation
+- Historique calcul (savings-interest-history.php): Traces calculs
+- Épargne programmée (savings-programmed.php): Plans épargne automatiques
+- Épargne obligatoire (savings-mandatory.php): Pour crédits en cours
+- Tontines (savings-tontines.php): Groupes, cycles, cotisations
+- Cotisations tontine (savings-tontine-contributions.php): Saisie et suivi
+- Retraits épargne (savings-withdrawal.php): Conditions, pénalités
+- Clôture compte épargne (savings-close.php): Intérêts, préavis
+- Mouvements épargne (savings-movements.php): Historique détaillé
+- Rapport épargne (savings-reporting.php): Collecte, encours, dépôts
+- Projets épargne (savings-projects.php): Objectifs, échéances
+- Virements automatiques (savings-auto-transfer.php): Règles prélèvements
+- Simulation épargne (savings-simulation.php): Projection avec intérêts
+- Certificats dépôt (savings-certificates.php): Émission, suivi
+
+2.11 CAISSES ET EOD (18 écrans)
+─────────────────────────────────
+- Dashboard caisses (cash-dashboard.php): Statut caisses, sessions actives
+- Liste caisses (cash-list.php): Toutes caisses, type (principale/guichet)
+- Ouverture caisse (cash-open.php): Solde initial, billetage, signature
+- Session caisse (cash-session.php): Opérations en cours, encaisse
+- Fermeture caisse (cash-close.php): Billetage final, écart, validation
+- Billetage (cash-billetage.php): Par billet/pièce, total
+- Écarts de caisse (cash-variances.php): Liste écarts, montant, motif
+- Validation écart (cash-variance-validate.php): Approuver/rejeter, correction
+- Approvisionnement caisse (cash-provisioning.php): Montant, provenance
+- Retrait caisse (cash-unloading.php): Montant, destination
+- Transfert inter-caisse (cash-transfer.php): Caisse source/dest, montant
+- Coffre (cash-vault.php): Entrées/sorties, inventaire valeurs
+- Relevé caissier (cash-teller-statement.php): Synthèse journalière
+- Clôture journalière (cash-eod.php): Processus complet fin de journée
+- Monitoring EOD (cash-eod-monitor.php): Progression étapes
+- Historique EOD (cash-eod-history.php): Clôtures archivées
+- Paramètres caisse (cash-params.php): Seuils, plafonds, règles
+- Espèces en transit (cash-in-transit.php): Mouvements espèces
+
+2.12 PAIEMENTS (26 écrans)
+─────────────────────────────────
+- Dépôt chèque (payment-cheque-deposit.php): Remise chèque, compensation
+- Carnets chèques (payment-chequebooks.php): Émission, remise, suivi
+- Opposition chèque (payment-cheque-oppose.php): Motif, certificat
+- Incidents chèque (payment-cheque-incidents.php): Liste, déclaration BCT
+- Compensation (payment-clearing.php): Échanges interbancaires
+- Virement interbancaire (payment-sit.php): SIT UEMOA, swift
+- Virement RTGS (payment-rtgs.php): Gros montants
+- Cartes (payment-cards.php): Émission, activation, blocage
+- Litiges cartes (payment-card-disputes.php): Contestation opérations
+- Rapprochement cartes (payment-card-reconciliation.php): Flux monétique
+- DAB/GAB (payment-atm.php): Approvisionnement, retraits
+- Mobile money (payment-mobile-money.php): Orange Money, MTN, Moov
+- Paiement factures (payment-bills.php): Partenaires, transactions
+- Recharges (payment-recharges.php): Téléphone, internet
+- Transfert international (payment-international.php): Swift, Western Union
+- Prélèvement automatique (payment-direct-debit.php): Mandats, exécution
+- LCR/BOR (payment-lcr.php): Effets de commerce
+- Virement masse (payment-batch-transfer.php): Fichier multiple
+- Abonnements (payment-subscriptions.php): Paiements récurrents
+- Commissions paiement (payment-fees.php): Barème, calcul
+- API paiement (payment-api.php): Monitoring partenaires
+- Journal paiements (payment-journal.php): Toutes opérations
+- Remboursement (payment-refund.php): Annulation paiement
+- Historique mobile money (payment-momo-history.php): Transactions MOMO
+- Partenaires (payment-partners.php): Configuration, contrats
+- Plafonds (payment-limits.php): Par produit, client, canal
+
+2.13 VALIDATIONS MAKER-CHECKER (10 écrans)
+─────────────────────────────────
+- File d'attente (approval-queue.php): Actions en attente de validation
+- Détail action (approval-detail.php): Contenu, pièces, justificatif
+- Approbation (approval-approve.php): Confirmation + signature
+- Rejet (approval-reject.php): Motif obligatoire
+- Retour pour correction (approval-revision.php): Commentaire
+- Historique validations (approval-history.php): Mes actions approuvées/rejetées
+- Mes limites (approval-limits.php): Plafonds par type d'action
+- Règles validation (approval-rules.php): Configuration 4-yeux
+- Forçages (approval-forced.php): Validations forcées (superviseur)
+- Mes actions en attente (approval-my-actions.php): Ce que j'ai soumis
+
+2.14 CONFORMITÉ (16 écrans)
+─────────────────────────────────
+- Dashboard conformité (compliance-dashboard.php): Alertes, dossiers, stats
+- Alertes conformité (compliance-alerts.php): Déclenchées automatiquement
+- Investigation (compliance-investigation.php): Ouverture, suivi
+- Déclaration COAF (compliance-sar.php): Suspicious Activity Report
+- Screening sanctions (compliance-screening.php): Listes internationales
+- PEP (compliance-pep.php): Personnes exposées politiquement
+- Profil risque (compliance-risk-profile.php): Catégorisation client
+- BIC (compliance-bic.php): Bénéficiaire effectif
+- Incidents de paiement (compliance-payment-incidents.php): BCT
+- Taxation (compliance-tax.php): Contrôle fiscal
+- Accès inspection (compliance-inspector.php): Portail inspecteur
+- Rapports (compliance-reports.php): Obligations déclaratives
+- Formation (compliance-training.php): Modules, suivi personnel
+- Cartographie risques LCB-FT (compliance-risk-map.php): Matrice
+- Correspondants (compliance-correspondents.php): Banques, échanges
+- Contrôle interne (compliance-internal-control.php): Plan de contrôle
+
+2.15 REPORTING (12 écrans)
+─────────────────────────────────
+- Rapports comptables (reporting-accounting.php): États financiers
+- Rapports réglementaires (reporting-regulatory.php): BCT, UMOA
+- Ratios prudentiels (reporting-ratios.php): Cooke, McN, liquidité
+- Rapports crédit (reporting-credit.php): Portefeuille, qualité
+- Rapports épargne (reporting-savings.php): Collecte, encours
+- Rapports caisse (reporting-cash.php): Flux, positions
+- Rapports agences (reporting-agency.php): Comparatif par agence
+- Rapports conformité (reporting-compliance.php): KYC, LCB-FT
+- Rapports personnalisés (reporting-custom.php): Constructeur ad-hoc
+- Exports programmés (reporting-scheduled.php): Automatisation envois
+- Abonnements (reporting-subscriptions.php): Destinataires, fréquence
+- Rapports RH (reporting-hr.php): Effectifs, paie, absences
+
+2.16 RISQUES (12 écrans)
+─────────────────────────────────
+- Dashboard risques (risk-dashboard.php): Indicateurs composites
+- Risque crédit (risk-credit.php): Concentration, migration
+- Provisions réglementaires (risk-provisions.php): IAS 39, Bâle
+- Liquidité (risk-liquidity.php): Gap, ratios LCR/NSFR
+- Stress tests (risk-stress-tests.php): Scénarios, impacts
+- Cartographie risques (risk-map.php): Matrice criticité
+- Incidents opérationnels (risk-operational.php): Déclarations
+- ALM (risk-alm.php): Asset Liability Management
+- PCA (risk-pca.php): Plan continuité activité
+- PRA (risk-pra.php): Plan reprise activité
+- Risque de taux (risk-interest-rate.php): Sensibilité
+- Reporting risques (risk-reporting.php): Pilier 3, Bâle
+
+2.17 SUPPORT INTERNE - RH (20 écrans)
+─────────────────────────────────
+- Employés (hr-employees.php): Liste, fiches
+- Recrutement (hr-recruitment.php): Demandes, candidatures
+- Congés (hr-leave.php): Demandes, soldes
+- Absences (hr-attendance.php): Pointage, justificatifs
+- Paie (hr-payroll.php): Bulletins, traitements
+- Formation (hr-training.php): Plan, suivis
+- Évaluations (hr-performance.php): Entretiens, objectifs
+- Discipline (hr-discipline.php): Sanctions
+- Fin contrat (hr-separation.php): Départ, solde tout compte
+- Achats (purchase-orders.php): Demandes, bons commande
+- Fournisseurs (purchase-suppliers.php): Base fournisseurs
+- Réceptions (purchase-receipts.php): Livraisons
+- Stocks (purchase-inventory.php): Articles, inventaire
+- Budget (budget.php): Élaboration, suivi
+- Immobilisations (fixed-assets.php): Acquisition, cession, amortissement
+- Entretien (maintenance.php): Demandes, interventions
+- Park auto (fleet.php): Véhicules, affectations, carburant
+- Assurances (insurance.php): Polices, sinistres
+- Courrier (mail-tracking.php): Entrée/sortie, scan
+- Archives (archives.php): GED, indexation, consultation
+
+2.18 ADMINISTRATION (18 écrans)
+─────────────────────────────────
+- Utilisateurs (admin-users.php): Liste, création, modification
+- Profils/Rôles (admin-roles.php): CRUD rôles, hiérarchie
+- Permissions (admin-permissions.php): Arbre permissions, affectation
+- Politique sécurité (admin-security-policy.php): MDP, session, 2FA
+- Sessions actives (admin-sessions.php): Liste, révocation
+- Tentatives connexion (admin-login-attempts.php): Échecs, IP
+- Audit (admin-audit.php): Toutes actions, filtres
+- Paramètres système (admin-system-params.php): Variables globales
+- Notifications (admin-notifications.php): Configuration canaux
+- Tâches planifiées (admin-scheduled-tasks.php): CRON jobs, statut
+- Sauvegardes (admin-backups.php): Planification, restauration
+- Santé système (admin-system-health.php): CPU, RAM, disque, services
+- Logs application (admin-logs.php): Niveaux, filtres, téléchargement
+- Versions (admin-versions.php): Déploiements, changelog
+- Cache (admin-cache.php): Vidage, analyse performance
+- Configuration modules (admin-modules.php): Activation/désactivation
+- Maintenance (admin-maintenance.php): Mode maintenance
+- Journal des modifications (admin-changelog.php): Modifications paramètres
+
+================================================================================
+3. PATRONS D'ÉCRAN DÉTAILLÉS
+================================================================================
+
+3.1 PATRON AUTHENTIFICATION
+----------------------------------------------------------------
+Description: Écran de connexion avec formulaire identifiant/mot de passe
+Usage: Login, OTP, Forgot password, Reset password, Expired password, Locked account
+Champs: Identifiant (text, required), Mot de passe (password, required, min 8), Se souvenir (checkbox), Code OTP (number, 6 digits, required if 2FA)
+Actions: Connexion, Renvoyer OTP, Mot de passe oublié? (link), S'inscrire (link)
+États: Initial (form), Chargement (spinner + disabled button), Erreur validation (inline), Erreur serveur (flash message), Succès (redirect)
+Sécurité: Rate limiting (5 tentatives/min/IP), CAPTCHA après 3 échecs, Compte verrouillé après 5 échecs
+API: POST /api/v1/auth/login, POST /api/v1/auth/otp/verify, POST /api/v1/auth/forgot-password, POST /api/v1/auth/reset-password
+Composants UI: form-group, primary-button, checkbox, flash, loading-spinner
+Design: Layout auth.php, card centré max-w 480px, logo MicroFin en haut, copyright en bas
+
+3.2 PATRON DASHBOARD
+----------------------------------------------------------------
+Description: Écran d'accueil avec indicateurs clés, graphiques, alertes
+Usage: Tous les dashboards (général, agence, crédit, etc.)
+Données: KPIs (4-6 cartes en haut), Graphiques (barres, lignes, secteurs), Alertes récentes (3-5), Tableaux récapitulatifs
+Actions: Voir tout (liens), Filtrer (période, agence), Exporter, Rafraîchir
+États: Loading (skeleton cards), Empty (pas encore de données), Error (message + retry), Loaded (données)
+API: GET /api/v1/dashboard/{type}?period=daily|weekly|monthly&agency=X
+Composants: stat-card (icône, valeur, label, variation %), chart (Chart.js ou D3), alert-item, mini-table
+Design: 12-col grid, KPI cards 3-col chacun en desktop, 2-col tablet, 1-col mobile
+
+3.3 PATRON LISTE AVEC TABLEAU
+----------------------------------------------------------------
+Description: Liste paginée avec recherche, filtres, tri, export
+Usage: Clients, comptes, opérations, crédits, utilisateurs, etc.
+Données: Table avec colonnes configurables, pagination, tri par colonne
+Actions: Nouveau (bouton), Recherche (input avec debounce 300ms), Filtres (dropdowns), Exporter (CSV/Excel/PDF), Imprimer, Ligne cliquable → détail
+États: Loading (shimmer rows), Empty (empty-state component), Error (message + retry), Loaded (données)
+API: GET /api/v1/{resource}?page=1&size=20&search=X&sort=name,asc&filters...
+Composants: data-table (zebra #F8FAFA, th sticky, th sortable), table-toolbar, pagination, empty-state, export-actions
+Design: Card 24px padding, table pleine largeur, toolbar flex space-between, pagination centrée
+
+3.4 PATRON FORMULAIRE
+----------------------------------------------------------------
+Description: Formulaire de saisie avec validation, sections, multi-step
+Usage: Création client, ouverture compte, demande crédit, etc.
+Données: Champs text, number, date, select, autocomplete, file, checkbox, radio
+Actions: Enregistrer (brouillon), Soumettre, Annuler, Étape suivante/précédente
+États: Draft (sauvegardé pas soumis), Validation (erreurs inline résumées), Submitting (loading), Success (message + redirect), Error (serveur error)
+Règles: Required fields marqués *, Validation asynchrone (unicité identifiant), Confirm dialog avant soumission
+API: POST/PUT /api/v1/{resource}
+Sécurité: CSRF token, Validation côté serveur, Logging toutes modifications
+Composants: form-group, form-section (avec titre), form-step (avec progress), date-picker, autocomplete-input, file-upload, signature-pad, form-errors
+
+3.5 PATRON FICHE DÉTAIL
+----------------------------------------------------------------
+Description: Vue détaillée d'une entité avec onglets et timeline
+Usage: Fiche client, fiche compte, fiche crédit, fiche employé
+Données: En-tête (nom, ID, statut), Tabs (info, relations, historique, documents), Timeline activités
+Actions: Modifier (entraîne patron formulaire), Actions contextuelles (bloquer, suspendre), Imprimer, Lier
+États: Loading, Loaded, Error, NotFound (404)
+API: GET /api/v1/{resource}/{id}
+Composants: tab-nav, tab-content, activity-timeline, document-viewer, status-badge, card
+
+3.6 PATRON WORKFLOW MULTI-STEP
+----------------------------------------------------------------
+Description: Processus guidé en étapes avec progression
+Usage: Création client (4 steps), Demande crédit (6 steps), Clôture journalière (8 steps)
+Données: Steps avec titre, description, statut (pending/active/complete/error)
+Actions: Suivant, Précédent, Enregistrer brouillon, Annuler
+États: Current step (active), Valid step (checkmark), Invalid step (error icon), Pending step (greyed)
+Validation: Validation par step avant navigation, Validation finale avant soumission
+Composants: progress-steps (horizontal, avec numéros), step-content, step-actions (Prev/Next/Submit)
+
+3.7 PATRON DOCUMENTS/GED
+----------------------------------------------------------------
+Description: Gestion de documents avec upload, preview, versioning
+Usage: KYC, contrats, pièces justificatives, rapports
+Données: Liste documents (nom, type, taille, date, version), Preview viewer
+Actions: Upload (drag-drop + browse), Supprimer, Télécharger, Version précédente, Catégoriser
+Types: PDF, JPEG, PNG, DOC, XLS (max 10MB)
+Composants: file-upload-zone, document-list, document-viewer, version-history
+API: POST /api/v1/documents/upload, GET /api/v1/documents/{id}/download, GET /api/v1/documents/{id}/preview
+
+3.8 PATRON BATCH/MONITORING
+----------------------------------------------------------------
+Description: Exécution et suivi de tâches batch (EOD, calcul intérêts, reports)
+Usage: EOD, calcul provisions, clôture comptable, génération reports
+Données: Tâche (nom, statut, progression %, start, end, logs)
+Actions: Démarrer, Arrêter, Relancer, Voir logs, Planifier
+États: PENDING, RUNNING, COMPLETED, FAILED, CANCELLED
+Composants: progress-bar (linear, animated), log-viewer (scroll auto), task-card, scheduler-config
+API: POST /api/v1/batch/{task}/start, GET /api/v1/batch/{task}/status, GET /api/v1/batch/{task}/logs
+
+================================================================================
+4. ÉCRANS CRITIQUES DÉTAILLÉS
+================================================================================
+
+4.1 CRÉATION CLIENT PHYSIQUE
+----------------------------------------------------------------
+BUT: Enregistrer un nouveau client personne physique dans le système
+MAKER-CHECKER: OUI (création validée par superviseur)
+
+ÉTAPE 1: IDENTITÉ
+- Champs: Civilité (Mr/Mme/Mlle/Dr select), Nom (text, required, 2-50 chars), Prénom (text, required, 2-50 chars), Date naissance (date, required, age > 18), Lieu naissance (text, required), Nationalité (select pays, required), Sexe (M/F select, required), Situation matrimoniale (Célibataire/Marié/Divorcé/Veuf select, required), Nombre enfants (number, 0-20)
+- Validations: Age calculé > 18 ans, Nom/Prénom sans chiffres, Date naissance <= aujourd'hui
+
+ÉTAPE 2: PIÈCES D'IDENTITÉ
+- Champs: Type pièce (CNI/Passeport/Attestation select, required), Numéro pièce (text, required, unique), Date délivrance (date), Date expiration (date, required), Autorité délivrance (text), Pièce recto (file upload, required), Pièce verso (file upload, required), Photo portrait (file upload, required)
+- Validations: Numéro pièce unique dans le système, Date expiration > aujourd'hui
+
+ÉTAPE 3: COORDONNÉES
+- Champs: Adresse (text, required), Ville (text, required), Commune (text), Quartier (text), BP (text), Tél mobile (tel, required, format +225XXXXXXXXX), Tél fixe (tel), Email (email), Situation géographique (text, point de repère)
+- Validations: Tél unique dans le système, Format mobile UEMOA (+225 XX XX XX XX)
+
+ÉTAPE 4: PROFESSION & REVENUS
+- Champs: Profession (text, required), Secteur activité (select secteur, required), Employeur (text), Revenu mensuel (number), Autres revenus (number), Source revenus (select: salaire/commerce/agriculture/autre), Type employeur (public/privé/indépendant select)
+- Validations: Si secteur financier → screening PEP renforcé
+
+ÉTAPE 5: PIÈCES JUSTIFICATIVES
+- Justificatif domicile (file, ≤3mois), Justificatif revenus (file), Attestation employeur (file), Autres documents
+- Champs: Catégorie document (select), Description (text), Fichier (file upload)
+
+ÉTAPE 6: RISQUE & CONSENTEMENT
+- Évaluation risque: scoring préliminaire automatique, facteurs de risque (PEP, pays, profession)
+- Consentement RGPD: checkbox required, Consentement marketing: checkbox optional
+- Déclaration Bénéficiaire effectif: Nom, Prénom, Date naissance, Nationalité, % détention
+
+ACTIONS: Enregistrer brouillon, Soumettre pour validation, Annuler, Imprimer fiche provisoire
+API: POST /api/v1/clients (body: all step data, status: PENDING_VALIDATION)
+AUDIT: Log création client (utilisateur, date, client ID données)
+
+4.2 CRÉATION CLIENT MORAL
+----------------------------------------------------------------
+BUT: Enregistrer une entreprise/association comme client
+MAKER-CHECKER: OUI
+
+ÉTAPE 1: IDENTITÉ SOCIÉTÉ
+- Champs: Raison sociale (text, required), Sigle (text), Forme juridique (SA/SARL/SNC/GIE/Association/Coopérative select, required), N° RCCM (text, required, unique), N° CNPS (text), N° Contribuable (text, required), Date création (date), Capital social (number), Siège social (text, required)
+- Validations: Raison sociale unique, N° RCCM unique
+
+ÉTAPE 2: COORDONNÉES
+- Champs: Adresse, Ville, Quartier, BP, Tél, Email, Site web
+- Identiques à client physique
+
+ÉTAPE 3: REPRÉSENTANTS LÉGAUX
+- Gérant/President: civilité, nom, prénom, fonction, tél, email, pièce identité
+- Au moins 1 représentant, jusqu'à 3
+
+ÉTAPE 4: ACTIONNAIRES ET BÉNÉFICIAIRES
+- Nom, prénom, nationalité, % parts, type actionnaire (personne physique/morale)
+- Déclaration BÉFI obligatoire si >25% détention
+
+ÉTAPE 5: PIÈCES JUSTIFICATIVES
+- Statuts, RCCM, CNPS, Contribuable, PV AG, Liste actionnaires
+- Pièces représentants
+
+ACTIONS: Identiques client physique
+API: POST /api/v1/clients/moral
+AUDIT: Log + pièces uploadées
+
+4.3 OUVERTURE DE COMPTE
+----------------------------------------------------------------
+BUT: Ouvrir un compte pour un client existant
+MAKER-CHECKER: OUI
+
+ÉTAPE 1: SÉLECTION CLIENT
+- Recherche client (autocomplete: nom, tel, identifiant)
+- Fiche récapitulative client en lecture
+- Vérification KYC client (si KYC non validé, alerte rouge)
+
+ÉTAPE 2: CHOIX PRODUIT
+- Type compte: Courant/Épargne/DAT (select)
+- Produit: Liste filtrable par type (select from products)
+- Devise: XOF (par défaut), autres (select)
+- Conditions: affichage automatique des conditions du produit (frais, taux, seuils)
+
+ÉTAPE 3: PARAMÈTRES DU COMPTE
+- Numéro compte: Auto-généré (modifiable si rules le permettent)
+- Plafond découvert (si autorisé par produit): montant (number), date début, date fin
+- Mode fonction: Chéquier + Carte, Chéquier seul, Carte seul, Aucun
+- Agence de domiciliation: pré-remplie (agence utilisateur), modifiable
+- Mandataires optionnels: Nom, prénom, type (simple/conjoint), pièce identité
+
+ÉTAPE 4: DÉPÔT INITIAL
+- Montant dépôt initial (number, required, >= montant minimum produit)
+- Mode dépôt: Espèces/Chèque/Virement (select)
+- Référence opération si chèque/virement
+- Billetage si espèces (optionnel)
+
+ÉTAPE 5: CONTRAT
+- Génération contrat PDF
+- Récapitulatif: Client, Produit, Numéro compte, Dépôt initial, Conditions
+- Checkbox: "J'ai lu et accepté les conditions" (required)
+- Signature client (signature-pad) ou "Signature différée"
+
+VALIDATIONS:
+- Client doit avoir KYC completed
+- Client ne doit pas être suspendu/archivé
+- Âge client compatible avec produit (ex: compte jeune 15-25)
+- Produit actif et disponible dans l'agence
+- Dépôt initial >= minimum requis
+- Pas de doublon compte (client + produit déjà ouvert)
+- Pièce identité valide
+
+API: POST /api/v1/accounts (body: clientId, productId, params, deposit, contractData)
+AUDIT: Log ouverture, contrat PDF archivé, KYC check timestamp
+
+4.4 DEMANDE CRÉDIT
+----------------------------------------------------------------
+BUT: Soumettre une demande de crédit pour analyse
+MAKER-CHECKER: OUI (décision finale)
+
+ÉTAPE 1: CLIENT & PRODUIT
+- Recherche client (autocomplete)
+- Fiche client récapitulative (comptes, crédits en cours, épargne)
+- Produit de crédit (select with conditions: taux, durée min/max, montant min/max)
+- Type crédit: Individuel / Groupe solidaire
+
+ÉTAPE 2: SIMULATION
+- Montant demandé (number, required)
+- Durée (months, number, required)
+- Objet crédit (textarea, required)
+- Simulation: Calcul auto échéancier (taux, montant échéance, intérêts totaux, TEG)
+- Affichage tableau amortissement prévisionnel
+
+ÉTAPE 3: GARANTIES
+- Type garantie: Caution solidaire/Gage/Cession créance/Hypothèque/Caution personnelle (select)
+- Description garantie (textarea)
+- Valeur estimée (number)
+- Documents justificatifs (file upload)
+- Caution(s): Nom, prénom, relation avec client (select)
+
+ÉTAPE 4: ANALYSE FINANCIÈRE
+- Revenus déclarés (number, required)
+- Charges déclarées (number, required)
+- Capacité remboursement mensuelle (calcul auto: revenus - charges)
+- Ratio endettement (calcul auto: échéance / revenus)
+- Si ratio > 40%: alerte rouge, validation superviseur requise
+- Apport personnel (number)
+- Historique crédit client (affichage: nb crédits, incidents, score)
+
+ÉTAPE 5: DOCUMENTS
+- Checklist documents obligatoires par produit (with status: uploading/uploaded/missing)
+- Upload par type: CNI, justificatif revenus, facture proforma, devis, contrat, etc.
+
+ÉTAPE 6: SOUMISSION
+- Récapitulatif complet
+- Score automatique (affiché si module scoring actif)
+- Avis agent (textarea, required)
+- Soumettre → Statut: PENDING_VALIDATION
+- Notifications envoyées aux validateurs
+
+VALIDATIONS:
+- Client ne doit pas avoir de crédit en impayé > 30 jours
+- Montant dans plage produit
+- Durée dans plage produit
+- Scoring minimum si auto-scoring activé
+- Documents obligatoires uploadés
+- Endettement < 80% (ou dérogation)
+
+API: POST /api/v1/loans/requests
+AUDIT: Demande complète loggée, score enregistré, documents hashés
+
+4.5 DÉBLOCAGE CRÉDIT
+----------------------------------------------------------------
+BUT: Décaisser les fonds après approbation du crédit
+MAKER-CHECKER: OUI
+
+ÉTAPE 1: SÉLECTION DEMANDE APPROUVÉE
+- Liste crédits approuvés non décaissés
+- Recherche par client ou référence
+
+ÉTAPE 2: VÉRIFICATION
+- Contrat signé? (yes/no avec date)
+- Garanties mises en place? (yes/no checklist)
+- Conditions suspensives levées? (yes/no avec pièces)
+- KYC à jour? (auto-check)
+- Vérification compte de décaissement (existe, actif, au nom du client)
+
+ÉTAPE 3: DÉCAISSEMENT
+- Compte destination: Compte courant client (select si multiple)
+- Montant décaissé: montant approuvé (modifiable partiel)
+- Frais de dossier: montant calculé (modifiable)
+- Frais assurance: montant calculé
+- Net à verser: montant - frais
+- Mode décaissement: Virement compte / Espèces / Chèque
+- Pièce justificative (file upload)
+
+ÉTAPE 4: CONFIRMATION
+- Récapitulatif: Client, Montant, Compte destination, Échéancier
+- Validation: signature numérique ou mot de passe
+
+ÉTATS POST-DÉCAISSEMENT:
+- Mise en place comptable (écriture compte prêt + compte client)
+- Génération première échéance
+- Statut crédit: ACTIF
+- Notification client (SMS: "Votre crédit de XXX FCFA a été débloqué")
+
+API: POST /api/v1/loans/{id}/disbursement
+AUDIT: Décaissement loggué avec tous détails
+
+4.6 FERMETURE CAISSE
+----------------------------------------------------------------
+BUT: Clôturer la session caisse d'un guichetier en fin de journée
+MAKER-CHECKER: NON (mais validé par superviseur)
+
+PRÉ-REQUIS:
+- Toutes opérations du jour terminées
+- Solde caisse théorique = solde ouverture + dépôts - retraits
+- Billetage physique effectué
+
+ÉTAPE 1: RÉCAPITULATIF
+- Caissier, Agence, Date
+- Heure ouverture, heure fermeture
+- Solde ouverture (XOF)
+- Total dépôts (XOF)
+- Total retraits (XOF)
+- Solde théorique (XOF)
+- Nombre opérations: dépôts N, retraits N
+
+ÉTAPE 2: BILLETAGE PHYSIQUE
+- Billets: 10000, 5000, 2000, 1000, 500 (quantité x montant = total)
+- Pièces: 500, 200, 100, 50, 25, 10, 5 (quantité x montant = total)
+- Total espèces calculé
+- Chèques en caisse: nombre, montant total
+
+ÉTAPE 3: ÉCART DE CAISSE
+- Solde théorique - Solde physique = Écart
+- Si écart != 0: champ motif obligatoire
+- Si écart > seuil supervision (50000 XOF): alerte niveau hiérarchique supérieur
+- Action: Validation superviseur requise si écart > 10000 XOF
+
+ÉTAPE 4: VALIDATION
+- Certification écart (checkbox): "Je certifie que ce billetage est conforme"
+- Signature numérique caissier
+- Approbation superviseur (si écart ou validation requise)
+- État: CLOS (si validé) / PENDING_VALIDATION (si en attente)
+
+API: POST /api/v1/cash/sessions/{id}/close
+AUDIT: Billetage, écart, validateur, timestamp
+
+4.7 CLÔTURE JOURNALIÈRE (EOD)
+----------------------------------------------------------------
+BUT: Finaliser la journée comptable, exécuter les traitements batch
+MAKER-CHECKER: OUI
+
+PRÉ-REQUIS:
+- Toutes caisses fermées
+- Aucune opération en cours
+- Aucune validation en attente
+
+ÉTAPES:
+1. Vérification pré-requis (auto-check toutes caisses fermées, toutes opérations validées)
+2. Calcul intérêts épargne (si jour de capitalisation)
+3. Calcul provisions crédit
+4. Rapprochement inter-caisses
+5. Écritures comptables automatiques (OD de clôture)
+6. Génération bordereaux caissiers
+7. Actualisation soldes comptes
+8. Génération fichiers BCT (si échanges du jour)
+9. Archivage journées
+10. Ouverture nouveau jour (nouveaux soldes)
+
+MONITORING:
+- Barre de progression globale
+- Statut chaque étape: PENDING, RUNNING, COMPLETED, FAILED, SKIPPED
+- Logs temps réel
+- Si étape FAILED: pause, afficher erreur, permettre reprise
+
+ACTIONS: Démarrer EOD, Reprendre après échec, Forcer passage étape, Rapport EOD
+API: POST /api/v1/eod/start, GET /api/v1/eod/status
+AUDIT: EOD complet loggé, rapport généré
+
+4.8 VALIDATION MAKER-CHECKER
+----------------------------------------------------------------
+BUT: Liste des actions en attente de validation par un superviseur
+ACTIONS: Approuver, Rejeter, Retour pour correction, Consulter détail
+
+ÉLÉMENTS:
+- Type d'action (création client, ouverture compte, décaissement crédit, opération, etc.)
+- ID de l'élément
+- Soumis par (utilisateur)
+- Date soumission
+- Statut actuel (PENDING_APPROVAL, APPROVED, REJECTED, REVISION)
+- Priorité (haute si montant > seuil)
+
+DÉTAIL ACTION:
+- Valeurs actuelles (avant modification)
+- Valeurs proposées
+- Diff (changements mis en évidence)
+- Pièces justificatives
+- Commentaire du maker
+- Champ validation: Motif approbation/rejet (textarea)
+
+RÈGLES:
+- Validateur ne peut pas approuver sa propre action
+- Double validation requise pour actions montant > 10M FCFA
+- Escalade si délai dépassé (24h pour P0, 48h pour P1)
+- Notification maker quand action validée/rejetée
+
+API: GET /api/v1/approvals/pending, PUT /api/v1/approvals/{id}/approve, PUT /api/v1/approvals/{id}/reject
+
+================================================================================
+5. WORKFLOWS COMPLETS
+================================================================================
+
+5.1 WORKFLOW CONNEXION
+----------------------------------------------------------------
+1. Utilisateur accède à login.php
+2. Saisit identifiant + mot de passe
+3. Système vérifie: existence compte, statut (actif/bloqué/expiré), MDP valide
+4. Si compte bloqué: "Votre compte est verrouillé. Réessayez dans X minutes ou contactez le support"
+5. Si MDP expiré (>90 jours): redirige → expired-password.php (changement obligatoire)
+6. Si MDP valide mais 2FA activée: redirige → otp-verify.php
+7. Code OTP envoyé par email et/ou SMS
+8. Utilisateur saisit code OTP (6 chiffres, valide 5 min)
+9. Si OTP valide: session créée, redirect dashboard selon rôle
+10. Si OTP invalide: message erreur, 3 tentatives → nouveau code requis
+11. Si multi-agence: écran selection agence (agency-select.php)
+12. Session HTTP, timeout 30min inactivité, JWT pour les appels API
+
+5.2 WORKFLOW TRANSACTION (DÉPÔT/RETRAIT/VIREMENT)
+----------------------------------------------------------------
+1. GUICHETIER sélectionne type opération
+2. Recherche client (autocomplete)
+3. Sélectionne le compte (si plusieurs)
+4. Saisit montant (XOF, >0, <= plafond agence/guichetier)
+5. Sélectionne mode de paiement (espèces/chèque/virement)
+6. Saisit motif (text, required)
+7. Vérification: solde suffisant (retrait), plafond non dépassé, compte actif
+8. Confirmation: récapitulatif (client, compte, montant, frais, net)
+9. Si montant > seuil libre (500000 XOF): workflow Maker-Checker déclenché
+10. Si montant > seuil supérieur (5000000 XOF): double validation requise
+11. Exécution: écriture compte, journal opérations, mise à jour solde, caisse
+12. Impression reçu (operation-receipt.php)
+13. Notification client SMS (si option activée)
+14. État: COMPLETED (ou PENDING_VALIDATION si Maker-Checker)
+
+5.3 WORKFLOW CRÉDIT COMPLET (DEMANDE → DÉCAISSEMENT → REMBOURSEMENT)
+----------------------------------------------------------------
+PHASE 1: DEMANDE
+1. Client soumet demande (via guichetier: credit-request-create.php)
+2. System enregistre demande (statut: PENDING_VALIDATION)
+3. Maker-Checker: validation demande par superviseur
+4. Si validé → PHASE 2; Si rejeté → notification motif au client
+
+PHASE 2: ANALYSE
+1. Agent crédit analyse dossier (credit-analysis.php)
+2. Scoring automatique (credit-scoring.php): score sur 1000
+3. Si score ≥ 700: recommandé
+4. Si score 500-700: comité requis
+5. Si score < 500: refus recommandé
+
+PHASE 3: COMITÉ (si requis)
+1. Convocations membres comité (credit-committee.php)
+2. Saisie avis individuels
+3. Décision collégiale: ACCORDÉ / REFUSÉ / CONDITIONNEL
+4. Si conditionnel: conditions spécifiques ajoutées au dossier
+
+PHASE 4: DÉCISION
+1. Saisie décision finale (credit-decision.php)
+2. Si accordé: montant, taux, durée, conditions particulières
+3. Si refusé: motif envoyé au client
+4. Validation finale (Maker-Checker)
+
+PHASE 5: CONTRAT
+1. Génération contrat (credit-contract.php): PDF avec toutes conditions
+2. Signature client (signature-pad ou papier scanné)
+3. Archivage contrat signé
+
+PHASE 6: DÉCAISSEMENT
+1. Vérification conditions suspensives levées
+2. Décaissement (credit-disbursement.php): montant vers compte client
+3. Frais de dossier prélevés
+4. Écriture comptable: débit compte prêt, crédit compte client
+5. Échéancier généré
+6. Notification client (SMS + email)
+
+PHASE 7: REMBOURSEMENT
+1. Échéance auto: prélèvement compte épargne/courant (si autorisé)
+2. Remboursement manuel: guichetier ou agent terrain
+3. Calcul intérêts: méthode actuarielle
+4. Si impayé > 5 jours: relance automatique (SMS)
+5. Si impayé > 30 jours: statut IMPAYÉ, provisions
+6. Si impayé > 90 jours: contentieux, poursuites
+
+5.4 WORKFLOW CAISSE (OUVERTURE → OPÉRATIONS → FERMETURE)
+----------------------------------------------------------------
+1. Guichetier ouvre session (cash-open.php):
+   - Identifie caisse
+   - Saisit solde initial (XOF)
+   - Billetage initial
+   - Signature
+2. Session active: opérations (dépôts, retraits, virements)
+3. Chaque opération enregistrée dans journal caisse
+4. En fin de journée: fermeture caisse (cash-close.php):
+   - Solde théorique = ouverture + dépôts - retraits
+   - Billetage physique
+   - Solde réel
+   - Calcul écart
+   - Si écart ≠ 0: motif + validation superviseur si > seuil
+   - Signature fermeture
+5. Session fermée: CLOS ou PENDING_VALIDATION
+
+5.5 WORKFLOW MAKER-CHECKER GÉNÉRIQUE
+----------------------------------------------------------------
+1. MAKER: Crée/modifie entité (client, compte, crédit, etc.)
+2. MAKER: Soumet pour validation (statut → PENDING_APPROVAL)
+3. Notifications envoyées aux validateurs (superviseurs, managers)
+4. CHECKER: Consulte file d'attente (approval-queue.php)
+5. CHECKER: Examine détails, changements, pièces
+6. CHECKER: Actions possibles:
+   a. APPROUVER: entité validée, actions exécutées, notification maker
+   b. REJETER: entité refusée, motif loggué, notification maker
+   c. RETOUR POUR CORRECTION: entité retournée au maker, commentaire
+7. Maker reçoit notification et peut corriger/resoumettre
+
+RÈGLES:
+- Maker et Checker ne peuvent pas être la même personne
+- Checker doit avoir le rôle SUPERVISEUR ou supérieur
+- Double validation pour montants > 10M FCFA
+- SLA: P0 4h, P1 8h, P2 24h, P3 48h
+- Escalade automatique si SLA dépassé
+
+5.6 WORKFLOW KYC
+----------------------------------------------------------------
+1. Client créé (statut: KYC_PENDING)
+2. Checklist KYC générée automatiquement selon type client:
+   - Physique: CNI/passeport, selfie, justificatif domicile, déclaration BÉFI
+   - Moral: statuts, RCCM, CNPS, représentants légaux
+3. Guichetier/Agent upload documents
+4. Vérification documents par conformité:
+   - Valide: documents conformes, statut → KYC_VALIDATED
+   - Invalide: documents rejetés, motif, statut → KYC_REJECTED
+   - Complément: documents supplémentaires requis
+5. Client notifié du statut KYC
+6. Screening PEP et sanctions (automatique)
+7. Profil risque client défini (faible/moyen/élevé)
+8. KYC à renouveler: 1 an (risque élevé), 3 ans (moyen), 5 ans (faible)
+
+5.7 WORKFLOW EOD (END OF DAY)
+----------------------------------------------------------------
+PRÉ-REQUIS: Toutes caisses fermées, toutes opérations validées
+1. Déclenchement: automatique (horaire configurable) ou manuel
+2. Vérification pré-requis (auto-check)
+3. Étape 1: Arrêt des opérations (plus aucune transaction acceptée)
+4. Étape 2: Calcul intérêts épargne (si dernier jour période)
+5. Étape 3: Calcul provisions crédit
+6. Étape 4: Rapprochement caisse/vault
+7. Étape 5: Écritures comptables EOD
+8. Étape 6: Génération bordereaux et rapports
+9. Étape 7: Archivage des journaux
+10. Étape 8: Ouverture nouveau jour comptable
+MONITORING: Barre progression, statut chaque étape, logs temps réel
+SI ÉCHEC: Pause, afficher cause, permettre reprise ou forcer contournement
+
+5.8 WORKFLOW COMPTABLE (CLÔTURE DE PÉRIODE)
+----------------------------------------------------------------
+1. Vérification: toutes écritures validées, aucun brouillard en cours
+2. Calcul amortissements et provisions
+3. Inventaire stocks (si actif)
+4. Lettrage comptes (automatique + manuel si anomalies)
+5. Balance de vérification (doit être équilibrée)
+6. États financiers: Bilan, CGR, Tableau flux
+7. Clôture exercice: extinction comptes 6/7, affectation résultat
+8. Ouverture nouvel exercice: reports à nouveau
+9. Archivage exercice clôturé (lecture seule)
+
+5.9 WORKFLOW MULTI-AGENCE (OPÉRATION DÉPLACÉE)
+----------------------------------------------------------------
+1. Client se présente dans agence B (domicilié à agence A)
+2. Guichetier agence B initie opération déplacée
+3. Vérification: client existe, compte actif
+4. Opération marquée "déplacée" avec agence origine
+5. Frais inter-agence appliqués (si applicable)
+6. Exécution locale (débit/crédit immédiat)
+7. Rapprochement inter-agence nocturne
+8. Écritures comptables: compte transit agence B → compte transit agence A
+9. Compensation réalisée
+
+================================================================================
+6. PERMISSIONS MATRIX
+================================================================================
+
+Module              | ADMIN | SUPERVISEUR | GUICHETIER | MANAGER
+────────────────────|───────|─────────────|────────────|────────
+client.*            | CRUD  | CRU         | CRU        | R
+client.delete       | OUI   | NON         | NON        | NON
+client.kyc.validate | OUI   | OUI         | NON        | NON
+account.*           | CRUD  | CRU         | CRU        | R
+account.open        | OUI   | OUI         | OUI        | NON
+account.close       | OUI   | OUI         | OUI        | NON
+account.block       | OUI   | OUI         | NON        | NON
+operation.*         | CRUD  | CRU         | CRU        | R
+operation.cancel    | OUI   | OUI         | NON        | NON
+cash.*              | CRUD  | CRU         | CRU        | R
+cash.close          | OUI   | OUI         | OUI        | NON
+loan.*              | CRUD  | CRU         | R          | R
+loan.create         | OUI   | OUI         | OUI        | NON
+loan.approve        | OUI   | OUI         | NON        | OUI
+loan.disburse       | OUI   | OUI         | NON        | OUI
+approval.*          | OUI   | OUI         | NON        | OUI
+compliance.*        | CRUD  | R           | R          | R
+accounting.*        | CRUD  | CRU         | R          | R
+accounting.close    | OUI   | OUI         | NON        | NON
+reporting.*         | CRUD  | CRU         | R          | CRU
+admin.*             | CRUD  | R           | NON        | RU
+admin.users         | CRUD  | R           | NON        | RU
+admin.audit         | CRUD  | R           | NON        | R
+
+R = Lecture, C = Création, U = Mise à jour, D = Suppression
+
+================================================================================
+7. EXIGENCES UX SPÉCIFIQUES
+================================================================================
+
+7.1 RESPONSIVE
+- Desktop (>1280px): Sidebar expanded 256px, content 12-col grid
+- Tablet (768-1279px): Sidebar collapsed 72px (icônes), content full width
+- Mobile (<768px): Sidebar off-canvas (hamburger menu), stacked layouts, simplified tables
+
+7.2 COMPORTEMENTS GÉNÉRAUX
+- Keyboard shortcuts: Ctrl+S (save), Ctrl+Enter (submit), Ctrl+K (global search), Escape (close modal)
+- Autosave brouillon: tous les 60s pour les formulaires longs
+- Debounce recherche: 300ms
+- Infinite scroll: pas de pagination, remplacer par "Charger plus" bouton
+- Tooltips sur icônes (title attribute minimum)
+- Confirm dialogs pour toutes actions destructrices
+
+7.3 ACCESSIBILITÉ
+- Contrast ratio minimum 4.5:1 (WCAG AA)
+- Focus visible sur tous les éléments interactifs
+- Labels ARIA pour icônes seules
+- Keyboard navigation (Tab, Enter, Escape)
+- Screen reader: aria-live regions pour mises à jour dynamiques
+- headings hiérarchiques (h1 → h2 → h3)
+
+7.4 GESTION DES ERREURS
+- Validation inline: erreur sous chaque champ immédiatement après blur
+- Error summary: en haut du formulaire pour les erreurs de soumission
+- Toast notifications pour succès/erreur (auto-dismiss 5s)
+- HTTP errors: 401→login, 403→page interdite, 404→page non trouvée, 500→page d'erreur
+- Network error: bannière "Connexion perdue" + retry automatique
+- Empty states: illustration + message + action (ex: "Aucun client. Créer le premier client")
+
+7.5 CHARGEMENT
+- Skeleton screens pour tableaux (shimmer rows)
+- Spinner pour actions AJAX
+- Progress bar pour uploads
+- "Page en cours de chargement..." pour navigation complète (Turbo)
+
+7.6 ÉTATS PAR DÉFAUT
+- Loading: skeleton UI, shimmer animation, pas de spinner centré
+- Empty: illustration personnalisée + message + CTA
+- Error: message clair + action possible (retry, go back)
+- Success: toast notification + redirect or confirmation screen
+
+================================================================================
+FIN DU PRD MODULE 1 - WEB OPERATEUR INTERNE
+================================================================================

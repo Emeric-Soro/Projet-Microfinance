@@ -1,0 +1,100 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Régions - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% if show_mode is defined and region is defined %}
+        <div class="mb-6 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-heading font-bold text-on-surface">{{ region.libelle }}</h1>
+                <p class="text-sm text-on-surface-variant mt-1">Code: {{ region.code }}</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="{{ path('organisation_regions_edit', { id: region.id }) }}" class="mf-btn-secondary flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    Modifier
+                </a>
+                <a href="{{ path('organisation_regions') }}" class="mf-btn-secondary">Retour</a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2">
+                {% embed 'components/MfCard.html.twig' with { title: 'Informations générales' } %}
+                    {% block card_content %}
+                        <dl class="divide-y divide-gray-100">
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Code', value: region.code } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Libellé', value: region.libelle } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Statut', value: '' } %}
+                        </dl>
+                        <div class="mt-2">
+                            {% include 'components/MfStatusBadge.html.twig' with { status: region.statut } %}
+                        </div>
+                    {% endblock %}
+                {% endembed %}
+            </div>
+            <div class="lg:col-span-1">
+                {% embed 'components/MfCard.html.twig' with { title: 'Agences liées' } %}
+                    {% block card_content %}
+                        <div class="text-3xl font-heading font-bold text-primary">{{ region.nbAgences|default(0) }}</div>
+                        <p class="text-sm text-on-surface-variant mt-1">agences dans cette région</p>
+                    {% endblock %}
+                {% endembed %}
+            </div>
+        </div>
+
+    {% elseif create_mode is defined or edit_mode is defined %}
+        <div class="max-w-2xl">
+            {% embed 'components/MfFormCard.html.twig' with {
+                title: edit_mode is defined ? 'Modifier la région' : 'Nouvelle région',
+                description: edit_mode is defined ? 'Modifiez les informations de la région' : 'Saisissez les informations de la nouvelle région',
+            } %}
+                {% block form_fields %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Code</label>
+                            <input type="text" name="code" value="{{ region.code|default('') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Libellé</label>
+                            <input type="text" name="libelle" value="{{ region.libelle|default('') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                        </div>
+                    </div>
+                {% endblock %}
+            {% endembed %}
+        </div>
+
+    {% else %}
+        {% embed 'components/MfCard.html.twig' with { title: 'Régions' } %}
+            {% block card_content %}
+                {% include 'partials/_table_toolbar.html.twig' with {
+                    search_placeholder: 'Rechercher une région...',
+                    action_button: { url: path('organisation_regions_create'), label: 'Nouvelle région' }
+                } %}
+                {% embed 'components/MfDataTable.html.twig' with {
+                    headers: [
+                        { key: 'code', label: 'Code', sortable: true },
+                        { key: 'libelle', label: 'Libellé', sortable: true },
+                        { key: 'statut', label: 'Statut' },
+                    ],
+                    rows: regions,
+                    actions: [
+                        { label: 'Détails', url: (row) => path('organisation_regions_show', { id: row.id }), icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
+                        { label: 'Modifier', url: (row) => path('organisation_regions_edit', { id: row.id }), icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' },
+                    ],
+                } %}{% endembed %}
+                {% include 'partials/_pagination.html.twig' with {
+                    route: 'organisation_regions',
+                    total_pages: total_pages,
+                    total_items: total_items,
+                    current_page: current_page,
+                    page_size: page_size
+                } %}
+            {% endblock %}
+        {% endembed %}
+    {% endif %}
+</div>
+{% endblock %}

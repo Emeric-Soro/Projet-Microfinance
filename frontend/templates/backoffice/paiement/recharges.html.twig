@@ -1,0 +1,75 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Recharges téléphoniques{% endblock %}
+{% block current_menu %}paiements_recharges{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+{% embed 'components/MfStatsGrid.html.twig' with {stats: [
+    {label: 'Recharges jour', value: stats.rechargesJour|default(0), icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600'},
+    {label: 'Volume jour', value: (stats.volumeJour|default(0))|number_format(0, ',', ' ') ~ ' FCFA', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1', icon_bg: 'bg-green-50', icon_color: 'text-green-600'},
+    {label: 'Opérateurs', value: stats.operateurs|default(0), icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', icon_bg: 'bg-primary-50', icon_color: 'text-primary'},
+    {label: 'Taux succès', value: stats.tauxSucces|default(0) ~ '%', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-teal-50', icon_color: 'text-teal-600'},
+]} %}{% endembed %}
+
+{% embed 'components/MfCard.html.twig' with {title: 'Recharges'} %}
+    {% block card_content %}
+        {% include 'partials/_table_toolbar.html.twig' with {
+            search_placeholder: 'Rechercher une recharge...',
+            filters: [
+                {label: 'Opérateur', options: [
+                    {value: 'ORANGE', label: 'Orange'},
+                    {value: 'MTN', label: 'MTN'},
+                    {value: 'MOOV', label: 'Moov'},
+                ]},
+                {label: 'Statut', options: [
+                    {value: 'SUCCES', label: 'Succès'},
+                    {value: 'EN_COURS', label: 'En cours'},
+                    {value: 'ECHEC', label: 'Échec'},
+                ]}
+            ]
+        } %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                {key: 'id', label: 'N°'},
+                {key: 'date', label: 'Date'},
+                {key: 'telephone', label: 'Téléphone'},
+                {key: 'operateur', label: 'Opérateur'},
+                {key: 'montant', label: 'Montant'},
+                {key: 'commission', label: 'Commission'},
+                {key: 'statut', label: 'Statut'},
+                {key: 'actions', label: 'Actions'},
+            ],
+            rows: recharges
+        } %}
+            {% block card_content %}
+                {% for recharge in recharges %}
+                    <tr>
+                        <td>{{ recharge.id }}</td>
+                        <td>{{ recharge.date|date('d/m/Y H:i') }}</td>
+                        <td>{{ recharge.telephone }}</td>
+                        <td>{{ recharge.operateur }}</td>
+                        <td class="font-medium">{{ recharge.montant|number_format(0, ',', ' ') }} FCFA</td>
+                        <td>{{ recharge.commission|number_format(0, ',', ' ') }} FCFA</td>
+                        <td>{% include 'components/MfStatusBadge.html.twig' with {status: recharge.statut} %}</td>
+                        <td class="text-right">
+                            {% if recharge.statut == 'EN_COURS' %}
+                                <form method="post" action="{{ path('paiements_recharges_process', {id: recharge.id}) }}" class="inline" onsubmit="return confirm('Confirmer le traitement?')">
+                                    <button type="submit" class="text-sm font-medium text-primary hover:text-primary-600">Traiter</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-8">
+                            {% include 'partials/_empty_state.html.twig' with {title: 'Aucune recharge', message: 'Aucune recharge trouvée.'} %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

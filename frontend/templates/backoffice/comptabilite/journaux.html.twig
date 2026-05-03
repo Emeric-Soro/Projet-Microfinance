@@ -1,0 +1,39 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Journaux comptables - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Journaux comptables</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Consultation des journaux comptables</p>
+    </div>
+</div>
+
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for journal in journals %}
+    <div class="mf-card p-6 hover:shadow-lg transition-shadow">
+        <div class="flex items-center justify-between mb-4">
+            <span class="font-mono font-bold text-primary text-lg">{{ journal.code }}</span>
+            {% include 'partials/_status_badge.html.twig' with {status: journal.statut} %}
+        </div>
+        <h3 class="font-heading font-semibold text-on-surface mb-2">{{ journal.libelle }}</h3>
+        <p class="text-sm text-on-surface-variant mb-4">{{ journal.description|default('') }}</p>
+        <div class="flex justify-between text-sm mb-4">
+            <span class="text-on-surface-variant">Écritures:</span>
+            <span class="font-medium">{{ journal.nb_ecritures|default(0) }}</span>
+        </div>
+        <a href="{{ path('comptabilite_ledger', {code: journal.code}) }}" class="mf-btn-primary w-full text-center">
+            <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            Consulter
+        </a>
+    </div>
+    {% else %}
+    <div class="col-span-full">
+        {% include 'partials/_empty_state.html.twig' with {title: 'Aucun journal', message: 'Aucun journal comptable trouvé.'} %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

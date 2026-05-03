@@ -1,0 +1,29 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Détail validation #{{ validation.id }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Validation #' ~ validation.id } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'champ', label: 'Champ' },
+                    { key: 'valeur', label: 'Valeur' },
+                ],
+                rows: validation.details|default([]),
+                actions: false,
+            } %}{% endembed %}
+
+            <div class="flex flex-wrap gap-3 mt-6">
+                <a href="{{ path('validation_approve', { id: validation.id }) }}" class="mf-btn-primary">Approuver</a>
+                <a href="{{ path('validation_reject', { id: validation.id }) }}" class="mf-btn-secondary">Rejeter</a>
+                <a href="{{ path('validation_revision', { id: validation.id }) }}" class="mf-btn-secondary">Demander une révision</a>
+                <a href="{{ path('validation_queue') }}" class="mf-btn-secondary">Retour</a>
+            </div>
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

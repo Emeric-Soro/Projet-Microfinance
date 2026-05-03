@@ -1,0 +1,57 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Liste des caisses - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Liste des caisses</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Gestion des guichets et sessions de caisse</p>
+    </div>
+    <a href="{{ path('caisse_open') }}" class="mf-btn-primary flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Nouvelle session
+    </a>
+</div>
+
+{% include 'partials/_table_toolbar.html.twig' with {
+    search_placeholder: 'Rechercher un guichet...',
+    filters: [
+        { label: 'Statut', options: [
+            { value: 'OUVERTE', label: 'Ouverte' },
+            { value: 'FERMEE', label: 'Fermée' },
+        ]},
+    ],
+} %}
+
+{% embed component('MfDataTable') with {
+    headers: [
+        { key: 'guichet', label: 'Guichet', sortable: true },
+        { key: 'caissier', label: 'Caissier', sortable: true },
+        { key: 'dateOuverture', label: 'Date ouverture', sortable: true },
+        { key: 'soldeInitial', label: 'Solde initial', sortable: true },
+        { key: 'soldeActuel', label: 'Solde actuel', sortable: true },
+        { key: 'statut', label: 'Statut' },
+    ],
+    rows: caisses,
+    actions: [
+        { label: 'Voir', url: (row) => path('caisse_session', { id: row.id }), icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
+        { label: 'Fermer', url: (row) => path('caisse_close', { id: row.id }), icon: 'M6 18L18 6M6 6l12 12' },
+    ],
+    empty_title: 'Aucune caisse',
+    empty_message: 'Aucune session de caisse trouvée.',
+} %}
+    {% block card_content %}
+        {{ parent() }}
+    {% endblock %}
+{% endembed %}
+
+{% include 'partials/_pagination.html.twig' with {
+    route: 'caisse_list',
+    query: app.request.query.all,
+    total_pages: total_pages,
+    current_page: current_page,
+    total_items: total_items,
+    page_size: page_size,
+} %}
+{% endblock %}

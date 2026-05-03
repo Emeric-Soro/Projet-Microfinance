@@ -1,0 +1,79 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Tableau de bord - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Tableau de bord</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Vue d'ensemble de l'activité</p>
+</div>
+
+{% if data is defined and data is not empty %}
+    {% include 'components/MfStatsGrid.html.twig' with { cols: 4, stats: [
+        { label: 'Clients total', value: data.totalClients|default(0)|number_format(0, ',', ' '), icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+        { label: 'Comptes ouverts', value: data.totalComptes|default(0)|number_format(0, ',', ' '), icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', icon_bg: 'bg-teal-50', icon_color: 'text-teal-600' },
+        { label: 'Opérations aujourd\'hui', value: data.operationsJour|default(0)|number_format(0, ',', ' '), icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+        { label: 'Validations en attente', value: data.validationsEnAttente|default(0)|number_format(0, ',', ' '), icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: data.validationsEnAttente|default(0) > 0 ? 'bg-yellow-50' : 'bg-green-50', icon_color: data.validationsEnAttente|default(0) > 0 ? 'text-yellow-600' : 'text-green-600' },
+    ]} %}
+
+    {% if data.validationsEnAttente|default(0) > 0 %}
+        <div class="mt-4">
+            {% include 'components/MfAlertBanner.html.twig' with { type: 'warning', message: 'Des opérations sont en attente de validation', details: data.validationsEnAttente ~ ' validation(s) en attente' } %}
+        </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {% embed 'components/MfCard.html.twig' with { title: 'Dernières opérations', action: { url: path('operation_history'), label: 'Voir tout' } } %}
+            {% block card_content %}
+                {% set headers = [
+                    { label: 'Réf', key: 'reference' },
+                    { label: 'Type', key: 'type' },
+                    { label: 'Montant', key: 'montant' },
+                    { label: 'Statut', key: 'statut' },
+                ] %}
+                {% set rows = data.dernieresOperations|default([]) %}
+                {% include 'components/MfDataTable.html.twig' with { headers: headers, rows: rows } %}
+            {% endblock %}
+        {% endembed %}
+
+        {% embed 'components/MfCard.html.twig' with { title: 'Actions rapides' } %}
+            {% block card_content %}
+                <div class="grid grid-cols-2 gap-3">
+                    <a href="{{ path('client_create') }}" class="p-4 border border-teal-100 rounded-lg text-center hover:bg-teal-50 transition-colors">
+                        <svg class="w-6 h-6 mx-auto mb-1 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                        <span class="text-xs font-medium">Nouveau client</span>
+                    </a>
+                    <a href="{{ path('operation_deposit') }}" class="p-4 border border-teal-100 rounded-lg text-center hover:bg-teal-50 transition-colors">
+                        <svg class="w-6 h-6 mx-auto mb-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        <span class="text-xs font-medium">Dépôt</span>
+                    </a>
+                    <a href="{{ path('operation_withdrawal') }}" class="p-4 border border-teal-100 rounded-lg text-center hover:bg-teal-50 transition-colors">
+                        <svg class="w-6 h-6 mx-auto mb-1 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+                        <span class="text-xs font-medium">Retrait</span>
+                    </a>
+                    <a href="{{ path('credit_request_create') }}" class="p-4 border border-teal-100 rounded-lg text-center hover:bg-teal-50 transition-colors">
+                        <svg class="w-6 h-6 mx-auto mb-1 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="text-xs font-medium">Demande de crédit</span>
+                    </a>
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="mt-6">
+        {% embed 'components/MfCard.html.twig' with { title: 'Encours par produit' } %}
+            {% block card_content %}
+                {% set headers = [
+                    { label: 'Produit', key: 'produit' },
+                    { label: 'Nombre', key: 'nombre' },
+                    { label: 'Encours', key: 'encours' },
+                ] %}
+                {% set rows = data.encoursParProduit|default([]) %}
+                {% include 'components/MfDataTable.html.twig' with { headers: headers, rows: rows } %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+{% else %}
+    {% include 'partials/_empty_state.html.twig' with { title: 'Chargement...', message: 'Données du tableau de bord en cours de chargement.' } %}
+{% endif %}
+{% endblock %}

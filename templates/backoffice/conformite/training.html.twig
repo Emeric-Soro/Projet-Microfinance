@@ -1,0 +1,18 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block content %}
+  {% include 'backoffice/partials/_breadcrumb.html.twig' with {'path': ['Accueil','Conformité','Formation']} %}
+  <div class="MfCard">
+    <h2>Formation conformité</h2>
+    <div class="MfDataTable">
+      <table>
+        <thead><tr><th>Titre</th><th>Statut</th></tr></thead>
+        <tbody>
+          {% for r in data.data %}
+          <tr><td>{{ r.title ?? '' }}</td><td>{{ r.status ?? '' }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

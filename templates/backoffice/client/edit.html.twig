@@ -1,0 +1,21 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block content %}
+  {% include 'partials/_breadcrumb.html.twig' with {'path': 'Accueil > Clients > Édition'} %}
+  {% include 'partials/_flash.html.twig' %}
+
+  <MfCard>
+    <MfFormCard>
+      <h3>Éditer le client</h3>
+      <form method="post" action="/clients/{{ client.id ?? 0 }}">
+        <div class="grid">
+          <MfInput name="nom" label="Nom" value="{{ client.nom ?? '' }}" />
+          <MfInput name="prenom" label="Prénom" value="{{ client.prenom ?? '' }}" />
+          <MfInput name="email" label="Email" value="{{ client.email ?? '' }}" />
+          <MfInput name="telephone" label="Téléphone" value="{{ client.telephone ?? '' }}" />
+        </div>
+        <MfButton label="Enregistrer" type="primary" />
+      </form>
+    </MfFormCard>
+  </MfCard>
+{% endblock %}

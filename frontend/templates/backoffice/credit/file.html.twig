@@ -1,0 +1,121 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Dossier complet - Crédit N°{{ credit.id }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Crédit', url: path('credit_dashboard') }, { label: 'Crédits actifs', url: path('credit_active') }, { label: 'N°' ~ credit.id ~ ' - Dossier complet' }] %}
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Dossier complet - Crédit N°{{ credit.id }}</h1>
+</div>
+
+<div class="space-y-6">
+    <div class="bg-white rounded-lg border border-gray-200">
+        <div class="px-4 py-3 border-b border-gray-200">
+            <h3 class="font-semibold text-on-surface">Informations générales</h3>
+        </div>
+        <div class="p-4 text-sm space-y-2">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <span class="text-on-surface-variant">Client :</span>
+                    <span class="font-medium ml-2">{{ credit.clientNom|default('') }}</span>
+                </div>
+                <div>
+                    <span class="text-on-surface-variant">Produit :</span>
+                    <span class="font-medium ml-2">{{ credit.produitLibelle|default('') }}</span>
+                </div>
+                <div>
+                    <span class="text-on-surface-variant">Montant accordé :</span>
+                    <span class="font-medium ml-2">{{ credit.montantAccorde|default(0)|number_format(0, ',', ' ') }} FCFA</span>
+                </div>
+                <div>
+                    <span class="text-on-surface-variant">Taux :</span>
+                    <span class="font-medium ml-2">{{ credit.taux|default(0) }}%</span>
+                </div>
+                <div>
+                    <span class="text-on-surface-variant">Durée :</span>
+                    <span class="font-medium ml-2">{{ credit.duree|default(0) }} mois</span>
+                </div>
+                <div>
+                    <span class="text-on-surface-variant">Statut :</span>
+                    <span class="font-medium ml-2">{{ credit.statut|default('')|replace({'_': ' '}) }}</span>
+                </div>
+                <div>
+                    <span class="text-on-surface-variant">Date de décaissement :</span>
+                    <span class="font-medium ml-2">{{ credit.dateDecaissement|default('')|date('d/m/Y') }}</span>
+                </div>
+                <div>
+                    <span class="text-on-surface-variant">Date d'échéance finale :</span>
+                    <span class="font-medium ml-2">{{ credit.dateEcheanceFinale|default('')|date('d/m/Y') }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if dossier.documents|default([]) is not empty %}
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Documents</h3>
+            </div>
+            <div class="p-4">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-on-surface-variant border-b border-gray-100">
+                            <th class="pb-2">Type</th>
+                            <th class="pb-2">Nom</th>
+                            <th class="pb-2">Date</th>
+                            <th class="pb-2">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in dossier.documents %}
+                            <tr class="border-b border-gray-50">
+                                <td class="py-2">{{ doc.type|default('') }}</td>
+                                <td class="py-2">{{ doc.nom|default('') }}</td>
+                                <td class="py-2">{{ doc.dateAjout|default('')|date('d/m/Y') }}</td>
+                                <td class="py-2">
+                                    <a href="#" class="text-teal-600 hover:text-teal-800 text-xs">Télécharger</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if dossier.historique|default([]) is not empty %}
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Historique des actions</h3>
+            </div>
+            <div class="p-4">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-on-surface-variant border-b border-gray-100">
+                            <th class="pb-2">Date</th>
+                            <th class="pb-2">Action</th>
+                            <th class="pb-2">Utilisateur</th>
+                            <th class="pb-2">Commentaire</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in dossier.historique %}
+                            <tr class="border-b border-gray-50">
+                                <td class="py-2">{{ h.date|default('')|date('d/m/Y H:i') }}</td>
+                                <td class="py-2">{{ h.action|default('') }}</td>
+                                <td class="py-2">{{ h.utilisateur|default('') }}</td>
+                                <td class="py-2">{{ h.commentaire|default('') }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<div class="mt-4">
+    <a href="{{ path('credit_detail', { id: credit.id }) }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">Retour au détail</a>
+</div>
+{% endblock %}

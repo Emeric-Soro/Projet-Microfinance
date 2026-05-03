@@ -1,0 +1,45 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Historique EOD - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Historique des clôtures de journée</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Consultez l'historique des EOD</p>
+</div>
+
+<div class="bg-white rounded-lg shadow-card border border-teal-100 p-4 mb-6">
+    <form method="get" class="flex items-end gap-4">
+        {% include component('MfDatePicker') with { name: 'date_debut', label: 'Date début' } %}
+        {% include component('MfDatePicker') with { name: 'date_fin', label: 'Date fin' } %}
+        <button type="submit" class="mf-btn-primary">Filtrer</button>
+    </form>
+</div>
+
+{% embed component('MfDataTable') with {
+    headers: [
+        { key: 'date', label: 'Date', sortable: true },
+        { key: 'statut', label: 'Statut' },
+        { key: 'executePar', label: 'Exécuté par' },
+        { key: 'dateExecution', label: 'Date exécution', sortable: true },
+        { key: 'duree', label: 'Durée' },
+        { key: 'anomalies', label: 'Anomalies' },
+    ],
+    rows: history,
+    empty_title: 'Aucun historique',
+    empty_message: 'Aucune clôture de journée trouvée.',
+} %}
+    {% block card_content %}
+        {{ parent() }}
+    {% endblock %}
+{% endembed %}
+
+{% include 'partials/_pagination.html.twig' with {
+    route: 'caisse_eod_history',
+    query: app.request.query.all,
+    total_pages: total_pages,
+    current_page: current_page,
+    total_items: total_items,
+    page_size: page_size,
+} %}
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Virements SIT{% endblock %}
+{% block current_menu %}paiements_virements_sit{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+{% embed 'components/MfStatsGrid.html.twig' with {stats: [
+    {label: 'En attente', value: stats.enAttente|default(0), icon: 'M12 9v2m0 4h.01', icon_bg: 'bg-yellow-50', icon_color: 'text-yellow-600'},
+    {label: 'Traités', value: stats.traites|default(0), icon: 'M9 12l2 2 4-4', icon_bg: 'bg-green-50', icon_color: 'text-green-600'},
+    {label: 'Échoués', value: stats.echoues|default(0), icon: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2', icon_bg: 'bg-red-50', icon_color: 'text-red-600'},
+    {label: 'Montant total', value: (stats.montantTotal|default(0))|number_format(0, ',', ' ') ~ ' FCFA', icon: 'M9 8h6m-6 4h6m-6 4h6', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600'},
+]} %}{% endembed %}
+
+{% embed 'components/MfCard.html.twig' with {title: 'Virements SIT'} %}
+    {% block card_content %}
+        {% include 'partials/_table_toolbar.html.twig' with {
+            search_placeholder: 'Rechercher un virement...',
+            filters: [
+                {label: 'Statut', options: [
+                    {value: 'EN_ATTENTE', label: 'En attente'},
+                    {value: 'TRAITE', label: 'Traité'},
+                    {value: 'ECHOUE', label: 'Échoué'},
+                ]}
+            ],
+            action_button: {url: '#', label: 'Nouveau virement SIT'}
+        } %}
+
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                {key: 'id', label: 'N°'},
+                {key: 'compteDebiteur', label: 'Compte débiteur'},
+                {key: 'compteCrediteur', label: 'Compte créditeur'},
+                {key: 'montant', label: 'Montant'},
+                {key: 'motif', label: 'Motif'},
+                {key: 'dateValeur', label: 'Date valeur'},
+                {key: 'statut', label: 'Statut'},
+                {key: 'actions', label: 'Actions'},
+            ],
+            rows: virements
+        } %}
+            {% block card_content %}
+                {% for virement in virements %}
+                    <tr>
+                        <td>{{ virement.id }}</td>
+                        <td>{{ virement.compteDebiteur }}</td>
+                        <td>{{ virement.compteCrediteur }}</td>
+                        <td class="font-medium">{{ virement.montant|number_format(0, ',', ' ') }} FCFA</td>
+                        <td>{{ virement.motif }}</td>
+                        <td>{{ virement.dateValeur|date('d/m/Y') }}</td>
+                        <td>{% include 'components/MfStatusBadge.html.twig' with {status: virement.statut} %}</td>
+                        <td class="text-right">
+                            {% if virement.statut == 'EN_ATTENTE' %}
+                                <form method="post" action="{{ path('paiements_virements_sit_process', {id: virement.id}) }}" class="inline" onsubmit="return confirm('Confirmer le traitement?')">
+                                    <button type="submit" class="text-sm font-medium text-primary hover:text-primary-600">Traiter</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-8">
+                            {% include 'partials/_empty_state.html.twig' with {title: 'Aucun virement', message: 'Aucun virement SIT trouvé.'} %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

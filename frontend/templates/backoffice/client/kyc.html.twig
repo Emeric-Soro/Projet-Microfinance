@@ -1,0 +1,103 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}KYC - {{ client.nom ?? client.raisonSociale ?? 'Client' }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [
+    { label: 'Clients', url: path('client_list') },
+    { label: client.nom ?? client.raisonSociale ?? 'Client', url: path('client_detail', { id: client.id }) },
+    { label: 'KYC' }
+] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">KYC - {{ client.nom ?? client.raisonSociale ?? 'Client' }} {{ client.prenom ?? '' }}</h1>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div>
+        {% embed 'components/MfCard.html.twig' with { title: 'Niveau KYC' } %}
+            {% block card_content %}
+                {% set niveau = kyc.niveau ?? 'NON_SOUMIS' %}
+                {% set niveauClass = niveau == 'VALIDATED' ? 'bg-green-100 text-green-800' : niveau == 'PENDING' ? 'bg-yellow-100 text-yellow-800' : niveau == 'REJECTED' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-600' %}
+                <div class="text-center py-4">
+                    <div class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium {{ niveauClass }}">
+                        {% if niveau == 'VALIDATED' %}
+                            Vérifié
+                        {% elseif niveau == 'PENDING' %}
+                            En attente
+                        {% elseif niveau == 'REJECTED' %}
+                            Rejeté
+                        {% else %}
+                            Non soumis
+                        {% endif %}
+                    </div>
+                    <p class="mt-2 text-sm text-on-surface-variant">Niveau de vérification KYC</p>
+                </div>
+            {% endblock %}
+        {% endembed %}
+
+        {% embed 'components/MfCard.html.twig' with { title: 'Score', class: 'mt-4' } %}
+            {% block card_content %}
+                {% set score = kyc.score ?? 0 %}
+                <div class="text-center py-4">
+                    <p class="text-3xl font-heading font-bold text-primary">{{ score }}%</p>
+                    <p class="text-sm text-on-surface-variant mt-1">Score KYC global</p>
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-2">
+        {% embed 'components/MfCard.html.twig' with { title: 'Liste de vérification KYC' } %}
+            {% block card_content %}
+            <form method="post" action="{{ path('client_kyc', { id: client.id }) }}">
+                <div class="space-y-4">
+                    {% set checklist = kyc.checklist ?? [
+                        { key: 'PIECE_IDENTITE', label: 'Pièce d\'identité valide', required: true },
+                        { key: 'JUSTIFICATIF_DOMICILE', label: 'Justificatif de domicile', required: true },
+                        { key: 'PHOTO_IDENTITE', label: 'Photo d\'identité', required: true },
+                        { key: 'CONTRAT_SIGNE', label: 'Contrat signé', required: true },
+                        { key: 'DECLARATION_FISCALE', label: 'Déclaration fiscale', required: false },
+                        { key: 'REFERENCE_BANCAIRE', label: 'Référence bancaire', required: false },
+                        { key: 'CASIER_JUDICIAIRE', label: 'Casier judiciaire', required: false },
+                        { key: 'ATTESTATION_COMPTE', label: 'Attestation de compte', required: false },
+                    ] %}
+                    {% for item in checklist %}
+                    <div class="flex items-start gap-3 p-3 rounded-lg {% if item.checked is defined and item.checked %}bg-green-50 border border-green-200{% else %}bg-gray-50 border border-gray-200{% endif %}">
+                        <input type="checkbox" name="checklist[{{ item.key }}]" class="mt-0.5 rounded border-gray-300 text-primary focus:ring-primary"
+                               {% if item.checked is defined and item.checked %}checked{% endif %}>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-on-surface">{{ item.label }}</p>
+                            <p class="text-xs text-on-surface-variant">{{ item.required ? 'Obligatoire' : 'Optionnel' }}</p>
+                        </div>
+                        {% if item.status is defined %}
+                            {% include 'components/MfStatusBadge.html.twig' with { status: item.status } %}
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-6 flex gap-3">
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Mettre à jour le KYC</button>
+                    <a href="{{ path('client_detail', { id: client.id }) }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Retour</a>
+                </div>
+            </form>
+            {% endblock %}
+        {% endembed %}
+
+        {% if kyc.documents is defined and kyc.documents is not empty %}
+            {% embed 'components/MfCard.html.twig' with { title: 'Documents KYC', class: 'mt-6' } %}
+                {% block card_content %}
+                    {% embed 'components/MfDataTable.html.twig' with {
+                        headers: [
+                            { key: 'type', label: 'Type' },
+                            { key: 'statut', label: 'Statut' },
+                            { key: 'dateSoumission', label: 'Date soumission' },
+                        ],
+                        rows: kyc.documents,
+                    } %}{% endembed %}
+                {% endblock %}
+            {% endembed %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}File d'attente des validations - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfStatsGrid.html.twig' with { stats: [
+        { label: 'En attente', value: validations.en_attente|default('—'), icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-yellow-50', icon_color: 'text-yellow-600' },
+        { label: 'Approuvées', value: validations.approuvees|default('—'), icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+        { label: 'Rejetées', value: validations.rejetees|default('—'), icon: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-red-50', icon_color: 'text-red-600' },
+        { label: 'En révision', value: validations.en_revision|default('—'), icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+    ] } %}{% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'File d\'attente des validations' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'id', label: 'N°' },
+                    { key: 'type', label: 'Type' },
+                    { key: 'soumis_par', label: 'Soumis par' },
+                    { key: 'montant', label: 'Montant' },
+                    { key: 'date_soumission', label: 'Date' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: validations.liste|default([]),
+                actions: [
+                    { label: 'Détails', url: row => path('validation_detail', { id: row.id }), icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
+                    { label: 'Approuver', url: row => path('validation_approve', { id: row.id }), icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+                    { label: 'Rejeter', url: row => path('validation_reject', { id: row.id }), icon: 'M6 18L18 6M6 6l12 12' },
+                ],
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

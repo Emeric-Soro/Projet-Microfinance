@@ -1,0 +1,46 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Tableau de bord Conformité - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfStatsGrid.html.twig' with { stats: [
+        { label: 'Alertes', value: stats.alertes|default('—'), icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z', icon_bg: 'bg-red-50', icon_color: 'text-red-600' },
+        { label: 'Déclarations SAR', value: stats.sar|default('—'), icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-primary-50', icon_color: 'text-primary' },
+        { label: 'Screening PEP', value: stats.pep|default('—'), icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+        { label: 'Taux de conformité', value: stats.taux|default('—'), icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+    ] } %}{% endembed %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {% embed 'components/MfCard.html.twig' with { title: 'Dernières alertes' } %}
+            {% block card_content %}
+                {% embed 'components/MfDataTable.html.twig' with {
+                    headers: [
+                        { key: 'date', label: 'Date' },
+                        { key: 'type', label: 'Type' },
+                        { key: 'statut', label: 'Statut' },
+                    ],
+                    rows: stats.dernieres_alertes|default([]),
+                    actions: [{ label: 'Voir', url: row => path('conformite_investigation', { id: row.id }), icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' }],
+                } %}{% endembed %}
+            {% endblock %}
+        {% endembed %}
+
+        {% embed 'components/MfCard.html.twig' with { title: 'Indicateurs clés' } %}
+            {% block card_content %}
+                {% embed 'components/MfDataTable.html.twig' with {
+                    headers: [
+                        { key: 'indicateur', label: 'Indicateur' },
+                        { key: 'valeur', label: 'Valeur' },
+                        { key: 'statut', label: 'Statut' },
+                    ],
+                    rows: stats.indicateurs|default([]),
+                    actions: false,
+                } %}{% endembed %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

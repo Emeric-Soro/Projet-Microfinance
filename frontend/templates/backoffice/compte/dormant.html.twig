@@ -1,0 +1,46 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block backoffice_content %}
+<div class="mf-card p-0 overflow-hidden">
+    <div class="p-6 border-b border-teal-100">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-xl font-heading font-semibold text-on-surface">Comptes dormants</h2>
+                <p class="text-sm text-on-surface-variant mt-1">{{ total_items }} compte(s) sans activité</p>
+            </div>
+            <a href="{{ path('account_list') }}" class="mf-btn-secondary flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                Tous les comptes
+            </a>
+        </div>
+    </div>
+
+    <div class="p-6 border-b border-teal-100 bg-surface">
+        <p class="text-sm text-on-surface-variant flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Comptes sans opération depuis au moins 12 mois
+        </p>
+    </div>
+
+    {% include 'components/MfDataTable.html.twig' with {
+        headers: [
+            { key: 'numero', label: 'Numéro' },
+            { key: 'client', label: 'Client' },
+            { key: 'produit', label: 'Produit' },
+            { key: 'solde', label: 'Solde' },
+            { key: 'dateDerniereOperation', label: 'Dernière opération' },
+            { key: 'statut', label: 'Statut' },
+        ],
+        rows: comptes,
+        actions: [
+            { label: 'Détail', url: (row) => path('account_detail', { num: row.numero }), icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
+        ],
+        empty_title: 'Aucun compte dormant',
+        empty_message: 'Aucun compte dormant trouvé.',
+    } %}
+
+    {% include 'partials/_pagination.html.twig' with {
+        route: 'account_dormant',
+    } %}
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Tontines - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Tontines</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Gestion des groupes de tontines</p>
+</div>
+
+{% include component('MfTabs') with { tabs: [
+    { key: 'list', label: 'Tontines', count: tontines|length },
+    { key: 'create', label: 'Nouvelle tontine' },
+] } %}
+{% block tabs_content %}
+    <div data-tabs-target="list">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for tontine in tontines %}
+                <div class="bg-white rounded-lg shadow-card border border-teal-100 p-5 hover:shadow-md transition-shadow">
+                    <div class="flex items-start justify-between mb-3">
+                        <h3 class="font-heading font-semibold text-on-surface">{{ tontine.nom }}</h3>
+                        {% include component('MfStatusBadge') with { status: tontine.statut|default('ACTIF') } %}
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-on-surface-variant">Participants</span>
+                            <span class="font-medium">{{ tontine.nombreParticipants }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-on-surface-variant">Montant cycle</span>
+                            <span class="font-medium">{{ tontine.montantCycle|montant }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-on-surface-variant">Fréquence</span>
+                            <span class="font-medium">{{ tontine.frequence }}</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-gray-100">
+                        <a href="{{ path('epargne_tontine_contributions', { id: tontine.id }) }}" class="text-sm text-primary hover:text-primary-600">Voir les contributions</a>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-span-full">
+                    {% include 'partials/_empty_state.html.twig' with {
+                        title: 'Aucune tontine',
+                        message: 'Aucune tontine enregistrée.',
+                    } %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div data-tabs-target="create" class="hidden mt-6">
+        <div class="max-w-2xl">
+            {% embed component('MfFormCard') with { title: 'Nouvelle tontine', description: 'Paramètres du groupe' } %}
+                {% block form_fields %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% include component('MfInput') with { name: 'nom', label: 'Nom de la tontine', required: true } %}
+                        {% include component('MfInput') with { name: 'client_responsable', label: 'Responsable', required: true } %}
+                        {% include component('MfMoneyInput') with { name: 'montant_cycle', label: 'Montant du cycle', required: true } %}
+                        {% include component('MfInput') with { name: 'nombre_participants', label: 'Nombre de participants', type: 'number', required: true } %}
+                        {% include component('MfDatePicker') with { name: 'date_debut', label: 'Date début', required: true, value: 'now'|date('Y-m-d') } %}
+                        {% include component('MfSelect') with { name: 'frequence', label: 'Fréquence', value: 'MENSUELLE', options: [
+                            { value: 'HEBDOMADAIRE', label: 'Hebdomadaire' },
+                            { value: 'MENSUELLE', label: 'Mensuelle' },
+                            { value: 'TRIMESTRIELLE', label: 'Trimestrielle' },
+                        ]} %}
+                    </div>
+                {% endblock %}
+            {% endembed %}
+        </div>
+    </div>
+{% endblock %}
+{% endblock %}

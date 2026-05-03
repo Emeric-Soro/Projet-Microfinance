@@ -1,0 +1,57 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}DAT Détail - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Détail Dépôt à Terme</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Contrat: {{ dat.numero }}</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        {% embed component('MfCard') with { title: 'Informations générales' } %}
+            {% block card_content %}
+                <dl class="divide-y divide-gray-100">
+                    {% include component('MfDetailRow') with { label: 'N° Contrat', value: dat.numero } %}
+                    {% include component('MfDetailRow') with { label: 'Client', value: dat.client } %}
+                    {% include component('MfDetailRow') with { label: 'Montant', value: dat.montant|montant } %}
+                    {% include component('MfDetailRow') with { label: 'Taux', value: (dat.taux)|taux } %}
+                    {% include component('MfDetailRow') with { label: 'Durée', value: dat.duree ~ ' jours' } %}
+                    {% include component('MfDetailRow') with { label: 'Date souscription', value: dat.dateSouscription|date_fr } %}
+                    {% include component('MfDetailRow') with { label: 'Date échéance', value: dat.dateEcheance|date_fr } %}
+                    {% include component('MfDetailRow') with { label: 'Capitalisation', value: dat.capitalisation ? 'Oui' : 'Non' } %}
+                    {% include component('MfDetailRow') with { label: 'Statut', value: '' } %}
+                </dl>
+                <div class="mt-2">
+                    {% include component('MfStatusBadge') with { status: dat.statut } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-1 space-y-6">
+        {% embed component('MfCard') with { title: 'Montants' } %}
+            {% block card_content %}
+                {% embed component('MfSummaryCard') with { items: [
+                    { label: 'Montant initial', value: dat.montantInitial|default(dat.montant)|montant },
+                    { label: 'Intérêts estimés', value: (dat.interetsEstimes|default(0))|montant },
+                    { label: 'Montant à échéance', value: (dat.montantEcheance|default(0))|montant },
+                ]} %}
+                    {% block card_content %}
+                        {{ parent() }}
+                    {% endblock %}
+                {% endembed %}
+            {% endblock %}
+        {% endembed %}
+
+        {% if dat.audit is defined and dat.audit is not empty %}
+            {% embed component('MfCard') with { title: 'Audit' } %}
+                {% block card_content %}
+                    {% include component('MfTimeline') with { entries: dat.audit } %}
+                {% endblock %}
+            {% endembed %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

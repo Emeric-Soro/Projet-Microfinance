@@ -1,0 +1,71 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Journal des paiements{% endblock %}
+{% block current_menu %}paiements_journal{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+{% embed 'components/MfCard.html.twig' with {title: 'Journal des paiements'} %}
+    {% block card_content %}
+        {% include 'partials/_table_toolbar.html.twig' with {
+            search_placeholder: 'Rechercher dans le journal...',
+            filters: [
+                {label: 'Type', options: [
+                    {value: 'VIREMENT', label: 'Virement'},
+                    {value: 'CHEQUE', label: 'Chèque'},
+                    {value: 'CARTE', label: 'Carte'},
+                    {value: 'MOBILE_MONEY', label: 'Mobile Money'},
+                    {value: 'FACTURE', label: 'Facture'},
+                    {value: 'RECHARGE', label: 'Recharge'},
+                    {value: 'DAB', label: 'DAB'},
+                    {value: 'LCR', label: 'LCR'},
+                    {value: 'PRELEVEMENT', label: 'Prélèvement'},
+                    {value: 'TRANSFERT', label: 'Transfert'},
+                ]}
+            ]
+        } %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                {key: 'id', label: 'N°'},
+                {key: 'date', label: 'Date'},
+                {key: 'type', label: 'Type'},
+                {key: 'reference', label: 'Référence'},
+                {key: 'compte', label: 'Compte'},
+                {key: 'montant', label: 'Montant'},
+                {key: 'statut', label: 'Statut'},
+                {key: 'utilisateur', label: 'Utilisateur'},
+            ],
+            rows: entries
+        } %}
+            {% block card_content %}
+                {% for entry in entries %}
+                    <tr>
+                        <td>{{ entry.id }}</td>
+                        <td>{{ entry.date|date('d/m/Y H:i:s') }}</td>
+                        <td>
+                            <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                {{ entry.type }}
+                            </span>
+                        </td>
+                        <td class="font-mono text-xs">{{ entry.reference }}</td>
+                        <td>{{ entry.compte }}</td>
+                        <td class="font-medium">{{ entry.montant|number_format(0, ',', ' ') }} FCFA</td>
+                        <td>{% include 'components/MfStatusBadge.html.twig' with {status: entry.statut} %}</td>
+                        <td class="text-sm">{{ entry.utilisateur }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-8">
+                            {% include 'partials/_empty_state.html.twig' with {title: 'Aucune entrée', message: 'Aucune entrée dans le journal des paiements.'} %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+        {% if pages is defined and pages > 1 %}
+            {% include 'partials/_pagination.html.twig' with {current: currentPage|default(1), total: pages} %}
+        {% endif %}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

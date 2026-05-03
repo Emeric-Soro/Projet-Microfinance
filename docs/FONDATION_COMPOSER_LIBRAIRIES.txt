@@ -1,0 +1,622 @@
+================================================================================
+  MICROFIN — FONDATION : LIBRAIRIES COMPOSER PHP (SYMFONY 7.x)
+  Toutes les dépendances PHP pour le frontend back-office et portails web
+================================================================================
+
+TABLE DES MATIÈRES
+  1. Cœur Symfony
+  2. Base de Données & ORM
+  3. Sécurité & Authentification
+  4. API & Documentation
+  5. Export & Rapports (PDF/Excel/CSV)
+  6. Files d'attente & Tâches asynchrones
+  7. Communication (Email/SMS/WhatsApp/Push)
+  8. Dashboard & Graphiques
+  9. Formulaires & UX
+  10. Cache & Performance
+  11. Test & Qualité
+  12. Outils Développement
+  13. Intégrations Bancaires & Financières
+  14. Traduction & Internationalisation
+  15. Logging & Monitoring
+  16. Déploiement & DevOps
+  17. Arbre complet des dépendances (composer.json)
+  18. Justification technique détaillée par module
+  19. Contraintes versions & compatibilités
+  20. Sécurité des dépendances
+
+
+══════════════════════════════════════════════════════════════════════════════
+  1. CŒUR SYMFONY — Framework Foundation
+══════════════════════════════════════════════════════════════════════════════
+
+  Package                          Version   Usage
+  ─────────────────────────────────────────────────────────────────────────
+  symfony/framework-bundle         ^7.2     Cœur du framework Symfony
+  symfony/http-kernel              ^7.2     Gestion des requêtes/réponses
+  symfony/http-foundation          ^7.2     Objets Request/Response/Session
+  symfony/routing                  ^7.2     Système de routes
+  symfony/config                   ^7.2     Chargement configuration YAML/php
+  symfony/dependency-injection     ^7.2     Conteneur DI
+  symfony/event-dispatcher         ^7.2     Système d'événements
+  symfony/console                  ^7.2     Commandes CLI (Batch, EOD, etc.)
+  symfony/flex                     ^2.4     Gestionnaire de recettes
+  symfony/yaml                     ^7.2     Parsing YAML (configuration)
+  symfony/dotenv                   ^7.2     Chargement .env
+  symfony/error-handler            ^7.2     Gestion d'erreurs
+  symfony/var-dumper               ^7.2     Debug (dev)
+
+  JUSTIFICATION :
+  Symfony 7.2 est choisi comme framework PHP principal pour le frontend
+  back-office (Web Opérateur) et les portails web. Sa maturité, sa sécurité
+  (firewall, CSRF, XSS protection), son système de formulaires avec
+  validation, son moteur de templates Twig, et son écosystème de bundles
+  en font le choix idéal pour une application bancaire nécessitant :
+    - Contrôle d'accès fin (rôles + permissions)
+    - Gestion de sessions sécurisée
+    - Formulaires complexes avec validation métier
+    - Caching performant (templates, queries, HTTP)
+    - Messaging asynchrone pour les opérations longues (EOD, batch)
+
+  Version 7.2 requis pour PHP 8.2+, performances accrues, et support LTS.
+
+
+══════════════════════════════════════════════════════════════════════════════
+  2. BASE DE DONNÉES & ORM
+══════════════════════════════════════════════════════════════════════════════
+
+  Package                          Version   Usage
+  ─────────────────────────────────────────────────────────────────────────
+  doctrine/orm                     ^3.3     ORM Doctrine (Entity Manager)
+  doctrine/doctrine-bundle         ^2.13    Intégration Symfony/Doctrine
+  doctrine/doctrine-migrations-bundle ^3.4  Migrations base de données
+  doctrine/doctrine-fixtures-bundle ^3.6    Données de test / fixtures
+  doctrine/dbal                    ^4.2     Abstraction base de données
+  symfony/doctrine-messenger       ^7.2     Transport Messenger via Doctrine
+
+  JUSTIFICATION :
+  Doctrine ORM 3.x est l'ORM de référence pour Symfony. L'application
+  MicroFin utilise Oracle 21c XE et le mapping se fait via :
+    - Entity classes PHP (POJO mapping)
+    - Annotations/Attributes pour les relations (OneToMany, ManyToOne)
+    - QueryBuilder pour les requêtes complexes (rapports, statistiques)
+    - Doctrine Migrations pour la gestion du schéma (compatible Oracle)
+    - Fixtures pour les données de démo et les tests
+
+  Points critiques pour une application bancaire :
+    - Transactions ACID via EntityManager::beginTransaction()
+    - Second level cache pour les référentiels (produits, taux)
+    - Pagination native (KNPPaginator ou doctrine paginator)
+    - Optimisation des requêtes N+1 via JOIN FETCH
+    - Schema filtering pour le cloisonnement par agence
+
+
+══════════════════════════════════════════════════════════════════════════════
+  3. SÉCURITÉ & AUTHENTIFICATION
+══════════════════════════════════════════════════════════════════════════════
+
+Package                          Version   Usage
+─────────────────────────────────────────────────────────────────────────
+symfony/security-bundle          ^7.2     Firewall, authentification, ACL
+symfony/security-core            ^7.2     Core sécurité (UserChecker, etc.)
+symfony/security-http            ^7.2     HTTP authentication, logout
+symfony/password-hasher          ^7.2     Hashing mots de passe (bcrypt/argon2)
+lexik/jwt-authentication-bundle  ^3.0     Génération/validation JWT
+scheb/2fa-bundle                 ^7.0     Two-Factor Authentication
+scheb/2fa-totp                   ^7.0     TOTP (Google Authenticator)
+scheb/2fa-backup-code            ^7.0     Codes de secours 2FA
+scheb/2fa-email                  ^7.0     2FA par email
+symfony/rate-limiter             ^7.2     Rate limiting (login, API)
+symfony/lock                     ^7.2     Verrous distribués (idempotence)
+
+JUSTIFICATION :
+La sécurité est le pilier #1 d'une application bancaire :
+  - LexikJWTAuthenticationBundle : génère les JWT pour l'API et stocke
+    le refresh token. Les tokens sont signés en RS256 (paire de clés).
+  - SCHED 2FA : authentification à deux facteurs obligatoire pour les
+    opérateurs (GUICHETIER, SUPERVISEUR, ADMIN). Supporte TOTP (app),
+    email, et codes de secours.
+  - RateLimiter : limite les tentatives de connexion (10/min), les
+    créations de clients (5/min), et les opérations sensibles.
+  - Lock : empêche la double soumission (idempotence des transactions).
+  - PasswordHasher : utilise bcrypt (cost=12) pour le stockage des mots
+    de passe, conforme aux recommandations OWASP.
+
+
+══════════════════════════════════════════════════════════════════════════════
+  4. API & DOCUMENTATION
+══════════════════════════════════════════════════════════════════════════════
+
+Package                          Version   Usage
+─────────────────────────────────────────────────────────────────────────
+nelmio/api-doc-bundle            ^4.3     Documentation Swagger/OpenAPI
+friendsofsymfony/rest-bundle     ^4.0     (optionnel) REST routing
+api-platform/core                ^4.0     (optionnel) API Platform
+symfony/serializer               ^7.2     Serialisation JSON
+symfony/validator                ^7.2     Validation (annotations)
+symfony/property-access          ^7.2     Accès propriétés (serializer)
+symfony/property-info            ^7.2     Métadonnées propriétés
+
+JUSTIFICATION :
+Le frontend Symfony est un client de l'API REST Java Spring Boot, mais
+il expose aussi ses propres endpoints pour les interactions utilisateur.
+NelmioApiDocBundle génère la documentation Swagger des endpoints exposés.
+Le serializer Symfony convertit les objets PHP en JSON pour les réponses
+AJAX et les appels API.
+
+
+══════════════════════════════════════════════════════════════════════════════
+  5. EXPORT & RAPPORTS (PDF/Excel/CSV)
+══════════════════════════════════════════════════════════════════════════════
+
+Package                          Version   Usage
+─────────────────────────────────────────────────────────────────────────
+phpoffice/phpspreadsheet          ^3.0     Génération fichiers Excel (.xlsx)
+knplabs/knp-snappy-bundle         ^3.0     Génération PDF (wkhtmltopdf)
+knplabs/knp-snappy                ^3.0     Cœur Snappy PDF
+symfony/mime                      ^7.2     Gestion des MIME types
+box/spout                         ^3.3     Import/export CSV performant
+
+JUSTIFICATION :
+Export essentiel en microfinance :
+  - PHPSpreadsheet : génération Excel des rapports (balance, grand livre,
+    relevés de compte, liste clients, échéanciers) avec mise en forme
+    (en-têtes, couleurs, largeurs colonnes).
+  - KnpSnappyBundle : génération PDF des contrats, attestations, relevés
+    bancaires, reçus, bulletins de paie. Utilise wkhtmltopdf en backend.
+  - Spout : lecture/écriture CSV pour les imports massifs (clients,
+    transactions, remboursements).
+
+
+══════════════════════════════════════════════════════════════════════════════
+  6. FILES D'ATTENTE & TÂCHES ASYNCHRONES
+══════════════════════════════════════════════════════════════════════════════
+
+Package                          Version   Usage
+─────────────────────────────────────────────────────────────────────────
+symfony/messenger                ^7.2     Message Bus / Queue
+symfony/doctrine-messenger       ^7.2     Transport Doctrine (queue SQL)
+symfony/amqp-messenger           ^7.2     Transport AMQP (RabbitMQ)
+symfony/redis-messenger          ^7.2     Transport Redis
+symfony/scheduler                ^7.2     Tâches planifiées (cron-like)
+symfony/workflow                 ^7.2     Workflow engine (Maker-Checker)
+
+JUSTIFICATION :
+Le traitement asynchrone est critique pour :
+  - End Of Day (EOD) : clôture journalière en arrière-plan
+  - Calcul des intérêts : épargne et crédit
+  - Détection des impayés
+  - Génération des rapports volumineux
+  - Envoi des notifications (SMS/Email)
+  - Batch commissions agent banking
+
+Symfony Messenger permet de définir des Handlers et Middleware pour
+chaque type de message. Le transport Doctrine (SQL) est le défaut,
+RabbitMQ pour la production.
+
+Symfony Workflow est utilisé pour modéliser le processus Maker-Checker
+(EN_ATTENTE → APPROUVEE|REJETEE) avec des transitions, gardes, et
+callbacks.
+
+
+══════════════════════════════════════════════════════════════════════════════
+  7. COMMUNICATION (Email/SMS/WhatsApp/Push)
+══════════════════════════════════════════════════════════════════════════════
+
+Package                          Version   Usage
+─────────────────────────────────────────────────────────────────────────
+symfony/mailer                   ^7.2     Envoi d'emails (MailerInterface)
+symfony/notifier                 ^7.2     Notification multi-canal
+symfony/amazon-mailer            ^7.2     (optionnel) SES
+twig/cssinliner-extra            ^7.2     Inline CSS pour emails
+netflie/whatsapp-cloud-api       ^2.0     WhatsApp Business API
+africastalking/africas-talking   ^4.0     SMS USSD via Africa's Talking
+kreait/firebase-php              ^7.0     Firebase Cloud Messaging (push)
+mercure                         ^0.6     Real-time notifications (Mercure)
+
+JUSTIFICATION :
+Communication omnichannel avec les clients UEMOA :
+  - Africa's Talking : gateway SMS et USSD pour toute l'Afrique de
+    l'ouest. Permet l'envoi SMS transactionnels (OTP, alertes, rappels)
+    et la gestion des sessions USSD (*123#).
+  - WhatsApp Cloud API : communication riche avec les clients (reçus,
+    notifications, support). Template messages approuvés par Meta.
+  - Kreait Firebase : push notifications pour l'app mobile Flutter
+    (client et agent terrain).
+  - Mercure : notifications en temps réel (Live Updates) pour le
+    back-office (nouvelle validation, alerte, opération).
+  - Symfony Mailer : envoi emails transactionnels via SMTP ou API SES.
+
+
+══════════════════════════════════════════════════════════════════════════════
+  8. DASHBOARD & GRAPHIQUES
+══════════════════════════════════════════════════════════════════════════════
+
+Package                          Version   Usage
+─────────────────────────────────────────────────────────────────────────
+symfony/ux-chartjs               ^3.0     Graphiques Chart.js (Twig)
+symfony/ux-twig-component        ^3.0     Composants Twig dynamiques
+twig/twig                        ^3.14    Moteur de templates
+twig/extra-bundle                ^3.14    Extras Twig (intl, markdown, etc.)
+twig/intl-extra                  ^3.14    Formatage dates/monnaies (UEMOA XOF)
+twig/cssinliner-extra            ^3.14    CSS inline (emails)
+
+JUSTIFICATION :
+UX-Chartjs intègre Chart.js dans Twig côté serveur, idéal pour les
+dashboards de la microfinance : graphiques d'évolution des portefeuilles,
+répartition des crédits, tendances des dépôts, etc.
+
+
+══════════════════════════════════════════════════════════════════════════════
+  9. FORMULAIRES & UX
+══════════════════════════════════════════════════════════════════════════════
+
+Package                          Version   Usage
+─────────────────────────────────────────────────────────────────────────
+symfony/form                     ^7.2     Form Builder
+symfony/validator                ^7.2     Validation (constraints)
+symfony/asset                    ^7.2     Gestion assets (css/js)
+symfony/webpack-encore-bundle    ^2.2     Webpack Encore / Vite integration
+symfony/ux-autocomplete          ^3.0     Autocomplete select2
+symfony/ux-dropzone              ^3.0     Upload fichiers drag & drop
+symfony/ux-live-component        ^3.0     Composants live (AJAX)
+symfony/ux-toast-notification    ^3.0     Notifications toast
+symfony/stimulus-bundle          ^3.0     Stimulus JS
+symfony/ux-turbo                 ^3.0     Turbo Drive (SPA-like)
+
+JUSTIFICATION :
+L'UX du back-office bancaire doit être fluide et réactive :
+  - Webpack Encore : build CSS/JS moderne (Tailwind + Stimulus)
+  - UX Autocomplete : recherche clients/comptes avec suggestions
+  - UX Dropzone : upload documents KYC (CNI, passeport, justificatifs)
+  - UX Live Component : mises à jour en temps réel sans rechargement
+    (idéal pour les files de validation en attente)
+  - Turbo : navigation SPA-like sans perte des états JS
+  - Stimulus : framework JS léger pour les interactions (confirmations,
+    toasts, modales)
+
+
+══════════════════════════════════════════════════════════════════════════════
+  10. CACHE & PERFORMANCE
+══════════════════════════════════════════════════════════════════════════════
+
+Package                          Version   Usage
+─────────────────────────────────────────────────────────────────────────
+symfony/cache                    ^7.2     Cache (Redis/APCu/filesystem)
+symfony/http-cache               ^7.2     HTTP caching
+symfony/rate-limiter             ^7.2     Rate limiting
+doctrine/orm-second-level-cache  ^3.3     Cache ORM second niveau
+
+JUSTIFICATION :
+  - Redis pour le cache applicatif (sessions, queries, templates)
+  - Second level cache Doctrine pour les référentiels stables
+    (produits, taux, paramétrage)
+  - Rate limiter pour la protection anti-bruteforce
+
+
+══════════════════════════════════════════════════════════════════════════════
+  11. TEST & QUALITÉ
+══════════════════════════════════════════════════════════════════════════════
+
+Package                          Version   Usage
+─────────────────────────────────────────────────────────────────────────
+phpunit/phpunit                   ^11      Tests unitaires
+symfony/test-pack                 ^7.2     Test helpers Symfony
+symfony/phpunit-bridge            ^7.2     Bridge PHPUnit
+dama/doctrine-test-bundle         ^8.2     Tests avec transaction rollback
+liip/functional-test-bundle       ^5.0     Tests fonctionnels
+symfony/browser-kit               ^7.2     Client HTTP pour tests
+symfony/css-selector              ^7.2     Selecteur CSS tests
+symfony/dom-crawler               ^7.2     Crawler DOM tests
+phpstan/phpstan                   ^1.12    Analyse statique
+phpstan/phpstan-doctrine          ^1.6     Règles Doctrine pour PHPStan
+phpstan/phpstan-symfony           ^1.6     Règles Symfony pour PHPStan
+friendsofphp/php-cs-fixer         ^3.60    Formatteur de code
+rector/rector                     ^1.2     Refactoring automatique
+
+JUSTIFICATION :
+  - DamaDoctrineTestBundle : isole chaque test avec rollback auto
+  - LiipFunctionalTestBundle : tests HTTP avec authentification
+  - PHPStan niveau max (9) : détection des erreurs avant prod
+  - PHP-CS-Fixer : style de code uniforme
+
+
+══════════════════════════════════════════════════════════════════════════════
+  12. OUTILS DÉVELOPPEMENT
+══════════════════════════════════════════════════════════════════════════════
+
+Package                          Version   Usage
+─────────────────────────────────────────────────────────────────────────
+symfony/debug-bundle              ^7.2     Debug toolbar (dev)
+symfony/maker-bundle              ^2.0     Scaffolding (make:entity, etc.)
+symfony/profiler-pack             ^7.2     Profiler (dev)
+symfony/web-profiler-bundle       ^7.2     Barre de debug (dev)
+doctrine/doctrine-migrations-bundle ^3.4   Migrations CLI
+
+
+══════════════════════════════════════════════════════════════════════════════
+  13. INTÉGRATIONS BANCAIRES & FINANCIÈRES UEMOA
+══════════════════════════════════════════════════════════════════════════════
+
+Package                          Version   Usage
+─────────────────────────────────────────────────────────────────────────
+giggsey/libphonenumber-for-php    ^8.13    Validation téléphones UEMOA
+maba/webpack-encore-bundle...     —         (déjà inclus plus haut)
+
+  Justification :
+  LibPhoneNumber pour formater/valider les numéros de téléphone des
+  8 pays UEMOA (Bénin, Burkina, Côte d'Ivoire, Mali, Niger, Sénégal,
+  Togo, Guinée-Bissau). Format international +225 XX XX XX XX.
+
+
+══════════════════════════════════════════════════════════════════════════════
+  14. TRADUCTION & INTERNATIONALISATION
+══════════════════════════════════════════════════════════════════════════════
+
+Package                          Version   Usage
+─────────────────────────────────────────────────────────────────────────
+symfony/translation              ^7.2     Traduction (messages.fr.yaml)
+twig/intl-extra                  ^3.14    Formatage dates/monnaies
+
+NOTE :
+Le système est en français pour l'UEMOA. Les traductions sont stockées
+dans translations/messages.fr.yaml. Le formatage monétaire utilise XOF
+(1 000 000 FCFA) avec le format locale fr_FR.
+
+
+══════════════════════════════════════════════════════════════════════════════
+  15. LOGGING & MONITORING
+══════════════════════════════════════════════════════════════════════════════
+
+Package                          Version   Usage
+─────────────────────────────────────────────────────────────────────────
+monolog/monolog                   ^3.7     Logging (fichier, DB, syslog)
+symfony/monolog-bundle            ^3.10    Intégration Monolog/Symfony
+sentry/sentry-symfony             ^5.0     Error tracking (Sentry)
+elasticsearch/elasticsearch       ^8.14    (optionnel) Elasticsearch
+
+
+══════════════════════════════════════════════════════════════════════════════
+  16. DÉPLOIEMENT & DEVOPS
+══════════════════════════════════════════════════════════════════════════════
+
+Package                          Version   Usage
+─────────────────────────────────────────────────────────────────────────
+symfony/web-link                 ^7.2     Performance (preload, prefetch)
+symfony/asset-mapper             ^7.2     Asset mapping (optionnel)
+
+
+══════════════════════════════════════════════════════════════════════════════
+  17. FICHIER COMPOSER.JSON COMPLET
+══════════════════════════════════════════════════════════════════════════════
+
+{
+  "name": "microfin/backoffice",
+  "type": "project",
+  "description": "MicroFin - Core Banking System Back-Office (UEMOA)",
+  "license": "proprietary",
+  "require": {
+    "php": ">=8.2",
+    "ext-ctype": "*",
+    "ext-iconv": "*",
+    "ext-intl": "*",
+    "ext-zip": "*",
+    "ext-gd": "*",
+    "ext-bcmath": "*",
+    "ext-exif": "*",
+    "ext-openssl": "*",
+    "ext-pdo": "*",
+    "ext-oci8": "*",
+
+    "symfony/framework-bundle": "^7.2",
+    "symfony/http-kernel": "^7.2",
+    "symfony/http-foundation": "^7.2",
+    "symfony/routing": "^7.2",
+    "symfony/config": "^7.2",
+    "symfony/dependency-injection": "^7.2",
+    "symfony/event-dispatcher": "^7.2",
+    "symfony/console": "^7.2",
+    "symfony/yaml": "^7.2",
+    "symfony/dotenv": "^7.2",
+    "symfony/flex": "^2.4",
+
+    "doctrine/orm": "^3.3",
+    "doctrine/doctrine-bundle": "^2.13",
+    "doctrine/doctrine-migrations-bundle": "^3.4",
+    "doctrine/dbal": "^4.2",
+
+    "symfony/security-bundle": "^7.2",
+    "symfony/security-core": "^7.2",
+    "symfony/security-http": "^7.2",
+    "symfony/password-hasher": "^7.2",
+    "lexik/jwt-authentication-bundle": "^3.0",
+    "scheb/2fa-bundle": "^7.0",
+    "scheb/2fa-totp": "^7.0",
+    "scheb/2fa-backup-code": "^7.0",
+    "scheb/2fa-email": "^7.0",
+    "symfony/rate-limiter": "^7.2",
+    "symfony/lock": "^7.2",
+
+    "twig/twig": "^3.14",
+    "twig/extra-bundle": "^3.14",
+    "twig/intl-extra": "^3.14",
+    "twig/cssinliner-extra": "^3.14",
+    "symfony/form": "^7.2",
+    "symfony/validator": "^7.2",
+    "symfony/asset": "^7.2",
+    "symfony/serializer": "^7.2",
+    "symfony/property-access": "^7.2",
+    "symfony/property-info": "^7.2",
+    "symfony/mime": "^7.2",
+    "symfony/translation": "^7.2",
+
+    "symfony/webpack-encore-bundle": "^2.2",
+    "symfony/stimulus-bundle": "^3.0",
+    "symfony/ux-chartjs": "^3.0",
+    "symfony/ux-autocomplete": "^3.0",
+    "symfony/ux-dropzone": "^3.0",
+    "symfony/ux-live-component": "^3.0",
+    "symfony/ux-toast-notification": "^3.0",
+    "symfony/ux-twig-component": "^3.0",
+    "symfony/ux-turbo": "^3.0",
+
+    "symfony/mailer": "^7.2",
+    "symfony/notifier": "^7.2",
+    "symfony/messenger": "^7.2",
+    "symfony/doctrine-messenger": "^7.2",
+    "symfony/scheduler": "^7.2",
+    "symfony/workflow": "^7.2",
+    "symfony/cache": "^7.2",
+    "symfony/http-cache": "^7.2",
+
+    "phpoffice/phpspreadsheet": "^3.0",
+    "knplabs/knp-snappy-bundle": "^3.0",
+    "box/spout": "^3.3",
+
+    "nelmio/api-doc-bundle": "^4.3",
+    "africastalking/africas-talking": "^4.0",
+    "netflie/whatsapp-cloud-api": "^2.0",
+    "kreait/firebase-php": "^7.0",
+    "mercure": "^0.6",
+    "giggsey/libphonenumber-for-php": "^8.13",
+
+    "monolog/monolog": "^3.7",
+    "symfony/monolog-bundle": "^3.10",
+    "sentry/sentry-symfony": "^5.0",
+
+    "symfony/lock": "^7.2",
+    "symfony/serializer-pack": "^1.3",
+    "symfony/debug-pack": "^1.3",
+    "symfony/profiler-pack": "^1.3"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^11.0",
+    "symfony/test-pack": "^7.2",
+    "symfony/phpunit-bridge": "^7.2",
+    "dama/doctrine-test-bundle": "^8.2",
+    "liip/functional-test-bundle": "^5.0",
+    "symfony/browser-kit": "^7.2",
+    "symfony/css-selector": "^7.2",
+    "symfony/dom-crawler": "^7.2",
+    "symfony/maker-bundle": "^2.0",
+    "symfony/debug-bundle": "^7.2",
+    "symfony/web-profiler-bundle": "^7.2",
+    "phpstan/phpstan": "^1.12",
+    "phpstan/phpstan-doctrine": "^1.6",
+    "phpstan/phpstan-symfony": "^1.6",
+    "friendsofphp/php-cs-fixer": "^3.60",
+    "rector/rector": "^1.2",
+    "doctrine/doctrine-fixtures-bundle": "^3.6"
+  },
+  "scripts": {
+    "auto-scripts": {
+      "cache:clear": "symfony-cmd",
+      "assets:install": "symfony-cmd"
+    },
+    "post-install-cmd": [
+      "@auto-scripts"
+    ],
+    "post-update-cmd": [
+      "@auto-scripts"
+    ]
+  },
+  "extra": {
+    "symfony": {
+      "allow-contrib": true,
+      "require": "^7.2"
+    }
+  }
+}
+
+
+══════════════════════════════════════════════════════════════════════════════
+  18. JUSTIFICATION TECHNIQUE PAR MODULE FRONTEND
+══════════════════════════════════════════════════════════════════════════════
+
+MODULE 01 — WEB OPÉRATEUR (Back-office employés)
+────────────────────────────────────────────────
+  Templates : Twig étendus (base.php → auth.php, backoffice.php)
+  CSS/JS : Tailwind CSS + Stimulus controllers + UX packages
+  Composants : Twig components (ux-twig-component) pour les patrons
+    réutilisables (DataTable, FormCard, DetailModal, StatusBadge)
+  Live updates : UX Live Component pour notifications et file Maker-Checker
+  Chart.js : UX Chartjs pour les dashboards (tendances, KPIs)
+  Upload : UX Dropzone pour les documents KYC et pièces jointes
+  Export : PHPExcel/Snappy pour Excel et PDF (rapports, relevés)
+
+MODULE 02 — PORTAIL CLIENT WEB (E-Banking)
+───────────────────────────────────────────
+  Templates : auth.php (client layout, simulation session client)
+  Sécurité : JWT + OTP pour toutes les transactions
+  Formulaires : Symfony Form avec validation OTP
+  Live : Turbo Drive pour navigation fluide sans rechargement
+  API calls : HttpClient vers l'API Java Spring Boot
+
+MODULE 05 — USSD
+────────────────
+  Africa's Talking : gestion des sessions USSD
+  Symfony Console : traitement des réponses USSD via Messenger
+  Validation : numéros téléphone UEMOA (libphonenumber)
+
+MODULE 06 — AGENT BANKING DASHBOARD
+────────────────────────────────────
+  Graphiques : UX Chart.js pour KPIs performance agents
+  Map : Intégration carte (Leaflet/OpenStreetMap) localisation agents
+  Excel : PHPSpreadsheet pour rapports commissions
+
+MODULE 07 — PORTAIL DÉVELOPPEUR OPEN BANKING
+─────────────────────────────────────────────
+  Swagger : NelmioApiDocBundle pour la documentation interactive
+  OAuth : LexikJWTAuthenticationBundle pour la gestion des tokens
+  Webhooks : Symfony Messenger pour la file d'envoi
+
+MODULE 08 — CONSOLE COMMUNICATION
+─────────────────────────────────
+  Email : Symfony Mailer + Twig/CSS Inliner
+  SMS : Africa's Talking
+  WhatsApp : Netflie WhatsApp Cloud API
+  Push : Kreait Firebase (FCM)
+  Notifications temps réel : Mercure
+
+
+══════════════════════════════════════════════════════════════════════════════
+  19. CONTRAINTES VERSIONS & COMPATIBILITÉS
+══════════════════════════════════════════════════════════════════════════════
+
+  PHP             8.2+    Nécessaire pour Symfony 7.2
+  Oracle XE       21c     Base de données principale
+  wkhtmltopdf     0.12.6  Pour Snappy PDF (binaire système)
+  Node.js         20+     Pour Webpack Encore (assets build)
+  Redis           7+      Cache session + Cache Doctrine + Messenger
+  RabbitMQ        3.13+   (optionnel) Transport Messenger AMQP
+  Composer        2.7+    Gestionnaire de dépendances
+
+  EXTENSIONS PHP REQUISES :
+    - ext-oci8   : Connexion Oracle
+    - ext-bcmath : Précision décimale (montants financiers)
+    - ext-intl   : Formatage dates/monnaies
+    - ext-zip    : Export Excel
+    - ext-gd     : Génération d'images (graphiques)
+    - ext-openssl : Chiffrement JWT
+    - iconv, ctype, pdo, json, mbstring, xml
+
+
+══════════════════════════════════════════════════════════════════════════════
+  20. SÉCURITÉ DES DÉPENDANCES
+══════════════════════════════════════════════════════════════════════════════
+
+  AUDIT RÉGULIER :
+    composer audit                    # Vérifie les CVE connues
+    composer update --dry-run         # Simule les mises à jour
+    symfony check:security            # Vérifie les vulnérabilités Symfony
+
+  PRATIQUES :
+    - Versions pinées (^7.2) avec mises à jour régulières
+    - Aucune librairie non maintenue ou abandonnée
+    - Favoriser les bundles officiels Symfony/Doctrine
+    - Revues de sécurité avant chaque mise à jour majeure
+    - Tests de régression avant déploiement
+
+================================================================================
+  FIN DU DOCUMENT — FONDATION COMPOSER LIBRAIRIES
+================================================================================

@@ -1,0 +1,57 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Validation opérations - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Validation des opérations</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Valider ou rejeter les opérations en attente</p>
+</div>
+
+{% include 'partials/_table_toolbar.html.twig' with {
+    search_placeholder: 'Rechercher...',
+} %}
+
+{% embed component('MfCard') with { title: 'Opérations en attente de validation' } %}
+    {% block card_content %}
+        {% if transactions is not empty %}
+            <div class="space-y-4">
+                {% for transaction in transactions %}
+                    <div class="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3">
+                                <span class="font-medium text-on-surface">{{ transaction.reference }}</span>
+                                {% include component('MfStatusBadge') with { status: transaction.statut } %}
+                            </div>
+                            <div class="mt-1 text-sm text-on-surface-variant">
+                                {{ transaction.type|replace({'_': ' '})|title }} - {{ transaction.montant|montant }}
+                            </div>
+                            <div class="text-xs text-on-surface-variant mt-1">
+                                {{ transaction.clientNom }} | {{ transaction.dateCreation|date_fr }}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 ml-4">
+                            <form method="post" action="{{ path('operation_validate') }}" class="inline">
+                                <input type="hidden" name="reference" value="{{ transaction.reference }}">
+                                <input type="hidden" name="action" value="approve">
+                                <button type="submit" class="px-3 py-1.5 text-sm bg-green-100 text-green-800 rounded hover:bg-green-200 transition-colors">Valider</button>
+                            </form>
+                            <form method="post" action="{{ path('operation_validate') }}" class="inline" onsubmit="return prompt('Motif du rejet:') && confirm('Rejeter cette opération?')">
+                                <input type="hidden" name="reference" value="{{ transaction.reference }}">
+                                <input type="hidden" name="action" value="reject">
+                                <button type="submit" class="px-3 py-1.5 text-sm bg-red-100 text-red-800 rounded hover:bg-red-200 transition-colors">Rejeter</button>
+                            </form>
+                            <a href="{{ path('operation_detail', { ref: transaction.reference }) }}" class="text-sm text-primary hover:text-primary-600">Détail</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            {% include 'partials/_empty_state.html.twig' with {
+                title: 'Aucune opération en attente',
+                message: 'Toutes les opérations ont été validées.',
+            } %}
+        {% endif %}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

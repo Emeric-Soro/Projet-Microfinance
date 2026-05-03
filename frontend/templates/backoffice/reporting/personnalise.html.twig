@@ -1,0 +1,81 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Rapports Personnalisés - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Créer un Rapport Personnalisé' } %}
+        {% block card_content %}
+            <form method="post" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Nom du Rapport</label>
+                        <input type="text" name="report[nom]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Module</label>
+                        <select name="report[module]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                            <option value="credit">Crédit</option>
+                            <option value="epargne">Épargne</option>
+                            <option value="caisse">Caisse</option>
+                            <option value="comptabilite">Comptabilité</option>
+                            <option value="conformite">Conformité</option>
+                            <option value="rh">RH</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Description</label>
+                    <textarea name="report[description]" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"></textarea>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Format</label>
+                        <select name="report[format]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                            <option value="pdf">PDF</option>
+                            <option value="xlsx">Excel</option>
+                            <option value="csv">CSV</option>
+                            <option value="html">HTML</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Fréquence</label>
+                        <select name="report[frequence]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                            <option value="ponctuel">Ponctuel</option>
+                            <option value="quotidien">Quotidien</option>
+                            <option value="hebdomadaire">Hebdomadaire</option>
+                            <option value="mensuel">Mensuel</option>
+                            <option value="trimestriel">Trimestriel</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="reset" class="mf-btn-secondary">Réinitialiser</button>
+                    <button type="submit" class="mf-btn-primary">Créer le Rapport</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Rapports Personnalisés' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'nom', label: 'Nom' },
+                    { key: 'module', label: 'Module' },
+                    { key: 'format', label: 'Format' },
+                    { key: 'frequence', label: 'Fréquence' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: reports|default([]),
+                actions: [
+                    { label: 'Exécuter', url: row => '#', icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z' },
+                    { label: 'Modifier', url: row => '#', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' },
+                ],
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

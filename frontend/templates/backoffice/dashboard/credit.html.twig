@@ -1,0 +1,61 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Crédit - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Tableau de bord Crédit</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Suivi du portefeuille et des impayés</p>
+</div>
+
+{% if data is defined and data is not empty %}
+    {% embed component('MfStatsGrid') with { cols: 4, stats: [
+        { label: 'Crédits en cours', value: data.creditsEnCours|default(0)|number_format(0, ',', ' '), icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+        { label: 'Encours total', value: data.encoursTotal|default(0)|montant, icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+        { label: 'Impayés > 30j', value: data.impayes30j|default(0)|montant, icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z', icon_bg: 'data.impayes30j|default(0) > 0 ? 'bg-red-50' : 'bg-green-50'', icon_color: 'data.impayes30j|default(0) > 0 ? 'text-red-600' : 'text-green-600'' },
+        { label: 'Taux PAR', value: (data.par|default(0)) ~ '%', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', icon_bg: 'data.par|default(0) > 5 ? 'bg-red-50' : 'bg-green-50'', icon_color: 'data.par|default(0) > 5 ? 'text-red-600' : 'text-green-600'' },
+    ]} %}
+        {% block card_content %}{{ parent() }}{% endblock %}
+    {% endembed %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {% embed component('MfCard') with { title: 'Décaissements du mois' } %}
+            {% block card_content %}
+                {% set headers = [
+                    { label: 'Date', key: 'date' },
+                    { label: 'Client', key: 'client' },
+                    { label: 'Montant', key: 'montant' },
+                    { label: 'Produit', key: 'produit' },
+                ] %}
+                {% set rows = data.decaissementsMois|default([]) %}
+                {% include component('MfDataTable') with { headers: headers, rows: rows } %}
+            {% endblock %}
+        {% endembed %}
+
+        {% embed component('MfCard') with { title: 'Répartition du portefeuille' } %}
+            {% block card_content %}
+                {% set items = [
+                    { label: 'Crédits sains', value: data.creditsSains|default(0)|montant },
+                    { label: 'Impayés 1-30j', value: data.impayes1a30|default(0)|montant },
+                    { label: 'Impayés 31-90j', value: data.impayes31a90|default(0)|montant },
+                    { label: 'Impayés > 90j', value: data.impayesPlus90|default(0)|montant },
+                    { label: 'Provisions constituées', value: data.provisions|default(0)|montant },
+                ] %}
+                {% include component('MfSummaryCard') with { items: items } %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    {% if data.alertes|default([]) is not empty %}
+        <div class="mt-6">
+            {% for alerte in data.alertes %}
+                <div class="mb-3">
+                    {% include component('MfAlertBanner') with { type: alerte.type|default('warning'), message: alerte.message, details: alerte.details|default('') } %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% else %}
+    {% include 'partials/_empty_state.html.twig' with { title: 'Chargement...', message: 'Données du crédit en cours de chargement.' } %}
+{% endif %}
+{% endblock %}

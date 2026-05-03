@@ -1,0 +1,46 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Audit - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Administration', url: path('admin_audit') }, { label: 'Audit' }] %}
+
+{% if mode == 'list' %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Journal d'audit</h1>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Traces d\'audit' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'date', label: 'Date' },
+                { key: 'utilisateur', label: 'Utilisateur' },
+                { key: 'action', label: 'Action' },
+                { key: 'ressource', label: 'Ressource' },
+                { key: 'ip', label: 'IP' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% include 'partials/_pagination.html.twig' with { current_page: page, total_pages: pages, total_items: total, route: 'admin_audit', query: {} } %}
+
+{% elseif mode == 'show' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Détail audit</h1></div>
+{% embed 'components/MfCard.html.twig' with { title: 'Informations' } %}
+    {% block card_content %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><strong>Date:</strong> {{ item.date ?? '—' }}</div>
+        <div><strong>Utilisateur:</strong> {{ item.utilisateur ?? '—' }}</div>
+        <div><strong>Action:</strong> {{ item.action ?? '—' }}</div>
+        <div><strong>Ressource:</strong> {{ item.ressource ?? '—' }}</div>
+        <div><strong>IP:</strong> {{ item.ip ?? '—' }}</div>
+        <div><strong>Détails:</strong> {{ item.details ?? '—' }}</div>
+    </div>
+    <div class="mt-6"><a href="{{ path('admin_audit') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Retour</a></div>
+    {% endblock %}
+{% endembed %}
+{% endif %}
+{% endblock %}

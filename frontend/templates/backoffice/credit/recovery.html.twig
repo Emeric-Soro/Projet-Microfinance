@@ -1,0 +1,116 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Recouvrement - Crédit N°{{ credit.id }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Crédit', url: path('credit_dashboard') }, { label: 'Impayés', url: path('credit_arrears') }, { label: 'N°' ~ credit.id ~ ' - Recouvrement' }] %}
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Recouvrement - Crédit N°{{ credit.id }}</h1>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Situation du crédit</h3>
+            </div>
+            <div class="p-4 space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Client</span>
+                    <span class="font-medium">{{ credit.clientNom|default('') }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Encours</span>
+                    <span class="font-semibold">{{ credit.encours|default(0)|number_format(0, ',', ' ') }} FCFA</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Arriéré</span>
+                    <span class="font-semibold text-red-600">{{ credit.arriere|default(0)|number_format(0, ',', ' ') }} FCFA</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Jours d'impayé</span>
+                    <span class="font-medium">{{ credit.joursImpaye|default(0) }} jours</span>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 mt-4">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Actions</h3>
+            </div>
+            <div class="p-4 space-y-2">
+                <a href="{{ path('credit_litigation', { id: credit.id }) }}" class="block w-full text-center px-4 py-2 border border-red-200 text-red-700 rounded-lg hover:bg-red-50 transition-colors text-sm">Passer en contentieux</a>
+                <a href="{{ path('credit_restructuring', { id: credit.id }) }}" class="block w-full text-center px-4 py-2 border border-orange-200 text-orange-700 rounded-lg hover:bg-orange-50 transition-colors text-sm">Restructurer</a>
+                <a href="{{ path('credit_charge_off', { id: credit.id }) }}" class="block w-full text-center px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors text-sm">Passage en perte</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Actions de recouvrement</h3>
+            </div>
+            <div class="p-4">
+                <form method="post" action="{{ path('credit_recovery', { id: credit.id }) }}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Type d'action</label>
+                            <select name="typeAction" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="APPEL_TELEPHONIQUE">Appel téléphonique</option>
+                                <option value="VISITE_DOMICILE">Visite à domicile</option>
+                                <option value="MISE_DEMEURE">Mise en demeure</option>
+                                <option value="RELANCE_COURRIER">Relance courrier</option>
+                                <option value="RELANCE_SMS">Relance SMS</option>
+                                <option value="CONCILIATION">Conciliation</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Date de l'action</label>
+                            <input type="date" name="dateAction" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value="{{ 'now'|date('Y-m-d') }}">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-on-surface mb-1">Compte-rendu</label>
+                        <textarea name="compteRendu" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"></textarea>
+                    </div>
+                    <div class="flex items-center justify-end gap-3 mt-6">
+                        <a href="{{ path('credit_arrears') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">Retour</a>
+                        <button type="submit" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm">Enregistrer l'action</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if recouvrement.historique|default([]) is not empty %}
+        <div class="bg-white rounded-lg border border-gray-200 mt-4">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Historique des actions</h3>
+            </div>
+            <div class="p-4">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-on-surface-variant border-b border-gray-100">
+                            <th class="pb-2">Date</th>
+                            <th class="pb-2">Action</th>
+                            <th class="pb-2">Agent</th>
+                            <th class="pb-2">Résultat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in recouvrement.historique %}
+                        <tr class="border-b border-gray-50">
+                            <td class="py-2">{{ h.date|default('')|date('d/m/Y') }}</td>
+                            <td class="py-2">{{ h.typeAction|default('') }}</td>
+                            <td class="py-2">{{ h.agent|default('') }}</td>
+                            <td class="py-2">{{ h.resultat|default('') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'auth/auth.html.twig' %}
+
+{% block title %}Sélection d'agence - MicroFin{% endblock %}
+
+{% block auth_content %}
+<div class="MfFormCard" style="max-width:720px;margin:0 auto;padding:20px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.05);background:#fff;">
+  <h2 style="font-family: 'Manrope', sans-serif;margin-bottom:12px;">Sélectionnez votre agence</h2>
+  <form method="post" action="{{ path('select_agency') }}">
+    <div style="display:flex;flex-wrap:wrap;gap:12px;">
+      {% for a in agencies %}
+        <label style="border:1px solid #ddd;border-radius:6px;padding:12px;min-width:180px;cursor:pointer;">
+          <input type="radio" name="agency" value="{{ a.code }}" style="margin-right:8px;" />
+          <strong>{{ a.name }}</strong><br>
+          <small>{{ a.code }} - {{ a.city }}</small>
+        </label>
+      {% endfor %}
+    </div>
+    <button type="submit" class="MfButton" style="margin-top:12px;width:100%;padding:12px;background:#004D61;color:white;border:none;border-radius:4px;">Continuer</button>
+  </form>
+</div>
+{% endblock %}

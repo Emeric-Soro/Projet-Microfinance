@@ -1,0 +1,32 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Reporting Crédit - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfStatsGrid.html.twig' with { stats: [
+        { label: 'Encours Total', value: data.encours|default('—'), icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', icon_bg: 'bg-primary-50', icon_color: 'text-primary' },
+        { label: 'Nouveaux Prêts', value: data.nouveaux|default('—'), icon: 'M12 6v6m0 0v6m0-6h6m-6 0H6', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+        { label: 'Taux d\'Impayé', value: data.taux_impaye|default('—'), icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z', icon_bg: 'bg-red-50', icon_color: 'text-red-600' },
+        { label: 'Décaissements', value: data.decaissements|default('—'), icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+    ] } %}{% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Portefeuille Crédit' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'produit', label: 'Produit' },
+                    { key: 'encours', label: 'Encours' },
+                    { key: 'nombre', label: 'Nombre' },
+                    { key: 'taux_moyen', label: 'Taux Moyen' },
+                    { key: 'impaye', label: 'Impayé' },
+                ],
+                rows: data.portefeuille|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

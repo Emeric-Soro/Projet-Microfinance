@@ -1,0 +1,11 @@
+<div class="{{ class|default('') }}">
+    {% if label is defined %}
+        <div class="flex justify-between mb-1">
+            <span class="text-sm font-medium text-on-surface">{{ label }}</span>
+            <span class="text-sm font-medium text-primary">{{ value|default(0) }}%</span>
+        </div>
+    {% endif %}
+    <div class="mf-progress-bar">
+        <div class="mf-progress-fill" style="width: {{ value|default(0) }}%"></div>
+    </div>
+</div>

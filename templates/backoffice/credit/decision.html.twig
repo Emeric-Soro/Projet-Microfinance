@@ -1,0 +1,28 @@
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Décision'] } %}
+{% include 'partials/_flash.html.twig' %}
+
+<h1>Décision Crédit</h1>
+
+<section class="MfCard">
+    <header>Détails de la décision</header>
+    <form method="post" action="">
+        <div class="MfFormRow">
+            <label>Décision</label>
+            <select class="MfSelect" name="decision">
+                <option>Approuver</option>
+                <option>Rejeter</option>
+                <option>Conditionnelle</option>
+            </select>
+        </div>
+        <div class="MfFormRow">
+            <label>Conditions</label>
+            <input class="MfInput" name="conditions" type="text" />
+        </div>
+        <button class="MfButton" type="submit">Enregistrer</button>
+    </form>
+    </section>
+
+<section class="MfTable">
+    <h2>Référence du comité</h2>
+    <p>{{ committeeReference ?? '' }}</p>
+    </section>

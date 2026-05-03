@@ -1,0 +1,53 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Conformité - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Tableau de bord Conformité</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Alertes et surveillance réglementaire</p>
+</div>
+
+{% if data is defined and data is not empty %}
+    {% embed component('MfStatsGrid') with { cols: 4, stats: [
+        { label: 'Alertes ouvertes', value: data.alertesOuvertes|default(0)|number_format(0, ',', ' '), icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z', icon_bg: 'data.alertesOuvertes|default(0) > 0 ? 'bg-red-50' : 'bg-green-50'', icon_color: 'data.alertesOuvertes|default(0) > 0 ? 'text-red-600' : 'text-green-600'' },
+        { label: 'En investigation', value: data.enInvestigation|default(0)|number_format(0, ',', ' '), icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+        { label: 'SAR soumises', value: data.sarSoumises|default(0)|number_format(0, ',', ' '), icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', icon_bg: 'bg-purple-50', icon_color: 'text-purple-600' },
+        { label: 'Screening du jour', value: data.screeningJour|default(0)|number_format(0, ',', ' '), icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01', icon_bg: 'bg-teal-50', icon_color: 'text-teal-600' },
+    ]} %}
+        {% block card_content %}{{ parent() }}{% endblock %}
+    {% endembed %}
+
+    <div class="mt-6">
+        {% embed component('MfCard') with { title: 'Alertes récentes', action: { url: path('conformite_alerts'), label: 'Voir tout' } } %}
+            {% block card_content %}
+                {% set headers = [
+                    { label: 'Date', key: 'date' },
+                    { label: 'Type', key: 'type' },
+                    { label: 'Client', key: 'client' },
+                    { label: 'Niveau', key: 'niveau' },
+                    { label: 'Statut', key: 'statut' },
+                ] %}
+                {% set rows = data.alertesRecentes|default([]) %}
+                {% include component('MfDataTable') with { headers: headers, rows: rows } %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="mt-6">
+        {% embed component('MfCard') with { title: 'Indicateurs de conformité' } %}
+            {% block card_content %}
+                {% set items = [
+                    { label: 'Clients PEP identifiés', value: data.pepIdentifies|default(0) },
+                    { label: 'Dossiers KYC à jour', value: (data.kycAJour|default(0) ~ '/' ~ data.totalDossiers|default(0)) },
+                    { label: 'Taux de complétion KYC', value: (data.tauxCompletionKyc|default(0)) ~ '%' },
+                    { label: 'Alertes par niveau de risque', value: data.alertesParRisque|default('-') },
+                ] %}
+                {% include component('MfSummaryCard') with { items: items } %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+{% else %}
+    {% include 'partials/_empty_state.html.twig' with { title: 'Chargement...', message: 'Données de conformité en cours de chargement.' } %}
+{% endif %}
+{% endblock %}

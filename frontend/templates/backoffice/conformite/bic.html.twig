@@ -1,0 +1,66 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Bénéficiaires effectifs - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Enregistrer un bénéficiaire effectif' } %}
+        {% block card_content %}
+            <form method="post" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Nom complet</label>
+                        <input type="text" name="bic[nom]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Nationalité</label>
+                        <input type="text" name="bic[nationalite]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Part (%)</label>
+                        <input type="number" name="bic[part]" min="0" max="100" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" placeholder="% de détention">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Date de naissance</label>
+                        <input type="date" name="bic[date_naissance]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Type de personne</label>
+                        <select name="bic[type_personne]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                            <option value="personne_physique">Personne physique</option>
+                            <option value="personne_morale">Personne morale</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Entité liée</label>
+                    <input type="text" name="bic[entite]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Client ou société concernée">
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="mf-btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Registre des bénéficiaires effectifs' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'nom', label: 'Nom' },
+                    { key: 'part', label: 'Part (%)' },
+                    { key: 'type_personne', label: 'Type' },
+                    { key: 'entite', label: 'Entité liée' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: bics.liste|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

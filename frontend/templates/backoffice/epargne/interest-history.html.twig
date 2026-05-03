@@ -1,0 +1,37 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Historique intérêts - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Historique des intérêts</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Consultez l'historique des calculs d'intérêts</p>
+</div>
+
+<div class="bg-white rounded-lg shadow-card border border-teal-100 p-4 mb-6">
+    <form method="get" class="flex items-end gap-4 flex-wrap">
+        {% include component('MfSelect') with { name: 'produit', label: 'Produit', options: products|map(p => { value: p.id, label: p.libelle }) } %}
+        {% include component('MfDatePicker') with { name: 'date_debut', label: 'Date début' } %}
+        {% include component('MfDatePicker') with { name: 'date_fin', label: 'Date fin' } %}
+        <button type="submit" class="mf-btn-primary">Filtrer</button>
+    </form>
+</div>
+
+{% embed component('MfDataTable') with {
+    headers: [
+        { key: 'date', label: 'Date', sortable: true },
+        { key: 'produit', label: 'Produit', sortable: true },
+        { key: 'nombreComptes', label: 'N° Comptes' },
+        { key: 'totalInterets', label: 'Total intérêts', sortable: true },
+        { key: 'tauxApplique', label: 'Taux appliqué' },
+        { key: 'statut', label: 'Statut' },
+    ],
+    rows: history,
+    empty_title: 'Aucun historique',
+    empty_message: 'Aucun calcul d\'intérêts trouvé.',
+} %}
+    {% block card_content %}
+        {{ parent() }}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Notifications système - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Administration', url: path('admin_notifications_systeme') }, { label: 'Notifications' }] %}
+
+{% if mode == 'list' %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Notifications système</h1>
+    <a href="{{ path('admin_notifications_systeme_create') }}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Nouvelle notification</a>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Liste des notifications' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'titre', label: 'Titre' },
+                { key: 'type', label: 'Type' },
+                { key: 'destinataire', label: 'Destinataire' },
+                { key: 'dateCreation', label: 'Création' },
+                { key: 'envoyee', label: 'Envoyée' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% include 'partials/_pagination.html.twig' with { current_page: page, total_pages: pages, total_items: total, route: 'admin_notifications_systeme', query: {} } %}
+
+{% elseif mode == 'create' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Nouvelle notification</h1></div>
+{% embed 'components/MfFormCard.html.twig' with { title: 'Création' } %}
+    {% block form_fields %}
+    <form method="post" action="{{ path('admin_notifications_systeme_create') }}">
+        <div class="grid grid-cols-1 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'titre', label: 'Titre', required: true } %}
+            {% include 'components/MfSelect.html.twig' with { name: 'type', label: 'Type', options: [
+                { value: 'INFO', label: 'Information' }, { value: 'ALERTE', label: 'Alerte' },
+                { value: 'MAINTENANCE', label: 'Maintenance' }, { value: 'URGENT', label: 'Urgent' }
+            ]} %}
+            {% include 'components/MfInput.html.twig' with { name: 'message', label: 'Message' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'destinataire', label: 'Destinataire (optionnel)' } %}
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Créer</button>
+            <a href="{{ path('admin_notifications_systeme') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+        </div>
+    </form>
+    {% endblock %}
+{% endembed %}
+{% endif %}
+{% endblock %}

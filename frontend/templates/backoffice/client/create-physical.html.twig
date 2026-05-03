@@ -1,0 +1,96 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Nouveau client physique - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Clients', url: path('client_list') }, { label: 'Nouveau client physique' }] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Nouveau client physique</h1>
+</div>
+
+<form method="post" action="{{ path('client_create') }}" enctype="multipart/form-data">
+    {% embed 'components/MfCard.html.twig' with { title: 'Identité' } %}
+        {% block card_content %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'nom', label: 'Nom', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'prenom', label: 'Prénom', required: true } %}
+            {% include 'components/MfSelect.html.twig' with { name: 'civilite', label: 'Civilité', options: [
+                { value: 'M', label: 'Monsieur' },
+                { value: 'MME', label: 'Madame' },
+                { value: 'MLLE', label: 'Mademoiselle' },
+            ]} %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'dateNaissance', label: 'Date de naissance', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'lieuNaissance', label: 'Lieu de naissance' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'nationalite', label: 'Nationalité' } %}
+            {% include 'components/MfSelect.html.twig' with { name: 'sexe', label: 'Sexe', options: [
+                { value: 'M', label: 'Masculin' },
+                { value: 'F', label: 'Féminin' },
+            ]} %}
+            {% include 'components/MfInput.html.twig' with { name: 'profession', label: 'Profession' } %}
+        </div>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Coordonnées' } %}
+        {% block card_content %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'telephone', label: 'Téléphone', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'email', label: 'Email' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'adresse', label: 'Adresse' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'ville', label: 'Ville' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'pays', label: 'Pays' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'codePostal', label: 'Code postal' } %}
+        </div>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Pièce d\'identité' } %}
+        {% block card_content %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfSelect.html.twig' with { name: 'typePieceIdentite', label: 'Type de pièce', options: [
+                { value: 'CNI', label: 'Carte nationale d\'identité' },
+                { value: 'PASSEPORT', label: 'Passeport' },
+                { value: 'PERMIS', label: 'Permis de conduire' },
+                { value: 'TITRE_SEJOUR', label: 'Titre de séjour' },
+                { value: 'AUTRE', label: 'Autre' },
+            ]} %}
+            {% include 'components/MfInput.html.twig' with { name: 'numeroPieceIdentite', label: 'Numéro de pièce' } %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'dateDelivrance', label: 'Date de délivrance' } %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'dateExpiration', label: "Date d'expiration" } %}
+        </div>
+        <div class="mt-4">
+            {% include 'components/MfFileUpload.html.twig' with { name: 'rectoPiece', label: 'Recto de la pièce' } %}
+        </div>
+        <div class="mt-4">
+            {% include 'components/MfFileUpload.html.twig' with { name: 'versoPiece', label: 'Verso de la pièce' } %}
+        </div>
+        <div class="mt-4">
+            {% include 'components/MfFileUpload.html.twig' with { name: 'selfie', label: 'Photo / Selfie' } %}
+        </div>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Informations complémentaires' } %}
+        {% block card_content %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'nomJeuneFille', label: 'Nom de jeune fille' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'nombreEnfants', label: "Nombre d'enfants", type: 'number' } %}
+            {% include 'components/MfSelect.html.twig' with { name: 'situationMatrimoniale', label: 'Situation matrimoniale', options: [
+                { value: 'CELIBATAIRE', label: 'Célibataire' },
+                { value: 'MARIE', label: 'Marié(e)' },
+                { value: 'DIVORCE', label: 'Divorcé(e)' },
+                { value: 'VEUF', label: 'Veuf/Veuve' },
+            ]} %}
+            {% include 'components/MfInput.html.twig' with { name: 'personneAContact', label: 'Personne à contacter' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'telephoneContact', label: 'Tél. contact urgence' } %}
+        </div>
+        {% endblock %}
+    {% endembed %}
+
+    <div class="flex items-center justify-end gap-3 mt-6">
+        <a href="{{ path('client_list') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Créer le client</button>
+    </div>
+</form>
+{% endblock %}

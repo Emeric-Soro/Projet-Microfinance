@@ -1,0 +1,21 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/Kernel.php'
+            - '../src/Entity/'
+
+    App\Service\ApiClientService:
+        arguments:
+            $httpClient: '@api.client'
+            $cache: '@cache.app'
+            $logger: '@monolog.logger.api'
+            $requestStack: '@request_stack'
+            $apiBaseUrl: ''
+
+    App\Security\AccessDeniedHandler: ~
+    App\Twig\AppExtension: ~

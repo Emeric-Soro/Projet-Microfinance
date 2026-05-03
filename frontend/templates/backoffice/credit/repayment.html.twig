@@ -1,0 +1,93 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Remboursement - Crédit N°{{ credit.id }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Crédit', url: path('credit_dashboard') }, { label: 'Crédits actifs', url: path('credit_active') }, { label: 'N°' ~ credit.id ~ ' - Remboursement' }] %}
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Remboursement - Crédit N°{{ credit.id }}</h1>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Récapitulatif</h3>
+            </div>
+            <div class="p-4 space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Client</span>
+                    <span class="font-medium">{{ credit.clientNom|default('') }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Encours</span>
+                    <span class="font-semibold text-teal-600">{{ credit.encours|default(0)|number_format(0, ',', ' ') }} FCFA</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Prochaine échéance</span>
+                    <span class="font-medium">{{ credit.prochaineEcheance|default('')|date('d/m/Y') }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Montant échéance</span>
+                    <span class="font-medium">{{ credit.montantEcheance|default(0)|number_format(0, ',', ' ') }} FCFA</span>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 mt-4">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Actions</h3>
+            </div>
+            <div class="p-4 space-y-2">
+                <a href="{{ path('credit_prepayment', { id: credit.id }) }}" class="block w-full text-center px-4 py-2 border border-teal-200 text-teal-700 rounded-lg hover:bg-teal-50 transition-colors text-sm">Remb. anticipé</a>
+                <a href="{{ path('credit_postponement', { id: credit.id }) }}" class="block w-full text-center px-4 py-2 border border-yellow-200 text-yellow-700 rounded-lg hover:bg-yellow-50 transition-colors text-sm">Report d'échéance</a>
+                <a href="{{ path('credit_restructuring', { id: credit.id }) }}" class="block w-full text-center px-4 py-2 border border-orange-200 text-orange-700 rounded-lg hover:bg-orange-50 transition-colors text-sm">Restructuration</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Saisie du remboursement</h3>
+            </div>
+            <div class="p-4">
+                <form method="post" action="{{ path('credit_repayment', { id: credit.id }) }}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Date de paiement</label>
+                            <input type="date" name="datePaiement" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value="{{ 'now'|date('Y-m-d') }}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Montant payé (FCFA)</label>
+                            <input type="number" name="montant" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" min="0" step="100" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Mode de paiement</label>
+                            <select name="modePaiement" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="ESPECES">Espèces</option>
+                                <option value="VIREMENT">Virement</option>
+                                <option value="MOBILE_MONEY">Mobile Money</option>
+                                <option value="CHEQUE">Chèque</option>
+                                <option value="PRELEVEMENT">Prélèvement automatique</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Référence</label>
+                            <input type="text" name="reference" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-on-surface mb-1">Commentaires</label>
+                        <textarea name="commentaires" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"></textarea>
+                    </div>
+                    <div class="flex items-center justify-end gap-3 mt-6">
+                        <a href="{{ path('credit_detail', { id: credit.id }) }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">Annuler</a>
+                        <button type="submit" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm">Enregistrer le paiement</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}ALM - Gestion Actif-Passif - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfStatsGrid.html.twig' with { stats: [
+        { label: 'Total Actifs', value: data.total_actifs|default('—'), icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+        { label: 'Total Passifs', value: data.total_passifs|default('—'), icon: 'M13 17h8m0 0V9m0 8l-8-8-4 4-6-6', icon_bg: 'bg-red-50', icon_color: 'text-red-600' },
+        { label: 'Gap Actif-Passif', value: data.gap|default('—'), icon: 'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+        { label: 'Duration', value: data.duration|default('—'), icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-yellow-50', icon_color: 'text-yellow-600' },
+    ] } %}{% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Analyse des Échéances' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'tranche', label: 'Tranche' },
+                    { key: 'actifs', label: 'Actifs' },
+                    { key: 'passifs', label: 'Passifs' },
+                    { key: 'gap', label: 'Gap' },
+                    { key: 'gap_cumule', label: 'Gap Cumulé' },
+                ],
+                rows: data.echeances|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

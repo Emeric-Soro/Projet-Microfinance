@@ -1,0 +1,52 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Validations forcées - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Nouvelle validation forcée' } %}
+        {% block card_content %}
+            <form method="post" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Type d'opération</label>
+                    <select name="forced[type]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                        <option value="credit">Décaissement Crédit</option>
+                        <option value="transfert">Transfert</option>
+                        <option value="commissions">Dépassement Commissions</option>
+                        <option value="autre">Autre</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Montant</label>
+                    <input type="text" name="forced[montant]" placeholder="0 CFA" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Motif de la validation forcée <span class="text-red-500">*</span></label>
+                    <textarea name="forced[motif]" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required placeholder="Justification requise..."></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="mf-btn-primary">Valider forcément</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Historique des validations forcées' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'date', label: 'Date' },
+                    { key: 'type', label: 'Type' },
+                    { key: 'montant', label: 'Montant' },
+                    { key: 'auteur', label: 'Auteur' },
+                    { key: 'motif', label: 'Motif' },
+                ],
+                rows: forced.historique|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

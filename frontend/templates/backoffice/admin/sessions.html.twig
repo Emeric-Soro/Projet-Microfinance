@@ -1,0 +1,27 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Sessions - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Administration', url: path('admin_sessions') }, { label: 'Sessions' }] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Sessions actives</h1>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Liste des sessions' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'utilisateur', label: 'Utilisateur' },
+                { key: 'ip', label: 'Adresse IP' },
+                { key: 'debut', label: 'Début' },
+                { key: 'derniereActivite', label: 'Dernière activité' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% include 'partials/_pagination.html.twig' with { current_page: page, total_pages: pages, total_items: total, route: 'admin_sessions', query: {} } %}
+{% endblock %}

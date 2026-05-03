@@ -1,0 +1,15 @@
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Restructuration'] } %}
+{% include 'partials/_flash.html.twig' %}
+
+<h1>Restructuration</h1>
+
+<section class="MfCard">
+    <header>Nouvelles conditions</header>
+    <form method="post" action="">
+        <div class="MfFormRow">
+            <label>Nouveaux termes</label>
+            <input class="MfInput" name="terms" type="text" />
+        </div>
+        <button class="MfButton" type="submit">Enregistrer</button>
+    </form>
+    </section>

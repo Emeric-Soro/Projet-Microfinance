@@ -1,0 +1,67 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Tableau de bord Organisation - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfStatsGrid.html.twig' with { stats: [
+        { label: 'Régions', value: stats.nbRegions|default('—'), icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-primary-50', icon_color: 'text-primary' },
+        { label: 'Agences Actives', value: stats.nbAgencesActives|default('—'), icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+        { label: 'Guichets', value: stats.nbGuichets|default('—'), icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+        { label: 'Personnel Total', value: stats.nbPersonnel|default('—'), icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z', icon_bg: 'bg-teal-50', icon_color: 'text-teal-600' },
+    ] } %}{% endembed %}
+
+    {% if stats.dernieresMutations is defined and stats.dernieresMutations is not empty %}
+        {% embed 'components/MfCard.html.twig' with { title: 'Dernières Mutations' } %}
+            {% block card_content %}
+                {% embed 'components/MfDataTable.html.twig' with {
+                    headers: [
+                        { key: 'date', label: 'Date' },
+                        { key: 'employe', label: 'Employé' },
+                        { key: 'agence_source', label: 'Source' },
+                        { key: 'agence_dest', label: 'Destination' },
+                    ],
+                    rows: stats.dernieresMutations,
+                    actions: false,
+                } %}{% endembed %}
+            {% endblock %}
+        {% endembed %}
+    {% endif %}
+
+    {% if stats.inventairesRecents is defined and stats.inventairesRecents is not empty %}
+        {% embed 'components/MfCard.html.twig' with { title: 'Inventaires Récents' } %}
+            {% block card_content %}
+                {% embed 'components/MfDataTable.html.twig' with {
+                    headers: [
+                        { key: 'date', label: 'Date' },
+                        { key: 'agence', label: 'Agence' },
+                        { key: 'type', label: 'Type' },
+                        { key: 'statut', label: 'Statut' },
+                    ],
+                    rows: stats.inventairesRecents,
+                    actions: false,
+                } %}{% endembed %}
+            {% endblock %}
+        {% endembed %}
+    {% endif %}
+
+    {% if stats.agences is defined and stats.agences is not empty %}
+        {% embed 'components/MfCard.html.twig' with { title: 'Agences par Région' } %}
+            {% block card_content %}
+                {% embed 'components/MfDataTable.html.twig' with {
+                    headers: [
+                        { key: 'region', label: 'Région' },
+                        { key: 'nbAgences', label: 'Agences' },
+                        { key: 'nbGuichets', label: 'Guichets' },
+                        { key: 'nbPersonnel', label: 'Personnel' },
+                    ],
+                    rows: stats.agences,
+                    actions: false,
+                } %}{% endembed %}
+            {% endblock %}
+        {% endembed %}
+    {% endif %}
+</div>
+{% endblock %}

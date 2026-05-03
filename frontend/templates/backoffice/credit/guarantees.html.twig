@@ -1,0 +1,84 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Garanties - Demande N°{{ demande.id }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Crédit', url: path('credit_dashboard') }, { label: 'Demandes', url: path('credit_requests') }, { label: 'N°' ~ demande.id ~ ' - Garanties' }] %}
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Garanties - Demande N°{{ demande.id }}</h1>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Garanties constituées</h3>
+            </div>
+            <div class="p-4">
+                {% if garanties is not empty %}
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-on-surface-variant border-b border-gray-100">
+                                <th class="pb-2">Type</th>
+                                <th class="pb-2">Description</th>
+                                <th class="pb-2">Valeur estimée</th>
+                                <th class="pb-2">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for g in garanties %}
+                                <tr class="border-b border-gray-50">
+                                    <td class="py-2">{{ g.type|default('') }}</td>
+                                    <td class="py-2">{{ g.description|default('') }}</td>
+                                    <td class="py-2">{{ g.valeurEstimee|default(0)|number_format(0, ',', ' ') }} FCFA</td>
+                                    <td class="py-2">
+                                        <span class="inline-block px-2 py-0.5 text-xs rounded-full {{ g.statut == 'VALIDEE' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
+                                            {{ g.statut|default('EN_ATTENTE')|replace({'_': ' '}) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="text-sm text-on-surface-variant text-center py-4">Aucune garantie constituée.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Ajouter une garantie</h3>
+            </div>
+            <div class="p-4">
+                <form method="post" action="{{ path('credit_guarantees', { id: demande.id }) }}">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Type de garantie</label>
+                            <select name="type" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="IMMOBILIERE">Immobilière</option>
+                                <option value="MOBILIERE">Mobilière</option>
+                                <option value="CAUTION">Caution solidaire</option>
+                                <option value="NANTISSEMENT">Nantissement</option>
+                                <option value="GAGE">Gage</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Description</label>
+                            <textarea name="description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Valeur estimée (FCFA)</label>
+                            <input type="number" name="valeurEstimee" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" min="0" step="1000">
+                        </div>
+                        <button type="submit" class="w-full px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm">Ajouter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

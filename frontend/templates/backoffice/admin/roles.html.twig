@@ -1,0 +1,63 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Rôles - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Administration', url: path('admin_roles') }, { label: 'Rôles' }] %}
+
+{% if mode == 'list' %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Rôles</h1>
+    <a href="{{ path('admin_roles_create') }}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Nouveau rôle</a>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Liste des rôles' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'nom', label: 'Nom' },
+                { key: 'description', label: 'Description' },
+                { key: 'utilisateurs', label: 'Utilisateurs' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% include 'partials/_pagination.html.twig' with { current_page: page, total_pages: pages, total_items: total, route: 'admin_roles', query: {} } %}
+
+{% elseif mode == 'create' or mode == 'edit' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">{{ mode == 'create' ? 'Nouveau rôle' : 'Modifier rôle' }}</h1></div>
+{% embed 'components/MfFormCard.html.twig' with { title: mode == 'create' ? 'Création' : 'Édition' } %}
+    {% block form_fields %}
+    <form method="post" action="{{ path(mode == 'create' ? 'admin_roles_create' : 'admin_roles_edit', { id: item.id ?? 0 }) }}">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'nom', label: 'Nom', value: item.nom ?? '', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'description', label: 'Description', value: item.description ?? '' } %}
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Enregistrer</button>
+            <a href="{{ path('admin_roles') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+        </div>
+    </form>
+    {% endblock %}
+{% endembed %}
+
+{% elseif mode == 'permissions' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Permissions - {{ item.nom ?? '' }}</h1></div>
+{% embed 'components/MfCard.html.twig' with { title: 'Permissions du rôle' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'ressource', label: 'Ressource' },
+                { key: 'action', label: 'Action' },
+                { key: 'autorise', label: 'Autorisé' },
+            ],
+            rows: permissions,
+            actions: false,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+<div class="mt-4"><a href="{{ path('admin_roles') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Retour</a></div>
+{% endif %}
+{% endblock %}

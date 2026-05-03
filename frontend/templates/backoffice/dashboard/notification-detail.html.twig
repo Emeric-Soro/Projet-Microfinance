@@ -1,0 +1,60 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Notification - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Détail de la notification</h1>
+</div>
+
+{% if notification is defined and notification is not empty %}
+    <div class="bg-white rounded-lg shadow-card border border-teal-100 p-6 max-w-2xl">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+                <h2 class="text-lg font-heading font-semibold text-on-surface">{{ notification.titre }}</h2>
+                {% include component('MfStatusBadge') with { status: notification.type|default('INFO') } %}
+            </div>
+            {% if notification.lue is not defined or not notification.lue %}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Nouvelle</span>
+            {% endif %}
+        </div>
+
+        <div class="text-sm text-on-surface-variant mb-6">
+            <p>{{ notification.date|date_fr }}</p>
+            {% if notification.emetteur is defined %}
+                <p>De : {{ notification.emetteur }}</p>
+            {% endif %}
+        </div>
+
+        <div class="prose prose-sm max-w-none text-on-surface mb-6">
+            {{ notification.message|nl2br }}
+        </div>
+
+        {% if notification.details is defined and notification.details is not empty %}
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <h4 class="text-sm font-semibold text-on-surface mb-2">Informations complémentaires</h4>
+                <dl class="divide-y divide-gray-200">
+                    {% for key, value in notification.details %}
+                        <div class="flex justify-between py-2">
+                            <dt class="text-sm text-on-surface-variant">{{ key }}</dt>
+                            <dd class="text-sm font-medium text-on-surface">{{ value }}</dd>
+                        </div>
+                    {% endfor %}
+                </dl>
+            </div>
+        {% endif %}
+
+        {% if notification.action_url is defined %}
+            <a href="{{ notification.action_url }}" class="mf-btn-primary">
+                {{ notification.action_label|default('Voir') }}
+            </a>
+        {% endif %}
+
+        <a href="{{ path('notifications_list') }}" class="mf-btn-secondary ml-2">
+            Retour aux notifications
+        </a>
+    </div>
+{% else %}
+    {% include 'partials/_empty_state.html.twig' with { title: 'Notification introuvable', message: 'La notification demandée n\'existe pas.' } %}
+{% endif %}
+{% endblock %}

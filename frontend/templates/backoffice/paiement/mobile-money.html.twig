@@ -1,0 +1,84 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Mobile Money{% endblock %}
+{% block current_menu %}paiements_mobile_money{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+{% embed 'components/MfStatsGrid.html.twig' with {stats: [
+    {label: 'Transactions jour', value: stats.transactionsJour|default(0), icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600'},
+    {label: 'Volume jour', value: (stats.volumeJour|default(0))|number_format(0, ',', ' ') ~ ' FCFA', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1', icon_bg: 'bg-green-50', icon_color: 'text-green-600'},
+    {label: 'Taux succès', value: stats.tauxSucces|default(0) ~ '%', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-teal-50', icon_color: 'text-teal-600'},
+    {label: 'Opérateurs', value: stats.operateurs|default(0), icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', icon_bg: 'bg-primary-50', icon_color: 'text-primary'},
+]} %}{% endembed %}
+
+{% embed 'components/MfCard.html.twig' with {title: 'Transactions Mobile Money'} %}
+    {% block card_content %}
+        {% include 'partials/_table_toolbar.html.twig' with {
+            search_placeholder: 'Rechercher une transaction...',
+            filters: [
+                {label: 'Opérateur', options: [
+                    {value: 'ORANGE', label: 'Orange Money'},
+                    {value: 'MTN', label: 'MTN Mobile Money'},
+                    {value: 'MOOV', label: 'Moov Money'},
+                    {value: 'WAVE', label: 'Wave'},
+                ]},
+                {label: 'Statut', options: [
+                    {value: 'SUCCES', label: 'Succès'},
+                    {value: 'ECHEC', label: 'Échec'},
+                    {value: 'EN_COURS', label: 'En cours'},
+                ]}
+            ],
+            action_button: {url: path('paiements_mobile_money_history'), label: 'Historique'}
+        } %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                {key: 'id', label: 'N°'},
+                {key: 'date', label: 'Date'},
+                {key: 'operateur', label: 'Opérateur'},
+                {key: 'telephone', label: 'Téléphone'},
+                {key: 'type', label: 'Type'},
+                {key: 'montant', label: 'Montant'},
+                {key: 'reference', label: 'Référence'},
+                {key: 'statut', label: 'Statut'},
+            ],
+            rows: transactions
+        } %}
+            {% block card_content %}
+                {% for tx in transactions %}
+                    <tr>
+                        <td>{{ tx.id }}</td>
+                        <td>{{ tx.date|date('d/m/Y H:i') }}</td>
+                        <td>
+                            <span class="inline-flex items-center gap-1">
+                                {% if tx.operateur == 'ORANGE' %}
+                                    <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                                {% elseif tx.operateur == 'MTN' %}
+                                    <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                                {% elseif tx.operateur == 'WAVE' %}
+                                    <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+                                {% else %}
+                                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                {% endif %}
+                                {{ tx.operateur }}
+                            </span>
+                        </td>
+                        <td>{{ tx.telephone }}</td>
+                        <td>{{ tx.type }}</td>
+                        <td class="font-medium">{{ tx.montant|number_format(0, ',', ' ') }} FCFA</td>
+                        <td class="font-mono text-xs">{{ tx.reference }}</td>
+                        <td>{% include 'components/MfStatusBadge.html.twig' with {status: tx.statut} %}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-8">
+                            {% include 'partials/_empty_state.html.twig' with {title: 'Aucune transaction', message: 'Aucune transaction Mobile Money trouvée.'} %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

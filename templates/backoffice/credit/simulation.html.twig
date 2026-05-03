@@ -1,0 +1,49 @@
+{# Simulation de crédit - formulaire + résultats #}
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Simulation']} %}
+{% include 'partials/_flash.html.twig' %}
+
+<h1>Simulation de crédit</h1>
+
+<section class="MfCard MfFormCard">
+    <header>Calculateur</header>
+    <form method="post" action="">
+        <div class="MfFormRow">
+            <label>Montant (en €)</label>
+            <input class="MfMoneyInput" name="amount" type="text" placeholder="0,00" />
+        </div>
+        <div class="MfFormRow">
+            <label>Durée (mois)</label>
+            <input class="MfInput" name="duration" type="number" min="1" />
+        </div>
+        <div class="MfFormRow">
+            <label>Taux (%)</label>
+            <input class="MfInput" name="rate" type="number" step="0.01" />
+        </div>
+        <button class="MfButton" type="submit">Calculer</button>
+    </form>
+    </section>
+
+<section class="MfCard">
+    <header>Résultats</header>
+    {% if simulation is defined %}
+        <p>Mensualité: {{ simulation.monthly ?? 0 }} €</p>
+        <p>Coût total: {{ simulation.total_cost ?? 0 }} €</p>
+        <div class="MfTable">
+            <table class="MfDataTable__Table">
+                <thead><tr><th>Période</th><th>Intérêt</th><th>Principal</th><th>Solde</th></tr></thead>
+                <tbody>
+                {% for row in simulation.amortization or [] %}
+                    <tr>
+                        <td>{{ row.period }}</td>
+                        <td>{{ row.interest }}</td>
+                        <td>{{ row.principal }}</td>
+                        <td>{{ row.balance }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>Aucune simulation effectuée pour le moment.</p>
+    {% endif %}
+    </section>

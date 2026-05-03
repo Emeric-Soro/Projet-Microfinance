@@ -1,0 +1,57 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Comptabilité - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Tableau de bord Comptable</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Balance, journaux et opérations en attente</p>
+</div>
+
+{% if data is defined and data is not empty %}
+    {% embed component('MfStatsGrid') with { cols: 4, stats: [
+        { label: 'Balance générale', value: data.soldeBalance|default(0)|montant, icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+        { label: 'Opérations du jour', value: data.operationsJour|default(0)|number_format(0, ',', ' '), icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', icon_bg: 'bg-teal-50', icon_color: 'text-teal-600' },
+        { label: 'En attente de validation', value: data.enAttente|default(0)|number_format(0, ',', ' '), icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'data.enAttente|default(0) > 0 ? 'bg-yellow-50' : 'bg-green-50'', icon_color: 'data.enAttente|default(0) > 0 ? 'text-yellow-600' : 'text-green-600'' },
+        { label: 'Journaux ouverts', value: data.journauxOuverts|default(0)|number_format(0, ',', ' '), icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', icon_bg: 'bg-purple-50', icon_color: 'text-purple-600' },
+    ]} %}
+        {% block card_content %}{{ parent() }}{% endblock %}
+    {% endembed %}
+
+    {% if data.enAttente|default(0) > 0 %}
+        <div class="mt-4">
+            {% include component('MfAlertBanner') with { type: 'warning', message: 'Écritures en attente de validation comptable', details: data.enAttente ~ ' écriture(s) à valider' } %}
+        </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {% embed component('MfCard') with { title: 'Dernières écritures' } %}
+            {% block card_content %}
+                {% set headers = [
+                    { label: 'Date', key: 'date' },
+                    { label: 'Journal', key: 'journal' },
+                    { label: 'Libellé', key: 'libelle' },
+                    { label: 'Montant', key: 'montant' },
+                    { label: 'Statut', key: 'statut' },
+                ] %}
+                {% set rows = data.dernieresEcritures|default([]) %}
+                {% include component('MfDataTable') with { headers: headers, rows: rows } %}
+            {% endblock %}
+        {% endembed %}
+
+        {% embed component('MfCard') with { title: 'Soldes des comptes principaux' } %}
+            {% block card_content %}
+                {% set items = [
+                    { label: 'Caisse', value: data.soldeCaisse|default(0)|montant },
+                    { label: 'Banque', value: data.soldeBanque|default(0)|montant },
+                    { label: 'Créances clients', value: data.creancesClients|default(0)|montant },
+                    { label: 'Dettes fournisseurs', value: data.dettesFournisseurs|default(0)|montant },
+                ] %}
+                {% include component('MfSummaryCard') with { items: items } %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+{% else %}
+    {% include 'partials/_empty_state.html.twig' with { title: 'Chargement...', message: 'Données comptables en cours de chargement.' } %}
+{% endif %}
+{% endblock %}

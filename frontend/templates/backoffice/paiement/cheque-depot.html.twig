@@ -1,0 +1,83 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Dépôt de chèque{% endblock %}
+{% block current_menu %}paiements_cheques{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+{% embed 'components/MfStatsGrid.html.twig' with {stats: [
+    {label: 'Total dépôts', value: stats.totalDepots|default(0), icon: 'M12 4v16m8-8H4', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600'},
+    {label: 'En attente', value: stats.enAttente|default(0), icon: 'M12 9v2m0 4h.01', icon_bg: 'bg-yellow-50', icon_color: 'text-yellow-600'},
+    {label: 'Compensés', value: stats.compenses|default(0), icon: 'M9 12l2 2 4-4', icon_bg: 'bg-green-50', icon_color: 'text-green-600'},
+    {label: 'Rejetés', value: stats.rejetes|default(0), icon: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2', icon_bg: 'bg-red-50', icon_color: 'text-red-600'},
+]} %}{% endembed %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+    <div class="lg:col-span-2">
+        {% embed 'components/MfCard.html.twig' with {title: 'Dépôt de chèque'} %}
+            {% block card_content %}
+                <form method="post" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Numéro de chèque</label>
+                        <input type="text" name="numeroCheque" required class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:border-primary focus:ring-1 focus:ring-primary-200">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Compte débiteur</label>
+                        <select name="compteId" required class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:border-primary focus:ring-1 focus:ring-primary-200">
+                            <option value="">Sélectionner un compte</option>
+                            {% for compte in comptes %}
+                                <option value="{{ compte.id }}">{{ compte.numeroCompte }} - {{ compte.libelle }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Montant (FCFA)</label>
+                        <input type="number" name="montant" required step="0.01" min="0" class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:border-primary focus:ring-1 focus:ring-primary-200">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Tireur</label>
+                        <input type="text" name="tireur" required class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:border-primary focus:ring-1 focus:ring-primary-200">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Banque tirée</label>
+                        <input type="text" name="banqueTiree" required class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:border-primary focus:ring-1 focus:ring-primary-200">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Date de valeur</label>
+                        <input type="date" name="dateValeur" required class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:border-primary focus:ring-1 focus:ring-primary-200">
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <button type="submit" class="mf-btn-primary">Enregistrer le dépôt</button>
+                    </div>
+                </form>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div>
+        {% embed 'components/MfCard.html.twig' with {title: 'Derniers dépôts'} %}
+            {% block card_content %}
+                {% if depotsRecents is defined and depotsRecents is not empty %}
+                    <div class="space-y-3">
+                        {% for depot in depotsRecents[:5] %}
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                                <div>
+                                    <p class="text-sm font-medium text-on-surface">#{{ depot.numeroCheque }}</p>
+                                    <p class="text-xs text-on-surface-variant">{{ depot.dateDepot|date('d/m/Y') }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-semibold text-on-surface">{{ depot.montant|number_format(0, ',', ' ') }} FCFA</p>
+                                    {% include 'components/MfStatusBadge.html.twig' with {status: depot.statut} %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {% include 'partials/_empty_state.html.twig' with {title: 'Aucun dépôt', message: 'Aucun dépôt de chèque effectué récemment.'} %}
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

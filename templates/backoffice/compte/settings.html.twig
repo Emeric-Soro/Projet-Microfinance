@@ -1,0 +1,26 @@
+{% extends 'backoffice.html.twig' %}
+{% block title %}Paramètres du compte - {{ num }}{% endblock %}
+{% block content %}
+  {% include 'partials/_breadcrumb.html.twig' with {'items': ['Accueil','Comptes','Paramètres'] } %}
+  {% include 'partials/_flash.html.twig' %}
+  <div class="MfCard">
+    <div class="MfFormCard">
+      <h3>Alerts & Instructions</h3>
+      <form method="post">
+        <div class="field">
+          <label>Alertes</label>
+          <select name="alerts" class="mf-select">
+            <option value="none">Aucune</option>
+            <option value="email">Email</option>
+            <option value="sms">SMS</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Instructions permanentes</label>
+          <textarea name="standing_instructions" class="mf-input"></textarea>
+        </div>
+        <button class="MfButton" type="submit">Sauvegarder</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

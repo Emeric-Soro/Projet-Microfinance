@@ -1,0 +1,53 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Certificats épargne - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Certificats d'épargne</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Génération de certificats de compte</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-card border border-teal-100 p-6">
+            <form method="get" class="space-y-4">
+                {% include component('MfSelect') with { name: 'compte', label: 'Compte épargne', required: true, options: accounts|map(a => { value: a.id, label: a.numero ~ ' - ' ~ a.client_nom }) } %}
+                <button type="submit" class="mf-btn-primary w-full">Générer le certificat</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="lg:col-span-2">
+        {% if certificate is defined and certificate is not empty %}
+            {% embed component('MfCard') with { title: 'Certificat de compte' } %}
+                {% block card_content %}
+                    <div class="text-center mb-6 pb-6 border-b border-gray-100">
+                        <div class="w-14 h-14 bg-primary rounded-full flex items-center justify-center mx-auto mb-3">
+                            <span class="text-white font-heading font-bold text-lg">MF</span>
+                        </div>
+                        <h2 class="text-xl font-heading font-bold text-on-surface">MicroFin</h2>
+                        <p class="text-sm text-on-surface-variant">Certificat d'épargne</p>
+                    </div>
+                    <dl class="divide-y divide-gray-100">
+                        {% include component('MfDetailRow') with { label: 'N° Certificat', value: certificate.numero } %}
+                        {% include component('MfDetailRow') with { label: 'Compte', value: certificate.compte } %}
+                        {% include component('MfDetailRow') with { label: 'Client', value: certificate.client } %}
+                        {% include component('MfDetailRow') with { label: 'Solde au', value: certificate.dateArrete|date_fr } %}
+                        {% include component('MfDetailRow') with { label: 'Solde', value: certificate.solde|montant } %}
+                        {% include component('MfDetailRow') with { label: 'Produit', value: certificate.produit } %}
+                    </dl>
+                    <div class="mt-6 pt-6 border-t border-gray-100 flex justify-center gap-3">
+                        <button onclick="window.print()" class="mf-btn-primary">Imprimer</button>
+                    </div>
+                {% endblock %}
+            {% endembed %}
+        {% else %}
+            {% include 'partials/_empty_state.html.twig' with {
+                title: 'Sélectionnez un compte',
+                message: 'Choisissez un compte pour générer son certificat.',
+            } %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

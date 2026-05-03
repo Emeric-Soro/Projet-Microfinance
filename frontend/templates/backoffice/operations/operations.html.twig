@@ -1,0 +1,68 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Historique des opérations - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Historique des opérations</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Consultez l'ensemble des opérations effectuées</p>
+</div>
+
+{% include 'partials/_table_toolbar.html.twig' with {
+    search_placeholder: 'Rechercher une opération...',
+    filters: [
+        { label: 'Type', options: [
+            { value: 'DEPOT', label: 'Dépôt' },
+            { value: 'RETRAIT', label: 'Retrait' },
+            { value: 'VIREMENT', label: 'Virement' },
+            { value: 'DEPLACEE', label: 'Déplacée' },
+        ]},
+        { label: 'Statut', options: [
+            { value: 'EXECUTEE', label: 'Exécutée' },
+            { value: 'EN_ATTENTE', label: 'En attente' },
+            { value: 'ANNULEE', label: 'Annulée' },
+            { value: 'REJETEE', label: 'Rejetée' },
+        ]},
+    ],
+    export_actions: true,
+} %}
+
+{% embed component('MfCard') with { title: 'Opérations', class: 'mt-4' } %}
+    {% block card_content %}
+        {% embed component('MfDataTable') with {
+            headers: [
+                { key: 'reference', label: 'Référence', sortable: true },
+                { key: 'type', label: 'Type', sortable: true },
+                { key: 'compte', label: 'Compte', sortable: true },
+                { key: 'client', label: 'Client', sortable: true },
+                { key: 'montant', label: 'Montant', sortable: true },
+                { key: 'date', label: 'Date', sortable: true },
+                { key: 'statut', label: 'Statut', sortable: true },
+                { key: 'guichet', label: 'Guichet', sortable: true },
+            ],
+            rows: transactions,
+            actions: [
+                { label: 'Détail', url: (row) => path('operation_detail', { ref: row.reference }), icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
+                { label: 'Reçu', url: (row) => path('operation_receipt', { ref: row.reference }), icon: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z' },
+            ],
+            row_class: (row) => row.statut == 'ANNULEE' ? 'opacity-60' : '',
+            selectable: true,
+            empty_title: 'Aucune opération',
+            empty_message: 'Aucune opération trouvée pour les critères sélectionnés.',
+        } %}
+            {% block card_content %}
+                {{ parent() }}
+            {% endblock %}
+        {% endembed %}
+    {% endblock %}
+{% endembed %}
+
+{% include 'partials/_pagination.html.twig' with {
+    route: 'operation_history',
+    query: app.request.query.all,
+    total_pages: total_pages,
+    current_page: current_page,
+    total_items: total_items,
+    page_size: page_size,
+} %}
+{% endblock %}

@@ -39,7 +39,7 @@ public class RoleUtilisateur extends BaseAuditEntity {
 	// Utilisateurs possedant ce role.
 	private Set<Utilisateur> utilisateurs = new HashSet<>();
 
-	@ManyToMany
+	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(
 			name = "role_permission_securite",
 			joinColumns = @JoinColumn(name = "id_role"),

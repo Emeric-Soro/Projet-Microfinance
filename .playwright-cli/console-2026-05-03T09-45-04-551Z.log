@@ -1,0 +1,9 @@
+[   78322ms] [WARNING] You are loading Turbo from a <script> element inside the <body> element. This is probably not what you meant to do!
+
+Load your application’s JavaScript bundle inside the <head> element instead. <script> elements in <body> are evaluated with each page change.
+
+For more information, see: https://turbo.hotwired.dev/handbook/building#working-with-script-elements
+
+——
+Suppress this warning by adding a "data-turbo-suppress-warning" attribute to: %s
+ <script src="/build/app.e358b5f8.js" defer=""></script> @ http://127.0.0.1:8000/build/938.85de0137.js:15

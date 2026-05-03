@@ -1,0 +1,80 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Paie - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Support RH', url: path('support_paie') }, { label: 'Paie' }] %}
+
+{% if mode == 'list' %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Paie</h1>
+    <a href="{{ path('support_paie_process') }}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Traiter la paie</a>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Liste des paies' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'periode', label: 'Période' },
+                { key: 'employe', label: 'Employé' },
+                { key: 'salaireBrut', label: 'Salaire brut' },
+                { key: 'salaireNet', label: 'Salaire net' },
+                { key: 'statut', label: 'Statut' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% include 'partials/_pagination.html.twig' with { current_page: page, total_pages: pages, total_items: total, route: 'support_paie', query: {} } %}
+
+{% elseif mode == 'process' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Traiter la paie</h1></div>
+{% embed 'components/MfFormCard.html.twig' with { title: 'Traitement' } %}
+    {% block form_fields %}
+    <form method="post" action="{{ path('support_paie_process') }}">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfDatePicker.html.twig' with { name: 'periodeDebut', label: 'Période début', required: true } %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'periodeFin', label: 'Période fin', required: true } %}
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Lancer le traitement</button>
+            <a href="{{ path('support_paie') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+        </div>
+    </form>
+    {% endblock %}
+{% endembed %}
+
+{% elseif mode == 'show' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Fiche de paie</h1></div>
+{% embed 'components/MfCard.html.twig' with { title: 'Détails' } %}
+    {% block card_content %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><strong>Employé:</strong> {{ item.employe ?? '—' }}</div>
+        <div><strong>Période:</strong> {{ item.periode ?? '—' }}</div>
+        <div><strong>Salaire brut:</strong> {{ item.salaireBrut ?? '—' }}</div>
+        <div><strong>Salaire net:</strong> {{ item.salaireNet ?? '—' }}</div>
+        <div><strong>Statut:</strong> {% include 'components/MfStatusBadge.html.twig' with { status: item.statut ?? 'EN_ATTENTE' } %}</div>
+    </div>
+    <div class="mt-6"><a href="{{ path('support_paie') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Retour</a></div>
+    {% endblock %}
+{% endembed %}
+
+{% elseif mode == 'bulletins' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Bulletins de paie</h1></div>
+{% embed 'components/MfCard.html.twig' with { title: 'Bulletins' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'employe', label: 'Employé' },
+                { key: 'periode', label: 'Période' },
+                { key: 'salaireNet', label: 'Net à payer' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% endif %}
+{% endblock %}

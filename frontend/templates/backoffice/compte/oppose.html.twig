@@ -1,0 +1,66 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block backoffice_content %}
+<div class="max-w-2xl mx-auto">
+    <div>
+        <h2 class="text-xl font-heading font-semibold text-on-surface">Opposition sur le compte</h2>
+        <p class="text-sm text-on-surface-variant mt-1">Compte {{ compte.numero }} — {{ compte.client_nom|default('') }}</p>
+    </div>
+
+    <div class="mt-6 bg-white rounded-lg shadow-card border border-teal-100 p-6">
+        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div class="flex items-start gap-3">
+                <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                <div>
+                    <p class="text-sm font-medium text-red-800">Opposition légale</p>
+                    <p class="text-sm text-red-600 mt-1">Cette action est généralement effectuée suite à une réquisition judiciaire ou une demande légale.</p>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" action="{{ path('account_oppose', { num: compte.numero }) }}">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Type d'opposition</label>
+                    <select name="type_opposition" class="w-full border border-gray-200 rounded px-3 py-2 text-sm bg-white focus:border-primary focus:ring-1 focus:ring-primary-200" required>
+                        <option value="">Sélectionner un type</option>
+                        <option value="JUDICIAIRE">Judiciaire</option>
+                        <option value="ADMINISTRATIVE">Administrative</option>
+                        <option value="FISCALE">Fiscale</option>
+                        <option value="SAISIE">Saisie</option>
+                        <option value="AUTRE">Autre</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Référence légale</label>
+                    <input type="text" name="reference_juridique" class="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary-200" placeholder="N° de jugement, décision, etc." required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Autorité émettrice</label>
+                    <input type="text" name="autorite" class="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary-200" placeholder="Tribunal, administration, etc." required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Date de l'acte</label>
+                    <input type="date" name="date_acte" class="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary-200" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Motif détaillé</label>
+                    <textarea name="motif" rows="4" class="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary-200" placeholder="Décrivez le motif de l'opposition..." required></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Pièce jointe</label>
+                    <input type="file" name="piece_jointe" class="w-full text-sm text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary hover:file:bg-primary-100">
+                    <p class="text-xs text-on-surface-variant mt-1">Document justificatif (PDF, JPG, PNG)</p>
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-100 mt-6">
+                <a href="{{ path('account_detail', { num: compte.numero }) }}" class="mf-btn-secondary">Annuler</a>
+                <button type="submit" class="mf-btn-danger flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                    Enregistrer l'opposition
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

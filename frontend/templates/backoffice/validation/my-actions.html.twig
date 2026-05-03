@@ -1,0 +1,32 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Mes actions de validation - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfStatsGrid.html.twig' with { stats: [
+        { label: 'Approbations', value: actions.approbations|default('—'), icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+        { label: 'Rejets', value: actions.rejets|default('—'), icon: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-red-50', icon_color: 'text-red-600' },
+        { label: 'Révisions demandées', value: actions.revisions|default('—'), icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+        { label: 'Validations forcées', value: actions.forcees|default('—'), icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z', icon_bg: 'bg-yellow-50', icon_color: 'text-yellow-600' },
+    ] } %}{% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Mes actions récentes' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'date', label: 'Date' },
+                    { key: 'type', label: 'Type' },
+                    { key: 'action', label: 'Action' },
+                    { key: 'reference', label: 'Référence' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: actions.liste|default([]),
+                actions: [{ label: 'Détails', url: row => path('validation_detail', { id: row.id }), icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' }],
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

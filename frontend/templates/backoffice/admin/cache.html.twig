@@ -1,0 +1,49 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Cache - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Administration', url: path('admin_cache') }, { label: 'Cache' }] %}
+
+{% if mode == 'index' %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Gestion du cache</h1>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Statistiques' } %}
+        {% block card_content %}
+        <div class="space-y-3">
+            <div><strong>Taille totale:</strong> {{ status.taille ?? '—' }}</div>
+            <div><strong>Entrées:</strong> {{ status.entrees ?? '—' }}</div>
+            <div><strong>Dernier vidage:</strong> {{ status.dernierVidage ?? '—' }}</div>
+        </div>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Actions' } %}
+        {% block card_content %}
+        <div class="space-y-3">
+            <a href="{{ path('admin_cache_clear_all') }}" class="block w-full text-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors" onclick="return confirm('Vider tout le cache ?')">Vider tout le cache</a>
+        </div>
+        {% endblock %}
+    {% endembed %}
+</div>
+
+{% if status.pools is defined and status.pools is not empty %}
+{% embed 'components/MfCard.html.twig' with { title: 'Pools de cache' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'nom', label: 'Pool' },
+                { key: 'entrees', label: 'Entrées' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: status.pools,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% endif %}
+{% endif %}
+{% endblock %}

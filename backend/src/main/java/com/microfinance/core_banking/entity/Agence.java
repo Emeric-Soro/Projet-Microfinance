@@ -41,5 +41,8 @@ public class Agence extends BaseAuditEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_region")
     private Region region;
-}
 
+    public String getLibelle() {
+        return nomAgence;
+    }
+}

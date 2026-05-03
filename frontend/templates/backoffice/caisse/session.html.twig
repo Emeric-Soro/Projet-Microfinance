@@ -1,0 +1,56 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Session caisse - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Session de caisse</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Guichet: {{ session.guichet }}</p>
+    </div>
+    <div class="flex items-center gap-2">
+        <a href="{{ path('caisse_billetage', { id: session.id }) }}" class="mf-btn-secondary">Billetage</a>
+        {% if session.statut == 'OUVERTE' %}
+            <a href="{{ path('caisse_close', { id: session.id }) }}" class="mf-btn-primary">Fermer la session</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        {% embed component('MfCard') with { title: 'Informations session' } %}
+            {% block card_content %}
+                <dl class="divide-y divide-gray-100">
+                    {% include component('MfDetailRow') with { label: 'Guichet', value: session.guichet } %}
+                    {% include component('MfDetailRow') with { label: 'Caissier', value: session.caissier } %}
+                    {% include component('MfDetailRow') with { label: 'Date ouverture', value: session.dateOuverture|date_fr } %}
+                    {% include component('MfDetailRow') with { label: 'Solde initial', value: session.soldeInitial|montant } %}
+                    {% include component('MfDetailRow') with { label: 'Solde actuel', value: session.soldeActuel|montant } %}
+                    {% include component('MfDetailRow') with { label: 'Statut', value: '' } %}
+                </dl>
+                <div class="mt-2">
+                    {% include component('MfStatusBadge') with { status: session.statut } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-1 space-y-6">
+        {% embed component('MfCard') with { title: 'Résumé' } %}
+            {% block card_content %}
+                {% embed component('MfSummaryCard') with { items: [
+                    { label: 'Total dépôts', value: session.totalDepots|default(0)|montant },
+                    { label: 'Total retraits', value: session.totalRetraits|default(0)|montant },
+                    { label: 'Différence', value: (session.totalDepots|default(0) - session.totalRetraits|default(0))|montant },
+                ]} %}
+                    {% block card_content %}
+                        {{ parent() }}
+                    {% endblock %}
+                {% endembed %}
+            {% endblock %}
+        {% endembed %}
+
+        <a href="{{ path('caisse_teller_statement', { id: session.guichetId|default(session.id) }) }}" class="mf-btn-secondary w-full text-center">Relevé de guichet</a>
+    </div>
+</div>
+{% endblock %}

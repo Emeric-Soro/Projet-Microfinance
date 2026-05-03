@@ -1,0 +1,18 @@
+{% extends 'backoffice.html.twig' %}
+{% block title %}Opposition du compte {{ num }}{% endblock %}
+{% block content %}
+  {% include 'partials/_breadcrumb.html.twig' with {'items': ['Accueil','Comptes','Opposition'] } %}
+  {% include 'partials/_flash.html.twig' %}
+  <div class="MfCard">
+    <div class="MfFormCard">
+      <h3>Opposition</h3>
+      <form method="post">
+        <div class="field">
+          <label>Motif</label>
+          <input name="motif" class="mf-input" />
+        </div>
+        <button class="MfButton" type="submit">Enregistrer</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

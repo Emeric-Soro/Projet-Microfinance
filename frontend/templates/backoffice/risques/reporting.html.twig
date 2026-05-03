@@ -1,0 +1,43 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Reporting Risques - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Rapports Disponibles' } %}
+        {% block card_content %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for rapport in data.rapports|default([]) %}
+                    <div class="border border-gray-200 rounded-lg p-4 hover:border-primary transition-colors">
+                        <h4 class="font-medium text-on-surface">{{ rapport.nom }}</h4>
+                        <p class="text-sm text-on-surface-variant mt-1">{{ rapport.description }}</p>
+                        <div class="flex items-center justify-between mt-3">
+                            <span class="text-xs text-on-surface-variant">{{ rapport.frequence }}</span>
+                            <a href="{{ rapport.url|default('#') }}" class="text-sm text-primary hover:text-primary-600">Télécharger</a>
+                        </div>
+                    </div>
+                {% else %}
+                    {% include 'partials/_empty_state.html.twig' with { title: 'Aucun rapport', message: 'Aucun rapport disponible pour le moment.' } %}
+                {% endfor %}
+            </div>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Historique des Rapports' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'date', label: 'Date' },
+                    { key: 'type', label: 'Type' },
+                    { key: 'format', label: 'Format' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: data.historique|default([]),
+                actions: [{ label: 'Télécharger', url: row => '#', icon: 'M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' }],
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

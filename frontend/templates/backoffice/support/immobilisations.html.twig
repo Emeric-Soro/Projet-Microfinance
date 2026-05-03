@@ -1,0 +1,67 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Immobilisations - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Support', url: path('support_immobilisations') }, { label: 'Immobilisations' }] %}
+
+{% if mode == 'list' %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Immobilisations</h1>
+    <a href="{{ path('support_immobilisations_create') }}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Nouvelle immobilisation</a>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Liste des immobilisations' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'designation', label: 'Désignation' },
+                { key: 'categorie', label: 'Catégorie' },
+                { key: 'valeurAcquisition', label: 'Valeur acquisition' },
+                { key: 'valeurActuelle', label: 'Valeur actuelle' },
+                { key: 'statut', label: 'Statut' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% include 'partials/_pagination.html.twig' with { current_page: page, total_pages: pages, total_items: total, route: 'support_immobilisations', query: {} } %}
+
+{% elseif mode == 'create' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Nouvelle immobilisation</h1></div>
+{% embed 'components/MfFormCard.html.twig' with { title: 'Création' } %}
+    {% block form_fields %}
+    <form method="post" action="{{ path('support_immobilisations_create') }}">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'designation', label: 'Désignation', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'categorie', label: 'Catégorie', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'valeurAcquisition', label: "Valeur d'acquisition", type: 'number', required: true } %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'dateAcquisition', label: "Date d'acquisition", required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'dureeAmortissement', label: 'Durée amortissement (ans)', type: 'number' } %}
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Enregistrer</button>
+            <a href="{{ path('support_immobilisations') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+        </div>
+    </form>
+    {% endblock %}
+{% endembed %}
+
+{% elseif mode == 'show' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">{{ item.designation ?? 'Immobilisation' }}</h1></div>
+{% embed 'components/MfCard.html.twig' with { title: 'Détails' } %}
+    {% block card_content %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><strong>Désignation:</strong> {{ item.designation ?? '—' }}</div>
+        <div><strong>Catégorie:</strong> {{ item.categorie ?? '—' }}</div>
+        <div><strong>Valeur acquisition:</strong> {{ item.valeurAcquisition ?? '—' }}</div>
+        <div><strong>Valeur actuelle:</strong> {{ item.valeurActuelle ?? '—' }}</div>
+        <div><strong>Date acquisition:</strong> {{ item.dateAcquisition ?? '—' }}</div>
+        <div><strong>Statut:</strong> {% include 'components/MfStatusBadge.html.twig' with { status: item.statut ?? 'ACTIF' } %}</div>
+    </div>
+    <div class="mt-6"><a href="{{ path('support_immobilisations') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Retour</a></div>
+    {% endblock %}
+{% endembed %}
+{% endif %}
+{% endblock %}

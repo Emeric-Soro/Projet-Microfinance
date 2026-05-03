@@ -1,0 +1,51 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Suivi EOD - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Suivi de la clôture de journée</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Statut des différentes étapes</p>
+</div>
+
+{% embed component('MfCard') with { title: 'Statut EOD' } %}
+    {% block card_content %}
+        {% if status is defined and status is not empty %}
+            <div class="space-y-4">
+                {% for etape in status.etapes|default([]) %}
+                    <div class="flex items-center gap-4 p-3 {% if etape.completed %}bg-green-50{% else %}bg-gray-50{% endif %} rounded-lg">
+                        {% if etape.completed %}
+                            <svg class="w-6 h-6 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        {% else %}
+                            <div class="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
+                            </div>
+                        {% endif %}
+                        <div class="flex-1">
+                            <p class="text-sm font-medium {% if etape.completed %}text-green-800{% else %}text-on-surface{% endif %}">{{ etape.libelle }}</p>
+                            {% if etape.details is defined %}
+                                <p class="text-xs text-on-surface-variant">{{ etape.details }}</p>
+                            {% endif %}
+                        </div>
+                        {% if etape.time is defined %}
+                            <span class="text-xs text-on-surface-variant">{{ etape.time }}</span>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            {% if status.globalStatut is defined %}
+                {% include component('MfStatusBadge') with { status: status.globalStatut } %}
+            {% endif %}
+        {% else %}
+            {% include 'partials/_empty_state.html.twig' with {
+                title: 'Aucune information',
+                message: 'Aucune information de statut EOD disponible.',
+            } %}
+        {% endif %}
+    {% endblock %}
+{% endembed %}
+
+<div class="mt-6">
+    <a href="{{ path('caisse_eod') }}" class="mf-btn-primary">Exécuter la clôture</a>
+</div>
+{% endblock %}

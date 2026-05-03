@@ -1,0 +1,6 @@
+api_redirect:
+    path: /api/{path}
+    controller: App\Controller\Auth\LoginController::apiProxy
+    requirements:
+        path: .+
+    methods: [GET, POST, PUT, DELETE]

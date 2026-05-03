@@ -1,0 +1,78 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Décaissement - Crédit N°{{ credit.id }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Crédit', url: path('credit_dashboard') }, { label: 'Crédits actifs', url: path('credit_active') }, { label: 'N°' ~ credit.id ~ ' - Décaissement' }] %}
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Décaissement - Crédit N°{{ credit.id }}</h1>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Informations du crédit</h3>
+            </div>
+            <div class="p-4 space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Client</span>
+                    <span class="font-medium">{{ credit.clientNom|default('') }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Montant accordé</span>
+                    <span class="font-medium">{{ credit.montantAccorde|default(0)|number_format(0, ',', ' ') }} FCFA</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Frais de dossier</span>
+                    <span class="font-medium">{{ credit.fraisDossier|default(0)|number_format(0, ',', ' ') }} FCFA</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Montant net à décaisser</span>
+                    <span class="font-semibold text-teal-600">{{ (credit.montantAccorde|default(0) - credit.fraisDossier|default(0))|number_format(0, ',', ' ') }} FCFA</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Décaissement</h3>
+            </div>
+            <div class="p-4">
+                <form method="post" action="{{ path('credit_disbursement', { id: credit.id }) }}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Date de décaissement</label>
+                            <input type="date" name="dateDecaissement" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value="{{ decaissement.dateDecaissement|default('now')|date('Y-m-d') }}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Mode de décaissement</label>
+                            <select name="modeDecaissement" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="VIREMENT">Virement bancaire</option>
+                                <option value="CHEQUE">Chèque</option>
+                                <option value="ESPECES">Espèces</option>
+                                <option value="MOBILE_MONEY">Mobile Money</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Compte de décaissement</label>
+                            <input type="text" name="compteSource" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Référence</label>
+                            <input type="text" name="reference" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end gap-3 mt-6">
+                        <a href="{{ path('credit_detail', { id: credit.id }) }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">Annuler</a>
+                        <button type="submit" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm">Effectuer le décaissement</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

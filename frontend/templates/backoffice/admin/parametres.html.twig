@@ -1,0 +1,44 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Paramètres - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Administration', url: path('admin_parametres') }, { label: 'Paramètres' }] %}
+
+{% if mode == 'list' %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Paramètres système</h1>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Configuration' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'cle', label: 'Clé' },
+                { key: 'valeur', label: 'Valeur' },
+                { key: 'description', label: 'Description' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+
+{% elseif mode == 'edit' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Modifier paramètre</h1></div>
+{% embed 'components/MfFormCard.html.twig' with { title: item.cle ?? '' } %}
+    {% block form_fields %}
+    <form method="post" action="{{ path('admin_parametres_edit', { key: item.cle ?? '' }) }}">
+        <div class="grid grid-cols-1 gap-4">
+            <div><strong>Clé:</strong> {{ item.cle ?? '—' }}</div>
+            {% include 'components/MfInput.html.twig' with { name: 'valeur', label: 'Valeur', value: item.valeur ?? '', required: true } %}
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Enregistrer</button>
+            <a href="{{ path('admin_parametres') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+        </div>
+    </form>
+    {% endblock %}
+{% endembed %}
+{% endif %}
+{% endblock %}

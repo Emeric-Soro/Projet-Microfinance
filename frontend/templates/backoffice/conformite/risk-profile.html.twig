@@ -1,0 +1,58 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Profils de risque - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Attribution du profil de risque' } %}
+        {% block card_content %}
+            <form method="post" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Client</label>
+                        <select name="profil[client_id]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                            <option value="">Sélectionner un client</option>
+                            {% for client in profils.clients|default([]) %}
+                                <option value="{{ client.id }}">{{ client.nom }} {{ client.prenom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Niveau de risque</label>
+                        <select name="profil[niveau]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                            <option value="faible">Faible</option>
+                            <option value="moyen">Moyen</option>
+                            <option value="eleve" selected>Élevé</option>
+                            <option value="tres_eleve">Très élevé</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Justification</label>
+                    <textarea name="profil[justification]" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="mf-btn-primary">Attribuer le profil</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Profils attribués' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'client', label: 'Client' },
+                    { key: 'niveau', label: 'Niveau' },
+                    { key: 'date_attribution', label: 'Date' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: profils.liste|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

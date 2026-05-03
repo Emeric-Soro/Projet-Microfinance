@@ -1,0 +1,25 @@
+{% extends 'auth/auth.html.twig' %}
+
+{% block title %}Connexion - MicroFin{% endblock %}
+
+{% block auth_content %}
+<div class="MfFormCard" style="max-width:420px;margin:0 auto;padding:20px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.05);background:#fff;">
+  <h2 style="font-family: 'Manrope', sans-serif;margin-bottom:8px;">Connexion</h2>
+  <p style="color:#555;margin-top:0;margin-bottom:16px;font-family: 'Inter', sans-serif;">Connectez-vous avec vos identifiants</p>
+  <form method="post" action="{{ path('login') }}">
+    <div class="MfInput" style="margin-bottom:12px;">
+      <label for="username">Nom d'utilisateur</label>
+      <input id="username" name="username" type="text" required class="form-control" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;" />
+    </div>
+    <div class="MfInput" style="margin-bottom:12px;">
+      <label for="password">Mot de passe</label>
+      <input id="password" name="password" type="password" required class="form-control" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;" />
+    </div>
+    <button type="submit" class="MfButton" style="width:100%;padding:12px;background:#004D61;color:white;border:none;border-radius:4px;">Se connecter</button>
+  </form>
+  <div class="auth-links" style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;align-items:center;">
+    <a href="{{ path('forgot_password') }}">Mot de passe oublié ?</a>
+    <a href="{{ path('account_locked') }}">Compte bloqué ?</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Dépôt à Terme - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Dépôt à Terme (DAT)</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Gestion des dépôts à terme</p>
+</div>
+
+{% include component('MfTabs') with { tabs: [
+    { key: 'list', label: 'Liste des DAT', count: dats|length },
+    { key: 'create', label: 'Nouveau DAT' },
+] } %}
+{% block tabs_content %}
+    <div data-tabs-target="list">
+        {% embed component('MfDataTable') with {
+            headers: [
+                { key: 'numero', label: 'N° Contrat', sortable: true },
+                { key: 'client', label: 'Client', sortable: true },
+                { key: 'montant', label: 'Montant', sortable: true },
+                { key: 'duree', label: 'Durée (jours)' },
+                { key: 'taux', label: 'Taux', sortable: true },
+                { key: 'dateSouscription', label: 'Date' },
+                { key: 'dateEcheance', label: 'Échéance' },
+                { key: 'statut', label: 'Statut' },
+            ],
+            rows: dats,
+            actions: [
+                { label: 'Détail', url: (row) => path('epargne_dat_detail', { id: row.id }), icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
+            ],
+            empty_title: 'Aucun DAT',
+            empty_message: 'Aucun dépôt à terme enregistré.',
+        } %}
+            {% block card_content %}
+                {{ parent() }}
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div data-tabs-target="create" class="hidden mt-6">
+        <div class="max-w-2xl">
+            {% embed component('MfFormCard') with { title: 'Nouveau DAT', description: 'Saisissez les informations du dépôt à terme' } %}
+                {% block form_fields %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% include component('MfSelect') with { name: 'client', label: 'Client', required: true, options: [] } %}
+                        {% include component('MfMoneyInput') with { name: 'montant', label: 'Montant', required: true } %}
+                        {% include component('MfInput') with { name: 'duree_jours', label: 'Durée (jours)', required: true, type: 'number' } %}
+                        {% include component('MfInput') with { name: 'taux', label: 'Taux annuel (%)', required: true, type: 'number', step: '0.01' } %}
+                        {% include component('MfDatePicker') with { name: 'date_souscription', label: 'Date souscription', required: true, value: 'now'|date('Y-m-d') } %}
+                        <div class="flex items-center gap-2 pt-6">
+                            <input type="checkbox" id="capitalisation" name="capitalisation" class="rounded border-gray-300">
+                            <label for="capitalisation" class="text-sm text-on-surface">Capitalisation automatique</label>
+                        </div>
+                    </div>
+                {% endblock %}
+            {% endembed %}
+        </div>
+    </div>
+{% endblock %}
+{% endblock %}

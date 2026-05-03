@@ -1,0 +1,54 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Congés - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Support RH', url: path('support_conges') }, { label: 'Congés' }] %}
+
+{% if mode == 'list' %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Congés</h1>
+    <a href="{{ path('support_conges_create') }}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Nouveau congé</a>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Liste des congés' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'employe', label: 'Employé' },
+                { key: 'type', label: 'Type' },
+                { key: 'dateDebut', label: 'Début' },
+                { key: 'dateFin', label: 'Fin' },
+                { key: 'statut', label: 'Statut' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% include 'partials/_pagination.html.twig' with { current_page: page, total_pages: pages, total_items: total, route: 'support_conges', query: {} } %}
+
+{% elseif mode == 'create' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Nouveau congé</h1></div>
+{% embed 'components/MfFormCard.html.twig' with { title: 'Création' } %}
+    {% block form_fields %}
+    <form method="post" action="{{ path('support_conges_create') }}">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'employe', label: 'Employé', required: true } %}
+            {% include 'components/MfSelect.html.twig' with { name: 'type', label: 'Type', options: [
+                { value: 'CONGE_ANNUEL', label: 'Congé annuel' }, { value: 'CONGE_MALADIE', label: 'Congé maladie' },
+                { value: 'CONGE_MATERNITE', label: 'Congé maternité' }, { value: 'CONGE_SANS_SOLDE', label: 'Sans solde' }
+            ]} %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'dateDebut', label: 'Date début', required: true } %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'dateFin', label: 'Date fin', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'motif', label: 'Motif' } %}
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Enregistrer</button>
+            <a href="{{ path('support_conges') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+        </div>
+    </form>
+    {% endblock %}
+{% endembed %}
+{% endif %}
+{% endblock %}

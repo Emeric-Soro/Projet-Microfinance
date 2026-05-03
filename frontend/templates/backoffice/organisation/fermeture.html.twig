@@ -1,0 +1,50 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Fermeture d'Agence - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="max-w-2xl mx-auto">
+    {% embed 'components/MfCard.html.twig' with { title: 'Fermeture - ' ~ agence.libelle } %}
+        {% block card_content %}
+            <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-6">
+                <div class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                    <div>
+                        <p class="font-medium text-yellow-800">Attention</p>
+                        <p class="text-sm text-yellow-700 mt-1">Cette action est irréversible. Assurez-vous d'avoir transféré toutes les opérations en cours avant de fermer l'agence.</p>
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" action="" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Motif de fermeture</label>
+                    <textarea name="motif" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Date de fermeture</label>
+                    <input type="date" name="dateFermeture" value="{{ 'now'|date('Y-m-d') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Agence de transfert</label>
+                    <select name="agenceTransfertId" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                        <option value="">Aucune</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="confirm" name="confirm" class="rounded border-gray-300" required>
+                    <label for="confirm" class="text-sm font-medium text-on-surface">Je confirme la fermeture de cette agence</label>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                    <a href="{{ path('organisation_agences') }}" class="mf-btn-secondary">Annuler</a>
+                    <button type="submit" class="mf-btn-primary bg-red-600 hover:bg-red-700">Fermer l'agence</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

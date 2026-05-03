@@ -1,0 +1,74 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Rapprochements - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Exécuter un rapprochement' } %}
+        {% block card_content %}
+            <form method="post" action="" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Date début</label>
+                        <input type="date" name="date_debut" value="{{ 'now'|date('Y-m-01') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Date fin</label>
+                        <input type="date" name="date_fin" value="{{ 'now'|date('Y-m-d') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Type</label>
+                        <select name="type" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                            <option value="INTERNE">Interne</option>
+                            <option value="BANQUE">Banque</option>
+                            <option value="MOBILE_MONEY">Mobile Money</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="mf-btn-primary">Exécuter le rapprochement</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+
+    {% if result is defined and result is not empty %}
+        {% embed 'components/MfCard.html.twig' with { title: 'Résultat du rapprochement', class: 'border-green-200' } %}
+            {% block card_content %}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-4 bg-green-50 rounded-lg text-center">
+                        <span class="text-2xl font-bold text-green-600">{{ result.approuves|default(0) }}</span>
+                        <p class="text-sm text-green-700">Approuvés</p>
+                    </div>
+                    <div class="p-4 bg-yellow-50 rounded-lg text-center">
+                        <span class="text-2xl font-bold text-yellow-600">{{ result.enAttente|default(0) }}</span>
+                        <p class="text-sm text-yellow-700">En attente</p>
+                    </div>
+                    <div class="p-4 bg-red-50 rounded-lg text-center">
+                        <span class="text-2xl font-bold text-red-600">{{ result.ecarts|default(0) }}</span>
+                        <p class="text-sm text-red-700">Écarts</p>
+                    </div>
+                </div>
+            {% endblock %}
+        {% endembed %}
+    {% endif %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Historique des rapprochements' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'date', label: 'Date', sortable: true },
+                    { key: 'type', label: 'Type' },
+                    { key: 'periode', label: 'Période' },
+                    { key: 'ecarts', label: 'Écarts' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: historique,
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

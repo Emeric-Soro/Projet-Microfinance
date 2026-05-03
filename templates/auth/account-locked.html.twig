@@ -1,0 +1,14 @@
+{% extends 'auth/auth.html.twig' %}
+
+{% block title %}Compte bloqué - MicroFin{% endblock %}
+
+{% block auth_content %}
+<div class="MfFormCard" style="max-width:520px;margin:0 auto;padding:20px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.05);background:#fff;">
+  <div class="MfAlertBanner" data-type="error" style="margin-bottom:12px;padding:12px;border-radius:6px;background:#f8d7da;border:1px solid #f5c6cb;color:#721c24;">Votre compte est temporairement bloqué</div>
+  <p style="color:#555;">Votre adresse a été bloquée après trop de tentatives. Veuillez réessayer plus tard ou réinitialiser votre mot de passe si nécessaire.</p>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;">
+    <a href="{{ path('forgot_password') }}" class="MfButton" style="padding:10px 14px;background:#004D61;color:white;border-radius:4px;text-decoration:none;display:inline-block;">Réinitialiser le mot de passe</a>
+    <a href="{{ path('login') }}" class="MfButton" style="padding:10px 14px;background:#6c757d;color:white;border-radius:4px;text-decoration:none;display:inline-block;">Retour à la connexion</a>
+  </div>
+</div>
+{% endblock %}

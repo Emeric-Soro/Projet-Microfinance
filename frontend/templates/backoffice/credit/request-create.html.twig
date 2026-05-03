@@ -1,0 +1,70 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Nouvelle demande de crédit - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Crédit', url: path('credit_dashboard') }, { label: 'Demandes', url: path('credit_requests') }, { label: 'Nouvelle demande' }] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Nouvelle demande de crédit</h1>
+</div>
+
+<div class="bg-white rounded-lg border border-gray-200">
+    <div class="px-4 py-3 border-b border-gray-200">
+        <h3 class="font-semibold text-on-surface">Formulaire de demande</h3>
+    </div>
+    <div class="p-4">
+        <form method="post" action="{{ path('credit_request_create') }}">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Client</label>
+                    <select name="client_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" required>
+                        <option value="">Sélectionner un client</option>
+                        {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.nom|default('') }} {{ client.prenom|default('') }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Produit de crédit</label>
+                    <select name="produit_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" required>
+                        <option value="">Sélectionner un produit</option>
+                        {% for p in produits %}
+                            <option value="{{ p.id }}">{{ p.libelle }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Montant demandé (FCFA)</label>
+                    <input type="number" name="montant" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" min="0" step="1000" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Durée souhaitée (mois)</label>
+                    <input type="number" name="duree" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" min="1" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Objet du crédit</label>
+                    <input type="text" name="objet" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Type de remboursement</label>
+                    <select name="typeRemboursement" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <option value="MENSUEL">Mensuel</option>
+                        <option value="TRIMESTRIEL">Trimestriel</option>
+                        <option value="SEMESTRIEL">Semestriel</option>
+                        <option value="ANNUEL">Annuel</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-on-surface mb-1">Commentaires</label>
+                <textarea name="commentaires" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"></textarea>
+            </div>
+            <div class="flex items-center justify-end gap-3 mt-6">
+                <a href="{{ path('credit_requests') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">Annuler</a>
+                <button type="submit" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm">Soumettre la demande</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

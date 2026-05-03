@@ -1,0 +1,47 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Suspendre {{ client.nom ?? client.raisonSociale ?? 'Client' }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [
+    { label: 'Clients', url: path('client_list') },
+    { label: client.nom ?? client.raisonSociale ?? 'Client', url: path('client_detail', { id: client.id }) },
+    { label: 'Suspendre' }
+] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Suspendre le client</h1>
+</div>
+
+<div class="max-w-2xl mx-auto">
+    {% embed 'components/MfCard.html.twig' with { title: 'Confirmation de suspension' } %}
+        {% block card_content %}
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <div class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                </svg>
+                <div>
+                    <p class="text-sm font-medium text-yellow-800">Attention</p>
+                    <p class="text-sm text-yellow-700 mt-1">Vous êtes sur le point de suspendre le client <strong>{{ client.nom ?? client.raisonSociale ?? '' }} {{ client.prenom ?? '' }}</strong>. Cette action désactivera temporairement l'accès à ses comptes et services.</p>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" action="{{ path('client_suspend', { id: client.id }) }}">
+            {% include 'components/MfInput.html.twig' with { name: 'motif', label: 'Motif de la suspension', required: true } %}
+            {% include 'components/MfSelect.html.twig' with { name: 'typeSuspension', label: 'Type de suspension', options: [
+                { value: 'TEMPORAIRE', label: 'Temporaire' },
+                { value: 'DEFINITIVE', label: 'Définitive' },
+            ]} %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'dateDebut', label: 'Date de début' } %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'dateFin', label: 'Date de fin (si temporaire)' } %}
+            <div class="mt-6 flex gap-3">
+                <button type="submit" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">Confirmer la suspension</button>
+                <a href="{{ path('client_detail', { id: client.id }) }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+            </div>
+        </form>
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

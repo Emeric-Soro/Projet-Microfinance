@@ -1,0 +1,64 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Préférences - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Préférences</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Personnalisez votre expérience</p>
+</div>
+
+<div class="max-w-2xl">
+    <form method="post" action="{{ path('preferences') }}" class="space-y-6">
+        {% embed component('MfCard') with { title: 'Affichage' } %}
+            {% block card_content %}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Thème</label>
+                        <select name="theme" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                            <option value="light" {{ preferences.theme|default('light') == 'light' ? 'selected' : '' }}>Clair</option>
+                            <option value="dark" {{ preferences.theme == 'dark' ? 'selected' : '' }}>Sombre</option>
+                            <option value="auto" {{ preferences.theme == 'auto' ? 'selected' : '' }}>Automatique</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Langue</label>
+                        <select name="langue" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                            <option value="fr" {{ preferences.langue|default('fr') == 'fr' ? 'selected' : '' }}>Français</option>
+                            <option value="en" {{ preferences.langue == 'en' ? 'selected' : '' }}>English</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Nombre d'éléments par page</label>
+                        <select name="page_size" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                            <option value="10" {{ preferences.pageSize|default(20) == 10 ? 'selected' : '' }}>10</option>
+                            <option value="20" {{ preferences.pageSize|default(20) == 20 ? 'selected' : '' }}>20</option>
+                            <option value="50" {{ preferences.pageSize|default(20) == 50 ? 'selected' : '' }}>50</option>
+                            <option value="100" {{ preferences.pageSize|default(20) == 100 ? 'selected' : '' }}>100</option>
+                        </select>
+                    </div>
+                </div>
+            {% endblock %}
+        {% endembed %}
+
+        {% embed component('MfCard') with { title: 'Notifications' } %}
+            {% block card_content %}
+                <div class="space-y-4">
+                    <label class="flex items-center gap-3">
+                        <input type="checkbox" name="notifications_email" value="1" {{ preferences.notificationsEmail|default(true) ? 'checked' : '' }} class="rounded border-gray-300 text-primary focus:ring-primary">
+                        <span class="text-sm text-on-surface">Recevoir les notifications par email</span>
+                    </label>
+                    <label class="flex items-center gap-3">
+                        <input type="checkbox" name="notifications_push" value="1" {{ preferences.notificationsPush|default(true) ? 'checked' : '' }} class="rounded border-gray-300 text-primary focus:ring-primary">
+                        <span class="text-sm text-on-surface">Recevoir les notifications push</span>
+                    </label>
+                </div>
+            {% endblock %}
+        {% endembed %}
+
+        <div class="flex items-center justify-end gap-3">
+            <button type="submit" class="mf-btn-primary">Enregistrer</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

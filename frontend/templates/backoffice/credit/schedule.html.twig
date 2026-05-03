@@ -1,0 +1,57 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Échéancier - Crédit N°{{ credit.id }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Crédit', url: path('credit_dashboard') }, { label: 'Crédits actifs', url: path('credit_active') }, { label: 'N°' ~ credit.id ~ ' - Échéancier' }] %}
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Échéancier - Crédit N°{{ credit.id }}</h1>
+    <div class="flex items-center gap-2">
+        <a href="{{ path('credit_repayment', { id: credit.id }) }}" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm">Effectuer un remboursement</a>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <table class="w-full text-sm">
+        <thead>
+            <tr class="bg-gray-50 text-left">
+                <th class="px-4 py-3 font-medium text-on-surface-variant">N°</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Date échéance</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Montant</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Principal</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Intérêts</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Capital restant</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Statut</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Date paiement</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in echeances %}
+                <tr class="border-t border-gray-100 hover:bg-gray-50 {{ e.statut == 'IMPAYEE' ? 'bg-red-50' : '' }}">
+                    <td class="px-4 py-3 font-medium">{{ e.numero|default('') }}</td>
+                    <td class="px-4 py-3">{{ e.dateEcheance|default('')|date('d/m/Y') }}</td>
+                    <td class="px-4 py-3">{{ e.montant|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="px-4 py-3">{{ e.principal|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="px-4 py-3">{{ e.interets|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="px-4 py-3">{{ e.capitalRestant|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="px-4 py-3">
+                        <span class="inline-block px-2 py-0.5 text-xs rounded-full {{ e.statut == 'PAYEE' ? 'bg-green-100 text-green-800' : e.statut == 'IMPAYEE' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800' }}">
+                            {{ e.statut|default('EN_ATTENTE')|replace({'_': ' '}) }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">{{ e.datePaiement|default('')|date('d/m/Y') }}</td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="8" class="px-4 py-8 text-center text-on-surface-variant">Aucune échéance trouvée.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-4 flex items-center gap-2">
+    <a href="{{ path('credit_detail', { id: credit.id }) }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">Retour au détail</a>
+</div>
+{% endblock %}

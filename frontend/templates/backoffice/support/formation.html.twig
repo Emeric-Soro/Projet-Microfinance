@@ -1,0 +1,69 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Formations - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Support RH', url: path('support_formation') }, { label: 'Formations' }] %}
+
+{% if mode == 'list' %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Formations</h1>
+    <a href="{{ path('support_formation_create') }}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Nouvelle formation</a>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Liste des formations' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'titre', label: 'Titre' },
+                { key: 'formateur', label: 'Formateur' },
+                { key: 'dateDebut', label: 'Début' },
+                { key: 'dateFin', label: 'Fin' },
+                { key: 'statut', label: 'Statut' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% include 'partials/_pagination.html.twig' with { current_page: page, total_pages: pages, total_items: total, route: 'support_formation', query: {} } %}
+
+{% elseif mode == 'create' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Nouvelle formation</h1></div>
+{% embed 'components/MfFormCard.html.twig' with { title: 'Création' } %}
+    {% block form_fields %}
+    <form method="post" action="{{ path('support_formation_create') }}">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'titre', label: 'Titre', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'formateur', label: 'Formateur', required: true } %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'dateDebut', label: 'Date début', required: true } %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'dateFin', label: 'Date fin', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'description', label: 'Description' } %}
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Enregistrer</button>
+            <a href="{{ path('support_formation') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+        </div>
+    </form>
+    {% endblock %}
+{% endembed %}
+
+{% elseif mode == 'sessions' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Sessions - {{ item.titre ?? '' }}</h1></div>
+{% embed 'components/MfCard.html.twig' with { title: 'Sessions de formation' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'date', label: 'Date' },
+                { key: 'participants', label: 'Participants' },
+                { key: 'duree', label: 'Durée' },
+                { key: 'statut', label: 'Statut' },
+            ],
+            rows: sessions,
+            actions: false,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+<div class="mt-4"><a href="{{ path('support_formation') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Retour</a></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Historique Mobile Money{% endblock %}
+{% block current_menu %}paiements_momo_historique{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+{% embed 'components/MfCard.html.twig' with {title: 'Historique des transactions Mobile Money'} %}
+    {% block card_content %}
+        {% include 'partials/_table_toolbar.html.twig' with {
+            search_placeholder: 'Rechercher dans l\'historique...',
+            filters: [
+                {label: 'Opérateur', options: [
+                    {value: 'ORANGE', label: 'Orange Money'},
+                    {value: 'MTN', label: 'MTN Mobile Money'},
+                    {value: 'MOOV', label: 'Moov Money'},
+                    {value: 'WAVE', label: 'Wave'},
+                ]},
+                {label: 'Statut', options: [
+                    {value: 'SUCCES', label: 'Succès'},
+                    {value: 'ECHEC', label: 'Échec'},
+                    {value: 'EN_COURS', label: 'En cours'},
+                ]}
+            ]
+        } %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                {key: 'id', label: 'N°'},
+                {key: 'date', label: 'Date'},
+                {key: 'operateur', label: 'Opérateur'},
+                {key: 'telephone', label: 'Téléphone'},
+                {key: 'type', label: 'Type'},
+                {key: 'montant', label: 'Montant'},
+                {key: 'reference', label: 'Référence'},
+                {key: 'statut', label: 'Statut'},
+            ],
+            rows: historique
+        } %}
+            {% block card_content %}
+                {% for entry in historique %}
+                    <tr>
+                        <td>{{ entry.id }}</td>
+                        <td>{{ entry.date|date('d/m/Y H:i:s') }}</td>
+                        <td>{{ entry.operateur }}</td>
+                        <td>{{ entry.telephone }}</td>
+                        <td>{{ entry.type }}</td>
+                        <td class="font-medium">{{ entry.montant|number_format(0, ',', ' ') }} FCFA</td>
+                        <td class="font-mono text-xs">{{ entry.reference }}</td>
+                        <td>{% include 'components/MfStatusBadge.html.twig' with {status: entry.statut} %}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-8">
+                            {% include 'partials/_empty_state.html.twig' with {title: 'Aucun historique', message: 'Aucune transaction dans l\'historique Mobile Money.'} %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+        {% if pages is defined and pages > 1 %}
+            {% include 'partials/_pagination.html.twig' with {current: currentPage|default(1), total: pages} %}
+        {% endif %}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

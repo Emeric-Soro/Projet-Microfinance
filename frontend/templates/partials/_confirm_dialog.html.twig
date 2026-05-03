@@ -1,0 +1,7 @@
+{% include 'partials/_modal.html.twig' with {
+    id: 'confirmDialog',
+    title: confirm_title|default('Confirmer l\'action'),
+    content: '<p class="text-sm text-on-surface-variant">' ~ (confirm_message|default('Êtes-vous sûr de vouloir effectuer cette action ?')) ~ '</p>',
+    confirm_label: confirm_label|default('Confirmer'),
+    cancel_label: 'Annuler',
+} %}

@@ -1,0 +1,24 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Versions - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Administration', url: path('admin_versions') }, { label: 'Versions' }] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Versions</h1>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Composants système' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'composant', label: 'Composant' },
+                { key: 'version', label: 'Version' },
+                { key: 'derniereMiseAJour', label: 'Dernière mise à jour' },
+            ],
+            rows: items,
+            actions: false,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

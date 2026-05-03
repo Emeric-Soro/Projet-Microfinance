@@ -1,0 +1,64 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Personnes politiquement exposées - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Enregistrer une PEP' } %}
+        {% block card_content %}
+            <form method="post" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Nom complet</label>
+                        <input type="text" name="pep[nom]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Fonction</label>
+                        <input type="text" name="pep[fonction]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Fonction occupée">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Pays</label>
+                        <input type="text" name="pep[pays]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Type de relation</label>
+                        <select name="pep[type_relation]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                            <option value="client">Client</option>
+                            <option value="beneficiaire">Bénéficiaire effectif</option>
+                            <option value="apparente">Personne apparentée</option>
+                            <option value="proche">Collaborateur proche</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Notes</label>
+                    <textarea name="pep[notes]" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="mf-btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Liste des PEP' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'nom', label: 'Nom' },
+                    { key: 'fonction', label: 'Fonction' },
+                    { key: 'pays', label: 'Pays' },
+                    { key: 'type_relation', label: 'Relation' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: peps.liste|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

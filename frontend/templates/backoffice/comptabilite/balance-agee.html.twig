@@ -1,0 +1,85 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Balance âgée - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Balance âgée</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Analyse des créances par tranche d'âge</p>
+    </div>
+</div>
+
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+<div class="mf-card p-6 mb-6">
+    <form method="get" action="" class="flex flex-wrap gap-4 items-end">
+        <div>
+            <label class="mf-label">Date d'arrêté</label>
+            <input type="date" name="date_arrete" value="{{ date_arrete }}" class="mf-input">
+        </div>
+        <div class="w-48">
+            <label class="mf-label">Tranche</label>
+            <select name="tranche" class="mf-input">
+                <option value="">Toutes</option>
+                <option value="0-30" {{ tranche == '0-30' ? 'selected' }}>0-30 jours</option>
+                <option value="31-60" {{ tranche == '31-60' ? 'selected' }}>31-60 jours</option>
+                <option value="61-90" {{ tranche == '61-90' ? 'selected' }}>61-90 jours</option>
+                <option value="91-180" {{ tranche == '91-180' ? 'selected' }}>91-180 jours</option>
+                <option value="180+" {{ tranche == '180+' ? 'selected' }}>Plus de 180 jours</option>
+            </select>
+        </div>
+        <button type="submit" class="mf-btn-primary">Générer</button>
+    </form>
+</div>
+
+{% if totaux is defined and totaux is not empty %}
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+    {% for tranche_label, montant in totaux %}
+    <div class="mf-card p-4">
+        <p class="text-sm text-on-surface-variant">{{ tranche_label }}</p>
+        <p class="text-lg font-heading font-bold text-on-surface">{{ montant|number_format(0, ',', ' ') }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="mf-card overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="mf-table">
+            <thead>
+                <tr>
+                    <th>Compte</th>
+                    <th>Tiers</th>
+                    <th class="text-right">Montant</th>
+                    <th class="text-right">0-30 j</th>
+                    <th class="text-right">31-60 j</th>
+                    <th class="text-right">61-90 j</th>
+                    <th class="text-right">91-180 j</th>
+                    <th class="text-right">180+ j</th>
+                    <th class="text-center">Provision</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in entries %}
+                <tr>
+                    <td class="font-mono">{{ entry.numero_compte }}</td>
+                    <td>{{ entry.tiers|default('-') }}</td>
+                    <td class="text-right font-mono">{{ entry.montant|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="text-right font-mono">{{ entry.tranche_0_30|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="text-right font-mono">{{ entry.tranche_31_60|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="text-right font-mono">{{ entry.tranche_61_90|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="text-right font-mono">{{ entry.tranche_91_180|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="text-right font-mono">{{ entry.tranche_180|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="text-center">{% include 'partials/_status_badge.html.twig' with {status: entry.statut_provision|default('NON')} %}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center py-8 text-on-surface-variant">Aucune donnée trouvée</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

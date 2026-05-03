@@ -1,0 +1,15 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block content %}
+  {% include 'backoffice/partials/_breadcrumb.html.twig' with {'path': ['Accueil','Validations/Conformité','Révision']} %}
+  <div class="MfCard">
+    <h2>Révision de la demande</h2>
+    <form method="post" action="/validations/{{ id }}/revision">
+      <div class="MfFormCard">
+        <label for="comments">Commentaires de révision</label>
+        <textarea id="comments" name="comments" required></textarea>
+      </div>
+      <button class="MfButton MfButton--secondary" type="submit">Envoyer la révision</button>
+    </form>
+  </div>
+{% endblock %}

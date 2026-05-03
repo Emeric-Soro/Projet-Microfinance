@@ -1,0 +1,29 @@
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Scoring'] } %}
+{% include 'partials/_flash.html.twig' %}
+
+<h1>Notation et score Crédit</h1>
+
+<section class="MfCard">
+    <header>Entrée de score</header>
+    <form method="post" action="">
+        <div class="MfFormRow">
+            <label>Score financier</label>
+            <input class="MfInput" name="finance_score" type="number" min="0" max="100" />
+        </div>
+        <div class="MfFormRow">
+            <label>Note métier</label>
+            <input class="MfInput" name="business_score" type="number" min="0" max="100" />
+        </div>
+        <button class="MfButton" type="submit">Calculer</button>
+    </form>
+    </section>
+
+<section class="MfTable">
+    <h2>Résultat du scoring</h2>
+    {% if score is defined %}
+        <p>Score total: {{ score.total ?? 0 }}</p>
+        <p>Recommandation: {{ score.recommendation ?? 'À définir' }}</p>
+    {% else %}
+        <p>Aucun score calculé.</p>
+    {% endif %}
+    </section>

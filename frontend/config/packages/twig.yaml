@@ -1,0 +1,10 @@
+twig:
+    default_path: '%kernel.project_dir%/templates'
+    form_themes: ['tailwind_2_layout.html.twig']
+    globals:
+        app_name: 'MicroFin'
+        app_version: '1.0.0'
+        design_system:
+            primary_color: '#004D61'
+            surface: '#F0F4F5'
+            max_width: 1440

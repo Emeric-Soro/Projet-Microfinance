@@ -1,0 +1,69 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Remboursements{% endblock %}
+{% block current_menu %}paiements_remboursements{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+{% embed 'components/MfCard.html.twig' with {title: 'Remboursements'} %}
+    {% block card_content %}
+        {% include 'partials/_table_toolbar.html.twig' with {
+            search_placeholder: 'Rechercher un remboursement...',
+            filters: [
+                {label: 'Statut', options: [
+                    {value: 'EN_ATTENTE', label: 'En attente'},
+                    {value: 'TRAITE', label: 'Traité'},
+                    {value: 'REJETE', label: 'Rejeté'},
+                ]},
+                {label: 'Type', options: [
+                    {value: 'FRAIS', label: 'Frais'},
+                    {value: 'COMMISSION', label: 'Commission'},
+                    {value: 'TRANSACTION', label: 'Transaction'},
+                    {value: 'AUTRE', label: 'Autre'},
+                ]}
+            ]
+        } %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                {key: 'id', label: 'N°'},
+                {key: 'date', label: 'Date'},
+                {key: 'client', label: 'Client'},
+                {key: 'type', label: 'Type'},
+                {key: 'montant', label: 'Montant'},
+                {key: 'motif', label: 'Motif'},
+                {key: 'statut', label: 'Statut'},
+                {key: 'actions', label: 'Actions'},
+            ],
+            rows: remboursements
+        } %}
+            {% block card_content %}
+                {% for remboursement in remboursements %}
+                    <tr>
+                        <td>{{ remboursement.id }}</td>
+                        <td>{{ remboursement.date|date('d/m/Y') }}</td>
+                        <td class="font-medium">{{ remboursement.client }}</td>
+                        <td>{{ remboursement.type }}</td>
+                        <td class="font-medium">{{ remboursement.montant|number_format(0, ',', ' ') }} FCFA</td>
+                        <td>{{ remboursement.motif }}</td>
+                        <td>{% include 'components/MfStatusBadge.html.twig' with {status: remboursement.statut} %}</td>
+                        <td class="text-right">
+                            {% if remboursement.statut == 'EN_ATTENTE' %}
+                                <form method="post" action="{{ path('paiements_remboursements_process', {id: remboursement.id}) }}" class="inline" onsubmit="return confirm('Confirmer le traitement de ce remboursement?')">
+                                    <button type="submit" class="text-sm font-medium text-primary hover:text-primary-600">Traiter</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-8">
+                            {% include 'partials/_empty_state.html.twig' with {title: 'Aucun remboursement', message: 'Aucun remboursement trouvé.'} %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

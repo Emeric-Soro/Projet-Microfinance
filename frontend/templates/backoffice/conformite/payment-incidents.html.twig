@@ -1,0 +1,63 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Incidents de paiement - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Déclarer un incident' } %}
+        {% block card_content %}
+            <form method="post" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Type d'incident</label>
+                        <select name="incident[type]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                            <option value="cheque_sans_provision">Chèque sans provision</option>
+                            <option value="impaye">Impagé</option>
+                            <option value="fraude">Fraude</option>
+                            <option value="anomalie">Anomalie de traitement</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Date de l'incident</label>
+                        <input type="date" name="incident[date]" value="{{ 'now'|date('Y-m-d') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Client concerné</label>
+                    <input type="text" name="incident[client]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Nom du client ou n° de compte">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Montant</label>
+                    <input type="text" name="incident[montant]" placeholder="0 CFA" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Description</label>
+                    <textarea name="incident[description]" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="mf-btn-primary">Enregistrer l'incident</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Liste des incidents' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'date', label: 'Date' },
+                    { key: 'type', label: 'Type' },
+                    { key: 'client', label: 'Client' },
+                    { key: 'montant', label: 'Montant' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: incidents.liste|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

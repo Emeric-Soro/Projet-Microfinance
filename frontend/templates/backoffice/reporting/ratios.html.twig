@@ -1,0 +1,39 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Ratios - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Ratios Financiers' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'ratio', label: 'Ratio' },
+                    { key: 'valeur', label: 'Valeur' },
+                    { key: 'cible', label: 'Cible' },
+                    { key: 'ecart', label: 'Écart' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: data.ratios|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Ratios de Performance' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'indicateur', label: 'Indicateur' },
+                    { key: 'value', label: 'Valeur' },
+                    { key: 'tendance', label: 'Tendance' },
+                ],
+                rows: data.performance|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

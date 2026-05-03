@@ -1,0 +1,43 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Reporting épargne - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Reporting épargne</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Indicateurs et rapports sur l'épargne</p>
+</div>
+
+{% if stats is defined and stats is not empty %}
+    {% embed component('MfStatsGrid') with { cols: 4, stats: [
+        { label: 'Nombre de comptes', value: stats.nombreComptes|default(0), icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+        { label: 'Encours total', value: stats.encoursTotal|default(0)|montant, icon: 'M12 4v16m8-8H4', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+        { label: 'Dépôts du mois', value: stats.depotsMois|default(0)|montant, icon: 'M12 4v16m8-8H4', icon_bg: 'bg-teal-50', icon_color: 'text-teal-600' },
+        { label: 'Retraits du mois', value: stats.retraitsMois|default(0)|montant, icon: 'M20 12H4', icon_bg: 'bg-orange-50', icon_color: 'text-orange-600' },
+    ]} %}
+        {% block card_content %}
+            {{ parent() }}
+        {% endblock %}
+    {% endembed %}
+{% endif %}
+
+{% embed component('MfCard') with { title: 'Répartition par produit', class: 'mt-6' } %}
+    {% block card_content %}
+        {% embed component('MfDataTable') with {
+            headers: [
+                { key: 'produit', label: 'Produit', sortable: true },
+                { key: 'nombreComptes', label: 'N° Comptes', sortable: true },
+                { key: 'encours', label: 'Encours', sortable: true },
+                { key: 'part', label: 'Part (%)' },
+            ],
+            rows: products,
+            empty_title: 'Aucune donnée',
+            empty_message: 'Aucune donnée de reporting disponible.',
+        } %}
+            {% block card_content %}
+                {{ parent() }}
+            {% endblock %}
+        {% endembed %}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

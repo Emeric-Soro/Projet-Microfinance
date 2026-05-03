@@ -1,0 +1,65 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Modifier {{ client.nom ?? client.raisonSociale ?? 'Client' }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [
+    { label: 'Clients', url: path('client_list') },
+    { label: client.nom ?? client.raisonSociale ?? 'Client', url: path('client_detail', { id: client.id }) },
+    { label: 'Modifier' }
+] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Modifier le client</h1>
+</div>
+
+<form method="post" action="{{ path('client_edit', { id: client.id }) }}" enctype="multipart/form-data">
+    {% embed 'components/MfCard.html.twig' with { title: 'Identité' } %}
+        {% block card_content %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% if client.type == 'MORAL' %}
+                {% include 'components/MfInput.html.twig' with { name: 'raisonSociale', label: 'Raison sociale', value: client.raisonSociale ?? '', required: true } %}
+                {% include 'components/MfInput.html.twig' with { name: 'sigle', label: 'Sigle', value: client.sigle ?? '' } %}
+                {% include 'components/MfInput.html.twig' with { name: 'registreCommerce', label: 'Registre de commerce', value: client.registreCommerce ?? '' } %}
+                {% include 'components/MfInput.html.twig' with { name: 'numeroContribuable', label: 'N° contribuable', value: client.numeroContribuable ?? '' } %}
+                {% include 'components/MfSelect.html.twig' with { name: 'formeJuridique', label: 'Forme juridique', value: client.formeJuridique ?? '', options: [
+                    { value: 'SA', label: 'SA' }, { value: 'SARL', label: 'SARL' },
+                    { value: 'SAS', label: 'SAS' }, { value: 'SNC', label: 'SNC' },
+                    { value: 'GIE', label: 'GIE' }, { value: 'ONGS', label: 'ONG/Association' },
+                ]} %}
+                {% include 'components/MfInput.html.twig' with { name: 'secteurActivite', label: 'Secteur', value: client.secteurActivite ?? '' } %}
+            {% else %}
+                {% include 'components/MfInput.html.twig' with { name: 'nom', label: 'Nom', value: client.nom ?? '', required: true } %}
+                {% include 'components/MfInput.html.twig' with { name: 'prenom', label: 'Prénom', value: client.prenom ?? '', required: true } %}
+                {% include 'components/MfDatePicker.html.twig' with { name: 'dateNaissance', label: 'Date naissance', value: client.dateNaissance ?? '' } %}
+                {% include 'components/MfInput.html.twig' with { name: 'lieuNaissance', label: 'Lieu naissance', value: client.lieuNaissance ?? '' } %}
+                {% include 'components/MfInput.html.twig' with { name: 'nationalite', label: 'Nationalité', value: client.nationalite ?? '' } %}
+                {% include 'components/MfInput.html.twig' with { name: 'profession', label: 'Profession', value: client.profession ?? '' } %}
+                {% include 'components/MfSelect.html.twig' with { name: 'situationMatrimoniale', label: 'Situation fam.', value: client.situationMatrimoniale ?? '', options: [
+                    { value: 'CELIBATAIRE', label: 'Célibataire' }, { value: 'MARIE', label: 'Marié(e)' },
+                    { value: 'DIVORCE', label: 'Divorcé(e)' }, { value: 'VEUF', label: 'Veuf/Veuve' },
+                ]} %}
+            {% endif %}
+        </div>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Coordonnées' } %}
+        {% block card_content %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'telephone', label: 'Téléphone', value: client.telephone ?? '' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'email', label: 'Email', value: client.email ?? '' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'adresse', label: 'Adresse', value: client.adresse ?? '' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'ville', label: 'Ville', value: client.ville ?? '' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'pays', label: 'Pays', value: client.pays ?? '' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'codePostal', label: 'Code postal', value: client.codePostal ?? '' } %}
+        </div>
+        {% endblock %}
+    {% endembed %}
+
+    <div class="flex items-center justify-end gap-3 mt-6">
+        <a href="{{ path('client_detail', { id: client.id }) }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Enregistrer</button>
+    </div>
+</form>
+{% endblock %}

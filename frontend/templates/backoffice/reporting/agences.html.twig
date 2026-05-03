@@ -1,0 +1,32 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Reporting Agences - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfStatsGrid.html.twig' with { stats: [
+        { label: 'Nombre d\'Agences', value: data.nombre|default('—'), icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', icon_bg: 'bg-primary-50', icon_color: 'text-primary' },
+        { label: 'Total Actifs', value: data.total_actifs|default('—'), icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+        { label: 'Performance Moy.', value: data.performance|default('—'), icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+    ] } %}{% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Performance par Agence' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'agence', label: 'Agence' },
+                    { key: 'region', label: 'Région' },
+                    { key: 'encours', label: 'Encours' },
+                    { key: 'depots', label: 'Dépôts' },
+                    { key: 'resultat', label: 'Résultat' },
+                    { key: 'performance', label: 'Performance' },
+                ],
+                rows: data.agences|default([]),
+                actions: [{ label: 'Détails', url: row => '#', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' }],
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

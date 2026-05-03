@@ -1,0 +1,25 @@
+{% extends 'auth/auth.html.twig' %}
+
+{% block title %}Configuration 2FA - MicroFin{% endblock %}
+
+{% block auth_content %}
+<div class="MfFormCard" style="max-width:520px;margin:0 auto;padding:20px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.05);background:#fff;">
+  <h2 style="font-family: 'Manrope', sans-serif;margin-bottom:8px;">Configuration de l'authentification à deux facteurs</h2>
+  <div style="display:flex;gap:16px;align-items:center;margin:12px 0;">
+    {% if qrCode %}
+      <img src="{{ qrCode }}" alt="QR Code" style="width:180px;height:180px;object-fit:cover;border:1px solid #ddd;border-radius:6px;" />
+    {% endif %}
+    <div style="flex:1;min-width:200px;">
+      <p class="muted">Code d'installation manuel:</p>
+      <pre style="background:#f7f7f7;border:1px solid #e5e5e5;padding:8px;border-radius:4px;">{{ manualCode ?? '' }}</pre>
+    </div>
+  </div>
+  <form method="post" action="{{ path('setup_2fa') }}">
+    <div class="MfInput" style="margin-bottom:12px;">
+      <label for="totp">CodeTOT P</label>
+      <input id="totp" name="totp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" required class="form-control" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;" />
+    </div>
+    <button type="submit" class="MfButton" style="width:100%;padding:12px;background:#004D61;color:white;border:none;border-radius:4px;">Activer la 2FA</button>
+  </form>
+</div>
+{% endblock %}

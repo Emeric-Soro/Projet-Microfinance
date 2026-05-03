@@ -1,0 +1,48 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Stocks - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Support', url: path('support_stocks') }, { label: 'Stocks' }] %}
+
+{% if mode == 'list' %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Stocks</h1>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Inventaire des stocks' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'reference', label: 'Référence' },
+                { key: 'designation', label: 'Désignation' },
+                { key: 'quantite', label: 'Quantité' },
+                { key: 'unite', label: 'Unité' },
+                { key: 'seuil', label: 'Seuil alerte' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% include 'partials/_pagination.html.twig' with { current_page: page, total_pages: pages, total_items: total, route: 'support_stocks', query: {} } %}
+
+{% elseif mode == 'movement' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Mouvements - {{ item.designation ?? '' }}</h1></div>
+{% embed 'components/MfCard.html.twig' with { title: 'Mouvements de stock' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'date', label: 'Date' },
+                { key: 'type', label: 'Type' },
+                { key: 'quantite', label: 'Quantité' },
+                { key: 'motif', label: 'Motif' },
+            ],
+            rows: movements,
+            actions: false,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+<div class="mt-4"><a href="{{ path('support_stocks') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Retour</a></div>
+{% endif %}
+{% endblock %}

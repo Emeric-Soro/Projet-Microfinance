@@ -1,0 +1,69 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Compensation chèques{% endblock %}
+{% block current_menu %}paiements_compensation{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+{% embed 'components/MfStatsGrid.html.twig' with {stats: [
+    {label: 'En attente', value: stats.enAttente|default(0), icon: 'M12 9v2m0 4h.01', icon_bg: 'bg-yellow-50', icon_color: 'text-yellow-600'},
+    {label: 'Compensés', value: stats.compenses|default(0), icon: 'M9 12l2 2 4-4', icon_bg: 'bg-green-50', icon_color: 'text-green-600'},
+    {label: 'Rejetés', value: stats.rejetes|default(0), icon: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2', icon_bg: 'bg-red-50', icon_color: 'text-red-600'},
+    {label: 'Total', value: stats.total|default(0), icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600'},
+]} %}{% endembed %}
+
+{% embed 'components/MfCard.html.twig' with {title: 'Compensations'} %}
+    {% block card_content %}
+        {% include 'partials/_table_toolbar.html.twig' with {
+            search_placeholder: 'Rechercher une compensation...',
+            filters: [
+                {label: 'Statut', options: [
+                    {value: 'EN_ATTENTE', label: 'En attente'},
+                    {value: 'COMPENSE', label: 'Compensé'},
+                    {value: 'REJETE', label: 'Rejeté'},
+                ]}
+            ]
+        } %}
+
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                {key: 'id', label: 'N°'},
+                {key: 'numeroCheque', label: 'Chèque'},
+                {key: 'montant', label: 'Montant'},
+                {key: 'banqueEmettrice', label: 'Banque'},
+                {key: 'dateCompensation', label: 'Date'},
+                {key: 'statut', label: 'Statut'},
+                {key: 'actions', label: 'Actions'},
+            ],
+            rows: compensations
+        } %}
+            {% block card_content %}
+                {% for compensation in compensations %}
+                    <tr>
+                        <td>{{ compensation.id }}</td>
+                        <td class="font-medium">{{ compensation.numeroCheque }}</td>
+                        <td>{{ compensation.montant|number_format(0, ',', ' ') }} FCFA</td>
+                        <td>{{ compensation.banqueEmettrice }}</td>
+                        <td>{{ compensation.dateCompensation|date('d/m/Y') }}</td>
+                        <td>{% include 'components/MfStatusBadge.html.twig' with {status: compensation.statut} %}</td>
+                        <td class="text-right">
+                            {% if compensation.statut == 'EN_ATTENTE' %}
+                                <form method="post" action="{{ path('paiements_compensation_process', {id: compensation.id}) }}" class="inline" onsubmit="return confirm('Confirmer le traitement de cette compensation?')">
+                                    <button type="submit" class="text-sm font-medium text-primary hover:text-primary-600">Traiter</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-8">
+                            {% include 'partials/_empty_state.html.twig' with {title: 'Aucune compensation', message: 'Aucune compensation trouvée.'} %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

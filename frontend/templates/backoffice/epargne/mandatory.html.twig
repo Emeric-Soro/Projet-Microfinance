@@ -1,0 +1,53 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Épargne obligatoire - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Épargne obligatoire</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Gestion des comptes d'épargne obligatoire</p>
+</div>
+
+{% include component('MfTabs') with { tabs: [
+    { key: 'list', label: 'Comptes', count: accounts|length },
+    { key: 'create', label: 'Nouveau' },
+] } %}
+{% block tabs_content %}
+    <div data-tabs-target="list">
+        {% embed component('MfDataTable') with {
+            headers: [
+                { key: 'numero', label: 'N° Compte', sortable: true },
+                { key: 'client', label: 'Client', sortable: true },
+                { key: 'montant', label: 'Montant', sortable: true },
+                { key: 'solde', label: 'Solde', sortable: true },
+                { key: 'dateOuverture', label: 'Date ouverture' },
+                { key: 'statut', label: 'Statut' },
+            ],
+            rows: accounts,
+            actions: [
+                { label: 'Détail', url: (row) => '#', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
+            ],
+            empty_title: 'Aucun compte',
+            empty_message: 'Aucun compte d\'épargne obligatoire.',
+        } %}
+            {% block card_content %}
+                {{ parent() }}
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div data-tabs-target="create" class="hidden mt-6">
+        <div class="max-w-2xl">
+            {% embed component('MfFormCard') with { title: 'Nouveau compte obligatoire', description: 'Paramètres du compte' } %}
+                {% block form_fields %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% include component('MfSelect') with { name: 'client', label: 'Client', required: true, options: [] } %}
+                        {% include component('MfSelect') with { name: 'produit', label: 'Produit', required: true, options: products|map(p => { value: p.id, label: p.libelle }) } %}
+                        {% include component('MfMoneyInput') with { name: 'montant', label: 'Montant', required: true } %}
+                    </div>
+                {% endblock %}
+            {% endembed %}
+        </div>
+    </div>
+{% endblock %}
+{% endblock %}

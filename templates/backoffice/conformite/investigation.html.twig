@@ -1,0 +1,10 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block content %}
+  {% include 'backoffice/partials/_breadcrumb.html.twig' with {'path': ['Accueil','Conformité','Investigation']} %}
+  <div class="MfCard">
+    <h2>Investigation de l’alerte</h2>
+    <div class="MfAlertBanner">Détails de l’alerte et historique d’investigation.</div>
+    <div class="MfTimeline">{% if alert %}Détails: {{ alert.description ?? '' }}{% endif %}</div>
+  </div>
+{% endblock %}

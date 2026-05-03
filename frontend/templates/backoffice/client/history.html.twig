@@ -1,0 +1,26 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Historique - {{ client.nom ?? client.raisonSociale ?? 'Client' }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [
+    { label: 'Clients', url: path('client_list') },
+    { label: client.nom ?? client.raisonSociale ?? 'Client', url: path('client_detail', { id: client.id }) },
+    { label: 'Historique' }
+] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Historique des modifications</h1>
+    <p class="text-sm text-on-surface-variant mt-1">{{ client.nom ?? client.raisonSociale ?? 'Client' }} {{ client.prenom ?? '' }}</p>
+</div>
+
+{% embed 'components/MfCard.html.twig' with { title: 'Chronologie des événements' } %}
+    {% block card_content %}
+        {% if history is not empty %}
+            {% include 'partials/_audit_timeline.html.twig' with { entries: history } %}
+        {% else %}
+            {% include 'partials/_empty_state.html.twig' with { title: 'Aucun historique', message: 'Aucun événement enregistré pour ce client.' } %}
+        {% endif %}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

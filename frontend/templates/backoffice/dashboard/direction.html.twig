@@ -1,0 +1,86 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Direction - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Tableau de bord Direction</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Indicateurs stratégiques</p>
+</div>
+
+{% if data is defined and data is not empty %}
+    {% embed component('MfStatsGrid') with { cols: 4, stats: [
+        { label: 'Total bilan', value: data.totalBilan|default(0)|montant, icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+        { label: 'Produit net bancaire', value: data.pnb|default(0)|montant, icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+        { label: 'Résultat net', value: data.resultatNet|default(0)|montant, icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'data.resultatNet|default(0) >= 0 ? 'bg-green-50' : 'bg-red-50'', icon_color: 'data.resultatNet|default(0) >= 0 ? 'text-green-600' : 'text-red-600'' },
+        { label: 'ROE', value: (data.roe|default(0)) ~ '%', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', icon_bg: 'bg-purple-50', icon_color: 'text-purple-600' },
+    ]} %}
+        {% block card_content %}{{ parent() }}{% endblock %}
+    {% endembed %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {% embed component('MfCard') with { title: 'Indicateurs de performance' } %}
+            {% block card_content %}
+                {% set items = [
+                    { label: 'Rendement des actifs (ROA)', value: (data.roa|default(0)) ~ '%' },
+                    { label: 'Marge nette d\'intérêt', value: (data.margeInteret|default(0)) ~ '%' },
+                    { label: 'Ratio de solvabilité', value: (data.ratioSolvabilite|default(0)) ~ '%' },
+                    { label: 'Ratio de couverture', value: (data.ratioCouverture|default(0)) ~ '%' },
+                    { label: 'Efficacité opérationnelle', value: (data.efficaciteOperationnelle|default(0)) ~ '%' },
+                ] %}
+                {% include component('MfSummaryCard') with { items: items } %}
+            {% endblock %}
+        {% endembed %}
+
+        {% embed component('MfCard') with { title: 'Évolution mensuelle' } %}
+            {% block card_content %}
+                {% set headers = [
+                    { label: 'Mois', key: 'mois' },
+                    { label: 'PNB', key: 'pnb' },
+                    { label: 'Charges', key: 'charges' },
+                    { label: 'Résultat', key: 'resultat' },
+                ] %}
+                {% set rows = data.evolutionMensuelle|default([]) %}
+                {% include component('MfDataTable') with { headers: headers, rows: rows } %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        {% embed component('MfCard') with { title: 'Crédit' } %}
+            {% block card_content %}
+                {% set items = [
+                    { label: 'Encours', value: data.encoursCredit|default(0)|montant },
+                    { label: 'PAR > 30j', value: (data.par30|default(0)) ~ '%' },
+                    { label: 'Nouveaux décaissements', value: data.nouveauxDecaissements|default(0)|montant },
+                ] %}
+                {% include component('MfSummaryCard') with { items: items } %}
+            {% endblock %}
+        {% endembed %}
+
+        {% embed component('MfCard') with { title: 'Épargne' } %}
+            {% block card_content %}
+                {% set items = [
+                    { label: 'Encours épargne', value: data.encoursEpargne|default(0)|montant },
+                    { label: 'Nombre de comptes', value: data.nbComptesEpargne|default(0)|number_format(0, ',', ' ') },
+                    { label: 'Taux de pénétration', value: (data.tauxPenetration|default(0)) ~ '%' },
+                ] %}
+                {% include component('MfSummaryCard') with { items: items } %}
+            {% endblock %}
+        {% endembed %}
+
+        {% embed component('MfCard') with { title: 'Ressources humaines' } %}
+            {% block card_content %}
+                {% set items = [
+                    { label: 'Effectif total', value: data.effectifTotal|default(0)|number_format(0, ',', ' ') },
+                    { label: 'Agences', value: data.nbAgences|default(0) },
+                    { label: 'Ratio encours/employé', value: data.ratioEncoursEmploye|default(0)|montant },
+                ] %}
+                {% include component('MfSummaryCard') with { items: items } %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+{% else %}
+    {% include 'partials/_empty_state.html.twig' with { title: 'Chargement...', message: 'Indicateurs de direction en cours de chargement.' } %}
+{% endif %}
+{% endblock %}

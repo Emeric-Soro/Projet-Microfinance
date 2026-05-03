@@ -1,0 +1,21 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e6]: MF
+    - heading "MicroFin" [level=1] [ref=e7]
+    - paragraph [ref=e8]: Système Bancaire Intégré
+  - generic [ref=e9]:
+    - heading "Connexion" [level=2] [ref=e10]
+    - generic [ref=e11]:
+      - generic [ref=e12]:
+        - text: Identifiant
+        - textbox "Identifiant" [active] [ref=e13]:
+          - /placeholder: Votre identifiant
+      - generic [ref=e14]:
+        - text: Mot de passe
+        - textbox "Mot de passe" [ref=e15]:
+          - /placeholder: Votre mot de passe
+          - text: demo.adminDemo@12345
+      - button "Se connecter" [ref=e16]
+      - link "Mot de passe oublié ?" [ref=e18] [cursor=pointer]:
+        - /url: /forgot-password
+  - paragraph [ref=e19]: © 2026 MicroFin. Tous droits réservés.

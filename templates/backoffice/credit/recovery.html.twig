@@ -1,0 +1,31 @@
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Récupération'] } %}
+{% include 'partials/_flash.html.twig' %}
+
+<h1>Récupération - Crédit</h1>
+
+<section class="MfCard">
+    <header>Actions de récupération</header>
+    <form method="post" action="">
+        <div class="MfFormRow">
+            <label>Action</label>
+            <select class="MfSelect" name="action">
+                <option>Appuyer sur signature</option>
+                <option>Envoyer rappel</option>
+            </select>
+        </div>
+        <button class="MfButton" type="submit">Enregistrer</button>
+    </form>
+    </section>
+
+<section class="MfTable">
+    <h2>Éléments de récupération</h2>
+    {% if data is defined %}
+        <ul>
+        {% for item in data %}
+            <li>{{ item.date ?? '' }} - {{ item.description ?? '' }}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>Aucune donnée.</p>
+    {% endif %}
+    </section>

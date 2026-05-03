@@ -1,0 +1,45 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Transfert caisse - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Transfert inter-caisse</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Transférer des fonds entre guichets</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1">
+        {% embed component('MfFormCard') with { title: 'Nouveau transfert', description: 'Saisissez les informations' } %}
+            {% block form_fields %}
+                <div class="space-y-4">
+                    {% include component('MfSelect') with { name: 'guichet_source', label: 'Guichet source', required: true, options: guichets|map(g => { value: g.id, label: g.libelle }) } %}
+                    {% include component('MfSelect') with { name: 'guichet_destination', label: 'Guichet destination', required: true, options: guichets|map(g => { value: g.id, label: g.libelle }) } %}
+                    {% include component('MfMoneyInput') with { name: 'montant', label: 'Montant', required: true } %}
+                    {% include component('MfInput') with { name: 'motif', label: 'Motif', required: true } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-2">
+        {% embed component('MfDataTable') with {
+            headers: [
+                { key: 'date', label: 'Date', sortable: true },
+                { key: 'source', label: 'Source', sortable: true },
+                { key: 'destination', label: 'Destination', sortable: true },
+                { key: 'montant', label: 'Montant', sortable: true },
+                { key: 'motif', label: 'Motif' },
+                { key: 'statut', label: 'Statut' },
+            ],
+            rows: transfers,
+            empty_title: 'Aucun transfert',
+            empty_message: 'Aucun transfert inter-caisse effectué.',
+        } %}
+            {% block card_content %}
+                {{ parent() }}
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

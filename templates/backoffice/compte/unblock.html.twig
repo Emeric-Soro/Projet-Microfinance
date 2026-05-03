@@ -1,0 +1,14 @@
+{% extends 'backoffice.html.twig' %}
+{% block title %}Débloquer le compte {{ num }}{% endblock %}
+{% block content %}
+  {% include 'partials/_breadcrumb.html.twig' with {'items': ['Accueil','Comptes','Déblocage'] } %}
+  {% include 'partials/_flash.html.twig' %}
+  <div class="MfCard">
+    <div class="MfFormCard">
+      <h3>Débloquer le compte</h3>
+      <form method="post">
+        <button class="MfButton" type="submit">Débloquer</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

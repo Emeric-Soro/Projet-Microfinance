@@ -1,0 +1,32 @@
+<header class="h-16 bg-white border-b border-teal-100 flex items-center justify-between px-6 sticky top-0 z-20">
+    <div class="flex items-center gap-4">
+        <button class="lg:hidden text-on-surface-variant hover:text-primary" data-action="sidebar#toggle">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        {% block topbar_left %}{% endblock %}
+    </div>
+
+    <div class="flex items-center gap-4">
+        <div class="relative hidden md:block" data-controller="live-search">
+            <input type="text" 
+                   placeholder="Rechercher (Ctrl+K)" 
+                   class="w-64 pl-9 pr-3 py-2 border border-gray-200 rounded text-sm bg-surface focus:border-primary focus:ring-1 focus:ring-primary-200 transition-colors"
+                   data-action="focus->live-search#onFocus keydown->live-search#onKeydown">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+
+        <a href="{{ path('notifications_list') }}" class="relative text-on-surface-variant hover:text-primary transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            {% if unread_notifications_count is defined and unread_notifications_count > 0 %}
+                <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">{{ unread_notifications_count }}</span>
+            {% endif %}
+        </a>
+
+        <a href="{{ path('profile') }}" class="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors">
+            <span class="text-sm font-medium hidden md:inline">{{ current_user().nom|default('Utilisateur') }}</span>
+            <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                <span class="text-primary font-medium text-xs">{{ (current_user().nom|default('U'))|first }}{{ (current_user().prenom|default(''))|first }}</span>
+            </div>
+        </a>
+    </div>
+</header>

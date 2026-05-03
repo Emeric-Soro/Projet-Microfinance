@@ -1,0 +1,4 @@
+framework:
+    lock:
+        eod: ~
+        batch_report: ~

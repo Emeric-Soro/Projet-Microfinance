@@ -1,0 +1,23 @@
+<div class="{{ class|default('') }}" data-controller="money-input">
+    {% if label is defined %}
+        <label for="{{ id|default(name) }}" class="block text-sm font-medium text-on-surface mb-1">
+            {{ label }}
+            {% if required is defined and required %}<span class="text-red-500">*</span>{% endif %}
+        </label>
+    {% endif %}
+    <div class="relative">
+        <input type="text" 
+               id="{{ id|default(name) }}" 
+               name="{{ name|default('') }}"
+               value="{{ value|default('') }}"
+               placeholder="{{ placeholder|default('0') }}"
+               class="mf-input pl-8 pr-16 {{ error|default(false) ? 'border-red-400' : '' }}"
+               data-money-input-target="input"
+               data-action="input->money-input#format"
+               {% if required %}required{% endif %}>
+        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant">XOF</span>
+    </div>
+    {% if error is defined %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+    {% endif %}
+</div>

@@ -1,0 +1,13 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+    {% include '_breadcrumb.html.twig' with {'breadcrumbs': breadcrumbs} %}
+    <div class="page-header mb-4 d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">Notifications</h1>
+        <div class="actions"></div>
+    </div>
+
+    {% include 'components/MfDataTable.html.twig' with {'headers': ['Type','Message','Date','Statut'], 'rows': rows, 'empty_title': 'Aucune notification', 'empty_message': 'Aucune notification pour le moment'} %}
+{% endblock %}

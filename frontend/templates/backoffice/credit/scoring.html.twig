@@ -1,0 +1,103 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Scoring - Demande N°{{ demande.id }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Crédit', url: path('credit_dashboard') }, { label: 'Demandes', url: path('credit_requests') }, { label: 'N°' ~ demande.id ~ ' - Scoring' }] %}
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Scoring - Demande N°{{ demande.id }}</h1>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Récapitulatif</h3>
+            </div>
+            <div class="p-4 space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Score actuel</span>
+                    <span class="font-semibold text-teal-600">{{ scoring.score|default('Non évalué') }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Décision suggérée</span>
+                    <span class="font-medium">{{ scoring.decisionSuggeree|default('En attente') }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="px-4 py-3 border-b border-gray-200">
+                <h3 class="font-semibold text-on-surface">Grille de scoring</h3>
+            </div>
+            <div class="p-4">
+                <form method="post" action="{{ path('credit_scoring', { id: demande.id }) }}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Ancienneté relation client</label>
+                            <select name="critere_anciennete" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="5" {{ scoring.critereAnciennete|default('') == '5' ? 'selected' : '' }}>> 5 ans (5 pts)</option>
+                                <option value="3" {{ scoring.critereAnciennete|default('') == '3' ? 'selected' : '' }}>2-5 ans (3 pts)</option>
+                                <option value="1" {{ scoring.critereAnciennete|default('') == '1' ? 'selected' : '' }}>1-2 ans (1 pt)</option>
+                                <option value="0" {{ scoring.critereAnciennete|default('') == '0' ? 'selected' : '' }}>< 1 an (0 pt)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Situation professionnelle</label>
+                            <select name="critere_emploi" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="5" {{ scoring.critereEmploi|default('') == '5' ? 'selected' : '' }}>CDI / Fonctionnaire (5 pts)</option>
+                                <option value="3" {{ scoring.critereEmploi|default('') == '3' ? 'selected' : '' }}>CDD (3 pts)</option>
+                                <option value="2" {{ scoring.critereEmploi|default('') == '2' ? 'selected' : '' }}>Indépendant (2 pts)</option>
+                                <option value="0" {{ scoring.critereEmploi|default('') == '0' ? 'selected' : '' }}>Sans emploi (0 pt)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Apport personnel</label>
+                            <select name="critere_apport" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="5" {{ scoring.critereApport|default('') == '5' ? 'selected' : '' }}>> 50% (5 pts)</option>
+                                <option value="3" {{ scoring.critereApport|default('') == '3' ? 'selected' : '' }}>25-50% (3 pts)</option>
+                                <option value="1" {{ scoring.critereApport|default('') == '1' ? 'selected' : '' }}>10-25% (1 pt)</option>
+                                <option value="0" {{ scoring.critereApport|default('') == '0' ? 'selected' : '' }}>< 10% (0 pt)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Garanties</label>
+                            <select name="critere_garanties" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="5" {{ scoring.critereGaranties|default('') == '5' ? 'selected' : '' }}>Garanties réelles suffisantes (5 pts)</option>
+                                <option value="3" {{ scoring.critereGaranties|default('') == '3' ? 'selected' : '' }}>Garanties partielles (3 pts)</option>
+                                <option value="1" {{ scoring.critereGaranties|default('') == '1' ? 'selected' : '' }}>Caution solidaire (1 pt)</option>
+                                <option value="0" {{ scoring.critereGaranties|default('') == '0' ? 'selected' : '' }}>Aucune garantie (0 pt)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Historique de remboursement</label>
+                            <select name="critere_historique" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="5" {{ scoring.critereHistorique|default('') == '5' ? 'selected' : '' }}>Excellent (5 pts)</option>
+                                <option value="3" {{ scoring.critereHistorique|default('') == '3' ? 'selected' : '' }}>Bon (3 pts)</option>
+                                <option value="1" {{ scoring.critereHistorique|default('') == '1' ? 'selected' : '' }}>Moyen (1 pt)</option>
+                                <option value="0" {{ scoring.critereHistorique|default('') == '0' ? 'selected' : '' }}>Mauvais (0 pt)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Ratio dette/revenu</label>
+                            <select name="critere_ratio" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="5" {{ scoring.critereRatio|default('') == '5' ? 'selected' : '' }}>< 20% (5 pts)</option>
+                                <option value="3" {{ scoring.critereRatio|default('') == '3' ? 'selected' : '' }}>20-35% (3 pts)</option>
+                                <option value="1" {{ scoring.critereRatio|default('') == '1' ? 'selected' : '' }}>35-50% (1 pt)</option>
+                                <option value="0" {{ scoring.critereRatio|default('') == '0' ? 'selected' : '' }}>> 50% (0 pt)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end gap-3 mt-6">
+                        <a href="{{ path('credit_requests') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">Retour</a>
+                        <button type="submit" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm">Calculer le score</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

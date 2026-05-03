@@ -1,0 +1,47 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}En transit - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Fonds en transit</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Gestion des fonds en transit entre guichets</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1">
+        {% embed component('MfFormCard') with { title: 'Nouveau transit', description: 'Enregistrer un envoi de fonds' } %}
+            {% block form_fields %}
+                <div class="space-y-4">
+                    {% include component('MfInput') with { name: 'guichet_source', label: 'Guichet source', required: true } %}
+                    {% include component('MfInput') with { name: 'guichet_destination', label: 'Guichet destination', required: true } %}
+                    {% include component('MfMoneyInput') with { name: 'montant', label: 'Montant', required: true } %}
+                    {% include component('MfDatePicker') with { name: 'date_envoi', label: 'Date d\'envoi', required: true, value: 'now'|date('Y-m-d') } %}
+                    {% include component('MfInput') with { name: 'reference', label: 'Référence' } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-2">
+        {% embed component('MfDataTable') with {
+            headers: [
+                { key: 'reference', label: 'Référence', sortable: true },
+                { key: 'dateEnvoi', label: 'Date envoi', sortable: true },
+                { key: 'source', label: 'Source', sortable: true },
+                { key: 'destination', label: 'Destination', sortable: true },
+                { key: 'montant', label: 'Montant', sortable: true },
+                { key: 'statut', label: 'Statut' },
+                { key: 'dateReception', label: 'Date réception' },
+            ],
+            rows: inTransit,
+            empty_title: 'Aucun fonds en transit',
+            empty_message: 'Aucun fonds en transit actuellement.',
+        } %}
+            {% block card_content %}
+                {{ parent() }}
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

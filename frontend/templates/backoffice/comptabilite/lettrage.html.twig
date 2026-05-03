@@ -1,0 +1,82 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Lettrage comptable - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Lettrage comptable</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Lettrage des comptes clients, fournisseurs et tiers</p>
+    </div>
+</div>
+
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+<div class="mf-card p-6 mb-6">
+    <form method="get" action="" class="flex flex-wrap gap-4 items-end">
+        <div class="flex-1 min-w-[200px]">
+            <label class="mf-label">Compte à lettrer</label>
+            <select name="compte_id" class="mf-input" required>
+                <option value="">Sélectionner</option>
+                {% for account in accounts %}
+                    <option value="{{ account.id }}" {{ compte_id == account.id ? 'selected' }}>{{ account.numero }} - {{ account.libelle }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="mf-btn-primary">Charger les écritures</button>
+    </form>
+</div>
+
+{% if non_lettrees is not empty %}
+<form method="post" action="{{ path('comptabilite_lettering') }}" class="space-y-4">
+    <input type="hidden" name="compte_id" value="{{ compte_id }}">
+    <input type="hidden" name="date_lettrage" value="{{ 'now'|date('Y-m-d') }}">
+
+    <div class="mf-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="mf-table">
+                <thead>
+                    <tr>
+                        <th class="w-10"><input type="checkbox" id="select-all" onchange="document.querySelectorAll('input[name=\\'ecriture_ids\\[\\]\\']').forEach(el => el.checked = this.checked)"></th>
+                        <th>Date</th>
+                        <th>Pièce</th>
+                        <th>Libellé</th>
+                        <th class="text-right">Débit</th>
+                        <th class="text-right">Crédit</th>
+                        <th>Lettrage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ecriture in non_lettrees %}
+                    <tr class="{{ ecriture.lettre_lettrage ? 'bg-green-50' : '' }}">
+                        <td><input type="checkbox" name="ecriture_ids[]" value="{{ ecriture.id }}" {{ ecriture.lettre_lettrage ? 'checked' : '' }}></td>
+                        <td>{{ ecriture.date_operation|date('d/m/Y') }}</td>
+                        <td class="font-mono">{{ ecriture.piece_reference|default('-') }}</td>
+                        <td>{{ ecriture.libelle }}</td>
+                        <td class="text-right font-mono">{{ ecriture.debit|default(0)|number_format(0, ',', ' ') }}</td>
+                        <td class="text-right font-mono">{{ ecriture.credit|default(0)|number_format(0, ',', ' ') }}</td>
+                        <td>
+                            {% if ecriture.lettre_lettrage %}
+                                <span class="text-xs font-mono bg-green-100 text-green-800 px-2 py-0.5 rounded">{{ ecriture.lettre_lettrage }}</span>
+                            {% else %}
+                                <span class="text-xs text-on-surface-variant">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="flex justify-end gap-3">
+        <span class="text-sm text-on-surface-variant self-center">
+            {{ non_lettrees|filter(e => not e.lettre_lettrage)|length }} écriture(s) non lettrée(s)
+        </span>
+        <button type="submit" class="mf-btn-primary">Lettrer les écritures sélectionnées</button>
+    </div>
+</form>
+{% elseif compte_id %}
+<div class="mf-card p-8 text-center text-on-surface-variant">Toutes les écritures sont lettrées pour ce compte.</div>
+{% endif %}
+{% endblock %}

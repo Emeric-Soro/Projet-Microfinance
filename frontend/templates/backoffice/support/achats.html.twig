@@ -1,0 +1,69 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Achats - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Support', url: path('support_achats') }, { label: 'Achats' }] %}
+
+{% if mode == 'list' %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Achats</h1>
+    <a href="{{ path('support_achats_create') }}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Nouvel achat</a>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Liste des achats' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'reference', label: 'Référence' },
+                { key: 'fournisseur', label: 'Fournisseur' },
+                { key: 'montant', label: 'Montant' },
+                { key: 'date', label: 'Date' },
+                { key: 'statut', label: 'Statut' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% include 'partials/_pagination.html.twig' with { current_page: page, total_pages: pages, total_items: total, route: 'support_achats', query: {} } %}
+
+{% elseif mode == 'create' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Nouvel achat</h1></div>
+{% embed 'components/MfFormCard.html.twig' with { title: 'Création' } %}
+    {% block form_fields %}
+    <form method="post" action="{{ path('support_achats_create') }}">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'reference', label: 'Référence', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'fournisseur', label: 'Fournisseur', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'montant', label: 'Montant', type: 'number', required: true } %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'date', label: 'Date', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'description', label: 'Description' } %}
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Enregistrer</button>
+            <a href="{{ path('support_achats') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+        </div>
+    </form>
+    {% endblock %}
+{% endembed %}
+
+{% elseif mode == 'show' %}
+<div class="mb-6"><h1 class="text-2xl font-heading font-bold">Détails achat</h1></div>
+{% embed 'components/MfCard.html.twig' with { title: 'Informations' } %}
+    {% block card_content %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><strong>Référence:</strong> {{ item.reference ?? '—' }}</div>
+        <div><strong>Fournisseur:</strong> {{ item.fournisseur ?? '—' }}</div>
+        <div><strong>Montant:</strong> {{ item.montant ?? '—' }}</div>
+        <div><strong>Date:</strong> {{ item.date ?? '—' }}</div>
+        <div><strong>Statut:</strong> {% include 'components/MfStatusBadge.html.twig' with { status: item.statut ?? 'EN_ATTENTE' } %}</div>
+        <div><strong>Description:</strong> {{ item.description ?? '—' }}</div>
+    </div>
+    <div class="mt-6 flex gap-3">
+        <a href="{{ path('support_achats') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Retour</a>
+    </div>
+    {% endblock %}
+{% endembed %}
+{% endif %}
+{% endblock %}

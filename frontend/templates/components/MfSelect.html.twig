@@ -1,0 +1,20 @@
+<div class="{{ class|default('') }}">
+    {% if label is defined %}
+        <label for="{{ id|default(name) }}" class="block text-sm font-medium text-on-surface mb-1">
+            {{ label }}
+            {% if required is defined and required %}<span class="text-red-500">*</span>{% endif %}
+        </label>
+    {% endif %}
+    <select id="{{ id|default(name) }}" 
+            name="{{ name|default('') }}"
+            class="mf-input {{ error|default(false) ? 'border-red-400' : '' }}"
+            {% if required is defined and required %}required{% endif %}>
+        <option value="">{{ placeholder|default('Sélectionner...') }}</option>
+        {% for option in options %}
+            <option value="{{ option.value }}" {{ value|default('') == option.value ? 'selected' : '' }}>{{ option.label }}</option>
+        {% endfor %}
+    </select>
+    {% if error is defined %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+    {% endif %}
+</div>

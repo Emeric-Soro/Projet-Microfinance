@@ -1,0 +1,66 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block backoffice_content %}
+<div class="mf-card p-0 overflow-hidden">
+    <div class="p-6 border-b border-teal-100">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-xl font-heading font-semibold text-on-surface">Liste des comptes</h2>
+                <p class="text-sm text-on-surface-variant mt-1">{{ total_items }} compte(s) trouvé(s)</p>
+            </div>
+            <a href="{{ path('account_open') }}" class="mf-btn-primary flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Nouveau compte
+            </a>
+        </div>
+    </div>
+
+    <div class="p-6 border-b border-teal-100 bg-surface">
+        <form method="get" action="{{ path('account_list') }}" class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Rechercher par numéro, client..." class="w-full pl-9 pr-3 py-2 border border-gray-200 rounded text-sm bg-white focus:border-primary focus:ring-1 focus:ring-primary-200">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+            <select name="statut" class="border border-gray-200 rounded text-sm px-3 py-2 bg-white focus:border-primary focus:ring-1 focus:ring-primary-200">
+                <option value="">Tous les statuts</option>
+                <option value="ACTIF" {{ search_query ? '' : '' }}>Actif</option>
+                <option value="BLOQUE">Bloqué</option>
+                <option value="DORMANT">Dormant</option>
+                <option value="FERME">Fermé</option>
+                <option value="PENDING">En attente</option>
+            </select>
+            <select name="type" class="border border-gray-200 rounded text-sm px-3 py-2 bg-white focus:border-primary focus:ring-1 focus:ring-primary-200">
+                <option value="">Tous les types</option>
+                <option value="EPARGNE">Épargne</option>
+                <option value="COURANT">Courant</option>
+                <option value="DEPOT">Dépôt</option>
+            </select>
+            <button type="submit" class="mf-btn-primary">Filtrer</button>
+            <a href="{{ path('account_list') }}" class="mf-btn-secondary">Réinitialiser</a>
+        </form>
+    </div>
+
+    {% include 'components/MfDataTable.html.twig' with {
+        headers: [
+            { key: 'numero', label: 'Numéro' },
+            { key: 'client', label: 'Client' },
+            { key: 'produit', label: 'Produit' },
+            { key: 'solde', label: 'Solde' },
+            { key: 'statut', label: 'Statut' },
+        ],
+        rows: comptes,
+        actions: [
+            { label: 'Détail', url: (row) => path('account_detail', { num: row.numero }), icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
+            { label: 'Bloquer', url: (row) => path('account_block', { num: row.numero }), icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
+        ],
+        empty_title: 'Aucun compte',
+        empty_message: 'Aucun compte trouvé pour les critères sélectionnés.',
+        row_class: (row) => row.statut == 'BLOQUE' ? 'opacity-60' : '',
+    } %}
+
+    {% include 'partials/_pagination.html.twig' with {
+        route: 'account_list',
+        query: { q: search_query, statut: app.request.query.get('statut'), type: app.request.query.get('type') },
+    } %}
+</div>
+{% endblock %}

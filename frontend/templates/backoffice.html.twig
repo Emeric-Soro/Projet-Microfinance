@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="flex h-screen overflow-hidden bg-surface">
+    {# Sidebar #}
+    {% include 'partials/_sidebar.html.twig' %}
+
+    {# Main content area #}
+    <div class="flex-1 flex flex-col overflow-hidden lg:ml-64">
+        {% include 'partials/_topbar.html.twig' %}
+
+        <main class="flex-1 overflow-y-auto p-6">
+            <div class="max-w-container mx-auto">
+                {% include 'partials/_breadcrumb.html.twig' %}
+                {% include 'partials/_flash.html.twig' %}
+                {% block backoffice_content %}{% endblock %}
+            </div>
+        </main>
+
+        <footer class="border-t border-teal-100 bg-white px-6 py-3">
+            <div class="max-w-container mx-auto flex justify-between items-center text-xs text-on-surface-variant">
+                <span>MicroFin v{{ app_version }}</span>
+                <span>&copy; {{ 'now'|date('Y') }} MicroFin. Tous droits réservés.</span>
+            </div>
+        </footer>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+<button type="{{ type|default('button') }}" 
+        class="{% if variant|default('primary') == 'primary' %}mf-btn-primary{% else %}mf-btn-secondary{% endif %} {{ class|default('') }}"
+        {% if disabled is defined and disabled %}disabled{% endif %}
+        {{ attributes|default('')|raw }}>
+    {% if icon is defined %}
+        <svg class="w-4 h-4 {{ label is defined ? 'mr-2' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ icon }}"/></svg>
+    {% endif %}
+    {{ label|default('Bouton') }}
+</button>

@@ -1,0 +1,37 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Préférences Utilisateur{% endblock %}
+
+{% block content %}
+    {% include '_breadcrumb.html.twig' with {'breadcrumbs': breadcrumbs} %}
+    <div class="page-header mb-4 d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">Préférences</h1>
+        <div class="actions"></div>
+    </div>
+
+    <form method="post" class="MfFormCard bg-white rounded-lg shadow-card border-teal-100 p-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label>Langue</label>
+                <select name="language" class="form-control">
+                    <option value="fr" {% if prefs.language == 'fr' %}selected{% endif %}>Français</option>
+                    <option value="en" {% if prefs.language == 'en' %}selected{% endif %}>Anglais</option>
+                </select>
+            </div>
+            <div>
+                <label>Thème</label>
+                <select name="theme" class="form-control">
+                    <option value="dark" {% if prefs.theme == 'dark' %}selected{% endif %}>Sombre</option>
+                    <option value="light" {% if prefs.theme == 'light' %}selected{% endif %}>Clair</option>
+                </select>
+            </div>
+        </div>
+        <div class="mt-4">
+            <label>Notifications</label>
+            <input type="checkbox" name="notifications" {% if prefs.notifications %}checked{% endif %} /> Activer
+        </div>
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Enregistrer les préférences</button>
+        </div>
+    </form>
+{% endblock %}

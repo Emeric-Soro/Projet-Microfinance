@@ -1,0 +1,44 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block backoffice_content %}
+<div class="max-w-2xl mx-auto">
+    <div>
+        <h2 class="text-xl font-heading font-semibold text-on-surface">Changement de produit</h2>
+        <p class="text-sm text-on-surface-variant mt-1">Compte {{ compte.numero }} — Produit actuel : {{ compte.produit_libelle|default('—') }}</p>
+    </div>
+
+    <div class="mt-6 bg-white rounded-lg shadow-card border border-teal-100 p-6">
+        <form method="post" action="{{ path('account_product_change', { num: compte.numero }) }}">
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-2">Nouveau produit</label>
+                    <div class="grid grid-cols-1 gap-3">
+                        {% for product in products %}
+                        <label class="flex items-center gap-3 p-4 border border-gray-200 rounded cursor-pointer hover:border-primary transition-colors">
+                            <input type="radio" name="product_id" value="{{ product.id }}" class="mt-0.5" {{ product.id == compte.produit_id ? 'disabled' : '' }}>
+                            <div>
+                                <p class="text-sm font-medium text-on-surface">{{ product.libelle }}</p>
+                                <p class="text-xs text-on-surface-variant mt-0.5">{{ product.description|default('') }}</p>
+                                {% if product.id == compte.produit_id %}
+                                <span class="inline-block mt-1 text-xs text-primary font-medium">Produit actuel</span>
+                                {% endif %}
+                            </div>
+                        </label>
+                        {% else %}
+                        <p class="text-sm text-on-surface-variant">Aucun autre produit disponible</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Motif du changement</label>
+                    <textarea name="motif" rows="3" class="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary-200" placeholder="Expliquez la raison du changement..." required></textarea>
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-100 mt-6">
+                <a href="{{ path('account_detail', { num: compte.numero }) }}" class="mf-btn-secondary">Annuler</a>
+                <button type="submit" class="mf-btn-primary">Confirmer le changement</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

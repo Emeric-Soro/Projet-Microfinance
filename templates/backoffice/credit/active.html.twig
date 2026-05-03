@@ -1,0 +1,25 @@
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Actifs']} %}
+{% include 'partials/_flash.html.twig' %}
+
+<h1>Crédits actifs</h1>
+
+<section class="MfDataTable">
+    {% if data is defined and data|length > 0 %}
+        <table class="MfDataTable__Table">
+            <thead><tr><th>ID</th><th>Client</th><th>Montant</th><th>État</th><th>Échéance</th></tr></thead>
+            <tbody>
+            {% for c in data %}
+                <tr>
+                    <td>{{ c.id }}</td>
+                    <td>{{ c.client ?? '' }}</td>
+                    <td>{{ c.amount ?? 0 }}</td>
+                    <td>{% include 'partials/_status_badge.html.twig' with {'status': c.status ?? 'en_attente'} %}</td>
+                    <td>{{ c.maturity_date ?? '' }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Aucun crédit actif.</p>
+    {% endif %}
+    </section>

@@ -1,0 +1,15 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block content %}
+  {% include 'backoffice/partials/_breadcrumb.html.twig' with {'path': ['Accueil','Validations/Conformité','Rejeter']} %}
+  <div class="MfCard">
+    <h2>Rejet de la validation</h2>
+    <form method="post" action="/validations/{{ id }}/reject">
+      <div class="MfFormCard">
+        <label for="reason">Raison du rejet</label>
+        <textarea id="reason" name="reason" required></textarea>
+      </div>
+      <button class="MfButton MfButton--secondary" type="submit">Envoyer le rejet</button>
+    </form>
+  </div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Plan comptable - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Plan comptable</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Gestion du plan comptable de l'institution</p>
+    </div>
+    <a href="#" class="mf-btn-primary" data-controller="modal" data-action="click->modal#open" data-modal-target="account-modal">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Nouveau compte
+    </a>
+</div>
+
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+<div class="mf-card p-6 mb-6">
+    <form method="get" action="" class="flex flex-wrap gap-4 items-end">
+        <div class="flex-1 min-w-[200px]">
+            <label class="mf-label">Recherche</label>
+            <input type="text" name="search" value="{{ search }}" class="mf-input" placeholder="Numéro ou libellé...">
+        </div>
+        <div class="w-48">
+            <label class="mf-label">Classe</label>
+            <select name="type" class="mf-input">
+                <option value="">Toutes</option>
+                {% for classe in classes %}
+                    <option value="{{ classe.code }}" {{ type == classe.code ? 'selected' }}>{{ classe.code }} - {{ classe.libelle }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="mf-btn-primary">Filtrer</button>
+        <a href="{{ path('comptabilite_chart') }}" class="mf-btn-secondary">Réinitialiser</a>
+    </form>
+</div>
+
+<div class="mf-card overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="mf-table">
+            <thead>
+                <tr>
+                    <th>Numéro</th>
+                    <th>Libellé</th>
+                    <th>Classe</th>
+                    <th>Type</th>
+                    <th class="text-right">Solde débiteur</th>
+                    <th class="text-right">Solde créditeur</th>
+                    <th class="text-center">Statut</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for account in accounts %}
+                <tr>
+                    <td class="font-mono font-medium">{{ account.numero }}</td>
+                    <td>{{ account.libelle }}</td>
+                    <td>{{ account.classe }}</td>
+                    <td>{{ account.type_compte }}</td>
+                    <td class="text-right font-mono">{{ account.solde_debiteur|number_format(0, ',', ' ') }}</td>
+                    <td class="text-right font-mono">{{ account.solde_crediteur|number_format(0, ',', ' ') }}</td>
+                    <td class="text-center">{% include 'partials/_status_badge.html.twig' with {status: account.statut} %}</td>
+                    <td class="text-center">
+                        <a href="#" class="mf-btn-icon" title="Voir détails">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-8 text-on-surface-variant">Aucun compte trouvé</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'partials/_pagination.html.twig' with {route: 'comptabilite_chart', query: {search: search, type: type}} %}
+</div>
+{% endblock %}

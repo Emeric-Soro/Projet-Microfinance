@@ -1,0 +1,94 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Statistiques clients - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Clients', url: path('client_list') }, { label: 'Statistiques' }] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Statistiques clients</h1>
+</div>
+
+{% include 'components/MfStatsGrid.html.twig' with { cols: 4, stats: [
+    { label: 'Total clients', value: stats.total ?? 0, icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+    { label: 'Clients actifs', value: stats.actifs ?? 0, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+    { label: 'Clients suspendus', value: stats.suspendus ?? 0, icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z', icon_bg: 'bg-yellow-50', icon_color: 'text-yellow-600' },
+    { label: 'Nouveaux ce mois', value: stats.nouveaux_mois ?? 0, icon: 'M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z', icon_bg: 'bg-purple-50', icon_color: 'text-purple-600', variation: stats.nouveaux_variation ?? 0 },
+]} %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Répartition par type' } %}
+        {% block card_content %}
+        <div class="flex items-center justify-center h-64">
+            <div class="text-center">
+                <div class="flex items-center justify-center gap-8">
+                    <div class="text-center">
+                        <p class="text-3xl font-heading font-bold text-primary">{{ stats.physiques ?? 0 }}</p>
+                        <p class="text-sm text-on-surface-variant mt-1">Personnes physiques</p>
+                    </div>
+                    <div class="w-px h-16 bg-gray-200"></div>
+                    <div class="text-center">
+                        <p class="text-3xl font-heading font-bold text-secondary">{{ stats.moraux ?? 0 }}</p>
+                        <p class="text-sm text-on-surface-variant mt-1">Personnes morales</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Répartition par statut' } %}
+        {% block card_content %}
+        <div class="space-y-4">
+            {% set statuts = stats.par_statut ?? { ACTIF: stats.actifs ?? 0, SUSPENDU: stats.suspendus ?? 0, INACTIF: stats.inactifs ?? 0 } %}
+            {% for code, count in statuts %}
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="font-medium text-on-surface">{{ code|trans }}</span>
+                    <span class="text-on-surface-variant">{{ count }}</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    {% set total = stats.total ?? 1 %}
+                    <div class="bg-primary h-2 rounded-full" style="width: {{ (count / total * 100)|round }}%"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endblock %}
+    {% endembed %}
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+    {% embed 'components/MfCard.html' with { title: 'Nouveaux clients' } %}
+        {% block card_content %}
+        <div class="grid grid-cols-2 gap-4 text-center">
+            <div class="p-4 bg-gray-50 rounded-lg">
+                <p class="text-2xl font-heading font-bold text-primary">{{ stats.nouveaux_semaine ?? 0 }}</p>
+                <p class="text-sm text-on-surface-variant">Cette semaine</p>
+            </div>
+            <div class="p-4 bg-gray-50 rounded-lg">
+                <p class="text-2xl font-heading font-bold text-primary">{{ stats.nouveaux_mois ?? 0 }}</p>
+                <p class="text-sm text-on-surface-variant">Ce mois</p>
+            </div>
+        </div>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Par agence' } %}
+        {% block card_content %}
+            {% if stats.par_agence is defined and stats.par_agence is not empty %}
+                <div class="space-y-3">
+                    {% for item in stats.par_agence %}
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                        <span class="text-sm text-on-surface">{{ item.agence ?? item.nom ?? 'Agence' }}</span>
+                        <span class="text-sm font-medium">{{ item.count ?? item.total ?? 0 }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-sm text-on-surface-variant text-center py-8">Aucune donnée par agence.</p>
+            {% endif %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

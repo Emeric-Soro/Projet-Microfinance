@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -44,10 +45,12 @@ public class JournalAppelExterne extends BaseAuditEntity {
     @Column(name = "code_statut_http")
     private Integer codeStatutHttp;
 
-    @Column(name = "request_body", columnDefinition = "TEXT")
+    @Lob
+    @Column(name = "request_body")
     private String requestBody;
 
-    @Column(name = "response_body", columnDefinition = "TEXT")
+    @Lob
+    @Column(name = "response_body")
     private String responseBody;
 
     @Column(name = "ip_source", length = 45)
@@ -62,6 +65,7 @@ public class JournalAppelExterne extends BaseAuditEntity {
     @Column(name = "id_utilisateur")
     private Long idUtilisateur;
 
-    @Column(name = "erreur_message", columnDefinition = "TEXT")
+    @Lob
+    @Column(name = "erreur_message")
     private String erreurMessage;
 }

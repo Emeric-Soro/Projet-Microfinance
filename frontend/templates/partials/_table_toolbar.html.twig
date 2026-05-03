@@ -1,0 +1,33 @@
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+    <div class="flex items-center gap-3 flex-1">
+        <div class="relative flex-1 max-w-xs">
+            <input type="text" 
+                   placeholder="{{ search_placeholder|default('Rechercher...') }}" 
+                   class="w-full pl-9 pr-3 py-2 border border-gray-200 rounded text-sm bg-white focus:border-primary focus:ring-1 focus:ring-primary-200"
+                   data-controller="auto-submit"
+                   data-action="input->auto-submit#debounce">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+        {% if filters is defined %}
+            {% for filter in filters %}
+                <select class="border border-gray-200 rounded text-sm px-3 py-2 bg-white focus:border-primary focus:ring-1 focus:ring-primary-200">
+                    <option value="">{{ filter.label|default('Filtre') }}</option>
+                    {% for option in filter.options %}
+                        <option value="{{ option.value }}">{{ option.label }}</option>
+                    {% endfor %}
+                </select>
+            {% endfor %}
+        {% endif %}
+    </div>
+    <div class="flex items-center gap-2">
+        {% if export_actions is defined and export_actions %}
+            {% include 'partials/_export_actions.html.twig' %}
+        {% endif %}
+        {% if action_button is defined %}
+            <a href="{{ action_button.url }}" class="mf-btn-primary flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                {{ action_button.label }}
+            </a>
+        {% endif %}
+    </div>
+</div>

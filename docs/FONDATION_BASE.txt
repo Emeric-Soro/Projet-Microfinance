@@ -1,0 +1,1224 @@
+================================================================================
+  MICROFIN — FONDATION BASE : ARCHITECTURE GLOBALE & FONDATIONS TECHNIQUES
+  Document de base pour l'implémentation complète du système
+  429 screens | 8 surfaces applicatives | Java + PHP + Flutter
+================================================================================
+
+TABLE DES MATIÈRES
+  1. VISION & PORTÉE DU SYSTÈME
+  2. ARCHITECTURE TECHNIQUE GLOBALE
+  3. PILE TECHNOLOGIQUE COMPLÈTE
+  4. STRUCTURE DES PROJETS (Backend + Frontend + Mobile)
+  5. DICTIONNAIRE DES ENTITÉS FONDAMENTALES
+  6. SYSTÈME DE RÉFÉRENTIEL (Plan Comptable SYSCOHADA)
+  7. SYSTÈME D'AUTHENTIFICATION (JWT + OTP + 2FA + Rôles)
+  8. WORKFLOW MAKER-CHECKER (Principe des 4 yeux)
+  9. WORKFLOW EOD (End Of Day — Clôture Journalière)
+  10. GESTION MULTI-AGENCES
+  11. GESTION DES SESSIONS CAISSE
+  12. SYSTÈME DE TARIFICATION
+  13. SYSTÈME DE COMMISSIONS
+  14. SYSTÈME DE NOTIFICATIONS OMNICHANNEL
+  15. SYSTÈME DE REPORTING & EXPORT
+  16. SYSTÈME D'AUDIT & TRACABILITÉ
+  17. GESTION DES EXERCICES & CLÔTURES
+  18. MATRICE DE PERMISSIONS (Rôles × Modules)
+  19. RÈGLES MÉTIER TRANSVERSES
+  20. CONTRAINTES RÉGLEMENTAIRES UEMOA / BCEAO
+  21. ANNEXES : Schémas d'architecture
+
+
+══════════════════════════════════════════════════════════════════════════════
+  1. VISION & PORTÉE DU SYSTÈME
+══════════════════════════════════════════════════════════════════════════════
+
+  1.1 CONTEXTE
+  MicroFin est un système de Core Banking destiné aux institutions de
+  microfinance de la zone UEMOA. Il couvre l'intégralité des opérations
+  bancaires : gestion des clients, comptes, transactions, crédits,
+  épargne, comptabilité, trésorerie, conformité, et reporting.
+
+  1.2 CIBLES
+  - IMF de taille petite à moyenne (~150 à 5000 clients)
+  - Réseau multi-agences (1 à 20 agences)
+  - Zone UEMOA (Bénin, Burkina, Côte d'Ivoire, Mali, Niger, Sénégal,
+    Togo, Guinée-Bissau)
+
+  1.3 SURFACES APPLICATIVES (8 modules)
+    M01 - Web Opérateur Interne    [247 écrans]  PHP/Symfony
+    M02 - Portail Client Web        [26 écrans]   PHP/Symfony
+    M03 - Mobile Client Flutter     [60 écrans]   Dart/Flutter
+    M04 - Mobile Agent Terrain      [28 écrans]   Dart/Flutter
+    M05 - USSD Banking              [17 écrans]   PHP/Symfony + API
+    M06 - Dashboard Agent Banking   [11 écrans]   PHP/Symfony
+    M07 - Portail Développeur       [13 écrans]   PHP/Symfony
+    M08 - Console Communication     [12 écrans]   PHP/Symfony
+
+  1.4 PRINCIPES FONDAMENTAUX
+    1. Séparation des tâches (Maker-Checker)
+    2. Auditabilité complète (chaque action est tracée)
+    3. Cohérence comptable (double partie, équilibre permanent)
+    4. Multi-devises (XOF principal, autres secondaires)
+    5. Cloisonnement par agence
+    6. Résilience (offline-first pour le terrain)
+    7. Conformité réglementaire BCEAO
+
+
+══════════════════════════════════════════════════════════════════════════════
+  2. ARCHITECTURE TECHNIQUE GLOBALE
+══════════════════════════════════════════════════════════════════════════════
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                      CLIENTS / SURFACES                             │
+  ├───────────────────┬──────────────────┬──────────────────────┬───────┤
+  │   Web Opérateur   │  Portail Client  │  App Mobile Client   │ USSD  │
+  │   (PHP/Symfony)   │  (PHP/Symfony)   │  (Flutter)           │       │
+  ├───────────────────┴──────────────────┴──────────────────────┴───────┤
+  │                       API REST / JSON (HTTPS)                       │
+  │           Authentification JWT + OTP + 2FA + HMAC-SHA256           │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │                   API GATEWAY (Spring Cloud Gateway)                │
+  │           Rate Limiting | Load Balancing | Routing | Logging        │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │                    CŒUR MÉTIER JAVA SPRING BOOT                     │
+  ├──────────┬──────────┬──────────┬──────────┬──────────┬─────────────┤
+  │ Clients  │ Comptes  │Transactions│ Crédit  │ Épargne  │ Conformité  │
+  │ Compta   │ Caisse   │ Paiements │ Risques  │ Scoring  │ Admin/Sécu  │
+  ├──────────┴──────────┴──────────┴──────────┴──────────┴─────────────┤
+  │                         BASE DE DONNÉES                             │
+  │                     Oracle 21c XE / PostgreSQL                      │
+  │              Flyway Migrations | JPA/Hibernate 6 | MapStruct        │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │               SERVICES D'INFRASTRUCTURE                             │
+  ├────────┬────────┬────────┬────────┬─────────┬────────┬─────────────┤
+  │ Redis  │RabbitMQ│  SMTP  │ SMS/   │ Firebase│MinIO/S3│ Mercure     │
+  │ Cache  │  Queue │ Mail   │ USSD   │   Push  │  Docs  │ Notif temps │
+  │        │        │        │Gateway │         │        │   réel      │
+  └────────┴────────┴────────┴────────┴─────────┴────────┴─────────────┘
+
+  2.1 SCHÉMA DE COMMUNICATION
+  ┌────────────┐     HTTP/JSON JWT      ┌──────────────┐
+  │  Symfony   │ ◄──────────────────────►│  Java Spring │
+  │  Frontend  │     (microfin-api)      │  Boot API    │
+  │           │                          │              │
+  │  Twig +   │                          │  32 Ctrl     │
+  │  Stimulus │                          │  49 Services │
+  │  Tailwind │                          │  104 Entities│
+  └────────────┘                          └──────────────┘
+        │                                         │
+        │                                         │
+  ┌─────┴──────┐                          ┌───────┴──────┐
+  │  Flutter   │◄────────────────────────►│   Oracle 21c │
+  │  Mobile    │     REST + JWT + OTP     │   Database   │
+  │            │                          │   (104 tbl)  │
+  └────────────┘                          └──────────────┘
+
+  2.2 PATRON ARCHITECTURE BACKEND (Spring Boot)
+    ┌─ Controller Layer (@RestController)
+    │   - Valide les entrées (DTO validation)
+    │   - Gère les codes HTTP (200, 201, 202, 404, 409, etc.)
+    │   - Délègue au Service Layer
+    ├─ Service Layer (@Service)
+    │   - Logique métier + transactions
+    │   - Orchestration des Repository + EntityManager
+    │   - Génération des événements (EventDispatcher)
+    ├─ Repository Layer (@Repository Spring Data JPA)
+    │   - Accès DB : queries dérivées, JPQL, Criteria, native
+    ├─ Entity Layer (@Entity JPA)
+    │   - Mapping Oracle (tables, séquences, contraintes)
+    ├─ DTO Layer (MapStruct)
+    │   - Mapping Entity ↔ Request/Response DTO
+    ├─ Maker-Checker Layer (aspect)
+    │   - Points de coupe AOP pour les 69 actions M-C
+    └─ Audit Layer (AOP @AuditLog)
+        - Capture : qui, quoi, quand, IP, action, ancienne/nouvelle valeur
+
+  2.3 PATRON ARCHITECTURE FRONTEND (Symfony)
+    ┌─ Controller Layer (@Controller)
+    │   - Routes Symfony (annotations)
+    │   - Appels à l'API Java via HttpClient
+    │   - Rendu Twig
+    ├─ Service Layer (@Service)
+    │   - ApiClientService (wrapper HttpClient)
+    │   - CacheService (gestion cache Redis)
+    │   - AuthService (JWT management côté front)
+    ├─ Twig Template Layer
+    │   - Layouts : base, backoffice, auth, client
+    │   - Partials : sidebar, topbar, table-toolbar, status-badge
+    │   - UX Components : DataTable, FormModal, etc.
+    ├─ Form Layer (Symfony Forms)
+    │   - FormType avec validation constraints
+    │   - CSRF protection intégrée
+    └─ Stimulus/JS Layer
+        - LiveComponent : mises à jour temps réel
+        - Autocomplete : recherche clients/comptes
+        - Dropzone : upload documents
+        - Chart.js : graphiques dashboards
+
+
+══════════════════════════════════════════════════════════════════════════════
+  3. PILE TECHNOLOGIQUE COMPLÈTE
+══════════════════════════════════════════════════════════════════════════════
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │                   BACKEND (Core Banking)                             │
+  ├──────────────────────┬───────────────────────────────────────────────┤
+  │ Langage              │ Java 21 (LTS)                                 │
+  │ Framework            │ Spring Boot 3.5                               │
+  │ ORM                  │ JPA/Hibernate 6 + Oracle 21c XE               │
+  │ Mapping             │ MapStruct (Entity ↔ DTO)                       │
+  │ Sécurité             │ Spring Security 6 + JWT (RS256)               │
+  │ Batch                │ Spring Batch 5 (EOD, calculs, reporting)      │
+  │ API                  │ REST JSON + OpenAPI 3.0 + Swagger             │
+  │ Messaging            │ Spring Event + RabbitMQ (async)               │
+  │ Migrations           │ Flyway 10 (Oracle-compatible)                 │
+  │ Audit                │ AOP @AuditLog annotation                      │
+  │ Tâches planifiées    │ @Scheduled + Spring Batch                     │
+  │ Validation           │ Jakarta Validation (Hibernate Validator)      │
+  │ Cache                │ Redis (second-level cache, sessions)          │
+  │ Tests                │ JUnit 5 + Mockito + Testcontainers            │
+  ├──────────────────────┴───────────────────────────────────────────────┤
+  │                   FRONTEND (Web Back-Office)                         │
+  ├──────────────────────┬───────────────────────────────────────────────┤
+  │ Langage              │ PHP 8.2+                                      │
+  │ Framework            │ Symfony 7.2                                   │
+  │ Template             │ Twig 3.x (extends + components + UX)          │
+  │ CSS                  │ Tailwind CSS 3.x (design system DESIGN.md)    │
+  │ JS                   │ Stimulus 3.x + Turbo + Chart.js               │
+  │ API Client           │ Symfony HttpClient                            │
+  │ Export               │ PHPSpreadsheet + KnpSnappy (PDF)               │
+  │ Forms                │ Symfony Form + Validation                     │
+  │ Auth                 │ JWT (via LexikJWTAuthenticationBundle)        │
+  │ 2FA                  │ scheb/2fa (TOTP/Email)                        │
+  ├──────────────────────┴───────────────────────────────────────────────┤
+  │                   MOBILE (Client + Agent)                            │
+  ├──────────────────────┬───────────────────────────────────────────────┤
+  │ Framework            │ Flutter 3.x / Dart 3.x                        │
+  │ State Management     │ BLoC / Cubit                                  │
+  │ Local Storage        │ Sembast / SQLite                              │
+  │ HTTP Client          │ Dio + Retrofit                                │
+  │ WebSocket            │ web_socket_channel (Mercure)                  │
+  │ Maps                 │ Mapbox / OpenStreetMap (agent terrain)        │
+  │ Biometrics           │ local_auth (fingerprint/face)                 │
+  │ Camera/QR            │ camera + qr_flutter                           │
+  │ Charts               │ fl_chart                                      │
+  └──────────────────────┴───────────────────────────────────────────────┘
+
+  3.1 EXTENSIONS & SERVICES TIERS
+  ┌──────────────────────┬───────────────────────────────────────────────┐
+  │ SMS / USSD           │ Africa's Talking API                         │
+  │ WhatsApp Business    │ Meta Cloud API (netflie/whatsapp-cloud-api)  │
+  │ Push Notifications   │ Firebase Cloud Messaging (FCM)                │
+  │ Email                │ SMTP transactional (SendGrid/Mailgun/SES)     │
+  │ Notifications temps  │ Mercure (SSE over HTTP/2)                    │
+  │ réel                 │                                               │
+  │ Stockage documents   │ MinIO / S3 (KYC, contrats, pièces)           │
+  │ Monitoring           │ Sentry (error tracking)                       │
+  │ Ordonnancement       │ Symfony Scheduler + Spring @Scheduled          │
+  │ Cache                │ Redis 7.x (session, query, template)         │
+  │ File d'attente       │ RabbitMQ 3.x (Messenger/Spring events)       │
+  └──────────────────────┴───────────────────────────────────────────────┘
+
+
+══════════════════════════════════════════════════════════════════════════════
+  4. STRUCTURE DES PROJETS
+══════════════════════════════════════════════════════════════════════════════
+
+  4.1 BACKEND (Java Spring Boot)
+  ┌── microfin-api/
+  │   ├── src/main/java/com/microfin/
+  │   │   ├── config/            (Spring Security, JWT, CORS, Swagger)
+  │   │   │   ├── jwt/           (JwtTokenProvider, JwtAuthFilter)
+  │   │   │   ├── audit/         (AuditAspect, AuditLog annotation)
+  │   │   │   ├── validation/    (MakerCheckerAspect)
+  │   │   │   ├── locale/        (LocaleResolver, MessageSource)
+  │   │   │   └── scheduler/     (TaskScheduler)
+  │   │   ├── controller/        (32 RestControllers)
+  │   │   ├── service/           (49 Services métier)
+  │   │   ├── repository/        (98 JPA Repositories)
+  │   │   ├── entity/            (104 JPA Entities)
+  │   │   ├── dto/               (DTO Request/Response + MapStruct)
+  │   │   ├── mapper/            (MapStruct mappers)
+  │   │   ├── exception/         (GlobalExceptionHandler + codes)
+  │   │   └── batch/             (Spring Batch jobs)
+  │   ├── src/main/resources/
+  │   │   ├── db/migration/      (28 Flyway migrations)
+  │   │   └── application.yml
+  │   └── pom.xml
+
+  4.2 FRONTEND (PHP Symfony)
+  ┌── microfin-front/
+  │   ├── src/
+  │   │   ├── Controller/        (Controllers Symfony)
+  │   │   ├── Service/           (ApiClient, Auth, Cache)
+  │   │   ├── Form/              (FormTypes, Validation)
+  │   │   └── Twig/              (Extensions, Components)
+  │   ├── templates/
+  │   │   ├── base.html.twig     (Layout principal DESIGN.md)
+  │   │   ├── auth/              (Login, OTP, 2FA, Reset)
+  │   │   ├── backoffice/        (Layout + sidebar + topbar)
+  │   │   ├── client/            (Layout portail client)
+  │   │   ├── agent/             (Layout agent banking)
+  │   │   ├── developer/         (Layout portail développeur)
+  │   │   ├── communication/     (Layout console communication)
+  │   │   ├── partials/          (Reusable: datatable, pagination,
+  │   │   │                       status-badge, modal, card, etc.)
+  │   │   └── components/        (Twig components: MfCard, MfTable,
+  │   │                            MfForm, MfMenu, etc.)
+  │   ├── assets/
+  │   │   ├── css/               (Tailwind DESIGN.md tokens)
+  │   │   ├── js/                (Stimulus controllers)
+  │   │   └── images/            (Logo, icônes)
+  │   ├── translations/          (messages.fr.yaml)
+  │   └── config/                (packages/, routes/, services.yaml)
+
+  4.3 MOBILE FLUTTER
+  ┌── microfin-mobile/
+  │   ├── lib/
+  │   │   ├── app/
+  │   │   │   ├── routes.dart
+  │   │   │   └── theme.dart     (DESIGN.md tokens Flutter)
+  │   │   ├── auth/              (BLoC, pages: login, otp)
+  │   │   ├── accounts/          (BLoC, pages: list, detail)
+  │   │   ├── transfers/         (BLoC, pages: send, confirm)
+  │   │   ├── loans/             (pages: list, detail, request)
+  │   │   ├── cards/             (pages: list, detail, block)
+  │   │   ├── bills/             (pages: pay, history)
+  │   │   ├── notifications/     (pages: list, detail)
+  │   │   ├── profile/           (pages: edit, security)
+  │   │   ├── agent/             (pages: collect, enroll, sync)
+  │   │   └── widgets/           (MfCard, MfButton, MfTextField, etc.)
+  │   └── pubspec.yaml
+
+
+══════════════════════════════════════════════════════════════════════════════
+  5. DICTIONNAIRE DES ENTITÉS FONDAMENTALES
+══════════════════════════════════════════════════════════════════════════════
+
+  5.1 CLIENTS
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ CLIENT (personne_physique / personne_morale)                        │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ id_client (PK, SEQUENCE)                                            │
+  │ type_client (PHYSIQUE | MORALE)                                     │
+  │ code_client (unique, généré auto: MF-CLI-YYYY-NNNNNN)              │
+  │                                                                     │
+  │ [PHYSIQUE]                                                          │
+  │ nom, prenom, date_naissance, lieu_naissance, sexe                   │
+  │ nationalite, profession, secteur_activite                           │
+  │ type_piece_identite (CNI|PASSEPORT|PERMIS|ATTESTATION)              │
+  │ numero_piece, date_delivrance, date_expiration                      │
+  │ telephone1, telephone2, email                                        │
+  │ adresse_geo (region, departement, commune, quartier)                │
+  │ adresse_postale, situation_matrimoniale, nombre_enfants             │
+  │ nom_mere, nom_pere                                                  │
+  │                                                                     │
+  │ [MORALE]                                                            │
+  │ raison_sociale, sigle, forme_juridique                              │
+  │ date_creation, numero_rc, numero_cc, numero_ifu                    │
+  │ capital_social, siege_social                                        │
+  │ representant_legal, responsable_comptable                           │
+  │                                                                     │
+  │ statut_kyc (EN_ATTENTE | VALIDE | REJETE | EN_REVISION)             │
+  │ niveau_risque (FAIBLE | MOYEN | ELEVE)                              │
+  │ statut_client (ACTIF | SUSPENDU | BLOQUE | RADIE | DECEDE)          │
+  │ date_creation, date_derniere_modification                           │
+  │ id_agence_principale                                                │
+  │ id_agent_createur                                                   │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  5.2 COMPTES
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ COMPTE                                                              │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ id_compte (PK)                                                      │
+  │ numero_compte (unique: MF-YYYY-AGENCE-NNNNNN)                      │
+  │ id_client (FK)                                                      │
+  │ id_produit (FK → type_compte)                                       │
+  │ code_type_compte (COURANT | EPARGNE | DEPOT_TERME | PRET)          │
+  │                                                                     │
+  │ devise (XOF)                                                        │
+  │ solde (BIG_DECIMAL, precision 14, echelle 2)                        │
+  │ solde_disponible, solde_epingle, solde_bloque                      │
+  │ decouvert_autorise, decouvert_utilise                               │
+  │ plafond_retrait_journalier, plafond_retrait_mensuel                 │
+  │                                                                     │
+  │ statut_compte (ACTIF | BLOQUE | OPPOSE | CLOTURE | DORMANT)        │
+  │ date_ouverture, date_derniere_operation                             │
+  │ motif_blocage, date_blocage, date_deblocage                        │
+  │ motif_opposition, date_opposition                                  │
+  │                                                                     │
+  │ id_agence (FK)                                                      │
+  │ id_guichetier_createur                                              │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  5.3 TRANSACTIONS
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ TRANSACTION                                                         │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ id_transaction (PK)                                                 │
+  │ reference (unique: MF-TXN-YYYY-NNNNNN)                             │
+  │ type_operation (DEPOT | RETRAIT | VIREMENT | PAIEMENT |            │
+  │                 REMBOURSEMENT | APPROVISIONNEMENT | DELESTAGE |     │
+  │                 FRAIS | INTERET | COMMISSION | EXTORNE |            │
+  │                 ANNULATION | OPPOSITION | DECOUVERT)                │
+  │ sens (DEBIT | CREDIT)                                               │
+  │ montant, frais, montant_total                                       │
+  │ devise, taux_change                                                 │
+  │                                                                     │
+  │ id_compte_source, id_compte_destination                             │
+  │ id_client, id_guichetier                                            │
+  │ id_agence, id_session_caisse                                        │
+  │                                                                     │
+  │ statut (EN_ATTENTE | EXECUTEE | ANNULEE | REJETEE | EXTORNEE)      │
+  │ seuil_valide (true/false → validation superviseur)                  │
+  │ motif, reference_externe                                              │
+  │                                                                     │
+  │ timestamp_creation, timestamp_execution, timestamp_validation       │
+  │ id_createur, id_validateur                                         │
+  │ checksum (HMAC du montant + compte + timestamp)                    │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  5.4 CRÉDITS
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ CREDIT                                                              │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ id_credit (PK)                                                      │
+  │ id_demande (FK → demande_credit)                                    │
+  │ id_client, id_produit_credit                                        │
+  │ reference (MF-CRE-YYYY-NNNNNN)                                     │
+  │                                                                     │
+  │ montant_approuve, montant_debloque, montant_restant                 │
+  │ duree_mois, nombre_echeances                                        │
+  │ taux_interet_annuel, taux_interet_nominal                            │
+  │ taux_penalite_retard, frais_dossier                                 │
+  │ periodicite (MENSUEL | TRIMESTRIEL | SEMESTRIEL | ANNUEL)           │
+  │ mode_amortissement (FRANCAIS | CONSTANT | BULLET | DIFFERE)        │
+  │ differe_periode, differe_type (PARTIEL | TOTAL)                    │
+  │                                                                     │
+  │ statut (SOUMIS | EN_ANALYSE | APPROUVE | REFUSE | DEBLOQUE |       │
+  │         EN_COURS | EN_RETARD | IMPAYE | RESTRUCTURE | SOLDE |      │
+  │         PASSE_EN_PERTE)                                             │
+  │ date_approbation, date_deblocage, date_premiere_echeance           │
+  │ date_dernier_remboursement, date_echeance_fin                      │
+  │                                                                     │
+  │ id_agent_saisie, id_agent_decision, id_agent_deblocage             │
+  │ comite_decision (texte libre: membres du comité)                   │
+  │                                                                     │
+  │ montant_provision, taux_provision                                   │
+  │ classe_risque (SAIN | SENSIBLE | IMPACTE | NON_PERFORMANT |        │
+  │               DOUTEUX | COMPROMIS)                                  │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  5.5 ÉPARGNE
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ EPARGNE / DAT                                                       │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ id_epargne (PK)                                                     │
+  │ type (EPARGNE_LIBRE | EPARGNE_PROGRAMMEE | DEPOT_A_TERME |         │
+  │       EPARGNE_OBLIGATOIRE | TONTINE)                               │
+  │ id_client, id_compte, id_produit_epargne                            │
+  │                                                                     │
+  │ [DEPOT_A_TERME]                                                    │
+  │ montant_depot, duree_mois, taux_interet                             │
+  │ date_souscription, date_echeance                                    │
+  │ modalite_revient (CAPITAL_INTERETS | CAPITAL_SEUL | INTERETS_SEUL) │
+  │ renouvellement_automatique (true/false)                             │
+  │                                                                     │
+  │ solde_actuel, interets_acquis, interets_verses                     │
+  │ statut (ACTIF | ARRIVE_A_TERME | RENOUVELE | CLOTURE)              │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  5.6 CAISSE / SESSION
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ CAISSE / SESSION_CAISSE / COFFRE                                    │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ CAISSE                                                              │
+  │ id_caisse, code_caisse, libelle, id_agence, id_guichetier          │
+  │ devise, statut (ACTIVE | SUSPENDUE | FERMEE)                       │
+  │                                                                     │
+  │ SESSION_CAISSE                                                      │
+  │ id_session, id_caisse, id_guichetier                               │
+  │ date_ouverture, heure_ouverture, date_fermeture                    │
+  │ solde_ouverture, solde_encaisse, solde_theorique                   │
+  │ solde_physique, ecart, ecart_regularise                            │
+  │ statut (OUVERTE | EN_COURS | FERMEE | CONTROLEE | VALIDEE)        │
+  │ motif_regularisation                                               │
+  │                                                                     │
+  │ COFFRE (Vault central)                                              │
+  │ id_coffre, code_coffre, libelle, id_agence                         │
+  │ solde, devise, statut                                              │
+  │                                                                     │
+  │ MOUVEMENT_COFFRE                                                    │
+  │ id_mouvement, type (APPROVISIONNEMENT | DELESTAGE | TRANSFERT)     │
+  │ montant, id_session, id_guichetier, date, statut                   │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  5.7 COMPTABILITÉ
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ COMPTE_COMPTABLE / JOURNAL / ECRITURE / PIECE / EXERCICE            │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ CLASSE_COMPTABLE (1-8 SYSCOHADA)                                    │
+  │ id_classe, numero, libelle                                          │
+  │                                                                     │
+  │ COMPTE_COMPTABLE                                                    │
+  │ id_compte_cpt, id_classe, numero_compte, libelle                   │
+  │ type (BILAN | GESTION | HORS_BILAN)                                │
+  │ sens (DEBITEUR | CREDITEUR | BIDIRECTIONNEL)                        │
+  │ niveau (RACINE | INTERMEDIAIRE | FOLIO)                            │
+  │ solde_initial, solde_debit, solde_credit, solde_net                │
+  │                                                                     │
+  │ JOURNAL                                                             │
+  │ id_journal, code (AC | AN | OD | VT | CT | CA | ...)              │
+  │ libelle, type (ACHATS | VENTES | OPERATIONS_DIVERSES | BANQUE |    │
+  │        CAISSE | STOCK | SALAIRES | IMMOBILISATIONS)                │
+  │                                                                     │
+  │ ECRITURE_COMPTABLE                                                  │
+  │ id_ecriture, id_journal, date_ecriture, numero_piece               │
+  │ id_compte, libelle_ecriture                                        │
+  │ montant_debit, montant_credit                                       │
+  │ id_piece_comptable, id_transaction (nullable)                      │
+  │                                                                     │
+  │ EXERCICE                                                            │
+  │ id_exercice, code, date_debut, date_fin                            │
+  │ cloture_mensuelle (true/false), date_cloture_mensuelle             │
+  │ cloture_annuelle (true/false), date_cloture_annuelle               │
+  │ statut (OUVERT | EN_COURS_CLOTURE | CLOTURE_MENSUELLE |            │
+  │        CLOTURE_ANNUEL)                                              │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  5.8 AGENCE / ORGANISATION
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ REGION / AGENCE / GUICHET                                           │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ REGION                                                              │
+  │ id_region, code_region, libelle, pays                              │
+  │                                                                     │
+  │ AGENCE                                                              │
+  │ id_agence, code_agence, libelle                                    │
+  │ id_region, ville, adresse, telephone, email                         │
+  │ responsable_agence                                                  │
+  │ statut (ACTIVE | SUSPENDUE | FERMEE)                                │
+  │                                                                     │
+  │ GUICHET                                                             │
+  │ id_guichet, code_guichet, libelle, id_agence                       │
+  │ statut                                                              │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  5.9 SÉCURITÉ
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ UTILISATEUR / ROLE / PERMISSION / SESSION_AUTH                     │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ UTILISATEUR                                                         │
+  │ id_user, login, mot_de_passe (bcrypt)                              │
+  │ nom, prenom, email, telephone                                      │
+  │ id_agence_principale                                                │
+  │ actif, compte_verrouille, tentative_echouees                       │
+  │ otp_secret (TOTP), otp_active, otp_email                           │
+  │ 2fa_active, date_derniere_connexion                                 │
+  │ date_expiration_mot_de_passe                                        │
+  │                                                                     │
+  │ ROLE                                                                │
+  │ id_role, code (ADMIN | SUPERVISEUR | GUICHETIER | CLIENT |         │
+  │              MANAGER | AGENT_TERRAIN | AGENT_BANKING |             │
+  │              PARTENAIRE_API | AUDITEUR | COMPTABLE)                │
+  │ libelle                                                            │
+  │                                                                     │
+  │ PERMISSION                                                          │
+  │ id_permission, code, libelle, module                               │
+  │                                                                     │
+  │ ROLE_PERMISSION (table pivot)                                      │
+  │ id_role, id_permission                                              │
+  │                                                                     │
+  │ USER_ROLE (table pivot)                                            │
+  │ id_user, id_role, id_agence (scope)                                │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  5.10 AUDIT
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ AUDIT_LOG / MAKER_CHECKER_ACTION                                   │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ AUDIT_LOG                                                           │
+  │ id_audit, action, ressource, id_ressource                          │
+  │ id_user, nom_user, id_agence                                       │
+  │ ancienne_valeur (JSON), nouvelle_valeur (JSON)                     │
+  │ ip_adresse, user_agent, id_session                                 │
+  │ correlation_id, timestamp                                          │
+  │                                                                     │
+  │ MAKER_CHECKER_ACTION                                                 │
+  │ id_action, type_action, id_reference                               │
+  │ statut (EN_ATTENTE | APPROUVEE | REJETEE)                          │
+  │ donnees_soumises (JSON), commentaire_maker                         │
+  │ commentaire_validation, id_maker, id_checker                       │
+  │ date_creation, date_decision, date_expiration                      │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+══════════════════════════════════════════════════════════════════════════════
+  6. SYSTÈME DE RÉFÉRENTIEL (Plan Comptable SYSCOHADA)
+══════════════════════════════════════════════════════════════════════════════
+
+  Le plan comptable SYSCOHADA révisé est utilisé. La structure est la
+  suivante :
+
+  CLASSE 1 : Comptes de ressources durables
+    10 - Capital et réserves
+    11 - Report à nouveau
+    12 - Résultat
+    13 - Subventions et provisions réglementées
+    14 - Emprunts et dettes assimilées
+    15 - Provisions pour risques et charges
+    16 - ...
+
+  CLASSE 2 : Comptes d'actif immobilisé
+    20 - Immobilisations incorporelles
+    21 - Immobilisations corporelles
+    22 - Immobilisations locatives
+    23 - Immobilisations en cours
+    24 - Immobilisations financières
+    25 - Créances financières
+    26 - Titres de participation
+    27 - ...
+
+  CLASSE 3 : Comptes de stocks
+
+  CLASSE 4 : Comptes de tiers
+    40 - Fournisseurs
+    41 - Clients
+    42 - Personnel
+    43 - Organismes sociaux
+    44 - État et collectivités
+    45 - Comptes de liaison des établissements
+    46 - Comptes de créances diverses
+    47 - Comptes de règlement avec les banques
+    48 - Comptes d'attente
+    49 - Provisions pour dépréciation des tiers
+
+  CLASSE 5 : Comptes de trésorerie
+    50 - Valeurs à encaisser
+    51 - Banques
+    52 - Caisses
+    53 - Caisse d'épargne
+    54 - Comptes de correspondants
+    55 - Comptes de trésorerie inter-agences
+    58 - Virements internes
+    59 - Provisions pour dépréciation de la trésorerie
+
+  CLASSE 6 : Comptes de charges
+    60 - Achats
+    61 - Transports
+    62 - Services extérieurs
+    63 - Impôts et taxes
+    64 - Charges de personnel
+    65 - Frais de gestion
+    66 - Charges financières
+    67 - Charges exceptionnelles
+    68 - Dotations aux amortissements et provisions
+
+  CLASSE 7 : Comptes de produits
+    70 - Ventes
+    71 - Subventions d'exploitation
+    72 - Production immobilisée
+    73 - Production stockée
+    74 - Autres produits
+    75 - Produits financiers
+    76 - Produits exceptionnels
+    77 - Reprises de provisions
+
+  CLASSE 8 : Comptes spéciaux
+    80 - Engagements hors-bilan
+    81 - Contrepartie des engagements hors-bilan
+    88 - Résultats hors exploitation
+
+
+══════════════════════════════════════════════════════════════════════════════
+  7. SYSTÈME D'AUTHENTIFICATION
+══════════════════════════════════════════════════════════════════════════════
+
+  7.1 FLUX COMPLET
+  ┌────────────┐     ┌────────────┐     ┌────────────┐     ┌──────────────┐
+  │  Login     │────▶│  Vérif.   │────▶│  Vérif.   │────▶│  2FA (si     │
+  │  step 1    │     │  Password │     │  OTP (si  │     │  activé)     │
+  │            │     │  (bcrypt) │     │  activé)  │     │  TOTP/Email  │
+  └────────────┘     └────────────┘     └────────────┘     └──────┬───────┘
+                                                                  │
+                                                                  ▼
+                                                          ┌──────────────┐
+                                                          │   JWT émis   │
+                                                          │  (RS256)     │
+                                                          │  + Refresh   │
+                                                          └──────────────┘
+
+  7.2 TOKEN JWT
+  {
+    "sub": "jkouame",
+    "id": 42,
+    "roles": ["ROLE_GUICHETIER", "ROLE_SUPERVISEUR"],
+    "permissions": ["PERM_CREDIT_VIEW", "PERM_CLIENT_CREATE"],
+    "id_agence": 3,
+    "agences": [3, 5],
+    "iat": 1745190000,
+    "exp": 1745193600,
+    "2fa": true
+  }
+
+  7.3 RAYONNAGE
+  - GUICHETIER : données de son agence uniquement
+  - SUPERVISEUR : données de ses agences assignées
+  - ADMIN : toutes les données
+  - CLIENT : ses propres données
+
+
+══════════════════════════════════════════════════════════════════════════════
+  8. WORKFLOW MAKER-CHECKER (Principe des 4 yeux)
+══════════════════════════════════════════════════════════════════════════════
+
+  PRINCIPE :
+  Toute action critique (69 actions) doit être créée par un utilisateur
+  (Maker), puis approuvée par un autre utilisateur (Checker) ayant les
+  permissions requises.
+
+  FLUX GÉNÉRIQUE :
+  1. Maker soumet une action → POST /api/validations/actions-en-attente
+     → Statut: EN_ATTENTE → Réponse HTTP 202 Accepted
+  2. checker (≠ maker) consulte la file d'attente
+  3. Checker examine les détails de l'action
+  4. Checker approuve → PUT /decision → Statut: APPROUVEE
+     → L'action réelle est exécutée
+  5. OU Checker rejette → PUT /decision → Statut: REJETEE
+     → L'action est annulée, motif requis
+  6. OU Checker renvoie pour correction → Statut: EN_CORRECTION
+     → Le maker modifie et resoumet
+
+  LISTE DES 69 ACTIONS MAKER-CHECKER (par module) :
+  Organisation :
+    - Création d'agence, de guichet, de région
+    - Affectation d'utilisateur à une agence
+    - Mutation de personnel
+    - Paramètres agence
+
+  Crédit :
+    - Création de produit de crédit
+    - Décision de crédit (approbation/rejet)
+    - Déblocage de crédit
+    - Restructuration de crédit
+    - Report d'échéance
+    - Passage en perte
+    - Enregistrement de garantie
+
+  Comptabilité :
+    - Création de classe, compte, journal, schéma comptable
+    - Écriture manuelle
+    - Clôture comptable (mensuelle, annuelle)
+
+  Caisse/Trésorerie :
+    - Création de caisse, coffre
+    - Ouverture de session caisse
+    - Fermeture de session caisse
+    - Approvisionnement, délestage
+
+  Opérations :
+    - Annulation de transaction
+    - Extourne de transaction
+    - Blocage/déblocage de compte
+    - Clôture de compte
+
+  Conformité :
+    - Alerte conformité
+    - Rapport réglementaire
+    - Rescannage client/transaction
+
+  Risques :
+    - Création risque
+    - Déclaration d'incident
+    - Stress test
+
+  Paiements :
+    - Opérateur mobile money
+    - Wallet client
+    - Transaction mobile money
+    - Lot de compensation
+    - Ordre de paiement
+
+  Sécurité :
+    - Création de permission
+    - Mise à jour permission
+    - Suppression permission
+    - Affectation permission
+
+  Support :
+    - Budget
+    - Fournisseur
+    - Commande d'achat
+    - Bulletin de paie
+    - Immobilisation
+
+  Digital :
+    - Partenaire API
+    - Employé
+
+
+══════════════════════════════════════════════════════════════════════════════
+  9. WORKFLOW EOD (End Of Day)
+══════════════════════════════════════════════════════════════════════════════
+
+  SÉQUENCE COMPLÈTE DE LA CLÔTURE JOURNALIÈRE :
+
+  1. VÉRIFICATIONS PRÉALABLES
+     - Toutes les sessions caisses sont-elles fermées ?
+     - Tous les comptes sont-ils équilibrés ?
+     - Pas d'écritures en attente ?
+
+  2. ÉTAPES EOD (ordre impératif)
+     a. Calcul des intérêts créditeurs (épargne)
+     b. Calcul des intérêts débiteurs (crédit)
+     c. Calcul des agios et frais de tenue de compte
+     d. Détection des impayés (crédits en retard)
+     e. Calcul des provisions (créances en souffrance)
+     f. Lettrage automatique des comptes
+     g. Report des soldes (balance du jour)
+     h. Écritures de clôture (journal OD)
+     i. Mise à jour des statuts (crédits, épargne)
+     j. Génération des rapports journaliers
+     k. Archivage des données du jour
+     l. Ouverture du nouveau jour comptable
+
+  3. ÉTATS POST-EOD
+     - Balance du jour (avant/après)
+     - Rapport des intérêts calculés
+     - Liste des impayés détectés
+     - Rapport des provisions
+     - Rapport d'exécution (succès/échecs par étape)
+
+  4. GESTION DES ÉCHECS
+     - Arrêt sur erreur (pas d'exécution partielle)
+     - Restart possible depuis l'étape échouée
+     - Notification automatique à l'administrateur
+     - Log complet de chaque étape
+
+
+══════════════════════════════════════════════════════════════════════════════
+  10. GESTION MULTI-AGENCES
+══════════════════════════════════════════════════════════════════════════════
+
+  PRINCIPES :
+  - Chaque agence est autonome avec ses propres caisses
+  - Un utilisateur peut être affecté à une ou plusieurs agences
+  - Un client est rattaché à une agence principale
+  - Les opérations inter-agences sont tracées (compte de liaison)
+  - Le reporting consolidé est disponible au niveau siège
+
+  OPÉRATIONS INTER-AGENCES :
+  - Dépôt dans agence A, retrait dans agence B
+  - Comptes de liaison inter-agences (CLIA)
+  - Rapprochement périodique des comptes de liaison
+  - Commission inter-agence pour opérations déplacées
+
+  CLOISONNEMENT :
+  - GUICHETIER : voit uniquement les données de son agence
+  - SUPERVISEUR : voit les données de ses agences assignées
+  - ADMIN : voit toutes les agences
+  - MANAGER : gestion des affectations
+
+
+══════════════════════════════════════════════════════════════════════════════
+  11. GESTION DES SESSIONS CAISSE
+══════════════════════════════════════════════════════════════════════════════
+
+  CYCLE DE VIE D'UNE SESSION :
+  1. OUVERTURE : guichetier ouvre sa caisse (solde initial)
+     → Maker-Checker requis pour l'ouverture
+  2. OPÉRATIONS : dépôts, retraits, approvisionnements
+     → Toutes les opérations sont liées à la session
+  3. FERMETURE : guichetier saisit le solde physique constaté
+     → Maker-Checker requis
+     → Calcul de l'écart (solde physique - solde théorique)
+  4. RÉGULARISATION : si écart > seuil, écriture comptable
+  5. VALIDATION : superviseur valide la fermeture
+
+  RÈGLES :
+  - Pas de session ouverte si une autre est déjà ouverte (même caisse)
+  - Pas d'opération sans session ouverte
+  - Session fermée = plus d'opérations possibles sur cette caisse
+  - Montant maximum en caisse (paramétrable par agence)
+  - Billetage obligatoire à l'ouverture et à la fermeture
+
+
+══════════════════════════════════════════════════════════════════════════════
+  12. SYSTÈME DE TARIFICATION
+══════════════════════════════════════════════════════════════════════════════
+
+  TYPES DE FRAIS :
+  - Frais de tenue de compte mensuels
+  - Frais de retrait (selon montant ou forfait)
+  - Frais de transfert (interne, interbancaire)
+  - Frais de dossier crédit
+  - Pénalité de découvert
+  - Pénalité de retard crédit
+  - Commissions sur opérations
+  - Frais de carte
+  - Frais de chéquier
+  - Frais de relevé/attestation
+
+  PARAMÉTRAGE :
+  Chaque tarif est paramétrable par :
+  - Type de produit
+  - Tranche de montant
+  - Type de client
+  - Agence
+  - Période (minimum, maximum)
+
+  CALCUL :
+  - Les frais sont calculés en batch (mensuel pour tenue de compte,
+    quotidien pour découvert)
+  - Les frais sont prélevés automatiquement sur le compte
+  - Traçabilité : chaque frais a sa propre transaction
+
+
+══════════════════════════════════════════════════════════════════════════════
+  13. SYSTÈME DE COMMISSIONS
+══════════════════════════════════════════════════════════════════════════════
+
+  APPLICABLE À :
+  - Agents banking (commission sur collecte/ouverture)
+  - Intermédiaires (commission sur crédit)
+  - Partenaires API (commission sur transaction)
+  - Opérations inter-agences (commission pour agence d'accueil)
+
+  PARAMÉTRAGE :
+  - Commission fixe ou pourcentage
+  - Seuils et plafonds
+  - Périodicité de calcul (quotidien, hebdomadaire, mensuel)
+  - Conditions de déclenchement
+
+  PAIEMENT :
+  - Les commissions sont calculées en batch
+  - Validation maker-checker obligatoire
+  - Paiement sur compte de l'agent ou en espèces
+
+
+══════════════════════════════════════════════════════════════════════════════
+  14. SYSTÈME DE NOTIFICATIONS OMNICHANNEL
+══════════════════════════════════════════════════════════════════════════════
+
+  CANAUX :
+  ┌──────────┬────────────┬──────────────┬─────────────────────────────┐
+  │ Canal    │ Usage                     │ Priorité                   │
+  ├──────────┼───────────────────────────┼─────────────────────────────┤
+  │ In-app   │ Alertes opérateur         │ Haute (temps réel)          │
+  │ Email    │ Relevés, contrats         │ Basse (batch)              │
+  │ SMS      │ OTP, alertes, rappels     │ Haute (immédiat)            │
+  │ Push     │ Transactions (mobile)     │ Haute (temps réel)          │
+  │ WhatsApp │ Reçus, support            │ Moyenne                    │
+  │ USSD     │ Solde, mini-relevé        │ Haute (interactif)         │
+  │ Mercure  │ Live updates dashboard    │ Haute (temps réel)         │
+  └──────────┴───────────────────────────┴─────────────────────────────┘
+
+  ÉVÉNEMENTS DÉCLENCHEURS :
+  - Transaction effectuée (reçu, notification)
+  - Échéance crédit approchante (rappels J-7, J-3, J-1)
+  - Impayé crédit (alerte J+1, J+7, J+30, J+90)
+  - Blocage/déblocage compte
+  - Validation maker-checker (notification au maker)
+  - Alerte conformité
+  - Échec EOD
+  - Anniversaire client (email automatique)
+
+  GESTION DES OPT-OUT :
+  - Chaque client peut choisir ses canaux préférés
+  - Désinscription via STOP SMS, lien désabonnement email
+  - Respect des réglementations (RGPD, loi UEMOA)
+
+
+══════════════════════════════════════════════════════════════════════════════
+  15. SYSTÈME DE REPORTING & EXPORT
+══════════════════════════════════════════════════════════════════════════════
+
+  RAPPORTS DISPONIBLES :
+
+  COMPTABILITÉ :
+  - Balance générale (jour, mois, exercice)
+  - Grand livre (par compte, période)
+  - Balance âgée (clients, fournisseurs)
+  - Journal des opérations
+  - Compte de résultat
+  - Bilan
+  - Tableau de flux de trésorerie
+
+  CRÉDIT :
+  - Portefeuille crédit (encours, qualité)
+  - Échéancier global
+  - Impayés par ancienneté
+  - Provisions réglementaires (BCEAO)
+  - Taux de pénétration
+  - PAR (Portfolio at Risk) 1, 30, 90 jours
+
+  ÉPARGNE :
+  - Portefeuille épargne
+  - Taux d'intérêt servis
+  - Échéances DAT
+
+  RÉGLEMENTAIRE (BCEAO) :
+  - Ratios prudentiels (COBAC)
+  - État de rapprochement
+  - Déclaration fiscale (TSA)
+  - Rapport LCB-FT
+
+  AGENCE :
+  - Performance par agence
+  - Transactions par guichetier
+  - Open/close caisse
+
+  EXPORT :
+  - PDF : contrats, relevés, attestations, reçus
+  - Excel : tous les rapports (formaté)
+  - CSV : données brutes (import/export)
+  - Print : toutes les pages (print.css)
+
+
+══════════════════════════════════════════════════════════════════════════════
+  16. SYSTÈME D'AUDIT & TRACABILITÉ
+══════════════════════════════════════════════════════════════════════════════
+
+  TOUTE OPÉRATION CRITIQUE EST TRACÉE :
+  - Qui (id_user, nom, rôle)
+  - Quoi (action, ressource, id)
+  - Quand (timestamp précis)
+  - D'où (IP, adresse, user_agent, correlation_id)
+  - Ancienne valeur (JSON de l'état avant)
+  - Nouvelle valeur (JSON de l'état après)
+
+  NIVEAUX DE JOURNALISATION :
+  1. AUDIT (toutes les opérations métier critiques)
+  2. SÉCURITÉ (connexions, échecs, changements de rôle)
+  3. DONNÉES (modifications des données sensibles)
+
+  PÉRIODE DE RÉTENTION :
+  - Logs d'audit : 10 ans (conformité BCEAO)
+  - Logs techniques : 1 an
+  - Logs de debug : 30 jours
+
+
+══════════════════════════════════════════════════════════════════════════════
+  17. GESTION DES EXERCICES & CLÔTURES
+══════════════════════════════════════════════════════════════════════════════
+
+  EXERCICE COMPTABLE :
+  - Du 1er janvier au 31 décembre
+  - Un seul exercice ouvert à la fois
+  - Clôture mensuelle obligatoire avant le 5 du mois suivant
+  - Clôture annuelle obligatoire avant le 31 mars de l'année suivante
+
+  ÉTAPES CLÔTURE MENSUELLE :
+  1. Vérifier que toutes les écritures du mois sont passées
+  2. Calculer les amortissements
+  3. Passer les écritures de régularisation
+  4. Lettrage des comptes
+  5. Éditer la balance du mois
+  6. Verrouiller la période
+
+  ÉTAPES CLÔTURE ANNUELLE :
+  1. + clôtures mensuelles de décembre
+  2. Calcul des provisions réglementaires
+  3. Calcul du résultat de l'exercice
+  4. Affectation du résultat
+  5. Éditer les états financiers (bilan, compte de résultat)
+  6. Ouverture du nouvel exercice
+
+
+══════════════════════════════════════════════════════════════════════════════
+  18. MATRICE DE PERMISSIONS (Rôles × Modules)
+══════════════════════════════════════════════════════════════════════════════
+
+  Légende : ●=Tout | ✓=Lecture | ✏=Écriture | M-C=Maker-Checker
+
+  Module                 ADMIN  SUPERV.  GUICHET.  CLIENT  MANAGER  AGENT
+  ──────────────────────────────────────────────────────────────────────────
+  Clients               ●       ✓✏M-C   ✓✏       ✓       ✓        ✓✏
+  Comptes               ●       ✓✏M-C   ✓✏       ✓       ✓        ✏(base)
+  Transactions          ●       ✓✏M-C   ✓✏       ✓(self) -        -
+  Crédits               ●       ✓✏M-C   ✓✏       ✓(self) ✓        ✏(terrain)
+  Épargne               ●       ✓✏M-C   ✓✏       ✓(self) ✓        -
+  Caisse/Coffre         ●       ✓✏M-C   ✓✏       -       -        -
+  Comptabilité          ●       ✓✏M-C   ✓        -       ✓        -
+  Trésorerie            ●       ✓✏M-C   ✓        -       ✓        -
+  Conformité            ●       ✓✏M-C   -        -       ✓        -
+  Risques               ●       ✓✏M-C   ✓        -       ✓        -
+  Organisation          ●       ✓✏M-C   ✓        -       ✓        -
+  Paiements             ●       ✓✏M-C   ✓✏      ✓(self) ✓        -
+  Support (RH/Achats)   ●       ✓✏M-C   -        -       ✓        -
+  Sécurité/Auth         ●       ✓        -        ✓(self) ✏        -
+  Audit                 ●       ✓        -        -       ✓        -
+  EOD/Batch             ●       ✓✏      ✓        -       -        -
+  Reporting             ●       ●        ✓        ✓(self) ●        -
+  Communication         ●       ✓✏M-C   -        ✓(self) ✓        -
+  Agent Banking         ●       ✓✏M-C   -        -       ✓        ✓(self)
+  Open Banking          ●       ✓✏M-C   -        ✓(cons.)✓        -
+
+
+══════════════════════════════════════════════════════════════════════════════
+  19. RÈGLES MÉTIER TRANSVERSES
+══════════════════════════════════════════════════════════════════════════════
+
+  R1 - SÉCURITÉ :
+  - Tout accès nécessite authentification (sauf login)
+  - 2FA obligatoire pour tout accès opérateur
+  - JWT expire après 1h, refresh token 24h
+  - Mot de passe expire tous les 90 jours
+  - 3 tentatives échouées → compte verrouillé 30 min
+  - Session inactive 15 min → déconnexion automatique
+  - Nouvel appareil → OTP obligatoire
+
+  R2 - TRANSACTIONS :
+  - Pas de transaction sans session caisse ouverte
+  - Double écriture comptable pour toute transaction
+  - Solde insuffisant → rejet
+  - Transaction > seuil → validation superviseur
+  - Idempotence via X-Idempotency-Key
+
+  R3 - CLIENTS :
+  - KYC validé requis pour ouverture de compte
+  - Pièce d'identité obligatoire (CNI/passeport)
+  - Scoring antérieur à toute décision de crédit
+  - Screening obligatoire (listes noires, PEP)
+  - Beneficial owner declaration pour personnes morales
+
+  R4 - CRÉDIT :
+  - Scoring obligatoire avant décision
+  - Comité de crédit pour montant > seuil
+  - Garantie obligatoire pour montant > seuil
+  - Provisionnement selon normes BCEAO
+  - Passage en perte après 365 jours d'impayé
+
+  R5 - ÉPARGNE :
+  - Taux d'intérêt paramétrables par produit
+  - Intérêts calculés par quinzaine (prorata temporis)
+  - DAT non renouvelable sauf option expresse
+
+  R6 - COMPTABILITÉ :
+  - Équilibre comptable obligatoire (débit = crédit)
+  - Lettrage périodique obligatoire
+  - Clôture annuelle obligatoire avant le 31 mars
+
+  R7 - AGENCE :
+  - Un client = une agence principale
+  - Un guichetier = une agence (peut opérer dans plusieurs guichets)
+  - Opération déplacée = commission à l'agence d'accueil
+
+  R8 - CONFORMITÉ :
+  - Déclaration COAF (Cellule de Renseignement Financier) pour toute
+    transaction suspecte > 5 000 000 XOF
+  - KYC simplifié (< 500 000 XOF), KYC normal (500 K - 5 M), KYC
+    renforcé (> 5 M)
+  - Conservation documents KYC : 10 ans après clôture
+
+
+══════════════════════════════════════════════════════════════════════════════
+  20. CONTRAINTES RÉGLEMENTAIRES UEMOA / BCEAO
+══════════════════════════════════════════════════════════════════════════════
+
+  RÈGLEMENTATION BCEAO (Banque Centrale des États de l'Afrique de l'Ouest)
+  - Instruction n°008-05-2015 relative aux systèmes financiers décentralisés
+  - Instruction n°009-05-2015 relative au ratio de couverture des risques
+  - Règlement n°01/2002/CM/UEMOA relatif au dispositif de cautionnement
+  - Loi uniforme portant réglementation des SFD dans l'UEMOA
+
+  EXIGENCES CLÉS :
+  1. Capital minimum : 50 000 000 XOF (IMF de catégorie 1)
+  2. Ratio de couverture des risques : ≥ 8%
+  3. Ratio de liquidité : ≥ 100%
+  4. Limite de concentration : max 25% des fonds propres par bénéficiaire
+  5. Créances en souffrance : provisionnement obligatoire
+     - 0-3 mois : 25%
+     - 3-6 mois : 50%
+     - 6-12 mois : 75%
+     - > 12 mois : 100%
+  6. Taux d'intérêt usuraire : max 27% (tous frais inclus)
+  7. Déclaration trimestrielle à la BCEAO (ratios prudentiels COBAC)
+
+  LCB-FT (Lutte Contre le Blanchiment et le Financement du Terrorisme) :
+  - Désignation d'un responsable LCB-FT
+  - Classification des clients par niveau de risque
+  - Déclaration de soupçon à la Cellule Nationale de Traitement des
+    Informations Financières (CENTIF)
+  - Conservation des documents 10 ans
+  - Formation obligatoire du personnel
+  - Identification du bénéficiaire effectif
+
+
+══════════════════════════════════════════════════════════════════════════════
+  21. ANNEXES : Schémas d'architecture
+══════════════════════════════════════════════════════════════════════════════
+
+  ANNEXE A — Schéma d'écran type (patron liste → fiche → workflow)
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  TopBar: Logo MicroFin | Menu | Notifications | Profil             │
+  ├───────┬─────────────────────────────────────────────────────────────┤
+  │       │  Breadcrumb: Accueil > Clients > Liste                      │
+  │       ├─────────────────────────────────────────────────────────────┤
+  │       │  Page Header: "Liste des clients" + [Nouveau] [Exporter]   │
+  │       ├─────────────────────────────────────────────────────────────┤
+  │       │  Filter Bar: Nom | Téléphone | Statut | Agence | [Filtrer] │
+  │       ├─────────────────────────────────────────────────────────────┤
+  │ Side  │  Data Table (zebra striping)                                │
+  │ Bar   │  ┌───────┬──────────┬────────┬──────────┬──────────────┐  │
+  │       │  │ Code  │ Nom      │ Tél    │ Statut   │ Actions      │  │
+  │       │  ├───────┼──────────┼────────┼──────────┼──────────────┤  │
+  │ Menu  │  │ XXXX  │ KOUAME   │ +225.. │ ACTIF    │ [Voir] [Mod] │  │
+  │       │  └───────┴──────────┴────────┴──────────┴──────────────┘  │
+  │       │  Pagination: 1-20 sur 120 clients                          │
+  └───────┴─────────────────────────────────────────────────────────────┘
+
+  ANNEXE B — Workflow transaction complet
+  ┌────────────┐  ┌──────────────┐  ┌──────────────┐  ┌─────────────┐
+  │ Guichetier │  │ Session      │  │ Solde        │  │ Montant >  │
+  │ sélectionne│─▶│ caisse       │─▶│ suffisant?   │─▶│ seuil?     │
+  │ opération  │  │ ouverte?     │  │              │  │            │
+  └────────────┘  └──────────────┘  └──────┬───────┘  └──────┬──────┘
+                                           │                 │
+                                    ┌──────▼──────┐   ┌──────▼──────┐
+                                    │  REJET       │   │ OUI → Envoi│
+                                    │  "Solde     │   │ validation │
+                                    │  insuff."   │   │ superviseur│
+                                    └─────────────┘   └──────┬──────┘
+                                                             │
+                                                     ┌──────▼──────┐
+                                                     │ Approbation │
+                                                     │ superviseur │
+                                                     └──────┬──────┘
+                                                            │
+                                                     ┌──────▼──────┐
+                                                     │ EXECUTION   │
+                                                     │ Comptable   │
+                                                     │ + Reçu      │
+                                                     └─────────────┘
+
+  ANNEXE C — Vue d'ensemble 8 modules
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │                      ÉCOSYSTÈME MICROFIN                           │
+  │                   8 SURFACES | 429 ÉCRANS                          │
+  ├──────────────────────────────────────────────────────────────────────┤
+  │                                                                      │
+  │  ┌───────────────────────────────────────────────────────────┐     │
+  │  │        01. WEB OPÉRATEUR (247 écrans — P0/P1)            │     │
+  │  │  Back-office complet : clients, comptes, opérations,      │     │
+  │  │  crédits, épargne, caisse, compta, conformité, risques,   │     │
+  │  │  reporting, admin, support                                │     │
+  │  └───────────────────────────────────────────────────────────┘     │
+  │                                                                      │
+  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌───────────┐ │
+  │  │ 02. PORTAIL  │  │ 03. MOBILE  │  │ 04. AGENT   │  │ 05. USSD  │ │
+  │  │ CLIENT WEB  │  │  CLIENT     │  │  TERRAIN    │  │          │ │
+  │  │ (26 écrans)  │  │ (60 écrans) │  │ (28 écrans) │  │(17 menus)│ │
+  │  └─────────────┘  └─────────────┘  └─────────────┘  └───────────┘ │
+  │                                                                      │
+  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                 │
+  │  │ 06. DASHBD  │  │ 07. PORTAIL  │  │ 08. CONSOLE │                 │
+  │  │ AGENT BANK  │  │ DÉVELOPPEUR │  │ COMMUNIC.   │                 │
+  │  │ (11 écrans)  │  │ (13 écrans) │  │ (12 écrans)  │                 │
+  │  └─────────────┘  └─────────────┘  └─────────────┘                 │
+  └──────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+  FIN DU DOCUMENT — FONDATION BASE
+================================================================================

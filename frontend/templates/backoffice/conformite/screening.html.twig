@@ -1,0 +1,58 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Screening conformité - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Nouveau screening' } %}
+        {% block card_content %}
+            <form method="post" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Type de screening</label>
+                    <select name="screening[type]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                        <option value="pep">Personne politiquement exposée</option>
+                        <option value="sanctions">Liste des sanctions</option>
+                        <option value="negatif">Médias négatifs</option>
+                        <option value="integral">Screening intégral</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Entité à screener</label>
+                    <input type="text" name="screening[entite]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required placeholder="Nom, dénomination sociale ou identifiant">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Type d'entité</label>
+                    <select name="screening[type_entite]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                        <option value="client">Client</option>
+                        <option value="beneficiaire">Bénéficiaire effectif</option>
+                        <option value="correspondant">Correspondant bancaire</option>
+                        <option value="employe">Employé</option>
+                        <option value="fournisseur">Fournisseur</option>
+                    </select>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="mf-btn-primary">Lancer le screening</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Résultats des screenings' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'date', label: 'Date' },
+                    { key: 'type', label: 'Type' },
+                    { key: 'entite', label: 'Entité' },
+                    { key: 'resultat', label: 'Résultat' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: resultats.liste|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

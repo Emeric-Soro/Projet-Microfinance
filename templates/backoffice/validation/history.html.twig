@@ -1,0 +1,24 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block content %}
+  {% include 'backoffice/partials/_breadcrumb.html.twig' with {'path': ['Accueil','Validations/Conformité','Historique']} %}
+  <div class="MfCard">
+    <h2>Historique des validations</h2>
+    <div class="MfTableToolbar"></div>
+    <div class="MfDataTable">
+      <table>
+        <thead><tr><th>Date</th><th>Action</th><th>Utilisateur</th><th>Détails</th></tr></thead>
+        <tbody>
+          {% for r in data.data %}
+          <tr>
+            <td>{{ r.date|date('d/m/Y') }}</td>
+            <td>{{ r.action ?? '' }}</td>
+            <td>{{ r.user ?? '' }}</td>
+            <td><a href="/validations/{{ r.id }}">Voir</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

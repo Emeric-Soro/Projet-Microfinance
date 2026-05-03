@@ -1,0 +1,9 @@
+scheb_two_factor:
+    security_tokens:
+        - Lexik\Bundle\JWTAuthenticationBundle\Security\Authenticator\Token\JWTPostAuthenticationToken
+    totp:
+        enabled: true
+        server_name: MicroFin
+        issuer: MicroFin
+    backup_codes:
+        enabled: true

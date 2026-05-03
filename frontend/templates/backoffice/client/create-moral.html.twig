@@ -1,0 +1,82 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Nouvelle personne morale - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Clients', url: path('client_list') }, { label: 'Nouvelle personne morale' }] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Nouvelle personne morale</h1>
+</div>
+
+<form method="post" action="{{ path('client_create_moral') }}" enctype="multipart/form-data">
+    {% embed 'components/MfCard.html.twig' with { title: 'Identité de l\'entreprise' } %}
+        {% block card_content %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'raisonSociale', label: 'Raison sociale', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'sigle', label: 'Sigle' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'registreCommerce', label: 'Registre de commerce', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'numeroContribuable', label: 'N° contribuable' } %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'dateCreation', label: 'Date de création' } %}
+            {% include 'components/MfSelect.html.twig' with { name: 'formeJuridique', label: 'Forme juridique', options: [
+                { value: 'SA', label: 'SA' },
+                { value: 'SARL', label: 'SARL' },
+                { value: 'SAS', label: 'SAS' },
+                { value: 'SNC', label: 'SNC' },
+                { value: 'GIE', label: 'GIE' },
+                { value: 'ONGS', label: 'ONG/Association' },
+                { value: 'AUTRE', label: 'Autre' },
+            ]} %}
+            {% include 'components/MfInput.html.twig' with { name: 'secteurActivite', label: "Secteur d'activité" } %}
+            {% include 'components/MfInput.html.twig' with { name: 'capitalSocial', label: 'Capital social', type: 'number' } %}
+        </div>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Siège social' } %}
+        {% block card_content %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'adresseSiege', label: 'Adresse du siège', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'villeSiege', label: 'Ville' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'paysSiege', label: 'Pays' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'telephoneSiege', label: 'Téléphone' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'emailSiege', label: 'Email' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'siteWeb', label: 'Site web' } %}
+        </div>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Représentant légal' } %}
+        {% block card_content %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'representantNom', label: 'Nom du représentant', required: true } %}
+            {% include 'components/MfInput.html.twig' with { name: 'representantPrenom', label: 'Prénom du représentant', required: true } %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'representantDateNaissance', label: 'Date de naissance' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'representantFonction', label: 'Fonction' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'representantTelephone', label: 'Téléphone' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'representantEmail', label: 'Email' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'representantPieceIdentite', label: 'N° pièce d\'identité' } %}
+        </div>
+        <div class="mt-4">
+            {% include 'components/MfFileUpload.html.twig' with { name: 'representantPhoto', label: 'Photo du représentant' } %}
+        </div>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Documents juridiques' } %}
+        {% block card_content %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfFileUpload.html.twig' with { name: 'statuts', label: 'Statuts de l\'entreprise' } %}
+            {% include 'components/MfFileUpload.html.twig' with { name: 'registreCommerceDoc', label: 'Registre de commerce' } %}
+            {% include 'components/MfFileUpload.html.twig' with { name: 'identifiantFiscal', label: 'Identifiant fiscal' } %}
+            {% include 'components/MfFileUpload.html.twig' with { name: 'PVAssemblee', label: 'PV d\'assemblée' } %}
+        </div>
+        {% endblock %}
+    {% endembed %}
+
+    <div class="flex items-center justify-end gap-3 mt-6">
+        <a href="{{ path('client_list') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Créer la personne morale</button>
+    </div>
+</form>
+{% endblock %}

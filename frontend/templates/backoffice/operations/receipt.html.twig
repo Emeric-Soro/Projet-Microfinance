@@ -1,0 +1,59 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Reçu - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Reçu d'opération</h1>
+        <div class="flex items-center gap-2">
+            <button onclick="window.print()" class="mf-btn-secondary flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                Imprimer
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-card border border-teal-100 p-8">
+        <div class="text-center mb-6 pb-6 border-b border-gray-100">
+            <div class="w-14 h-14 bg-primary rounded-full flex items-center justify-center mx-auto mb-3">
+                <span class="text-white font-heading font-bold text-lg">MF</span>
+            </div>
+            <h2 class="text-xl font-heading font-bold text-on-surface">MicroFin</h2>
+            <p class="text-sm text-on-surface-variant">Reçu d'opération</p>
+        </div>
+
+        <div class="text-center mb-6">
+            <p class="text-3xl font-heading font-bold text-primary">{{ transaction.montant|montant }}</p>
+            <p class="text-sm text-on-surface-variant mt-1">{{ transaction.type|replace({'_': ' '})|title }}</p>
+        </div>
+
+        <dl class="divide-y divide-gray-100">
+            {% include component('MfDetailRow') with { label: 'Référence', value: transaction.reference } %}
+            {% include component('MfDetailRow') with { label: 'Date', value: transaction.dateCreation|date_fr } %}
+            {% include component('MfDetailRow') with { label: 'Compte', value: transaction.compteSource|default(transaction.compte) } %}
+            {% include component('MfDetailRow') with { label: 'Client', value: transaction.clientNom } %}
+            {% include component('MfDetailRow') with { label: 'Guichet', value: transaction.guichet } %}
+            {% include component('MfDetailRow') with { label: 'Agent', value: transaction.agent } %}
+            {% include component('MfDetailRow') with { label: 'Statut', value: '' } %}
+        </dl>
+        <div class="mt-2">
+            {% include component('MfStatusBadge') with { status: transaction.statut } %}
+        </div>
+
+        {% if transaction.description is defined and transaction.description %}
+            <div class="mt-4 pt-4 border-t border-gray-100">
+                <p class="text-sm text-on-surface-variant">{{ transaction.description }}</p>
+            </div>
+        {% endif %}
+
+        <div class="mt-6 pt-6 border-t border-gray-100 text-center">
+            <p class="text-xs text-on-surface-variant">Reçu généré le {{ 'now'|date('d/m/Y à H:i') }}</p>
+        </div>
+    </div>
+
+    <div class="mt-4 text-center">
+        <a href="{{ path('operation_detail', { ref: transaction.reference }) }}" class="text-sm text-primary hover:text-primary-600">Voir le détail de l'opération</a>
+    </div>
+</div>
+{% endblock %}

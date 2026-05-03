@@ -1,0 +1,35 @@
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Garanties'] } %}
+{% include 'partials/_flash.html.twig' %}
+
+<h1>Garanties</h1>
+
+<section class="MfCard">
+    <header>Types de garanties</header>
+    <ul>
+        <li>Prière de sélectionner les garanties associées</li>
+    </ul>
+    <form method="post" action="">
+        <div class="MfFormRow">
+            <label>Ajouter garantie</label>
+            <select class="MfSelect" name="guarantee_type">
+                <option>Hypothèque</option>
+                <option>Caution solidaire</option>
+                <option>Nantissement</option>
+            </select>
+        </div>
+        <button class="MfButton" type="submit">Ajouter</button>
+    </form>
+    </section>
+
+<section class="MfTable">
+    <h2>Garanties existantes</h2>
+    {% if guarantees is defined and guarantees|length > 0 %}
+        <ul>
+        {% for g in guarantees %}
+            <li>{{ g.name ?? 'Garantie' }} - {{ g.type ?? '' }}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>Aucune garantie enregistrée.</p>
+    {% endif %}
+    </section>

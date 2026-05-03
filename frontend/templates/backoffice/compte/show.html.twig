@@ -1,0 +1,183 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block backoffice_content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1 space-y-6">
+        <div class="bg-white rounded-lg shadow-card border border-teal-100 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-heading font-semibold text-on-surface">Compte {{ compte.numero }}</h3>
+                {% include 'components/MfStatusBadge.html.twig' with { status: compte.statut|default('ACTIF') } %}
+            </div>
+            <div class="space-y-3">
+                <div class="flex justify-between text-sm">
+                    <span class="text-on-surface-variant">Client</span>
+                    <span class="font-medium text-on-surface">{{ compte.client_nom|default('—') }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-on-surface-variant">Code client</span>
+                    <span class="font-medium text-on-surface">{{ compte.client_code|default('—') }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-on-surface-variant">Produit</span>
+                    <span class="font-medium text-on-surface">{{ compte.produit_libelle|default('—') }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-on-surface-variant">Type</span>
+                    <span class="font-medium text-on-surface">{{ compte.type|default('—') }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-on-surface-variant">Agence</span>
+                    <span class="font-medium text-on-surface">{{ compte.agence_nom|default('—') }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-on-surface-variant">Date ouverture</span>
+                    <span class="font-medium text-on-surface">{{ compte.dateOuverture|default(compte.dateCreation|default('—'))|date('d/m/Y') }}</span>
+                </div>
+            </div>
+            <hr class="my-4 border-teal-100">
+            <div class="text-center">
+                <p class="text-sm text-on-surface-variant">Solde actuel</p>
+                <p class="text-2xl font-heading font-bold text-primary mt-1">{{ compte.solde|default(0)|number_format(0, ',', ' ') }} FCFA</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-card border border-teal-100 p-6">
+            <h4 class="text-sm font-semibold text-on-surface mb-3">Actions rapides</h4>
+            <div class="space-y-2">
+                <a href="{{ path('account_statement', { num: compte.numero }) }}" class="flex items-center gap-2 text-sm text-primary hover:text-primary-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Relevé de compte
+                </a>
+                <a href="{{ path('account_history', { num: compte.numero }) }}" class="flex items-center gap-2 text-sm text-primary hover:text-primary-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Historique des transactions
+                </a>
+                <a href="{{ path('account_block', { num: compte.numero }) }}" class="flex items-center gap-2 text-sm text-red-600 hover:text-red-700">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    Bloquer le compte
+                </a>
+                <a href="{{ path('account_closure', { num: compte.numero }) }}" class="flex items-center gap-2 text-sm text-red-600 hover:text-red-700">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    Clôturer le compte
+                </a>
+                <a href="{{ path('account_settings', { num: compte.numero }) }}" class="flex items-center gap-2 text-sm text-primary hover:text-primary-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Paramètres
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="lg:col-span-2">
+        {% include 'components/MfTabs.html.twig' with {
+            tabs: [
+                { key: 'infos', label: 'Informations' },
+                { key: 'mouvements', label: 'Derniers mouvements', count: mouvements|length },
+                { key: 'details', label: 'Détails' },
+            ],
+            active_tab: 'infos',
+        } %}
+
+        <div class="tab-content" id="tab-infos">
+            <div class="bg-white rounded-lg shadow-card border border-teal-100 p-6">
+                <h4 class="text-sm font-semibold text-on-surface mb-4">Informations détaillées</h4>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Numéro de compte</dt>
+                        <dd class="text-sm font-medium text-on-surface mt-0.5">{{ compte.numero|default('—') }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs text-on-surface-variant uppercase tracking-wide">RIB</dt>
+                        <dd class="text-sm font-medium text-on-surface mt-0.5">{{ compte.rib|default('—') }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Devise</dt>
+                        <dd class="text-sm font-medium text-on-surface mt-0.5">{{ compte.devise|default('XOF') }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Catégorie</dt>
+                        <dd class="text-sm font-medium text-on-surface mt-0.5">{{ compte.categorie|default('—') }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Solde disponible</dt>
+                        <dd class="text-sm font-medium text-on-surface mt-0.5">{{ compte.soldeDisponible|default(compte.solde|default(0))|number_format(0, ',', ' ') }} FCFA</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Solde bloqué</dt>
+                        <dd class="text-sm font-medium text-on-surface mt-0.5">{{ compte.soldeBloque|default(0)|number_format(0, ',', ' ') }} FCFA</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+
+        <div class="tab-content hidden" id="tab-mouvements">
+            <div class="bg-white rounded-lg shadow-card border border-teal-100 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-sm font-semibold text-on-surface">Derniers mouvements</h4>
+                    <a href="{{ path('account_history', { num: compte.numero }) }}" class="text-sm text-primary hover:text-primary-600">Voir tout</a>
+                </div>
+                {% if mouvements is not empty %}
+                <div class="overflow-x-auto">
+                    <table class="mf-table">
+                        <thead>
+                            <tr>
+                                <th class="text-xs">Date</th>
+                                <th class="text-xs">Libellé</th>
+                                <th class="text-xs">Débit</th>
+                                <th class="text-xs">Crédit</th>
+                                <th class="text-xs">Solde</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mvt in mouvements %}
+                            <tr>
+                                <td class="text-sm">{{ mvt.date|default('—')|date('d/m/Y') }}</td>
+                                <td class="text-sm">{{ mvt.libelle|default('—') }}</td>
+                                <td class="text-sm text-red-600">{{ mvt.debit|default(0) > 0 ? (mvt.debit|number_format(0, ',', ' ')) ~ ' FCFA' : '—' }}</td>
+                                <td class="text-sm text-green-600">{{ mvt.credit|default(0) > 0 ? (mvt.credit|number_format(0, ',', ' ')) ~ ' FCFA' : '—' }}</td>
+                                <td class="text-sm font-medium">{{ mvt.solde|default(0)|number_format(0, ',', ' ') }} FCFA</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    {% include 'partials/_empty_state.html.twig' with { title: 'Aucun mouvement', message: 'Ce compte ne présente aucun mouvement pour le moment.' } %}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="tab-content hidden" id="tab-details">
+            <div class="bg-white rounded-lg shadow-card border border-teal-100 p-6">
+                <h4 class="text-sm font-semibold text-on-surface mb-4">Détails supplémentaires</h4>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Date de dernière opération</dt>
+                        <dd class="text-sm font-medium text-on-surface mt-0.5">{{ compte.dateDerniereOperation|default('—')|date('d/m/Y H:i') }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Dernier mouvement</dt>
+                        <dd class="text-sm font-medium text-on-surface mt-0.5">{{ compte.dernierMouvement|default('—') }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Nombre d'opérations</dt>
+                        <dd class="text-sm font-medium text-on-surface mt-0.5">{{ compte.nbOperations|default(0) }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Date de dernière activation</dt>
+                        <dd class="text-sm font-medium text-on-surface mt-0.5">{{ compte.dateDerniereActivation|default('—')|date('d/m/Y') }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Cumul débit</dt>
+                        <dd class="text-sm font-medium text-on-surface mt-0.5">{{ compte.cumulDebit|default(0)|number_format(0, ',', ' ') }} FCFA</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Cumul crédit</dt>
+                        <dd class="text-sm font-medium text-on-surface mt-0.5">{{ compte.cumulCredit|default(0)|number_format(0, ',', ' ') }} FCFA</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

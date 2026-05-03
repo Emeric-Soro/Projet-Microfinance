@@ -1,0 +1,84 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Clôture comptable - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Clôture comptable</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Clôture des exercices comptables</p>
+    </div>
+</div>
+
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+{% if statut is defined %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="mf-card p-4">
+        <p class="text-sm text-on-surface-variant">Exercice courant</p>
+        <p class="text-lg font-heading font-bold text-on-surface">{{ statut.exercice_courant|default('Aucun') }}</p>
+    </div>
+    <div class="mf-card p-4">
+        <p class="text-sm text-on-surface-variant">Statut</p>
+        <p class="text-lg font-heading font-bold">{% include 'partials/_status_badge.html.twig' with {status: statut.statut|default('INCONNU')} %}</p>
+    </div>
+    <div class="mf-card p-4">
+        <p class="text-sm text-on-surface-variant">Dernière clôture</p>
+        <p class="text-lg font-heading font-bold text-on-surface">{{ statut.derniere_cloture|default('Jamais') }}</p>
+    </div>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="mf-card p-6">
+        <h3 class="font-heading font-semibold text-lg text-on-surface mb-4">Clôture d'exercice</h3>
+        <form method="post" action="{{ path('comptabilite_closing') }}" class="space-y-4">
+            <input type="hidden" name="action" value="cloture_exercice">
+            <div>
+                <label class="mf-label">Exercice à clôturer</label>
+                <select name="exercice_id" class="mf-input" required>
+                    <option value="">Sélectionner</option>
+                    {% for exercice in exercices %}
+                        <option value="{{ exercice.id }}">{{ exercice.code }} - {{ exercice.libelle }} ({{ exercice.date_debut|date('Y') }}-{{ exercice.date_fin|date('Y') }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <p class="text-sm text-on-surface-variant">La clôture d'exercice transfère le solde des comptes de gestion vers le compte de résultat et crée le nouvel exercice.</p>
+            <button type="submit" class="mf-btn-primary" onclick="return confirm('Confirmer la clôture de cet exercice ? Cette action est irréversible.')">
+                Clôturer l'exercice
+            </button>
+        </form>
+    </div>
+
+    <div class="mf-card p-6">
+        <h3 class="font-heading font-semibold text-lg text-on-surface mb-4">Opérations de clôture</h3>
+        <form method="post" action="{{ path('comptabilite_closing') }}" class="space-y-4">
+            <input type="hidden" name="action" value="operations_cloture">
+            <div>
+                <label class="mf-label">Exercice</label>
+                <select name="exercice_id" class="mf-input" required>
+                    <option value="">Sélectionner</option>
+                    {% for exercice in exercices %}
+                        <option value="{{ exercice.id }}">{{ exercice.code }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="space-y-2">
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" name="operations[]" value="provisions" class="rounded border-gray-300">
+                    <span class="text-sm">Calcul des provisions</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" name="operations[]" value="amortissements" class="rounded border-gray-300">
+                    <span class="text-sm">Calcul des amortissements</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" name="operations[]" value="resultat" class="rounded border-gray-300">
+                    <span class="text-sm">Détermination du résultat</span>
+                </label>
+            </div>
+            <button type="submit" class="mf-btn-primary">Exécuter</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

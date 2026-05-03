@@ -1,0 +1,24 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Recherche Globale{% endblock %}
+
+{% block content %}
+    {% include '_breadcrumb.html.twig' with {'breadcrumbs': breadcrumbs} %}
+    <div class="page-header mb-4 d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">Recherche globale</h1>
+        <div class="actions"></div>
+    </div>
+
+    <form method="get" action="" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="q" value="{{ query|default('') }}" class="form-control" placeholder="Rechercher...">
+            <button class="btn btn-primary" type="submit">Rechercher</button>
+        </div>
+    </form>
+
+    {% if headers is defined and rows is defined %}
+        {% include 'components/MfDataTable.html.twig' with {'headers': headers, 'rows': rows} %}
+    {% else %}
+        <div class="text-sm text-gray-600">Aucun résultat à afficher</div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Factures{% endblock %}
+{% block current_menu %}paiements_factures{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+{% embed 'components/MfStatsGrid.html.twig' with {stats: [
+    {label: 'Factures impayées', value: stats.impayees|default(0), icon: 'M12 9v2m0 4h.01', icon_bg: 'bg-red-50', icon_color: 'text-red-600'},
+    {label: 'Payées', value: stats.payees|default(0), icon: 'M9 12l2 2 4-4', icon_bg: 'bg-green-50', icon_color: 'text-green-600'},
+    {label: 'Montant total', value: (stats.montantTotal|default(0))|number_format(0, ',', ' ') ~ ' FCFA', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600'},
+    {label: 'En attente', value: stats.enAttente|default(0), icon: 'M12 9v2m0 4h.01', icon_bg: 'bg-yellow-50', icon_color: 'text-yellow-600'},
+]} %}{% endembed %}
+
+<div class="grid grid-cols-1 {% if paiement_mode is defined and paiement_mode %}lg:grid-cols-3{% endif %} gap-6 mt-6">
+    <div class="{% if paiement_mode is defined and paiement_mode %}lg:col-span-2{% else %}lg:col-span-3{% endif %}">
+        {% embed 'components/MfCard.html.twig' with {title: 'Factures'} %}
+            {% block card_content %}
+                {% include 'partials/_table_toolbar.html.twig' with {
+                    search_placeholder: 'Rechercher une facture...',
+                    filters: [
+                        {label: 'Type', options: [
+                            {value: 'EAU', label: 'Eau'},
+                            {value: 'ELECTRICITE', label: 'Électricité'},
+                            {value: 'TELECOMMUNICATION', label: 'Télécom'},
+                            {value: 'INTERNET', label: 'Internet'},
+                            {value: 'AUTRE', label: 'Autre'},
+                        ]},
+                        {label: 'Statut', options: [
+                            {value: 'IMPAYEE', label: 'Impayée'},
+                            {value: 'PAYEE', label: 'Payée'},
+                            {value: 'EN_ATTENTE', label: 'En attente'},
+                        ]}
+                    ]
+                } %}
+                {% embed 'components/MfDataTable.html.twig' with {
+                    headers: [
+                        {key: 'id', label: 'N°'},
+                        {key: 'reference', label: 'Référence'},
+                        {key: 'type', label: 'Type'},
+                        {key: 'client', label: 'Client'},
+                        {key: 'montant', label: 'Montant'},
+                        {key: 'dateEcheance', label: 'Échéance'},
+                        {key: 'statut', label: 'Statut'},
+                        {key: 'actions', label: 'Actions'},
+                    ],
+                    rows: factures
+                } %}
+                    {% block card_content %}
+                        {% for facture in factures %}
+                            <tr>
+                                <td>{{ facture.id }}</td>
+                                <td class="font-mono text-sm">{{ facture.reference }}</td>
+                                <td>{{ facture.type }}</td>
+                                <td>{{ facture.client }}</td>
+                                <td class="font-medium">{{ facture.montant|number_format(0, ',', ' ') }} FCFA</td>
+                                <td>{{ facture.dateEcheance|date('d/m/Y') }}</td>
+                                <td>{% include 'components/MfStatusBadge.html.twig' with {status: facture.statut} %}</td>
+                                <td class="text-right">
+                                    {% if facture.statut == 'IMPAYEE' or facture.statut == 'EN_ATTENTE' %}
+                                        <a href="{{ path('paiements_factures_payer', {id: facture.id}) }}" class="text-sm font-medium text-primary hover:text-primary-600">Payer</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center py-8">
+                                    {% include 'partials/_empty_state.html.twig' with {title: 'Aucune facture', message: 'Aucune facture trouvée.'} %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% endblock %}
+                {% endembed %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    {% if paiement_mode is defined and paiement_mode and facture is defined %}
+    <div>
+        {% embed 'components/MfCard.html.twig' with {title: 'Payer la facture'} %}
+            {% block card_content %}
+                <div class="space-y-4 mb-4">
+                    {% embed 'components/MfDetailRow.html.twig' with {label: 'Référence', value: facture.reference} %}{% endembed %}
+                    {% embed 'components/MfDetailRow.html.twig' with {label: 'Montant', value: facture.montant|number_format(0, ',', ' ') ~ ' FCFA'} %}{% endembed %}
+                    {% embed 'components/MfDetailRow.html.twig' with {label: 'Type', value: facture.type} %}{% endembed %}
+                </div>
+                <form method="post" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Compte à débiter</label>
+                        <select name="compteId" required class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:border-primary focus:ring-1 focus:ring-primary-200">
+                            <option value="">Sélectionner un compte</option>
+                            {% if comptes is defined %}
+                                {% for compte in comptes %}
+                                    <option value="{{ compte.id }}">{{ compte.numeroCompte }} - {{ compte.libelle }}</option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <a href="{{ path('paiements_factures') }}" class="mf-btn-secondary">Annuler</a>
+                        <button type="submit" class="mf-btn-primary">Confirmer le paiement</button>
+                    </div>
+                </form>
+            {% endblock %}
+        {% endembed %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

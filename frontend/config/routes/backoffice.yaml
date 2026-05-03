@@ -1,0 +1,1713 @@
+# Dashboards
+dashboard_general:
+    path: /dashboard
+    controller: App\Controller\Dashboard\GeneralDashboardController::index
+    methods: [GET]
+
+dashboard_agency:
+    path: /dashboard/agence/{id}
+    controller: App\Controller\Dashboard\AgencyDashboardController::index
+    methods: [GET]
+
+dashboard_siege:
+    path: /dashboard/siege
+    controller: App\Controller\Dashboard\GeneralDashboardController::siege
+    methods: [GET]
+
+dashboard_caissier:
+    path: /dashboard/caissier
+    controller: App\Controller\Dashboard\CashierDashboardController::index
+    methods: [GET]
+
+dashboard_credit:
+    path: /dashboard/credit
+    controller: App\Controller\Dashboard\CreditDashboardController::index
+    methods: [GET]
+
+dashboard_compliance:
+    path: /dashboard/compliance
+    controller: App\Controller\Dashboard\ComplianceDashboardController::index
+    methods: [GET]
+
+dashboard_comptable:
+    path: /dashboard/comptable
+    controller: App\Controller\Dashboard\GeneralDashboardController::comptable
+    methods: [GET]
+
+dashboard_direction:
+    path: /dashboard/direction
+    controller: App\Controller\Dashboard\DirectorDashboardController::index
+    methods: [GET]
+
+# Global Nav
+global_search:
+    path: /search
+    controller: App\Controller\Dashboard\GeneralDashboardController::search
+    methods: [GET]
+
+notifications_list:
+    path: /notifications
+    controller: App\Controller\Dashboard\GeneralDashboardController::notifications
+    methods: [GET]
+
+notification_detail:
+    path: /notifications/{id}
+    controller: App\Controller\Dashboard\GeneralDashboardController::notificationDetail
+    methods: [GET]
+
+profile:
+    path: /profile
+    controller: App\Controller\Dashboard\GeneralDashboardController::profile
+    methods: [GET, POST]
+
+preferences:
+    path: /preferences
+    controller: App\Controller\Dashboard\GeneralDashboardController::preferences
+    methods: [GET, POST]
+
+help:
+    path: /help
+    controller: App\Controller\Dashboard\GeneralDashboardController::help
+    methods: [GET]
+
+# Clients
+client_list:
+    path: /clients
+    controller: App\Controller\Client\ClientListController::index
+    methods: [GET]
+
+client_search:
+    path: /clients/search
+    controller: App\Controller\Client\ClientSearchController::index
+    methods: [GET, POST]
+
+client_create:
+    path: /clients/create
+    controller: App\Controller\Client\ClientCreateController::createPhysical
+    methods: [GET, POST]
+
+client_create_moral:
+    path: /clients/create-moral
+    controller: App\Controller\Client\ClientCreateController::createMoral
+    methods: [GET, POST]
+
+client_detail:
+    path: /clients/{id}
+    controller: App\Controller\Client\ClientDetailController::show
+    methods: [GET]
+
+client_edit:
+    path: /clients/{id}/edit
+    controller: App\Controller\Client\ClientDetailController::edit
+    methods: [GET, POST]
+
+client_kyc:
+    path: /clients/{id}/kyc
+    controller: App\Controller\Client\ClientKycController::index
+    methods: [GET, POST]
+
+client_documents:
+    path: /clients/{id}/documents
+    controller: App\Controller\Client\ClientDocumentController::index
+    methods: [GET, POST]
+
+client_beneficiaires:
+    path: /clients/{id}/beneficiaires
+    controller: App\Controller\Client\ClientDetailController::beneficiaires
+    methods: [GET, POST]
+
+client_mandataires:
+    path: /clients/{id}/mandataires
+    controller: App\Controller\Client\ClientDetailController::mandataires
+    methods: [GET, POST]
+
+client_contacts:
+    path: /clients/{id}/contacts
+    controller: App\Controller\Client\ClientDetailController::contacts
+    methods: [GET, POST]
+
+client_risk:
+    path: /clients/{id}/risk
+    controller: App\Controller\Client\ClientDetailController::riskEvaluation
+    methods: [GET, POST]
+
+client_screening:
+    path: /clients/{id}/screening
+    controller: App\Controller\Client\ClientDetailController::screening
+    methods: [GET]
+
+client_history:
+    path: /clients/{id}/history
+    controller: App\Controller\Client\ClientDetailController::history
+    methods: [GET]
+
+client_suspend:
+    path: /clients/{id}/suspend
+    controller: App\Controller\Client\ClientDetailController::suspend
+    methods: [GET, POST]
+
+client_reactivate:
+    path: /clients/{id}/reactivate
+    controller: App\Controller\Client\ClientDetailController::reactivate
+    methods: [GET, POST]
+
+client_archive:
+    path: /clients/{id}/archive
+    controller: App\Controller\Client\ClientDetailController::archive
+    methods: [GET, POST]
+
+client_merge:
+    path: /clients/merge
+    controller: App\Controller\Client\ClientMergeController::index
+    methods: [GET, POST]
+
+client_export:
+    path: /clients/export
+    controller: App\Controller\Client\ClientListController::export
+    methods: [GET]
+
+client_stats:
+    path: /clients/stats
+    controller: App\Controller\Client\ClientListController::stats
+    methods: [GET]
+
+# Comptes
+account_list:
+    path: /comptes
+    controller: App\Controller\Compte\AccountListController::index
+    methods: [GET]
+
+account_open:
+    path: /comptes/open
+    controller: App\Controller\Compte\AccountOpenController::index
+    methods: [GET, POST]
+
+account_detail:
+    path: /comptes/{num}
+    controller: App\Controller\Compte\AccountDetailController::show
+    methods: [GET]
+
+account_history:
+    path: /comptes/{num}/history
+    controller: App\Controller\Compte\AccountDetailController::history
+    methods: [GET]
+
+account_statement:
+    path: /comptes/{num}/statement
+    controller: App\Controller\Compte\AccountStatementController::index
+    methods: [GET, POST]
+
+account_block:
+    path: /comptes/{num}/block
+    controller: App\Controller\Compte\AccountBlockController::block
+    methods: [GET, POST]
+
+account_unblock:
+    path: /comptes/{num}/unblock
+    controller: App\Controller\Compte\AccountBlockController::unblock
+    methods: [GET, POST]
+
+account_oppose:
+    path: /comptes/{num}/oppose
+    controller: App\Controller\Compte\AccountBlockController::oppose
+    methods: [GET, POST]
+
+account_product_change:
+    path: /comptes/{num}/product
+    controller: App\Controller\Compte\AccountDetailController::changeProduct
+    methods: [GET, POST]
+
+account_settings:
+    path: /comptes/{num}/settings
+    controller: App\Controller\Compte\AccountDetailController::settings
+    methods: [GET, POST]
+
+account_dormant:
+    path: /comptes/dormants
+    controller: App\Controller\Compte\AccountListController::dormant
+    methods: [GET]
+
+account_closure:
+    path: /comptes/{num}/closure
+    controller: App\Controller\Compte\AccountClosureController::index
+    methods: [GET, POST]
+
+account_pending:
+    path: /comptes/pending
+    controller: App\Controller\Compte\AccountListController::pending
+    methods: [GET]
+
+account_by_agency:
+    path: /comptes/agence/{id}
+    controller: App\Controller\Compte\AccountListController::byAgency
+    methods: [GET]
+
+# Operations (Transaction)
+operation_deposit:
+    path: /operations/depot
+    controller: App\Controller\Transaction\DepositController::index
+    methods: [GET, POST]
+
+operation_withdrawal:
+    path: /operations/retrait
+    controller: App\Controller\Transaction\WithdrawalController::index
+    methods: [GET, POST]
+
+operation_transfer:
+    path: /operations/virement
+    controller: App\Controller\Transaction\TransferController::index
+    methods: [GET, POST]
+
+operation_displaced:
+    path: /operations/deplacee
+    controller: App\Controller\Transaction\TransferController::displaced
+    methods: [GET, POST]
+
+operation_history:
+    path: /operations/history
+    controller: App\Controller\Transaction\TransactionHistoryController::index
+    methods: [GET]
+
+operation_detail:
+    path: /operations/{ref}
+    controller: App\Controller\Transaction\TransactionHistoryController::detail
+    methods: [GET]
+
+operation_receipt:
+    path: /operations/{ref}/receipt
+    controller: App\Controller\Transaction\TransactionHistoryController::receipt
+    methods: [GET]
+
+operation_cancel:
+    path: /operations/{ref}/cancel
+    controller: App\Controller\Transaction\TransactionCancelController::cancel
+    methods: [GET, POST]
+
+operation_extourne:
+    path: /operations/{ref}/extourne
+    controller: App\Controller\Transaction\TransactionCancelController::extourne
+    methods: [GET, POST]
+
+operation_validate:
+    path: /operations/validation
+    controller: App\Controller\Transaction\TransactionHistoryController::validate
+    methods: [GET, POST]
+
+operation_supervisor_force:
+    path: /operations/forcage
+    controller: App\Controller\Transaction\TransactionHistoryController::supervisorForce
+    methods: [GET, POST]
+
+operation_teller_journal:
+    path: /operations/teller-journal
+    controller: App\Controller\Transaction\TellerJournalController::index
+    methods: [GET]
+
+# Validations (Maker-Checker)
+validation_queue:
+    path: /validations
+    controller: App\Controller\Validation\ValidationController::queue
+    methods: [GET]
+
+validation_detail:
+    path: /validations/{id}
+    controller: App\Controller\Validation\ValidationController::detail
+    methods: [GET]
+
+validation_approve:
+    path: /validations/{id}/approve
+    controller: App\Controller\Validation\ValidationController::approve
+    methods: [POST]
+
+validation_reject:
+    path: /validations/{id}/reject
+    controller: App\Controller\Validation\ValidationController::reject
+    methods: [POST]
+
+validation_revision:
+    path: /validations/{id}/revision
+    controller: App\Controller\Validation\ValidationController::revision
+    methods: [POST]
+
+validation_history:
+    path: /validations/history
+    controller: App\Controller\Validation\ValidationController::history
+    methods: [GET]
+
+validation_limits:
+    path: /validations/limits
+    controller: App\Controller\Validation\ValidationController::limits
+    methods: [GET]
+
+validation_rules:
+    path: /validations/rules
+    controller: App\Controller\Validation\ValidationController::rules
+    methods: [GET]
+
+validation_forced:
+    path: /validations/forced
+    controller: App\Controller\Validation\ValidationController::forced
+    methods: [GET]
+
+validation_my_actions:
+    path: /validations/my-actions
+    controller: App\Controller\Validation\ValidationController::myActions
+    methods: [GET]
+
+# Credit routes
+credit_root:
+    path: /credit
+    controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirectAction
+    defaults:
+        route: credit_dashboard
+        permanent: false
+
+credit_dashboard:
+    path: /credit/dashboard
+    controller: App\Controller\Credit\CreditProductController::dashboard
+    methods: [GET]
+
+credit_products:
+    path: /credit/products
+    controller: App\Controller\Credit\CreditProductController::list
+    methods: [GET]
+
+credit_simulation:
+    path: /credit/simulation
+    controller: App\Controller\Credit\CreditRequestController::simulation
+    methods: [GET, POST]
+
+credit_requests:
+    path: /credit/requests
+    controller: App\Controller\Credit\CreditRequestController::list
+    methods: [GET]
+
+credit_request_create:
+    path: /credit/requests/create
+    controller: App\Controller\Credit\CreditRequestController::create
+    methods: [GET, POST]
+
+credit_request_documents:
+    path: /credit/requests/{id}/documents
+    controller: App\Controller\Credit\CreditRequestController::documents
+    methods: [GET, POST]
+
+credit_analysis:
+    path: /credit/requests/{id}/analysis
+    controller: App\Controller\Credit\CreditAnalysisController::index
+    methods: [GET, POST]
+
+credit_scoring:
+    path: /credit/requests/{id}/scoring
+    controller: App\Controller\Credit\CreditAnalysisController::scoring
+    methods: [GET, POST]
+
+credit_guarantees:
+    path: /credit/requests/{id}/guarantees
+    controller: App\Controller\Credit\CreditRequestController::guarantees
+    methods: [GET, POST]
+
+credit_committee:
+    path: /credit/requests/{id}/committee
+    controller: App\Controller\Credit\CreditDecisionController::committee
+    methods: [GET, POST]
+
+credit_decision:
+    path: /credit/requests/{id}/decision
+    controller: App\Controller\Credit\CreditDecisionController::index
+    methods: [GET, POST]
+
+credit_contract:
+    path: /credit/{id}/contract
+    controller: App\Controller\Credit\CreditDisbursementController::contract
+    methods: [GET, POST]
+
+credit_disbursement:
+    path: /credit/{id}/disbursement
+    controller: App\Controller\Credit\CreditDisbursementController::index
+    methods: [GET, POST]
+
+credit_active:
+    path: /credit/active
+    controller: App\Controller\Credit\CreditRepaymentController::activeList
+    methods: [GET]
+
+credit_detail:
+    path: /credit/{id}
+    controller: App\Controller\Credit\CreditRepaymentController::detail
+    methods: [GET]
+
+credit_schedule:
+    path: /credit/{id}/schedule
+    controller: App\Controller\Credit\CreditRepaymentController::schedule
+    methods: [GET]
+
+credit_repayment:
+    path: /credit/{id}/repayment
+    controller: App\Controller\Credit\CreditRepaymentController::repayment
+    methods: [GET, POST]
+
+credit_prepayment:
+    path: /credit/{id}/prepayment
+    controller: App\Controller\Credit\CreditRepaymentController::prepayment
+    methods: [GET, POST]
+
+credit_postponement:
+    path: /credit/{id}/postponement
+    controller: App\Controller\Credit\CreditRepaymentController::postponement
+    methods: [GET, POST]
+
+credit_restructuring:
+    path: /credit/{id}/restructuring
+    controller: App\Controller\Credit\CreditRepaymentController::restructuring
+    methods: [GET, POST]
+
+credit_arrears:
+    path: /credit/arrears
+    controller: App\Controller\Credit\CreditRecoveryController::arrears
+    methods: [GET]
+
+credit_recovery:
+    path: /credit/{id}/recovery
+    controller: App\Controller\Credit\CreditRecoveryController::index
+    methods: [GET, POST]
+
+credit_litigation:
+    path: /credit/{id}/litigation
+    controller: App\Controller\Credit\CreditRecoveryController::litigation
+    methods: [GET, POST]
+
+credit_provisions:
+    path: /credit/provisions
+    controller: App\Controller\Credit\CreditRecoveryController::provisions
+    methods: [GET, POST]
+
+credit_charge_off:
+    path: /credit/{id}/charge-off
+    controller: App\Controller\Credit\CreditRecoveryController::chargeOff
+    methods: [GET, POST]
+
+credit_solidarity_groups:
+    path: /credit/solidarity-groups
+    controller: App\Controller\Credit\CreditRequestController::solidarityGroups
+    methods: [GET, POST]
+
+credit_group_collection:
+    path: /credit/group-collection/{groupId}
+    controller: App\Controller\Credit\CreditRepaymentController::groupCollection
+    methods: [GET, POST]
+
+credit_reporting:
+    path: /credit/reporting
+    controller: App\Controller\Credit\CreditProductController::reporting
+    methods: [GET]
+
+credit_alerts:
+    path: /credit/alerts
+    controller: App\Controller\Credit\CreditProductController::alerts
+    methods: [GET]
+
+credit_file:
+    path: /credit/{id}/file
+    controller: App\Controller\Credit\CreditRepaymentController::fullFile
+    methods: [GET]
+
+credit_client_history:
+    path: /credit/client/{clientId}/history
+    controller: App\Controller\Credit\CreditRequestController::clientHistory
+    methods: [GET]
+
+# Epargne
+epargne_products:
+    path: /epargne/products
+    controller: App\Controller\Epargne\SavingsProductController::list
+    methods: [GET]
+
+epargne_dat:
+    path: /epargne/dat
+    controller: App\Controller\Epargne\DatController::index
+    methods: [GET, POST]
+
+epargne_rates:
+    path: /epargne/rates
+    controller: App\Controller\Epargne\SavingsProductController::rates
+    methods: [GET, POST]
+
+epargne_interest:
+    path: /epargne/interest
+    controller: App\Controller\Epargne\SavingsProductController::calculateInterest
+    methods: [GET, POST]
+
+epargne_interest_history:
+    path: /epargne/interest-history
+    controller: App\Controller\Epargne\SavingsReportController::interestHistory
+    methods: [GET]
+
+epargne_programmed:
+    path: /epargne/programmed
+    controller: App\Controller\Epargne\SavingsProductController::programmed
+    methods: [GET, POST]
+
+epargne_mandatory:
+    path: /epargne/mandatory
+    controller: App\Controller\Epargne\SavingsProductController::mandatory
+    methods: [GET, POST]
+
+epargne_tontines:
+    path: /epargne/tontines
+    controller: App\Controller\Epargne\SavingsProductController::tontines
+    methods: [GET, POST]
+
+epargne_tontine_contributions:
+    path: /epargne/tontines/{id}/contributions
+    controller: App\Controller\Epargne\SavingsProductController::tontineContributions
+    methods: [GET, POST]
+
+epargne_withdrawal:
+    path: /epargne/withdrawal
+    controller: App\Controller\Epargne\SavingsProductController::withdrawal
+    methods: [GET, POST]
+
+epargne_close:
+    path: /epargne/close/{id}
+    controller: App\Controller\Epargne\SavingsProductController::close
+    methods: [GET, POST]
+
+epargne_movements:
+    path: /epargne/movements/{id}
+    controller: App\Controller\Epargne\SavingsReportController::movements
+    methods: [GET]
+
+epargne_reporting:
+    path: /epargne/reporting
+    controller: App\Controller\Epargne\SavingsReportController::index
+    methods: [GET]
+
+epargne_projects:
+    path: /epargne/projects
+    controller: App\Controller\Epargne\SavingsProductController::projects
+    methods: [GET, POST]
+
+epargne_auto_transfer:
+    path: /epargne/auto-transfer
+    controller: App\Controller\Epargne\SavingsProductController::autoTransfer
+    methods: [GET, POST]
+
+epargne_simulation:
+    path: /epargne/simulation
+    controller: App\Controller\Epargne\SavingsProductController::simulation
+    methods: [GET, POST]
+
+epargne_certificates:
+    path: /epargne/certificates
+    controller: App\Controller\Epargne\SavingsProductController::certificates
+    methods: [GET, POST]
+
+# Caisse
+caisse_dashboard:
+    path: /caisse
+    controller: App\Controller\Caisse\CashDeskController::dashboard
+    methods: [GET]
+
+caisse_list:
+    path: /caisse/list
+    controller: App\Controller\Caisse\CashDeskController::index
+    methods: [GET]
+
+caisse_open:
+    path: /caisse/open
+    controller: App\Controller\Caisse\SessionController::open
+    methods: [GET, POST]
+
+caisse_session:
+    path: /caisse/session/{id}
+    controller: App\Controller\Caisse\SessionController::show
+    methods: [GET]
+
+caisse_close:
+    path: /caisse/close/{id}
+    controller: App\Controller\Caisse\SessionController::close
+    methods: [GET, POST]
+
+caisse_billetage:
+    path: /caisse/billetage/{id}
+    controller: App\Controller\Caisse\CashDeskController::billetage
+    methods: [GET, POST]
+
+caisse_variances:
+    path: /caisse/variances
+    controller: App\Controller\Caisse\CashDeskController::variances
+    methods: [GET]
+
+caisse_variance_validate:
+    path: /caisse/variances/{id}/validate
+    controller: App\Controller\Caisse\CashDeskController::varianceValidate
+    methods: [GET, POST]
+
+caisse_provisioning:
+    path: /caisse/provisioning
+    controller: App\Controller\Caisse\CashDeskController::provisioning
+    methods: [GET, POST]
+
+caisse_unloading:
+    path: /caisse/unloading
+    controller: App\Controller\Caisse\CashDeskController::unloading
+    methods: [GET, POST]
+
+caisse_transfer:
+    path: /caisse/transfer
+    controller: App\Controller\Caisse\CashDeskController::interCaisseTransfer
+    methods: [GET, POST]
+
+caisse_vault:
+    path: /caisse/vault
+    controller: App\Controller\Caisse\VaultController::index
+    methods: [GET, POST]
+
+caisse_teller_statement:
+    path: /caisse/teller-statement/{id}
+    controller: App\Controller\Caisse\SessionController::tellerStatement
+    methods: [GET]
+
+caisse_eod:
+    path: /caisse/eod
+    controller: App\Controller\Caisse\EodController::index
+    methods: [GET, POST]
+
+caisse_eod_monitor:
+    path: /caisse/eod/monitor
+    controller: App\Controller\Caisse\EodController::monitor
+    methods: [GET]
+
+caisse_eod_history:
+    path: /caisse/eod/history
+    controller: App\Controller\Caisse\EodController::history
+    methods: [GET]
+
+caisse_params:
+    path: /caisse/params
+    controller: App\Controller\Caisse\CashDeskController::params
+    methods: [GET, POST]
+
+caisse_in_transit:
+    path: /caisse/in-transit
+    controller: App\Controller\Caisse\VaultController::inTransit
+    methods: [GET, POST]
+
+# Comptabilite routes
+comptabilite_chart:
+    path: /comptabilite/plan-comptable
+    controller: App\Controller\Comptabilite\ChartController::index
+    methods: [GET]
+
+comptabilite_journals:
+    path: /comptabilite/journaux
+    controller: App\Controller\Comptabilite\JournalController::index
+    methods: [GET]
+
+comptabilite_diverse:
+    path: /comptabilite/operations-diverses
+    controller: App\Controller\Comptabilite\EcritureController::diverse
+    methods: [GET, POST]
+
+comptabilite_draft:
+    path: /comptabilite/brouillard
+    controller: App\Controller\Comptabilite\EcritureController::draft
+    methods: [GET]
+
+comptabilite_ledger:
+    path: /comptabilite/journal/{code}
+    controller: App\Controller\Comptabilite\JournalController::ledger
+    methods: [GET]
+
+comptabilite_general_ledger:
+    path: /comptabilite/grand-livre
+    controller: App\Controller\Comptabilite\GrandLivreController::index
+    methods: [GET]
+
+comptabilite_balance:
+    path: /comptabilite/balance
+    controller: App\Controller\Comptabilite\BalanceController::index
+    methods: [GET]
+
+comptabilite_aged_balance:
+    path: /comptabilite/balance-agee
+    controller: App\Controller\Comptabilite\BalanceController::aged
+    methods: [GET]
+
+comptabilite_pnl:
+    path: /comptabilite/resultat
+    controller: App\Controller\Comptabilite\BalanceController::pnl
+    methods: [GET]
+
+comptabilite_cash_flow:
+    path: /comptabilite/flux-tresorerie
+    controller: App\Controller\Comptabilite\BalanceController::cashFlow
+    methods: [GET]
+
+comptabilite_schemas:
+    path: /comptabilite/schemas
+    controller: App\Controller\Comptabilite\ChartController::schemas
+    methods: [GET]
+
+comptabilite_schema_test:
+    path: /comptabilite/schemas/test
+    controller: App\Controller\Comptabilite\ChartController::schemaTest
+    methods: [GET, POST]
+
+comptabilite_lettering:
+    path: /comptabilite/lettrage
+    controller: App\Controller\Comptabilite\EcritureController::lettering
+    methods: [GET, POST]
+
+comptabilite_reversal:
+    path: /comptabilite/contre-passation
+    controller: App\Controller\Comptabilite\EcritureController::reversal
+    methods: [GET, POST]
+
+comptabilite_closing:
+    path: /comptabilite/cloture
+    controller: App\Controller\Comptabilite\ClotureController::index
+    methods: [GET, POST]
+
+comptabilite_fiscal_years:
+    path: /comptabilite/exercices
+    controller: App\Controller\Comptabilite\ClotureController::fiscalYears
+    methods: [GET, POST]
+
+comptabilite_documents:
+    path: /comptabilite/pieces-comptables
+    controller: App\Controller\Comptabilite\EcritureController::documents
+    methods: [GET, POST]
+
+comptabilite_controls:
+    path: /comptabilite/controles
+    controller: App\Controller\Comptabilite\BalanceController::controls
+    methods: [GET]
+
+comptabilite_tax:
+    path: /comptabilite/fiscal
+    controller: App\Controller\Comptabilite\ClotureController::tax
+    methods: [GET, POST]
+
+comptabilite_reports:
+    path: /comptabilite/reporting
+    controller: App\Controller\Comptabilite\BalanceController::reports
+    methods: [GET]
+
+comptabilite_fixed_assets:
+    path: /comptabilite/immobilisations
+    controller: App\Controller\Comptabilite\ClotureController::fixedAssets
+    methods: [GET, POST]
+
+comptabilite_off_balance:
+    path: /comptabilite/hors-bilan
+    controller: App\Controller\Comptabilite\BalanceController::offBalance
+    methods: [GET]
+
+# Paiements routes
+paiement_cheque_deposit:
+    path: /paiements/cheque/depot
+    controller: App\Controller\Paiement\ChequeController::deposit
+    methods: [GET, POST]
+
+paiement_chequebooks:
+    path: /paiements/cheque/carnets
+    controller: App\Controller\Paiement\ChequeController::chequebooks
+    methods: [GET, POST]
+
+paiement_cheque_oppose:
+    path: /paiements/cheque/opposition
+    controller: App\Controller\Paiement\ChequeController::oppose
+    methods: [GET, POST]
+
+paiement_cheque_incidents:
+    path: /paiements/cheque/incidents
+    controller: App\Controller\Paiement\ChequeController::incidents
+    methods: [GET]
+
+paiement_clearing:
+    path: /paiements/compensation
+    controller: App\Controller\Paiement\CompensationController::index
+    methods: [GET, POST]
+
+paiement_sit:
+    path: /paiements/sit
+    controller: App\Controller\Paiement\TransferController::sit
+    methods: [GET, POST]
+
+paiement_rtgs:
+    path: /paiements/rtgs
+    controller: App\Controller\Paiement\TransferController::rtgs
+    methods: [GET, POST]
+
+paiement_cards:
+    path: /paiements/cartes
+    controller: App\Controller\Paiement\ChequeController::cards
+    methods: [GET, POST]
+
+paiement_card_disputes:
+    path: /paiements/cartes/litiges
+    controller: App\Controller\Paiement\ChequeController::cardDisputes
+    methods: [GET, POST]
+
+paiement_card_reconciliation:
+    path: /paiements/cartes/rapprochement
+    controller: App\Controller\Paiement\ChequeController::cardReconciliation
+    methods: [GET]
+
+paiement_atm:
+    path: /paiements/dab
+    controller: App\Controller\Paiement\TransferController::atm
+    methods: [GET, POST]
+
+paiement_mobile_money:
+    path: /paiements/mobile-money
+    controller: App\Controller\Paiement\MobileMoneyController::index
+    methods: [GET, POST]
+
+paiement_bills:
+    path: /paiements/factures
+    controller: App\Controller\Paiement\MobileMoneyController::bills
+    methods: [GET, POST]
+
+paiement_recharges:
+    path: /paiements/recharges
+    controller: App\Controller\Paiement\MobileMoneyController::recharges
+    methods: [GET, POST]
+
+paiement_international:
+    path: /paiements/transfert-international
+    controller: App\Controller\Paiement\TransferController::international
+    methods: [GET, POST]
+
+paiement_direct_debit:
+    path: /paiements/prelevement
+    controller: App\Controller\Paiement\TransferController::directDebit
+    methods: [GET, POST]
+
+paiement_lcr:
+    path: /paiements/lcr
+    controller: App\Controller\Paiement\CompensationController::lcr
+    methods: [GET, POST]
+
+paiement_batch_transfer:
+    path: /paiements/virement-masse
+    controller: App\Controller\Paiement\TransferController::batchTransfer
+    methods: [GET, POST]
+
+paiement_subscriptions:
+    path: /paiements/abonnements
+    controller: App\Controller\Paiement\MobileMoneyController::subscriptions
+    methods: [GET, POST]
+
+paiement_fees:
+    path: /paiements/commissions
+    controller: App\Controller\Paiement\MobileMoneyController::fees
+    methods: [GET, POST]
+
+paiement_api:
+    path: /paiements/api
+    controller: App\Controller\Paiement\MobileMoneyController::api
+    methods: [GET, POST]
+
+paiement_journal:
+    path: /paiements/journal
+    controller: App\Controller\Paiement\CompensationController::journal
+    methods: [GET]
+
+paiement_refund:
+    path: /paiements/remboursement
+    controller: App\Controller\Paiement\MobileMoneyController::refund
+    methods: [GET, POST]
+
+paiement_momo_history:
+    path: /paiements/momo/historique
+    controller: App\Controller\Paiement\MobileMoneyController::momoHistory
+    methods: [GET]
+
+paiement_partners:
+    path: /paiements/partenaires
+    controller: App\Controller\Paiement\MobileMoneyController::partners
+    methods: [GET, POST]
+
+paiement_limits:
+    path: /paiements/plafonds
+    controller: App\Controller\Paiement\MobileMoneyController::limits
+    methods: [GET, POST]
+
+# Conformite routes
+conformite_dashboard:
+    path: /conformite
+    controller: App\Controller\Conformite\ComplianceAlertController::dashboard
+    methods: [GET]
+
+conformite_alerts:
+    path: /conformite/alertes
+    controller: App\Controller\Conformite\ComplianceAlertController::index
+    methods: [GET]
+
+conformite_investigation:
+    path: /conformite/alertes/{id}/investigation
+    controller: App\Controller\Conformite\ComplianceAlertController::investigation
+    methods: [GET, POST]
+
+conformite_sar:
+    path: /conformite/declarations
+    controller: App\Controller\Conformite\SarController::index
+    methods: [GET, POST]
+
+conformite_screening:
+    path: /conformite/screening
+    controller: App\Controller\Conformite\ScreeningController::index
+    methods: [GET]
+
+conformite_pep:
+    path: /conformite/pep
+    controller: App\Controller\Conformite\ScreeningController::pep
+    methods: [GET, POST]
+
+conformite_risk_profile:
+    path: /conformite/profil-risque
+    controller: App\Controller\Conformite\ComplianceAlertController::riskProfile
+    methods: [GET]
+
+conformite_bic:
+    path: /conformite/bic
+    controller: App\Controller\Conformite\ScreeningController::bic
+    methods: [GET, POST]
+
+conformite_payment_incidents:
+    path: /conformite/incidents-paiement
+    controller: App\Controller\Conformite\ComplianceAlertController::paymentIncidents
+    methods: [GET]
+
+conformite_tax:
+    path: /conformite/fiscal
+    controller: App\Controller\Conformite\ComplianceAlertController::tax
+    methods: [GET, POST]
+
+conformite_inspector:
+    path: /conformite/inspecteur
+    controller: App\Controller\Conformite\ComplianceAlertController::inspector
+    methods: [GET, POST]
+
+conformite_reports:
+    path: /conformite/rapports
+    controller: App\Controller\Conformite\SarController::reports
+    methods: [GET]
+
+conformite_training:
+    path: /conformite/formation
+    controller: App\Controller\Conformite\ComplianceAlertController::training
+    methods: [GET, POST]
+
+conformite_risk_map:
+    path: /conformite/cartographie-risques
+    controller: App\Controller\Conformite\ComplianceAlertController::riskMap
+    methods: [GET]
+
+conformite_correspondents:
+    path: /conformite/correspondants
+    controller: App\Controller\Conformite\ScreeningController::correspondents
+    methods: [GET, POST]
+
+conformite_internal_control:
+    path: /conformite/controle-interne
+    controller: App\Controller\Conformite\ComplianceAlertController::internalControl
+    methods: [GET, POST]
+
+# Risque routes
+risque_dashboard:
+    path: /risques
+    controller: App\Controller\Risque\RiskController::dashboard
+    methods: [GET]
+
+risque_credit:
+    path: /risques/credit
+    controller: App\Controller\Risque\RiskController::credit
+    methods: [GET]
+
+risque_provisions:
+    path: /risques/provisions
+    controller: App\Controller\Risque\RiskController::provisions
+    methods: [GET]
+
+risque_liquidity:
+    path: /risques/liquidite
+    controller: App\Controller\Risque\RiskController::liquidity
+    methods: [GET]
+
+risque_stress_tests:
+    path: /risques/stress-tests
+    controller: App\Controller\Risque\StressTestController::index
+    methods: [GET, POST]
+
+risque_risk_map:
+    path: /risques/cartographie
+    controller: App\Controller\Risque\RiskController::riskMap
+    methods: [GET]
+
+risque_operational:
+    path: /risques/incidents
+    controller: App\Controller\Risque\IncidentController::index
+    methods: [GET, POST]
+
+risque_alm:
+    path: /risques/alm
+    controller: App\Controller\Risque\RiskController::alm
+    methods: [GET]
+
+risque_pca:
+    path: /risques/pca
+    controller: App\Controller\Risque\RiskController::pca
+    methods: [GET]
+
+risque_pra:
+    path: /risques/pra
+    controller: App\Controller\Risque\RiskController::pra
+    methods: [GET]
+
+risque_interest_rate:
+    path: /risques/taux
+    controller: App\Controller\Risque\RiskController::interestRate
+    methods: [GET]
+
+risque_reporting:
+    path: /risques/reporting
+    controller: App\Controller\Risque\StressTestController::reporting
+    methods: [GET]
+
+# Organisation routes
+organisation_regions:
+    path: /organisation/regions
+    controller: App\Controller\Organisation\RegionController::index
+    methods: [GET, POST]
+
+organisation_agencies:
+    path: /organisation/agences
+    controller: App\Controller\Organisation\AgencyController::index
+    methods: [GET, POST]
+
+organisation_agency_params:
+    path: /organisation/agences/{id}/params
+    controller: App\Controller\Organisation\AgencyController::params
+    methods: [GET, POST]
+
+organisation_staff:
+    path: /organisation/personnel
+    controller: App\Controller\Organisation\AgencyController::staff
+    methods: [GET, POST]
+
+organisation_mutations:
+    path: /organisation/mutations
+    controller: App\Controller\Organisation\MutationController::index
+    methods: [GET, POST]
+
+organisation_tellers:
+    path: /organisation/guichets
+    controller: App\Controller\Organisation\GuichetController::index
+    methods: [GET, POST]
+
+organisation_inter_agency:
+    path: /organisation/inter-agences
+    controller: App\Controller\Organisation\AgencyController::interAgency
+    methods: [GET, POST]
+
+organisation_reconciliation:
+    path: /organisation/rapprochements
+    controller: App\Controller\Organisation\AgencyController::reconciliation
+    methods: [GET]
+
+organisation_performance:
+    path: /organisation/performance
+    controller: App\Controller\Organisation\AgencyController::performance
+    methods: [GET]
+
+organisation_inventory:
+    path: /organisation/inventaire
+    controller: App\Controller\Organisation\GuichetController::inventory
+    methods: [GET, POST]
+
+organisation_close:
+    path: /organisation/agences/{id}/fermeture
+    controller: App\Controller\Organisation\AgencyController::close
+    methods: [GET, POST]
+
+organisation_open:
+    path: /organisation/agences/ouverture
+    controller: App\Controller\Organisation\AgencyController::openNew
+    methods: [GET, POST]
+
+organisation_reporting:
+    path: /organisation/reporting
+    controller: App\Controller\Organisation\RegionController::reporting
+    methods: [GET]
+
+# RH/Support routes
+support_employes:
+    path: /support/employes
+    controller: App\Controller\Support\EmployeController::list
+    methods: [GET]
+
+support_employes_create:
+    path: /support/employes/create
+    controller: App\Controller\Support\EmployeController::create
+    methods: [GET, POST]
+
+support_employes_show:
+    path: /support/employes/{id}
+    controller: App\Controller\Support\EmployeController::show
+    methods: [GET]
+
+support_employes_edit:
+    path: /support/employes/{id}/edit
+    controller: App\Controller\Support\EmployeController::edit
+    methods: [GET, POST]
+
+support_recrutement:
+    path: /support/recrutement
+    controller: App\Controller\Support\RecrutementController::list
+    methods: [GET]
+
+support_recrutement_create:
+    path: /support/recrutement/create
+    controller: App\Controller\Support\RecrutementController::create
+    methods: [GET, POST]
+
+support_recrutement_show:
+    path: /support/recrutement/{id}
+    controller: App\Controller\Support\RecrutementController::show
+    methods: [GET]
+
+support_conges:
+    path: /support/conges
+    controller: App\Controller\Support\CongeController::list
+    methods: [GET]
+
+support_conges_create:
+    path: /support/conges/create
+    controller: App\Controller\Support\CongeController::create
+    methods: [GET, POST]
+
+support_conges_approve:
+    path: /support/conges/{id}/approve
+    controller: App\Controller\Support\CongeController::approve
+    methods: [POST]
+
+support_absences:
+    path: /support/absences
+    controller: App\Controller\Support\AbsenceController::list
+    methods: [GET]
+
+support_absences_create:
+    path: /support/absences/create
+    controller: App\Controller\Support\AbsenceController::create
+    methods: [GET, POST]
+
+support_paie:
+    path: /support/paie
+    controller: App\Controller\Support\PaieController::index
+    methods: [GET]
+
+support_paie_process:
+    path: /support/paie/process
+    controller: App\Controller\Support\PaieController::process
+    methods: [GET, POST]
+
+support_paie_show:
+    path: /support/paie/{id}
+    controller: App\Controller\Support\PaieController::show
+    methods: [GET]
+
+support_paie_bulletins:
+    path: /support/paie/bulletins
+    controller: App\Controller\Support\PaieController::bulletins
+    methods: [GET]
+
+support_formation:
+    path: /support/formation
+    controller: App\Controller\Support\FormationController::list
+    methods: [GET]
+
+support_formation_create:
+    path: /support/formation/create
+    controller: App\Controller\Support\FormationController::create
+    methods: [GET, POST]
+
+support_formation_sessions:
+    path: /support/formation/{id}/sessions
+    controller: App\Controller\Support\FormationController::sessions
+    methods: [GET]
+
+support_evaluations:
+    path: /support/evaluations
+    controller: App\Controller\Support\EvaluationController::list
+    methods: [GET]
+
+support_evaluations_create:
+    path: /support/evaluations/create
+    controller: App\Controller\Support\EvaluationController::create
+    methods: [GET, POST]
+
+support_evaluations_show:
+    path: /support/evaluations/{id}
+    controller: App\Controller\Support\EvaluationController::show
+    methods: [GET]
+
+support_discipline:
+    path: /support/discipline
+    controller: App\Controller\Support\DisciplineController::list
+    methods: [GET]
+
+support_discipline_create:
+    path: /support/discipline/create
+    controller: App\Controller\Support\DisciplineController::create
+    methods: [GET, POST]
+
+support_depart:
+    path: /support/depart
+    controller: App\Controller\Support\DepartController::list
+    methods: [GET]
+
+support_depart_process:
+    path: /support/depart/{id}/process
+    controller: App\Controller\Support\DepartController::process
+    methods: [POST]
+
+support_achats:
+    path: /support/achats
+    controller: App\Controller\Support\AchatController::list
+    methods: [GET]
+
+support_achats_create:
+    path: /support/achats/create
+    controller: App\Controller\Support\AchatController::create
+    methods: [GET, POST]
+
+support_achats_show:
+    path: /support/achats/{id}
+    controller: App\Controller\Support\AchatController::show
+    methods: [GET]
+
+support_achats_approve:
+    path: /support/achats/{id}/approve
+    controller: App\Controller\Support\AchatController::approve
+    methods: [POST]
+
+support_fournisseurs:
+    path: /support/fournisseurs
+    controller: App\Controller\Support\FournisseurController::list
+    methods: [GET]
+
+support_fournisseurs_create:
+    path: /support/fournisseurs/create
+    controller: App\Controller\Support\FournisseurController::create
+    methods: [GET, POST]
+
+support_fournisseurs_show:
+    path: /support/fournisseurs/{id}
+    controller: App\Controller\Support\FournisseurController::show
+    methods: [GET]
+
+support_receptions:
+    path: /support/receptions
+    controller: App\Controller\Support\ReceptionController::list
+    methods: [GET]
+
+support_receptions_create:
+    path: /support/receptions/create
+    controller: App\Controller\Support\ReceptionController::create
+    methods: [GET, POST]
+
+support_stocks:
+    path: /support/stocks
+    controller: App\Controller\Support\StockController::list
+    methods: [GET]
+
+support_stocks_movement:
+    path: /support/stocks/{id}/movements
+    controller: App\Controller\Support\StockController::movement
+    methods: [GET]
+
+support_budget:
+    path: /support/budget
+    controller: App\Controller\Support\BudgetController::list
+    methods: [GET]
+
+support_budget_create:
+    path: /support/budget/create
+    controller: App\Controller\Support\BudgetController::create
+    methods: [GET, POST]
+
+support_budget_show:
+    path: /support/budget/{id}
+    controller: App\Controller\Support\BudgetController::show
+    methods: [GET]
+
+support_budget_execution:
+    path: /support/budget/{id}/execution
+    controller: App\Controller\Support\BudgetController::execution
+    methods: [GET]
+
+support_immobilisations:
+    path: /support/immobilisations
+    controller: App\Controller\Support\ImmobilisationController::list
+    methods: [GET]
+
+support_immobilisations_create:
+    path: /support/immobilisations/create
+    controller: App\Controller\Support\ImmobilisationController::create
+    methods: [GET, POST]
+
+support_immobilisations_show:
+    path: /support/immobilisations/{id}
+    controller: App\Controller\Support\ImmobilisationController::show
+    methods: [GET]
+
+support_maintenance:
+    path: /support/maintenance
+    controller: App\Controller\Support\MaintenanceController::list
+    methods: [GET]
+
+support_maintenance_create:
+    path: /support/maintenance/create
+    controller: App\Controller\Support\MaintenanceController::create
+    methods: [GET, POST]
+
+support_parc_auto:
+    path: /support/parc-auto
+    controller: App\Controller\Support\ParcAutoController::list
+    methods: [GET]
+
+support_parc_auto_create:
+    path: /support/parc-auto/create
+    controller: App\Controller\Support\ParcAutoController::create
+    methods: [GET, POST]
+
+support_assurances:
+    path: /support/assurances
+    controller: App\Controller\Support\AssuranceController::list
+    methods: [GET]
+
+support_assurances_create:
+    path: /support/assurances/create
+    controller: App\Controller\Support\AssuranceController::create
+    methods: [GET, POST]
+
+support_assurances_show:
+    path: /support/assurances/{id}
+    controller: App\Controller\Support\AssuranceController::show
+    methods: [GET]
+
+support_courrier:
+    path: /support/courrier
+    controller: App\Controller\Support\CourrierController::list
+    methods: [GET]
+
+support_courrier_create:
+    path: /support/courrier/create
+    controller: App\Controller\Support\CourrierController::create
+    methods: [GET, POST]
+
+support_courrier_show:
+    path: /support/courrier/{id}
+    controller: App\Controller\Support\CourrierController::show
+    methods: [GET]
+
+support_archives:
+    path: /support/archives
+    controller: App\Controller\Support\ArchiveController::list
+    methods: [GET]
+
+support_archives_search:
+    path: /support/archives/search
+    controller: App\Controller\Support\ArchiveController::search
+    methods: [GET]
+
+support_archives_show:
+    path: /support/archives/{id}
+    controller: App\Controller\Support\ArchiveController::show
+    methods: [GET]
+
+# Admin routes
+admin_utilisateurs:
+    path: /admin/utilisateurs
+    controller: App\Controller\Admin\UtilisateurController::list
+    methods: [GET]
+
+admin_utilisateurs_create:
+    path: /admin/utilisateurs/create
+    controller: App\Controller\Admin\UtilisateurController::create
+    methods: [GET, POST]
+
+admin_utilisateurs_show:
+    path: /admin/utilisateurs/{id}
+    controller: App\Controller\Admin\UtilisateurController::show
+    methods: [GET]
+
+admin_utilisateurs_edit:
+    path: /admin/utilisateurs/{id}/edit
+    controller: App\Controller\Admin\UtilisateurController::edit
+    methods: [GET, POST]
+
+admin_utilisateurs_suspend:
+    path: /admin/utilisateurs/{id}/suspend
+    controller: App\Controller\Admin\UtilisateurController::suspend
+    methods: [POST]
+
+admin_roles:
+    path: /admin/roles
+    controller: App\Controller\Admin\RoleController::list
+    methods: [GET]
+
+admin_roles_create:
+    path: /admin/roles/create
+    controller: App\Controller\Admin\RoleController::create
+    methods: [GET, POST]
+
+admin_roles_edit:
+    path: /admin/roles/{id}/edit
+    controller: App\Controller\Admin\RoleController::edit
+    methods: [GET, POST]
+
+admin_roles_permissions:
+    path: /admin/roles/{id}/permissions
+    controller: App\Controller\Admin\RoleController::permissions
+    methods: [GET]
+
+admin_permissions:
+    path: /admin/permissions
+    controller: App\Controller\Admin\PermissionController::list
+    methods: [GET]
+
+admin_permissions_matrix:
+    path: /admin/permissions/matrix
+    controller: App\Controller\Admin\PermissionController::matrix
+    methods: [GET]
+
+admin_securite:
+    path: /admin/securite
+    controller: App\Controller\Admin\SecuriteController::index
+    methods: [GET]
+
+admin_securite_edit:
+    path: /admin/securite/edit
+    controller: App\Controller\Admin\SecuriteController::edit
+    methods: [POST]
+
+admin_sessions:
+    path: /admin/sessions
+    controller: App\Controller\Admin\SessionController::list
+    methods: [GET]
+
+admin_sessions_revoke:
+    path: /admin/sessions/{id}/revoke
+    controller: App\Controller\Admin\SessionController::revoke
+    methods: [POST]
+
+admin_tentatives_connexion:
+    path: /admin/tentatives-connexion
+    controller: App\Controller\Admin\TentativeConnexionController::list
+    methods: [GET]
+
+admin_audit:
+    path: /admin/audit
+    controller: App\Controller\Admin\AuditController::list
+    methods: [GET]
+
+admin_audit_show:
+    path: /admin/audit/{id}
+    controller: App\Controller\Admin\AuditController::show
+    methods: [GET]
+
+admin_parametres:
+    path: /admin/parametres
+    controller: App\Controller\Admin\ParametreController::list
+    methods: [GET]
+
+admin_parametres_edit:
+    path: /admin/parametres/{key}/edit
+    controller: App\Controller\Admin\ParametreController::edit
+    methods: [GET, POST]
+
+admin_notifications_systeme:
+    path: /admin/notifications
+    controller: App\Controller\Admin\NotificationSystemeController::list
+    methods: [GET]
+
+admin_notifications_systeme_create:
+    path: /admin/notifications/create
+    controller: App\Controller\Admin\NotificationSystemeController::create
+    methods: [GET, POST]
+
+admin_notifications_systeme_send:
+    path: /admin/notifications/{id}/send
+    controller: App\Controller\Admin\NotificationSystemeController::send
+    methods: [POST]
+
+admin_taches_planifiees:
+    path: /admin/taches-planifiees
+    controller: App\Controller\Admin\TachePlanifieeController::list
+    methods: [GET]
+
+admin_taches_planifiees_create:
+    path: /admin/taches-planifiees/create
+    controller: App\Controller\Admin\TachePlanifieeController::create
+    methods: [GET, POST]
+
+admin_taches_planifiees_run:
+    path: /admin/taches-planifiees/{id}/run
+    controller: App\Controller\Admin\TachePlanifieeController::run
+    methods: [POST]
+
+admin_sauvegardes:
+    path: /admin/sauvegardes
+    controller: App\Controller\Admin\SauvegardeController::list
+    methods: [GET]
+
+admin_sauvegardes_create:
+    path: /admin/sauvegardes/create
+    controller: App\Controller\Admin\SauvegardeController::create
+    methods: [POST]
+
+admin_sauvegardes_restore:
+    path: /admin/sauvegardes/{id}/restore
+    controller: App\Controller\Admin\SauvegardeController::restore
+    methods: [GET, POST]
+
+admin_sante:
+    path: /admin/sante
+    controller: App\Controller\Admin\SanteController::index
+    methods: [GET]
+
+admin_logs:
+    path: /admin/logs
+    controller: App\Controller\Admin\LogController::list
+    methods: [GET]
+
+admin_logs_show:
+    path: /admin/logs/{id}
+    controller: App\Controller\Admin\LogController::show
+    methods: [GET]
+
+admin_versions:
+    path: /admin/versions
+    controller: App\Controller\Admin\VersionController::list
+    methods: [GET]
+
+admin_cache:
+    path: /admin/cache
+    controller: App\Controller\Admin\CacheController::index
+    methods: [GET]
+
+admin_cache_clear:
+    path: /admin/cache/clear/{prefix}
+    controller: App\Controller\Admin\CacheController::clear
+    methods: [POST]
+
+admin_cache_clear_all:
+    path: /admin/cache/clear-all
+    controller: App\Controller\Admin\CacheController::clearAll
+    methods: [POST]
+
+admin_modules:
+    path: /admin/modules
+    controller: App\Controller\Admin\ModuleController::list
+    methods: [GET]
+
+admin_modules_toggle:
+    path: /admin/modules/{id}/toggle
+    controller: App\Controller\Admin\ModuleController::toggle
+    methods: [POST]
+
+admin_modules_configure:
+    path: /admin/modules/{id}/configure
+    controller: App\Controller\Admin\ModuleController::configure
+    methods: [GET, POST]
+
+admin_maintenance:
+    path: /admin/maintenance
+    controller: App\Controller\Admin\MaintenanceController::index
+    methods: [GET]
+
+admin_maintenance_enable:
+    path: /admin/maintenance/enable
+    controller: App\Controller\Admin\MaintenanceController::enable
+    methods: [POST]
+
+admin_maintenance_disable:
+    path: /admin/maintenance/disable
+    controller: App\Controller\Admin\MaintenanceController::disable
+    methods: [POST]
+
+admin_maintenance_message:
+    path: /admin/maintenance/message
+    controller: App\Controller\Admin\MaintenanceController::message
+    methods: [POST]
+
+admin_changelog:
+    path: /admin/changelog
+    controller: App\Controller\Admin\ChangelogController::index
+    methods: [GET]
+
+# Reporting routes
+reporting_accounting:
+    path: /reporting/comptable
+    controller: App\Controller\Reporting\AccountingReportController::index
+    methods: [GET]
+
+reporting_regulatory:
+    path: /reporting/reglementaire
+    controller: App\Controller\Reporting\RegulatoryReportController::index
+    methods: [GET]
+
+reporting_ratios:
+    path: /reporting/ratios
+    controller: App\Controller\Reporting\AccountingReportController::ratios
+    methods: [GET]
+
+reporting_credit:
+    path: /reporting/credit
+    controller: App\Controller\Reporting\CreditReportController::index
+    methods: [GET]
+
+reporting_savings:
+    path: /reporting/epargne
+    controller: App\Controller\Reporting\CreditReportController::savings
+    methods: [GET]
+
+reporting_cash:
+    path: /reporting/caisse
+    controller: App\Controller\Reporting\AccountingReportController::cash
+    methods: [GET]
+
+reporting_agency:
+    path: /reporting/agences
+    controller: App\Controller\Reporting\AccountingReportController::agency
+    methods: [GET]
+
+reporting_compliance:
+    path: /reporting/conformite
+    controller: App\Controller\Reporting\RegulatoryReportController::compliance
+    methods: [GET]
+
+reporting_custom:
+    path: /reporting/personnalise
+    controller: App\Controller\Reporting\CustomReportController::index
+    methods: [GET, POST]
+
+reporting_scheduled:
+    path: /reporting/programme
+    controller: App\Controller\Reporting\CustomReportController::scheduled
+    methods: [GET, POST]
+
+reporting_subscriptions:
+    path: /reporting/abonnements
+    controller: App\Controller\Reporting\AccountingReportController::subscriptions
+    methods: [GET, POST]
+
+reporting_hr:
+    path: /reporting/rh
+    controller: App\Controller\Reporting\RegulatoryReportController::hr
+    methods: [GET]

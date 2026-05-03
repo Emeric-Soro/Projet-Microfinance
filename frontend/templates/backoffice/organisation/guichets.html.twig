@@ -1,0 +1,75 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Guichets - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% if create_mode is defined %}
+        <div class="max-w-2xl">
+            {% embed 'components/MfFormCard.html.twig' with { title: 'Nouveau guichet', description: 'Saisissez les informations du nouveau guichet' } %}
+                {% block form_fields %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Code</label>
+                            <input type="text" name="code" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Libellé</label>
+                            <input type="text" name="libelle" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Agence</label>
+                            <select name="agence_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                                <option value="">Sélectionner</option>
+                                {% for a in agences %}
+                                    <option value="{{ a.id }}">{{ a.libelle }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Type</label>
+                            <select name="type" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                                <option value="PRINCIPAL">Principal</option>
+                                <option value="SECONDAIRE">Secondaire</option>
+                                <option value="MOBILE">Mobile</option>
+                            </select>
+                        </div>
+                    </div>
+                {% endblock %}
+            {% endembed %}
+        </div>
+    {% endif %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Guichets' } %}
+        {% block card_content %}
+            {% include 'partials/_table_toolbar.html.twig' with {
+                search_placeholder: 'Rechercher un guichet...',
+                filters: [
+                    { label: 'Agence', options: agences|map(a => { value: a.id, label: a.libelle }) },
+                ],
+                action_button: { url: path('organisation_guichets_create'), label: 'Nouveau guichet' }
+            } %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'code', label: 'Code', sortable: true },
+                    { key: 'libelle', label: 'Libellé', sortable: true },
+                    { key: 'agence', label: 'Agence' },
+                    { key: 'type', label: 'Type' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: guichets,
+                actions: false,
+            } %}{% endembed %}
+            {% include 'partials/_pagination.html.twig' with {
+                route: 'organisation_guichets',
+                total_pages: total_pages,
+                total_items: total_items,
+                current_page: current_page,
+                page_size: page_size
+            } %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

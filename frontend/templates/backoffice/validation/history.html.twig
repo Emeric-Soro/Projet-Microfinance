@@ -1,0 +1,26 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Historique des validations - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Historique des validations' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'id', label: 'N°' },
+                    { key: 'type', label: 'Type' },
+                    { key: 'action', label: 'Action' },
+                    { key: 'auteur', label: 'Auteur' },
+                    { key: 'date_action', label: 'Date' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: historique.liste|default([]),
+                actions: [{ label: 'Détails', url: row => path('validation_detail', { id: row.id }), icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' }],
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

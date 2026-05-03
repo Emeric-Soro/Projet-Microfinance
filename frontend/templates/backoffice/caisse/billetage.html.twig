@@ -1,0 +1,48 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Billetage - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Billetage</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Session: {{ session.guichet }} - {{ session.dateOuverture|date_fr }}</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        {% embed component('MfFormCard') with { title: 'Comptage des billets et pièces', description: 'Saisissez le nombre de billets/pièces par coupure' } %}
+            {% block form_fields %}
+                <div class="space-y-4">
+                    <h4 class="text-sm font-semibold text-on-surface">Billets</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {% for d in denominations|filter(d => d.type == 'BILLET') %}
+                            {% include component('MfInput') with { name: 'coupures[' ~ d.valeur ~ ']', label: d.libelle, type: 'number', placeholder: '0' } %}
+                        {% endfor %}
+                    </div>
+                    <h4 class="text-sm font-semibold text-on-surface pt-4">Pièces</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {% for d in denominations|filter(d => d.type == 'PIECE') %}
+                            {% include component('MfInput') with { name: 'coupures[' ~ d.valeur ~ ']', label: d.libelle, type: 'number', placeholder: '0' } %}
+                        {% endfor %}
+                    </div>
+                    {% include component('MfInput') with { name: 'guichet', label: 'Guichet' } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-1">
+        {% embed component('MfCard') with { title: 'Session' } %}
+            {% block card_content %}
+                {% embed component('MfSummaryCard') with { items: [
+                    { label: 'Solde attendu', value: session.soldeActuel|montant },
+                ]} %}
+                    {% block card_content %}
+                        {{ parent() }}
+                    {% endblock %}
+                {% endembed %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

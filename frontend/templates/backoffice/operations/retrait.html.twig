@@ -1,0 +1,43 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Retrait - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Retrait</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Effectuer un retrait sur un compte</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        {% embed component('MfFormCard') with { title: 'Formulaire de retrait', description: 'Saisissez les informations du retrait' } %}
+            {% block form_fields %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% include component('MfSelect') with { name: 'compte', label: 'Compte à débiter', required: true, options: accounts|map(a => { value: a.numero, label: a.numero ~ ' - ' ~ a.client_nom }) } %}
+                    {% include component('MfMoneyInput') with { name: 'montant', label: 'Montant à retirer', required: true } %}
+                    {% include component('MfSelect') with { name: 'type_operation', label: 'Mode de retrait', value: 'ESPECES', options: [
+                        { value: 'ESPECES', label: 'Espèces' },
+                        { value: 'CHEQUE', label: 'Chèque' },
+                        { value: 'VIREMENT', label: 'Virement' },
+                    ]} %}
+                    {% include component('MfInput') with { name: 'piece_identite', label: 'Pièce d\'identité' } %}
+                    {% include component('MfInput') with { name: 'guichet', label: 'Guichet' } %}
+                    {% include component('MfInput') with { name: 'description', label: 'Motif du retrait' } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-1">
+        {% embed component('MfCard') with { title: 'Vérifications' } %}
+            {% block card_content %}
+                <div class="text-sm text-on-surface-variant space-y-3">
+                    <p>Vérifiez la pièce d'identité du client.</p>
+                    <p>Assurez-vous que le solde est suffisant.</p>
+                    {% include component('MfAlertBanner') with { type: 'warning', message: 'Les retraits supérieurs à 500 000 FCFA nécessitent une autorisation.' } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

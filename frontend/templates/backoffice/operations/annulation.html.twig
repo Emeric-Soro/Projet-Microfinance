@@ -1,0 +1,58 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}{{ mode == 'extourne' ? 'Extourne' : 'Annulation' }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">
+        {{ mode == 'extourne' ? 'Extourne' : 'Annulation' }} d'opération
+    </h1>
+    <p class="text-sm text-on-surface-variant mt-1">
+        {{ mode == 'extourne' ? 'Contre-passation' : 'Annulation' }} de l'opération {{ transaction.reference }}
+    </p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        {% embed component('MfCard') with { title: 'Opération concernée' } %}
+            {% block card_content %}
+                <dl class="divide-y divide-gray-100">
+                    {% include component('MfDetailRow') with { label: 'Référence', value: transaction.reference } %}
+                    {% include component('MfDetailRow') with { label: 'Type', value: transaction.type|replace({'_': ' '})|title } %}
+                    {% include component('MfDetailRow') with { label: 'Montant', value: transaction.montant|montant } %}
+                    {% include component('MfDetailRow') with { label: 'Date', value: transaction.dateCreation|date_fr } %}
+                    {% include component('MfDetailRow') with { label: 'Statut', value: '' } %}
+                </dl>
+                <div class="mt-2">
+                    {% include component('MfStatusBadge') with { status: transaction.statut } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+
+        {% embed component('MfFormCard') with { title: 'Motif de ' ~ (mode == 'extourne' ? 'l\'extourne' : 'l\'annulation'), description: 'Veuillez fournir les informations requises', class: 'mt-6' } %}
+            {% block form_fields %}
+                <div class="space-y-4">
+                    {% include component('MfInput') with { name: 'motif', label: 'Motif', required: true, placeholder: 'Description détaillée du motif...' } %}
+                    {% include component('MfInput') with { name: 'autorisation', label: 'Autorisation', required: true, placeholder: 'Référence d\'autorisation' } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-1">
+        {% embed component('MfCard') with { title: 'Attention' } %}
+            {% block card_content %}
+                <div class="text-sm text-on-surface-variant space-y-3">
+                    {% if mode == 'extourne' %}
+                        {% include component('MfAlertBanner') with { type: 'warning', message: 'L\'extourne contre-passe complètement l\'opération originale.' } %}
+                        <p>Une nouvelle écriture sera générée en sens inverse.</p>
+                    {% else %}
+                        {% include component('MfAlertBanner') with { type: 'error', message: 'L\'annulation est irréversible.' } %}
+                        <p>Seules les opérations du jour peuvent être annulées.</p>
+                    {% endif %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

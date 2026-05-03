@@ -1,0 +1,59 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Crédits actifs - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Crédit', url: path('credit_dashboard') }, { label: 'Crédits actifs' }] %}
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Crédits actifs</h1>
+    <div class="flex items-center gap-2">
+        <a href="{{ path('credit_arrears') }}" class="px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm">Impayés</a>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <table class="w-full text-sm">
+        <thead>
+            <tr class="bg-gray-50 text-left">
+                <th class="px-4 py-3 font-medium text-on-surface-variant">N°</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Client</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Produit</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Montant</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Encours</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Prochaine échéance</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Statut</th>
+                <th class="px-4 py-3 font-medium text-on-surface-variant">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in credits %}
+                <tr class="border-t border-gray-100 hover:bg-gray-50">
+                    <td class="px-4 py-3 font-medium">{{ c.id }}</td>
+                    <td class="px-4 py-3">{{ c.clientNom|default('') }}</td>
+                    <td class="px-4 py-3">{{ c.produitLibelle|default('') }}</td>
+                    <td class="px-4 py-3">{{ c.montantAccorde|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="px-4 py-3">{{ c.encours|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="px-4 py-3">{{ c.prochaineEcheance|default('')|date('d/m/Y') }}</td>
+                    <td class="px-4 py-3">
+                        <span class="inline-block px-2 py-0.5 text-xs rounded-full {{ c.statut == 'ACTIF' ? 'bg-green-100 text-green-800' : c.statut == 'IMPAYE' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800' }}">
+                            {{ c.statut|default('')|replace({'_': ' '}) }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2">
+                            <a href="{{ path('credit_detail', { id: c.id }) }}" class="text-teal-600 hover:text-teal-800 text-xs">Détail</a>
+                            <a href="{{ path('credit_repayment', { id: c.id }) }}" class="text-teal-600 hover:text-teal-800 text-xs">Remb.</a>
+                            <a href="{{ path('credit_schedule', { id: c.id }) }}" class="text-teal-600 hover:text-teal-800 text-xs">Échéancier</a>
+                        </div>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="8" class="px-4 py-8 text-center text-on-surface-variant">Aucun crédit actif trouvé.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

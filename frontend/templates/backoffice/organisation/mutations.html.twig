@@ -1,0 +1,83 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Mutations - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% if create_mode is defined %}
+        <div class="max-w-2xl">
+            {% embed 'components/MfFormCard.html.twig' with { title: 'Nouvelle mutation', description: 'Saisissez les informations de la mutation' } %}
+                {% block form_fields %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Employé</label>
+                            <select name="employe_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                                <option value="">Sélectionner</option>
+                                {% for p in personnel %}
+                                    <option value="{{ p.id }}">{{ p.nom }} {{ p.prenom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Agence source</label>
+                            <select name="agence_source_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                                <option value="">Sélectionner</option>
+                                {% for a in agences %}
+                                    <option value="{{ a.id }}">{{ a.libelle }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Agence destination</label>
+                            <select name="agence_dest_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                                <option value="">Sélectionner</option>
+                                {% for a in agences %}
+                                    <option value="{{ a.id }}">{{ a.libelle }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Date mutation</label>
+                            <input type="date" name="dateMutation" value="{{ 'now'|date('Y-m-d') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Motif</label>
+                        <textarea name="motif" rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"></textarea>
+                    </div>
+                {% endblock %}
+            {% endembed %}
+        </div>
+    {% endif %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Historique des mutations' } %}
+        {% block card_content %}
+            {% include 'partials/_table_toolbar.html.twig' with {
+                search_placeholder: 'Rechercher une mutation...',
+                action_button: { url: path('organisation_mutations_create'), label: 'Nouvelle mutation' }
+            } %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'date', label: 'Date', sortable: true },
+                    { key: 'employe', label: 'Employé' },
+                    { key: 'agence_source', label: 'Agence source' },
+                    { key: 'agence_dest', label: 'Agence destination' },
+                    { key: 'motif', label: 'Motif' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: mutations,
+                actions: false,
+            } %}{% endembed %}
+            {% include 'partials/_pagination.html.twig' with {
+                route: 'organisation_mutations',
+                total_pages: total_pages,
+                total_items: total_items,
+                current_page: current_page,
+                page_size: page_size
+            } %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Sécurité - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Administration', url: path('admin_securite') }, { label: 'Sécurité' }] %}
+
+{% if mode == 'index' %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Politique de sécurité</h1>
+</div>
+{% embed 'components/MfFormCard.html.twig' with { title: 'Configuration' } %}
+    {% block form_fields %}
+    <form method="post" action="{{ path('admin_securite_edit') }}">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'tentativesMax', label: 'Tentatives max avant verrouillage', value: policy.tentativesMax ?? '5', type: 'number' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'dureeVerrouillage', label: 'Durée verrouillage (min)', value: policy.dureeVerrouillage ?? '30', type: 'number' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'complexitePass', label: 'Complexité mot de passe', value: policy.complexitePass ?? '8' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'expirationPass', label: 'Expiration mot de passe (jours)', value: policy.expirationPass ?? '90', type: 'number' } %}
+            {% include 'components/MfSelect.html.twig' with { name: 'sessionTimeout', label: 'Timeout session', value: policy.sessionTimeout ?? '30', options: [
+                { value: '15', label: '15 min' }, { value: '30', label: '30 min' },
+                { value: '60', label: '1 heure' }, { value: '120', label: '2 heures' }
+            ]} %}
+            {% include 'components/MfSelect.html.twig' with { name: 'twoFactor', label: 'Double authentification', value: policy.twoFactor ?? 'DESACTIVE', options: [
+                { value: 'ACTIVE', label: 'Activée' }, { value: 'DESACTIVE', label: 'Désactivée' }
+            ]} %}
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Enregistrer</button>
+        </div>
+    </form>
+    {% endblock %}
+{% endembed %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Tableau de bord des Risques - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfStatsGrid.html.twig' with { stats: [
+        { label: 'Risque Global', value: stats.global_score|default('—'), icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z', icon_bg: 'bg-red-50', icon_color: 'text-red-600' },
+        { label: 'Crédits Impayés', value: stats.impayes|default('—'), icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', icon_bg: 'bg-yellow-50', icon_color: 'text-yellow-600' },
+        { label: 'Provisions', value: stats.provisions|default('—'), icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+        { label: 'Incidents', value: stats.incidents|default('—'), icon: 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636', icon_bg: 'bg-red-50', icon_color: 'text-red-600' },
+    ] } %}{% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Risques par Catégorie' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'categorie', label: 'Catégorie' },
+                    { key: 'score', label: 'Score' },
+                    { key: 'niveau', label: 'Niveau' },
+                    { key: 'tendance', label: 'Tendance' },
+                ],
+                rows: stats.categories|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Indicateurs Clés' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'indicateur', label: 'Indicateur' },
+                    { key: 'valeur', label: 'Valeur' },
+                    { key: 'alerte', label: 'Seuil d\'Alerte' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: stats.indicateurs|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

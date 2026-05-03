@@ -1,0 +1,11 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block content %}
+  {% include 'partials/_breadcrumb.html.twig' with {'path': 'Accueil > Clients > Bénéficiaires'} %}
+  {% include 'partials/_flash.html.twig' %}
+
+  <MfCard>
+    <h3>Bénéficiaires</h3>
+    <MfDataTable headers="Nom,Pourcentage" rows="{{ beneficiaires|length ? beneficiaires|json_encode : '[]' }}" />
+  </MfCard>
+{% endblock %}

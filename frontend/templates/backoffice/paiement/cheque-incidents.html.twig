@@ -1,0 +1,47 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Incidents chèques{% endblock %}
+{% block current_menu %}paiements_cheques{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+{% embed 'components/MfCard.html.twig' with {title: 'Incidents chèques'} %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                {key: 'id', label: 'N°'},
+                {key: 'numeroCheque', label: 'Chèque'},
+                {key: 'montant', label: 'Montant'},
+                {key: 'motif', label: 'Motif incident'},
+                {key: 'dateIncident', label: 'Date'},
+                {key: 'statut', label: 'Statut'},
+                {key: 'actions', label: 'Actions'},
+            ],
+            rows: incidents
+        } %}
+            {% block card_content %}
+                {% for incident in incidents %}
+                    <tr>
+                        <td>{{ incident.id }}</td>
+                        <td class="font-medium">{{ incident.numeroCheque }}</td>
+                        <td>{{ incident.montant|number_format(0, ',', ' ') }} FCFA</td>
+                        <td>{{ incident.motif }}</td>
+                        <td>{{ incident.dateIncident|date('d/m/Y') }}</td>
+                        <td>{% include 'components/MfStatusBadge.html.twig' with {status: incident.statut} %}</td>
+                        <td class="text-right">
+                            <a href="#" class="text-sm text-primary hover:text-primary-600">Détails</a>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-8">
+                            {% include 'partials/_empty_state.html.twig' with {title: 'Aucun incident', message: 'Aucun incident de chèque signalé.'} %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

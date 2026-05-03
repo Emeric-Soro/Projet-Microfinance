@@ -1,0 +1,92 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Balance - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Balance comptable</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Balance générale des comptes</p>
+    </div>
+    <a href="#" class="mf-btn-secondary" onclick="window.print()">
+        <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        Imprimer
+    </a>
+</div>
+
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+<div class="mf-card p-6 mb-6">
+    <form method="get" action="" class="flex flex-wrap gap-4 items-end">
+        <div>
+            <label class="mf-label">Date début</label>
+            <input type="date" name="date_debut" value="{{ date_debut }}" class="mf-input">
+        </div>
+        <div>
+            <label class="mf-label">Date fin</label>
+            <input type="date" name="date_fin" value="{{ date_fin }}" class="mf-input">
+        </div>
+        <div class="w-48">
+            <label class="mf-label">Agence</label>
+            <select name="agence_id" class="mf-input">
+                <option value="">Toutes</option>
+                {% for agence in agences %}
+                    <option value="{{ agence.id }}" {{ agence_id == agence.id ? 'selected' }}>{{ agence.libelle }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="w-48">
+            <label class="mf-label">Classe</label>
+            <select name="classe" class="mf-input">
+                <option value="">Toutes</option>
+                {% for i in 1..8 %}
+                    <option value="{{ i }}" {{ classe == i ? 'selected' }}>Classe {{ i }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="mf-btn-primary">Générer</button>
+    </form>
+</div>
+
+<div class="mf-card p-4 mb-6">
+    <div class="flex justify-between text-sm font-medium">
+        <span>Total débit: <span class="font-mono text-green-600">{{ total_debit|number_format(0, ',', ' ') }}</span></span>
+        <span>Total crédit: <span class="font-mono text-red-600">{{ total_credit|number_format(0, ',', ' ') }}</span></span>
+        <span>Écart: <span class="font-mono {{ total_debit - total_credit == 0 ? 'text-green-600' : 'text-red-600' }}">{{ (total_debit - total_credit)|number_format(0, ',', ' ') }}</span></span>
+    </div>
+</div>
+
+<div class="mf-card overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="mf-table">
+            <thead>
+                <tr>
+                    <th>Compte</th>
+                    <th>Libellé</th>
+                    <th class="text-right">Débit</th>
+                    <th class="text-right">Crédit</th>
+                    <th class="text-right">Solde débiteur</th>
+                    <th class="text-right">Solde créditeur</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for account in accounts %}
+                <tr>
+                    <td class="font-mono font-medium">{{ account.numero }}</td>
+                    <td>{{ account.libelle }}</td>
+                    <td class="text-right font-mono">{{ account.debit|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="text-right font-mono">{{ account.credit|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="text-right font-mono">{{ account.solde_debiteur|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="text-right font-mono">{{ account.solde_crediteur|default(0)|number_format(0, ',', ' ') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-8 text-on-surface-variant">Aucune donnée pour la période</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'partials/_pagination.html.twig' with {route: 'comptabilite_balance', query: {date_debut: date_debut, date_fin: date_fin, agence_id: agence_id, classe: classe}} %}
+</div>
+{% endblock %}

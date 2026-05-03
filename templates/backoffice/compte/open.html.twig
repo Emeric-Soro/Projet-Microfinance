@@ -1,0 +1,54 @@
+{% extends 'backoffice.html.twig' %}
+{% block title %}Ouverture de compte - Étape {{ step }}{% endblock %}
+{% block content %}
+  {% include 'partials/_breadcrumb.html.twig' with {'items': ['Accueil','Comptes','Ouverture']} %}
+  {% include 'partials/_flash.html.twig' %}
+
+  <div class="MfCard">
+    <div class="MfTabs">
+      <ul>
+        <li class="active">1) Client</li>
+        <li>2) Produit</li>
+        <li>3) Dépôt initial</li>
+        <li>4) Confirmation</li>
+      </ul>
+    </div>
+    <div class="MfFormCard">
+      {% if step == 1 %}
+        <h3>Rechercher un client</h3>
+        <form method="post">
+          <input type="hidden" name="step" value="2"/>
+          <div class="field">
+            <label>Nom du client</label>
+            <input name="client_id" class="mf-input" />
+          </div>
+          <button class="MfButton" type="submit">Suivant</button>
+        </form>
+      {% elseif step == 2 %}
+        <h3>Sélection du produit</h3>
+        <form method="post">
+          <input type="hidden" name="step" value="3"/>
+          <select name="product_id" class="mf-select">
+            {% for p in products %}
+              <option value="{{ p.id }}">{{ p.name }}</option>
+            {% endfor %}
+          </select>
+          <button class="MfButton" type="submit">Suivant</button>
+        </form>
+      {% elseif step == 3 %}
+        <h3>Dépôt initial</h3>
+        <form method="post">
+          <input type="hidden" name="step" value="4"/>
+          <div class="field">
+            <label>Montant initial</label>
+            <input type="text" name="initial_deposit" class="mf-input" />
+          </div>
+          <button class="MfButton" type="submit">Confirmer</button>
+        </form>
+      {% else %}
+        <h3>Confirmation</h3>
+        <p>Compte prêt à être créé. Confirmer via votre flux interne.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

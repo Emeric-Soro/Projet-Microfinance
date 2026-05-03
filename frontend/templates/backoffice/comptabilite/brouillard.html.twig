@@ -1,0 +1,100 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Brouillard comptable - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">
+            {% if journal_code is defined and journal_code %}
+                Journal {{ journal_code }}
+            {% else %}
+                Brouillard comptable
+            {% endif %}
+        </h1>
+        <p class="text-sm text-on-surface-variant mt-1">Consultation des écritures en brouillard</p>
+    </div>
+</div>
+
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+<div class="mf-card p-6 mb-6">
+    <form method="get" action="" class="flex flex-wrap gap-4 items-end">
+        {% if journaux is defined and journaux %}
+        <div class="w-48">
+            <label class="mf-label">Journal</label>
+            <select name="journal_code" class="mf-input">
+                <option value="">Tous</option>
+                {% for j in journaux %}
+                    <option value="{{ j.code }}" {{ journal_code == j.code ? 'selected' }}>{{ j.code }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div>
+            <label class="mf-label">Date début</label>
+            <input type="date" name="date_debut" value="{{ date_debut }}" class="mf-input">
+        </div>
+        <div>
+            <label class="mf-label">Date fin</label>
+            <input type="date" name="date_fin" value="{{ date_fin }}" class="mf-input">
+        </div>
+        <button type="submit" class="mf-btn-primary">Filtrer</button>
+    </form>
+</div>
+
+{% if solde is defined or total_debit is defined %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="mf-card p-4">
+        <p class="text-sm text-on-surface-variant">Total débit</p>
+        <p class="text-xl font-heading font-bold text-on-surface">{{ total_debit|default(0)|number_format(0, ',', ' ') }}</p>
+    </div>
+    <div class="mf-card p-4">
+        <p class="text-sm text-on-surface-variant">Total crédit</p>
+        <p class="text-xl font-heading font-bold text-on-surface">{{ total_credit|default(0)|number_format(0, ',', ' ') }}</p>
+    </div>
+    <div class="mf-card p-4">
+        <p class="text-sm text-on-surface-variant">Solde</p>
+        <p class="text-xl font-heading font-bold {{ solde|default(0) >= 0 ? 'text-green-600' : 'text-red-600' }}">{{ solde|default(0)|number_format(0, ',', ' ') }}</p>
+    </div>
+</div>
+{% endif %}
+
+<div class="mf-card overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="mf-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Journal</th>
+                    <th>Compte</th>
+                    <th>Libellé</th>
+                    <th class="text-right">Pièce</th>
+                    <th class="text-right">Débit</th>
+                    <th class="text-right">Crédit</th>
+                    <th class="text-center">Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in entries %}
+                <tr>
+                    <td>{{ entry.date_operation|date('d/m/Y') }}</td>
+                    <td class="font-mono">{{ entry.journal_code }}</td>
+                    <td class="font-mono">{{ entry.numero_compte }}</td>
+                    <td>{{ entry.libelle }}</td>
+                    <td class="font-mono text-right">{{ entry.piece_reference|default('-') }}</td>
+                    <td class="text-right font-mono">{{ entry.debit|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="text-right font-mono">{{ entry.credit|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="text-center">{% include 'partials/_status_badge.html.twig' with {status: entry.statut} %}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-8 text-on-surface-variant">Aucune écriture trouvée</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'partials/_pagination.html.twig' with {route: app.request.attributes.get('_route'), query: {date_debut: date_debut, date_fin: date_fin, journal_code: journal_code|default('')}} %}
+</div>
+{% endblock %}

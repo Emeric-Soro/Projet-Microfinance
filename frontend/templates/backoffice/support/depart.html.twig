@@ -1,0 +1,30 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Départs - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Support RH', url: path('support_depart') }, { label: 'Départs' }] %}
+
+{% if mode == 'list' %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Départs</h1>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Liste des départs' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'employe', label: 'Employé' },
+                { key: 'type', label: 'Type' },
+                { key: 'dateDepart', label: 'Date départ' },
+                { key: 'motif', label: 'Motif' },
+                { key: 'statut', label: 'Statut' },
+                { key: 'actions', label: 'Actions' },
+            ],
+            rows: items,
+            actions: true,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% include 'partials/_pagination.html.twig' with { current_page: page, total_pages: pages, total_items: total, route: 'support_depart', query: {} } %}
+{% endif %}
+{% endblock %}

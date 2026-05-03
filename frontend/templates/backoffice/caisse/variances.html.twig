@@ -1,0 +1,32 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Écarts de caisse - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Écarts de caisse</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Gestion des écarts constatés</p>
+</div>
+
+{% embed component('MfDataTable') with {
+    headers: [
+        { key: 'date', label: 'Date', sortable: true },
+        { key: 'guichet', label: 'Guichet', sortable: true },
+        { key: 'type', label: 'Type', sortable: true },
+        { key: 'montantAttendu', label: 'Montant attendu', sortable: true },
+        { key: 'montantConstate', label: 'Montant constaté', sortable: true },
+        { key: 'ecart', label: 'Écart', sortable: true },
+        { key: 'statut', label: 'Statut' },
+    ],
+    rows: variances,
+    actions: [
+        { label: 'Traiter', url: (row) => path('caisse_variance_validate', { id: row.id }), icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+    ],
+    empty_title: 'Aucun écart',
+    empty_message: 'Aucun écart de caisse enregistré.',
+} %}
+    {% block card_content %}
+        {{ parent() }}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

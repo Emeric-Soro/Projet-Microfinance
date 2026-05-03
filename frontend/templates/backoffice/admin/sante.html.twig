@@ -1,0 +1,44 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}État du système - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Administration', url: path('admin_sante') }, { label: 'Santé du système' }] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Santé du système</h1>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+    {% for service in health.services ?? [] %}
+    {% embed 'components/MfCard.html.twig' with { title: service.nom ?? 'Service' } %}
+        {% block card_content %}
+        <div class="flex items-center justify-between">
+            <span class="text-sm">{{ service.etat ?? '—' }}</span>
+            {% include 'components/MfStatusBadge.html.twig' with { status: service.statut ?? 'OK' } %}
+        </div>
+        {% if service.message is defined and service.message %}
+        <p class="text-xs text-on-surface-variant mt-2">{{ service.message }}</p>
+        {% endif %}
+        {% endblock %}
+    {% endembed %}
+    {% endfor %}
+</div>
+
+{% if health.indicateurs is defined and health.indicateurs is not empty %}
+{% embed 'components/MfCard.html.twig' with { title: 'Indicateurs' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'indicateur', label: 'Indicateur' },
+                { key: 'valeur', label: 'Valeur' },
+                { key: 'seuil', label: 'Seuil' },
+                { key: 'statut', label: 'Statut' },
+            ],
+            rows: health.indicateurs,
+            actions: false,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% endif %}
+{% endblock %}

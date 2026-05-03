@@ -1,0 +1,54 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Virement - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">
+        {% if batch|default(false) %}Virement de masse{% else %}Virement{% endif %}
+    </h1>
+    <p class="text-sm text-on-surface-variant mt-1">
+        {% if batch|default(false) %}Effectuer des virements multiples{% else %}Effectuer un virement entre comptes{% endif %}
+    </p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        {% embed component('MfFormCard') with { title: batch|default(false) ? 'Virements multiples' : 'Formulaire de virement', description: 'Saisissez les informations du virement' } %}
+            {% block form_fields %}
+                {% if batch|default(false) %}
+                    <div id="batch-entries">
+                        <div class="batch-entry grid grid-cols-1 md:grid-cols-4 gap-3 p-4 border border-gray-100 rounded-lg mb-3">
+                            {% include component('MfSelect') with { name: 'virements[0][source]', label: 'Compte source', required: true, options: accounts|map(a => { value: a.numero, label: a.numero }) } %}
+                            {% include component('MfSelect') with { name: 'virements[0][destination]', label: 'Compte destination', required: true, options: accounts|map(a => { value: a.numero, label: a.numero }) } %}
+                            {% include component('MfMoneyInput') with { name: 'virements[0][montant]', label: 'Montant', required: true } %}
+                            {% include component('MfInput') with { name: 'virements[0][description]', label: 'Motif' } %}
+                        </div>
+                    </div>
+                    <button type="button" class="text-sm text-primary hover:text-primary-600" onclick="addBatchEntry()">+ Ajouter un virement</button>
+                {% else %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% include component('MfSelect') with { name: 'compte_source', label: 'Compte source', required: true, options: accounts|map(a => { value: a.numero, label: a.numero ~ ' - ' ~ a.client_nom }) } %}
+                        {% include component('MfSelect') with { name: 'compte_destination', label: 'Compte destination', required: true, options: accounts|map(a => { value: a.numero, label: a.numero ~ ' - ' ~ a.client_nom }) } %}
+                        {% include component('MfMoneyInput') with { name: 'montant', label: 'Montant', required: true } %}
+                        {% include component('MfInput') with { name: 'guichet', label: 'Guichet' } %}
+                        {% include component('MfInput') with { name: 'description', label: 'Motif du virement' } %}
+                    </div>
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-1">
+        {% embed component('MfCard') with { title: 'Informations' } %}
+            {% block card_content %}
+                <div class="text-sm text-on-surface-variant space-y-3">
+                    <p>Les virements internes sont instantanés.</p>
+                    <p>Les virements vers d'autres banques peuvent prendre 24 à 48h.</p>
+                    {% include component('MfAlertBanner') with { type: 'info', message: 'Frais de virement: 500 FCFA (interne) / 1 500 FCFA (externe)' } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

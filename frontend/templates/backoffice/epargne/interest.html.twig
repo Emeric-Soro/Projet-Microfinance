@@ -1,0 +1,47 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Calcul intérêts - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Calcul des intérêts</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Calculer les intérêts pour les produits d'épargne</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1">
+        {% embed component('MfFormCard') with { title: 'Paramètres', description: 'Définissez la période de calcul' } %}
+            {% block form_fields %}
+                <div class="space-y-4">
+                    {% include component('MfSelect') with { name: 'produit', label: 'Produit', required: true, options: products|map(p => { value: p.id, label: p.libelle }) } %}
+                    {% include component('MfDatePicker') with { name: 'date_debut', label: 'Date début', required: true } %}
+                    {% include component('MfDatePicker') with { name: 'date_fin', label: 'Date fin', required: true, value: 'now'|date('Y-m-d') } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-2">
+        {% if result is defined and result is not empty %}
+            {% embed component('MfCard') with { title: 'Résultat du calcul' } %}
+                {% block card_content %}
+                    {% embed component('MfStatsGrid') with { cols: 3, stats: [
+                        { label: 'Nombre de comptes', value: result.nombreComptes|default(0), icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+                        { label: 'Total intérêts', value: result.totalInterets|default(0)|montant, icon: 'M12 4v16m8-8H4', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+                        { label: 'Taux moyen', value: (result.tauxMoyen|default(0))|taux, icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', icon_bg: 'bg-teal-50', icon_color: 'text-teal-600' },
+                    ]} %}
+                        {% block card_content %}
+                            {{ parent() }}
+                        {% endblock %}
+                    {% endembed %}
+                {% endblock %}
+            {% endembed %}
+        {% else %}
+            {% include 'partials/_empty_state.html.twig' with {
+                title: 'Aucun calcul',
+                message: 'Sélectionnez un produit et une période pour calculer les intérêts.',
+            } %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

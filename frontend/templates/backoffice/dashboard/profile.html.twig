@@ -1,0 +1,65 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Mon profil - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Mon profil</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Gérez vos informations personnelles</p>
+</div>
+
+{% if user is defined and user is not empty %}
+<div class="max-w-2xl">
+    {% embed component('MfFormCard') with { title: 'Informations personnelles', description: 'Mettez à jour vos coordonnées' } %}
+        {% block form_fields %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Nom</label>
+                    <input type="text" name="nom" value="{{ formData.nom|default(user.nom)|e }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Prénom</label>
+                    <input type="text" name="prenom" value="{{ formData.prenom|default(user.prenom)|e }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-on-surface mb-1">Email</label>
+                <input type="email" name="email" value="{{ formData.email|default(user.email)|e }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-on-surface mb-1">Téléphone</label>
+                <input type="text" name="telephone" value="{{ formData.telephone|default(user.telephone)|e }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-on-surface mb-1">Fonction</label>
+                <input type="text" name="fonction" value="{{ formData.fonction|default(user.fonction)|e }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+            </div>
+        {% endblock %}
+    {% endembed %}
+
+    <div class="mt-6 bg-white rounded-lg shadow-card border border-teal-100 p-6">
+        <h3 class="text-lg font-heading font-semibold text-on-surface mb-4">Informations du compte</h3>
+        <dl class="divide-y divide-gray-200">
+            <div class="flex justify-between py-2">
+                <dt class="text-sm text-on-surface-variant">Nom d'utilisateur</dt>
+                <dd class="text-sm font-medium text-on-surface">{{ user.username|default('-') }}</dd>
+            </div>
+            <div class="flex justify-between py-2">
+                <dt class="text-sm text-on-surface-variant">Agence</dt>
+                <dd class="text-sm font-medium text-on-surface">{{ user.agence|default('-') }}</dd>
+            </div>
+            <div class="flex justify-between py-2">
+                <dt class="text-sm text-on-surface-variant">Rôle</dt>
+                <dd class="text-sm font-medium text-on-surface">{{ user.role|default('-') }}</dd>
+            </div>
+            <div class="flex justify-between py-2">
+                <dt class="text-sm text-on-surface-variant">Membre depuis</dt>
+                <dd class="text-sm font-medium text-on-surface">{{ user.dateCreation|default('now')|date_fr }}</dd>
+            </div>
+        </dl>
+    </div>
+</div>
+{% else %}
+    {% include 'partials/_empty_state.html.twig' with { title: 'Chargement...', message: 'Profil en cours de chargement.' } %}
+{% endif %}
+{% endblock %}

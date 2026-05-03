@@ -1,0 +1,57 @@
+{% extends 'auth.html.twig' %}
+
+{% block title %}Sélectionner une agence - MicroFin{% endblock %}
+
+{% block auth_content %}
+<h2 class="font-heading text-xl font-semibold text-primary mb-2">Sélectionnez votre agence</h2>
+<p class="text-sm text-on-surface-variant mb-6">Choisissez l'agence depuis laquelle vous souhaitez travailler.</p>
+
+{% if agencies is empty %}
+<div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+    <p class="text-sm text-amber-800">Aucune agence disponible pour votre profil.</p>
+</div>
+
+<div class="text-center">
+    <a href="{{ path('login') }}" class="text-sm text-primary hover:text-primary-600 underline">
+        Retour à la connexion
+    </a>
+</div>
+{% else %}
+<form method="post" action="{{ path('select_agency') }}" class="space-y-4">
+    <div class="grid gap-3">
+        {% for agency in agencies %}
+        <label class="block cursor-pointer">
+            <input type="radio" name="agency_id" value="{{ agency.id }}" class="peer sr-only" required>
+            <div class="relative border border-teal-200 rounded-lg p-4 hover:border-primary hover:shadow-card-hover transition-all peer-checked:border-primary peer-checked:bg-teal-50 peer-checked:ring-1 peer-checked:ring-primary">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-medium text-primary">{{ agency.nom ?? agency.name ?? agency.libelle }}</h3>
+                        <p class="text-sm text-on-surface-variant mt-0.5">{{ agency.ville ?? agency.city ?? agency.localisation ?? '' }}</p>
+                    </div>
+                    <div class="w-5 h-5 rounded-full border-2 border-teal-300 peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center">
+                        <div class="w-2 h-2 rounded-full bg-white hidden peer-checked:block"></div>
+                    </div>
+                </div>
+                {% if agency.code %}
+                <p class="text-xs text-on-surface-variant mt-1">Code : {{ agency.code }}</p>
+                {% endif %}
+            </div>
+        </label>
+        {% endfor %}
+    </div>
+
+    <button type="submit"
+            class="w-full bg-primary text-white font-medium py-2.5 px-4 rounded-lg hover:bg-primary-600 focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors text-sm">
+        Confirmer la sélection
+    </button>
+
+    <div class="text-center">
+        <form method="post" action="{{ path('logout') }}">
+            <button type="submit" class="text-sm text-primary hover:text-primary-600 underline">
+                Se déconnecter
+            </button>
+        </form>
+    </div>
+</form>
+{% endif %}
+{% endblock %}

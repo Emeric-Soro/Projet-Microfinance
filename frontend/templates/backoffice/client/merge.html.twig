@@ -1,0 +1,76 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Fusion de clients - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Clients', url: path('client_list') }, { label: 'Fusion de clients' }] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Fusion de clients</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Sélectionnez deux clients à fusionner. Le client source sera absorbé par le client cible.</p>
+</div>
+
+<form method="post" action="{{ path('client_merge') }}">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+            {% embed 'components/MfCard.html.twig' with { title: 'Client source (sera absorbé)' } %}
+                {% block card_content %}
+                {% include 'components/MfInput.html.twig' with { name: 'source_q', label: 'Rechercher le client source', value: sourceQuery } %}
+                <div class="mt-2">
+                    <button type="submit" class="text-sm text-primary hover:text-primary-600" name="search_source" value="1">Rechercher</button>
+                </div>
+                {% if sourceResults is not empty %}
+                <div class="mt-4 space-y-2">
+                    {% for client in sourceResults %}
+                    <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-primary-200 cursor-pointer">
+                        <input type="radio" name="source_id" value="{{ client.id }}" class="text-primary focus:ring-primary">
+                        <div>
+                            <p class="text-sm font-medium">{{ client.nom ?? client.raisonSociale ?? 'Client' }} {{ client.prenom ?? '' }}</p>
+                            <p class="text-xs text-on-surface-variant">{{ client.telephone ?? '' }} {{ client.email ?? '' }}</p>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% elseif sourceQuery is not empty %}
+                    <p class="text-sm text-on-surface-variant mt-2">Aucun client trouvé.</p>
+                {% endif %}
+                {% endblock %}
+            {% endembed %}
+        </div>
+
+        <div>
+            {% embed 'components/MfCard.html.twig' with { title: 'Client cible (conservera les données)' } %}
+                {% block card_content %}
+                {% include 'components/MfInput.html.twig' with { name: 'target_q', label: 'Rechercher le client cible', value: targetQuery } %}
+                <div class="mt-2">
+                    <button type="submit" class="text-sm text-primary hover:text-primary-600" name="search_target" value="1">Rechercher</button>
+                </div>
+                {% if targetResults is not empty %}
+                <div class="mt-4 space-y-2">
+                    {% for client in targetResults %}
+                    <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-primary-200 cursor-pointer">
+                        <input type="radio" name="target_id" value="{{ client.id }}" class="text-primary focus:ring-primary">
+                        <div>
+                            <p class="text-sm font-medium">{{ client.nom ?? client.raisonSociale ?? 'Client' }} {{ client.prenom ?? '' }}</p>
+                            <p class="text-xs text-on-surface-variant">{{ client.telephone ?? '' }} {{ client.email ?? '' }}</p>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% elseif targetQuery is not empty %}
+                    <p class="text-sm text-on-surface-variant mt-2">Aucun client trouvé.</p>
+                {% endif %}
+                {% endblock %}
+            {% endembed %}
+        </div>
+    </div>
+
+    <div class="mt-6 flex items-center justify-end gap-3">
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex-1">
+            <p class="text-sm text-yellow-800"><strong>Attention :</strong> La fusion est irréversible. Les données du client source seront transférées vers le client cible, puis le client source sera désactivé.</p>
+        </div>
+        <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Fusionner les clients</button>
+        <a href="{{ path('client_list') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+    </div>
+</form>
+{% endblock %}

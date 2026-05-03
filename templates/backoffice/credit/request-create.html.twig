@@ -1,0 +1,34 @@
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Nouvelle demande']} %}
+{% include 'partials/_flash.html.twig' %}
+
+<h1>Nouvelle Demande - Crédit</h1>
+
+<section class="MfFormCard">
+    <header>Étapes: client → produit → montant → calendrier</header>
+    <form method="post" action="">
+        <div class="MfFormRow">
+            <label>Client</label>
+            <input class="MfInput" name="client" type="text" placeholder="Rechercher client..." />
+        </div>
+        <div class="MfFormRow">
+            <label>Produit</label>
+            <select class="MfSelect" name="product">
+                <option value="">Sélectionner un produit</option>
+                {% if products is defined %}
+                    {% for p in products %}
+                        <option value="{{ p.id }}">{{ p.name }}</option>
+                    {% endfor %}
+                {% endif %}
+            </select>
+        </div>
+        <div class="MfFormRow">
+            <label>Montant</label>
+            <input class="MfMoneyInput" name="amount" type="text" placeholder="Montant" />
+        </div>
+        <div class="MfFormRow">
+            <label>Échéancier</label>
+            <input class="MfInput" name="schedule" type="text" placeholder="Calendrier" />
+        </div>
+        <button class="MfButton" type="submit">Soumettre</button>
+    </form>
+    </section>

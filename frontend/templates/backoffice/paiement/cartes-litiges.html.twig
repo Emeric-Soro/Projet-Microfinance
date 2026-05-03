@@ -1,0 +1,64 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Litiges cartes{% endblock %}
+{% block current_menu %}paiements_cartes{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+{% embed 'components/MfStatsGrid.html.twig' with {stats: [
+    {label: 'Litiges ouverts', value: stats.ouverts|default(0), icon: 'M12 9v2m0 4h.01', icon_bg: 'bg-yellow-50', icon_color: 'text-yellow-600'},
+    {label: 'En cours', value: stats.enCours|default(0), icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600'},
+    {label: 'Résolus', value: stats.resolus|default(0), icon: 'M9 12l2 2 4-4', icon_bg: 'bg-green-50', icon_color: 'text-green-600'},
+]} %}{% endembed %}
+
+{% embed 'components/MfCard.html.twig' with {title: 'Litiges cartes bancaires'} %}
+    {% block card_content %}
+        {% include 'partials/_table_toolbar.html.twig' with {
+            search_placeholder: 'Rechercher un litige...',
+            filters: [
+                {label: 'Statut', options: [
+                    {value: 'OUVERT', label: 'Ouvert'},
+                    {value: 'EN_COURS', label: 'En cours'},
+                    {value: 'RESOLU', label: 'Résolu'},
+                    {value: 'REJETE', label: 'Rejeté'},
+                ]}
+            ]
+        } %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                {key: 'id', label: 'N°'},
+                {key: 'numeroCarte', label: 'Carte'},
+                {key: 'typeLitige', label: 'Type'},
+                {key: 'montant', label: 'Montant'},
+                {key: 'dateLitige', label: 'Date'},
+                {key: 'statut', label: 'Statut'},
+                {key: 'actions', label: 'Actions'},
+            ],
+            rows: litiges
+        } %}
+            {% block card_content %}
+                {% for litige in litiges %}
+                    <tr>
+                        <td>{{ litige.id }}</td>
+                        <td class="font-mono text-sm">{{ litige.numeroCarte }}</td>
+                        <td>{{ litige.typeLitige }}</td>
+                        <td class="font-medium">{{ litige.montant|number_format(0, ',', ' ') }} FCFA</td>
+                        <td>{{ litige.dateLitige|date('d/m/Y') }}</td>
+                        <td>{% include 'components/MfStatusBadge.html.twig' with {status: litige.statut} %}</td>
+                        <td class="text-right">
+                            <a href="#" class="text-sm text-primary hover:text-primary-600">Détails</a>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-8">
+                            {% include 'partials/_empty_state.html.twig' with {title: 'Aucun litige', message: 'Aucun litige trouvé.'} %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+    {% endblock %}
+{% endembed %}
+{% endblock %}

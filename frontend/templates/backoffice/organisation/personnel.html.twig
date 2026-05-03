@@ -1,0 +1,75 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Personnel - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Personnel des Agences' } %}
+        {% block card_content %}
+            {% include 'partials/_table_toolbar.html.twig' with {
+                search_placeholder: 'Rechercher un employé...',
+                filters: [
+                    { label: 'Agence', options: agences|map(a => { value: a.id, label: a.libelle }) },
+                ],
+            } %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'matricule', label: 'Matricule', sortable: true },
+                    { key: 'nom', label: 'Nom', sortable: true },
+                    { key: 'prenom', label: 'Prénom' },
+                    { key: 'poste', label: 'Poste' },
+                    { key: 'agence', label: 'Agence' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: personnel,
+                actions: [
+                    { label: 'Détails', url: (row) => '#', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
+                ],
+            } %}{% endembed %}
+            {% include 'partials/_pagination.html.twig' with {
+                route: 'organisation_personnel',
+                total_pages: total_pages,
+                total_items: total_items,
+                current_page: current_page,
+                page_size: page_size
+            } %}
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Affectation du personnel' } %}
+        {% block card_content %}
+            <form method="post" action="{{ path('organisation_personnel_affecter') }}" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Employé</label>
+                        <select name="employe_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                            <option value="">Sélectionner</option>
+                            {% for p in personnel %}
+                                <option value="{{ p.id }}">{{ p.nom }} {{ p.prenom }} ({{ p.matricule }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Agence destination</label>
+                        <select name="agence_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                            <option value="">Sélectionner</option>
+                            {% for a in agences %}
+                                <option value="{{ a.id }}">{{ a.libelle }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Poste</label>
+                        <input type="text" name="poste" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="mf-btn-primary">Affecter</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

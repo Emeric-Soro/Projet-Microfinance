@@ -1,0 +1,70 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Recherche avancée - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Clients', url: path('client_list') }, { label: 'Recherche avancée' }] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Recherche avancée de clients</h1>
+</div>
+
+{% embed 'components/MfFormCard.html.twig' with { title: 'Critères de recherche', submit_label: 'Rechercher' } %}
+    {% block form_fields %}
+    <form method="post" action="{{ path('client_search') }}">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfInput.html.twig' with { name: 'nom', label: 'Nom', value: app.request.request.get('nom') ?? '' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'prenom', label: 'Prénom', value: app.request.request.get('prenom') ?? '' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'numeroIdentite', label: 'N° pièce d\'identité', value: app.request.request.get('numeroIdentite') ?? '' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'telephone', label: 'Téléphone', value: app.request.request.get('telephone') ?? '' } %}
+            {% include 'components/MfInput.html.twig' with { name: 'email', label: 'Email', value: app.request.request.get('email') ?? '' } %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'dateNaissanceDeb', label: 'Date naissance (début)', value: app.request.request.get('dateNaissanceDeb') ?? '' } %}
+            {% include 'components/MfDatePicker.html.twig' with { name: 'dateNaissanceFin', label: 'Date naissance (fin)', value: app.request.request.get('dateNaissanceFin') ?? '' } %}
+            {% include 'components/MfSelect.html.twig' with { name: 'statut', label: 'Statut', value: app.request.request.get('statut') ?? '', options: [
+                { value: '', label: 'Tous' },
+                { value: 'ACTIF', label: 'Actif' },
+                { value: 'SUSPENDU', label: 'Suspendu' },
+                { value: 'INACTIF', label: 'Inactif' },
+                { value: 'ARCHIVE', label: 'Archivé' },
+            ]} %}
+            {% include 'components/MfSelect.html.twig' with { name: 'type', label: 'Type', value: app.request.request.get('type') ?? '', options: [
+                { value: '', label: 'Tous' },
+                { value: 'PHYSIQUE', label: 'Personne physique' },
+                { value: 'MORAL', label: 'Personne morale' },
+            ]} %}
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Rechercher</button>
+            <a href="{{ path('client_list') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+        </div>
+    </form>
+    {% endblock %}
+{% endembed %}
+
+{% if searched %}
+    <div class="mt-6">
+        {% embed 'components/MfCard.html.twig' with { title: 'Résultats (' ~ results|length ~ ')' } %}
+            {% block card_content %}
+                {% if results is not empty %}
+                    {% embed 'components/MfDataTable.html.twig' with {
+                        headers: [
+                            { key: 'nom', label: 'Nom' },
+                            { key: 'prenom', label: 'Prénom' },
+                            { key: 'telephone', label: 'Téléphone' },
+                            { key: 'email', label: 'Email' },
+                            { key: 'type', label: 'Type' },
+                            { key: 'statut', label: 'Statut' },
+                        ],
+                        rows: results,
+                        actions: [
+                            { label: 'Voir', url: function(row) { return path('client_detail', { id: row.id }) }, icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
+                        ],
+                    } %}{% endembed %}
+                {% else %}
+                    {% include 'partials/_empty_state.html.twig' with { title: 'Aucun résultat', message: 'Aucun client ne correspond à vos critères de recherche.' } %}
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Flux de trésorerie - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Flux de trésorerie</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Tableau des flux de trésorerie</p>
+    </div>
+</div>
+
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+<div class="mf-card p-6 mb-6">
+    <form method="get" action="" class="flex flex-wrap gap-4 items-end">
+        <div>
+            <label class="mf-label">Date début</label>
+            <input type="date" name="date_debut" value="{{ date_debut }}" class="mf-input">
+        </div>
+        <div>
+            <label class="mf-label">Date fin</label>
+            <input type="date" name="date_fin" value="{{ date_fin }}" class="mf-input">
+        </div>
+        <button type="submit" class="mf-btn-primary">Générer</button>
+    </form>
+</div>
+
+<div class="space-y-6">
+    <div class="mf-card p-6">
+        <h3 class="font-heading font-semibold text-lg text-on-surface mb-4 flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
+            Flux d'exploitation
+        </h3>
+        <table class="mf-table">
+            <tbody>
+                {% for item in flux.exploitation|default([]) %}
+                <tr>
+                    <td>{{ item.libelle }}</td>
+                    <td class="text-right font-mono">{{ item.montant|number_format(0, ',', ' ') }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="2" class="text-center py-4 text-on-surface-variant">Aucun flux d'exploitation</td></tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="font-bold border-t-2 border-gray-300">
+                    <td>Total flux d'exploitation</td>
+                    <td class="text-right font-mono">{{ totaux.exploitation|default(0)|number_format(0, ',', ' ') }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="mf-card p-6">
+        <h3 class="font-heading font-semibold text-lg text-on-surface mb-4 flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+            Flux d'investissement
+        </h3>
+        <table class="mf-table">
+            <tbody>
+                {% for item in flux.investissement|default([]) %}
+                <tr>
+                    <td>{{ item.libelle }}</td>
+                    <td class="text-right font-mono">{{ item.montant|number_format(0, ',', ' ') }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="2" class="text-center py-4 text-on-surface-variant">Aucun flux d'investissement</td></tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="font-bold border-t-2 border-gray-300">
+                    <td>Total flux d'investissement</td>
+                    <td class="text-right font-mono">{{ totaux.investissement|default(0)|number_format(0, ',', ' ') }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="mf-card p-6">
+        <h3 class="font-heading font-semibold text-lg text-on-surface mb-4 flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-purple-500 inline-block"></span>
+            Flux de financement
+        </h3>
+        <table class="mf-table">
+            <tbody>
+                {% for item in flux.financement|default([]) %}
+                <tr>
+                    <td>{{ item.libelle }}</td>
+                    <td class="text-right font-mono">{{ item.montant|number_format(0, ',', ' ') }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="2" class="text-center py-4 text-on-surface-variant">Aucun flux de financement</td></tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="font-bold border-t-2 border-gray-300">
+                    <td>Total flux de financement</td>
+                    <td class="text-right font-mono">{{ totaux.financement|default(0)|number_format(0, ',', ' ') }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="mf-card p-6 bg-primary-50 border border-primary-200">
+        <div class="flex justify-between items-center">
+            <span class="text-lg font-heading font-semibold">Variation de trésorerie</span>
+            <span class="text-2xl font-heading font-bold {{ totaux.variation|default(0) >= 0 ? 'text-green-600' : 'text-red-600' }}">
+                {{ totaux.variation|default(0)|number_format(0, ',', ' ') }}
+            </span>
+        </div>
+    </div>
+</div>
+{% endblock %}

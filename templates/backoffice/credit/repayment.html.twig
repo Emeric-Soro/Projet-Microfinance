@@ -1,0 +1,35 @@
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Remboursements'] } %}
+{% include 'partials/_flash.html.twig' %}
+
+<h1>Remboursement</h1>
+
+<section class="MfCard">
+    <header>Formulaire de remboursement</header>
+    <form method="post" action="">
+        <div class="MfFormRow">
+            <label>Montant</label>
+            <input class="MfMoneyInput" name="amount" type="text" />
+        </div>
+        <div class="MfFormRow">
+            <label>Compte</label>
+            <input class="MfInput" name="account" type="text" />
+        </div>
+        <button class="MfButton" type="submit">Soumettre</button>
+    </form>
+    </section>
+
+<section class="MfTable">
+    <h2>Remboursements</h2>
+    {% if data is defined and data|length > 0 %}
+        <table class="MfDataTable__Table">
+            <thead><tr><th>Date</th><th>Montant</th><th>Compte</th></tr></thead>
+            <tbody>
+            {% for r in data %}
+                <tr><td>{{ r.date ?? '' }}</td><td>{{ r.amount ?? 0 }}</td><td>{{ r.account ?? '' }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Aucun remboursement.</p>
+    {% endif %}
+    </section>

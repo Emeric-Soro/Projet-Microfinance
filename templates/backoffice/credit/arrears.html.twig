@@ -1,0 +1,30 @@
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Arriérés'] } %}
+{% include 'partials/_flash.html.twig' %}
+
+<h1>Arriérés</h1>
+
+<section class="MfStatsGrid">
+    {% if buckets is defined and buckets|length > 0 %}
+        {% for label, value in buckets %}
+            <div class="MfStatsGrid__Item"><div class="MfStatsGrid__Label">{{ label }}</div><div class="MfStatsGrid__Value">{{ value }}</div></div>
+        {% endfor %}
+    {% else %}
+        <div class="MfStatsGrid__Item"><div class="MfStatsGrid__Label">1-30j</div><div class="MfStatsGrid__Value">0</div></div>
+        <div class="MfStatsGrid__Item"><div class="MfStatsGrid__Label">31-60j</div><div class="MfStatsGrid__Value">0</div></div>
+        <div class="MfStatsGrid__Item"><div class="MfStatsGrid__Label">61-90j</div><div class="MfStatsGrid__Value">0</div></div>
+        <div class="MfStatsGrid__Item"><div class="MfStatsGrid__Label">90j+</div><div class="MfStatsGrid__Value">0</div></div>
+    {% endif %}
+    </section>
+
+<section class="MfTable">
+    <h2>Liste des arriérés</h2>
+    {% if arreas is defined and arreas|length > 0 %}
+        <table class="MfDataTable__Table"><thead><tr><th>Client</th><th>Montant</th><th>Délai</th></tr></thead><tbody>
+        {% for a in arreas %}
+            <tr><td>{{ a.client ?? '' }}</td><td>{{ a.amount ?? 0 }}</td><td>{{ a.days ?? '' }}</td></tr>
+        {% endfor %}
+        </tbody></table>
+    {% else %}
+        <p>Aucun arriéré.</p>
+    {% endif %}
+    </section>

@@ -1,0 +1,18 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block content %}
+  {% include 'backoffice/partials/_breadcrumb.html.twig' with {'path': ['Accueil','Conformité','Alerte']} %}
+  <div class=" MfCard">
+    <h2>Alerte conformité</h2>
+    <div class="MfDataTable">
+      <table>
+        <thead><tr><th>Date</th><th>Niveau</th><th>Description</th></tr></thead>
+        <tbody>
+          {% for a in data.data %}
+          <tr><td>{{ a.date|date('d/m/Y') }}</td><td>{{ a.level ?? '' }}</td><td>{{ a.description ?? '' }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

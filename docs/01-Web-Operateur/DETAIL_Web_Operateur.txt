@@ -1,0 +1,720 @@
+================================================================================
+  MICROFIN — M01 DÉTAIL : WEB OPÉRATEUR INTERNE
+  Implémentation détaillée du back-office PHP/Symfony
+  247 écrans | 18 sections | Design system DESIGN.md
+================================================================================
+
+1. STRUCTURE DES CONTRÔLEURS SYMFONY
+─────────────────────────────────────
+
+  src/Controller/
+  ├── Auth/                          (Authentification)
+  │   ├── LoginController.php
+  │   ├── OtpController.php
+  │   ├── TwoFactorController.php
+  │   ├── ForgotPasswordController.php
+  │   ├── ResetPasswordController.php
+  │   ├── AgencySelectionController.php
+  │   └── SecurityController.php
+  │
+  ├── Dashboard/                     (Tableaux de bord)
+  │   ├── GeneralDashboardController.php
+  │   ├── AgencyDashboardController.php
+  │   ├── CashierDashboardController.php
+  │   ├── CreditDashboardController.php
+  │   ├── ComplianceDashboardController.php
+  │   └── DirectorDashboardController.php
+  │
+  ├── Client/                        (Gestion clients)
+  │   ├── ClientListController.php
+  │   ├── ClientCreateController.php
+  │   ├── ClientDetailController.php
+  │   ├── ClientKycController.php
+  │   ├── ClientDocumentController.php
+  │   ├── ClientSearchController.php
+  │   └── ClientMergeController.php
+  │
+  ├── Compte/                        (Gestion comptes)
+  │   ├── AccountListController.php
+  │   ├── AccountOpenController.php
+  │   ├── AccountDetailController.php
+  │   ├── AccountStatementController.php
+  │   ├── AccountBlockController.php
+  │   └── AccountClosureController.php
+  │
+  ├── Transaction/                   (Opérations)
+  │   ├── DepositController.php
+  │   ├── WithdrawalController.php
+  │   ├── TransferController.php
+  │   ├── TransactionHistoryController.php
+  │   ├── TransactionCancelController.php
+  │   └── TellerJournalController.php
+  │
+  ├── Credit/                        (Crédits)
+  │   ├── CreditRequestController.php
+  │   ├── CreditAnalysisController.php
+  │   ├── CreditDecisionController.php
+  │   ├── CreditDisbursementController.php
+  │   ├── CreditRepaymentController.php
+  │   ├── CreditRecoveryController.php
+  │   └── CreditProductController.php
+  │
+  ├── Epargne/                       (Épargne)
+  │   ├── SavingsProductController.php
+  │   ├── DatController.php
+  │   └── SavingsReportController.php
+  │
+  ├── Caisse/                        (Caisses/Trésorerie)
+  │   ├── CashDeskController.php
+  │   ├── SessionController.php
+  │   ├── VaultController.php
+  │   └── EodController.php
+  │
+  ├── Comptabilite/                  (Comptabilité)
+  │   ├── ChartController.php
+  │   ├── JournalController.php
+  │   ├── EcritureController.php
+  │   ├── BalanceController.php
+  │   ├── GrandLivreController.php
+  │   └── ClotureController.php
+  │
+  ├── Paiement/                      (Paiements externes)
+  │   ├── MobileMoneyController.php
+  │   ├── TransferController.php
+  │   ├── CompensationController.php
+  │   └── ChequeController.php
+  │
+  ├── Conformite/                    (Conformité)
+  │   ├── ComplianceAlertController.php
+  │   ├── ScreeningController.php
+  │   └── SarController.php
+  │
+  ├── Risque/                        (Risques)
+  │   ├── RiskController.php
+  │   ├── IncidentController.php
+  │   └── StressTestController.php
+  │
+  ├── Organisation/                  (Multi-agence)
+  │   ├── RegionController.php
+  │   ├── AgencyController.php
+  │   ├── GuichetController.php
+  │   └── MutationController.php
+  │
+  ├── Support/                       (RH/Achats/Immos)
+  │   ├── BudgetController.php
+  │   ├── PurchaseController.php
+  │   └── ImmobilisationController.php
+  │
+  ├── Admin/                         (Administration)
+  │   ├── UserController.php
+  │   ├── RoleController.php
+  │   ├── PermissionController.php
+  │   ├── AuditController.php
+  │   └── SystemController.php
+  │
+  ├── Validation/                    (Maker-Checker)
+  │   └── ValidationController.php
+  │
+  └── Reporting/                     (Reporting)
+      ├── AccountingReportController.php
+      ├── RegulatoryReportController.php
+      ├── CreditReportController.php
+      └── CustomReportController.php
+
+
+2. TEMPLATES TWIG PAR ÉCRAN
+─────────────────────────────
+  templates/
+  ├── base.html.twig                          (Layout parent DESIGN.md)
+  │   ├── auth.html.twig                      (Layout login/OTP)
+  │   └── backoffice.html.twig                (Layout interne : sidebar + topbar)
+  │
+  ├── partials/
+  │   ├── _sidebar.html.twig                  (Menu latéral avec icônes)
+  │   ├── _topbar.html.twig                   (Barre supérieure)
+  │   ├── _breadcrumb.html.twig               (Fil d'Ariane)
+  │   ├── _flash.html.twig                    (Messages flash succès/erreur)
+  │   ├── _table_toolbar.html.twig            (Barre d'outils table)
+  │   ├── _pagination.html.twig               (Pagination)
+  │   ├── _empty_state.html.twig              (État vide)
+  │   ├── _status_badge.html.twig             (Badge statut)
+  │   ├── _approval_banner.html.twig          (Bannière Maker-Checker)
+  │   ├── _modal.html.twig                    (Modale générique)
+  │   ├── _confirm_dialog.html.twig           (Dialogue confirmation)
+  │   ├── _audit_timeline.html.twig           (Timeline audit)
+  │   ├── _document_viewer.html.twig          (Visualiseur document)
+  │   └── _export_actions.html.twig           (Actions export)
+  │
+  ├── components/
+  │   ├── MfCard.html.twig                    (Carte DESIGN.md 24px padding)
+  │   ├── MfDataTable.html.twig               (Table avec zebra #F8FAFA)
+  │   ├── MfFormCard.html.twig                (Carte de formulaire)
+  │   ├── MfStatsGrid.html.twig               (Grille KPI)
+  │   ├── MfProgressBar.html.twig             (Barre progression DESIGN.md)
+  │   ├── MfStatusBadge.html.twig             (Badge statut DESIGN.md)
+  │   ├── MfButton.html.twig                  (Bouton DESIGN.md)
+  │   ├── MfInput.html.twig                   (Champ DESIGN.md)
+  │   ├── MfSelect.html.twig                  (Sélecteur)
+  │   ├── MfDatePicker.html.twig              (Date)
+  │   ├── MfMoneyInput.html.twig              (Montant)
+  │   ├── MfFileUpload.html.twig              (Upload/UX Dropzone)
+  │   ├── MfDetailRow.html.twig               (Ligne détail label+valeur)
+  │   ├── MfTabs.html.twig                    (Onglets navigation)
+  │   ├── MfAccordion.html.twig               (Accordéon)
+  │   ├── MfSummaryCard.html.twig             (Carte récapitulative)
+  │   ├── MfAlertBanner.html.twig             (Bannière alerte/notice)
+  │   └── MfTimeline.html.twig                (Timeline visuel workflow)
+
+
+3. FICHIERS DE CONFIGURATION SYMFONY
+───────────────────────────────────────
+
+  config/
+  ├── packages/
+  │   ├── framework.yaml           (session, assets, translator)
+  │   ├── security.yaml            (firewalls, access_control, role_hierarchy)
+  │   ├── twig.yaml                 (globals, paths, form theme)
+  │   ├── doctrine.yaml             (Oracle connection, mappings)
+  │   ├── lexik_jwt_authentication.yaml
+  │   ├── scheb_2fa.yaml
+  │   ├── nelmio_api_doc.yaml
+  │   ├── monolog.yaml
+  │   ├── messenger.yaml           (Messages handlers for EOD, batch)
+  │   ├── webpack_encore.yaml
+  │   ├── rate_limiter.yaml
+  │   └── lock.yaml
+  ├── routes/
+  │   ├── auth.yaml
+  │   ├── backoffice.yaml
+  │   └── api.yaml
+  ├── services.yaml
+  └── packages/dev/
+      └── web_profiler.yaml
+
+
+4. SERVICE APICLIENT (Bridge avec l'API Java)
+─────────────────────────────────────────────────
+
+  src/Service/ApiClientService.php :
+  - HttpClient vers http://localhost:8080/api
+  - Gestion du JWT (login, refresh, blacklist)
+  - Headers : Authorization, X-Correlation-Id, X-Idempotency-Key
+  - Cache des réponses GET (cache Redis, TTL paramétrable)
+  - Circuit breaker pour les appels longs
+  - Mapping des erreurs API vers exceptions PHP
+
+  Méthodes principales :
+  - get(string $path, array $params = []) : ResponseInterface
+  - post(string $path, array $data = []) : ResponseInterface
+  - put(string $path, array $data = []) : ResponseInterface
+  - delete(string $path) : ResponseInterface
+  - login(string $user, string $pass) : JwtToken
+  - loginOtp(string $user, string $challenge, string $otp) : JwtToken
+  - refreshToken() : JwtToken
+
+
+5. DESIGN SYSTEM — IMPLÉMENTATION TAILWIND
+──────────────────────────────────────────────
+  tailwind.config.js extrait :
+  {
+    theme: {
+      extend: {
+        colors: {
+          primary: { DEFAULT: '#004D61', 50: '#E0F2F5', 100: '#B3E0E8',
+                     200: '#80CCD9', 300: '#4DB8CB', 400: '#26A8BF',
+                     500: '#004D61', 600: '#003F50', 700: '#00313F',
+                     800: '#00232E', 900: '#00151D' },
+          surface: '#F0F4F5',
+          'surface-white': '#FFFFFF',
+          'zebra-stripe': '#F8FAFA',
+          teal: { border: '#C0D4D8' },
+          status: { pending: '#FEF3C7', approved: '#D1FAE5',
+                    rejected: '#FEE2E2', blocked: '#FED7AA' }
+        },
+        fontFamily: {
+          heading: ['Manrope', 'sans-serif'],
+          body: ['Inter', 'sans-serif']
+        },
+        spacing: {
+          'base': '4px',
+          'xs': '0.25rem',
+          'sm': '0.5rem',
+          'md': '1rem',
+          'lg': '1.5rem',
+          'xl': '2.5rem'
+        },
+        maxWidth: { container: '1440px' },
+        borderRadius: {
+          'sm': '0.125rem',
+          'DEFAULT': '0.25rem',
+          'md': '0.375rem',
+          'lg': '0.5rem',
+          'xl': '0.75rem',
+          'full': '9999px'
+        },
+        boxShadow: {
+          'card': '0 1px 2px rgba(0, 77, 97, 0.04)',
+          'dropdown': '0 4px 12px rgba(0, 77, 97, 0.08)',
+          'modal': '0 8px 24px rgba(0, 77, 97, 0.12)'
+        }
+      }
+    }
+  }
+
+
+6. LISTE COMPLÈTE DES ÉCRANS AVEC ROUTES & PERMISSIONS
+───────────────────────────────────────────────────────────
+
+  AUTHENTIFICATION (8)
+  ┌───────────────────────────────┬─────────────────────────┬──────────────────┐
+  │ Écran                         │ Route                   │ Permission       │
+  ├───────────────────────────────┼─────────────────────────┼──────────────────┤
+  │ Connexion                     │ /login                  │ PUBLIC           │
+  │ Saisie code OTP               │ /login/otp              │ PUBLIC           │
+  │ Configuration 2FA initiale    │ /setup-2fa              │ AUTH             │
+  │ Mot de passe oublié           │ /forgot-password        │ PUBLIC           │
+  │ Réinitialisation mot de passe │ /reset-password/{token} │ PUBLIC           │
+  │ Mot de passe expiré           │ /change-expired-password│ AUTH             │
+  │ Compte verrouillé             │ /account-locked         │ PUBLIC           │
+  │ Sélection agence              │ /select-agency          │ AUTH             │
+  └───────────────────────────────┴─────────────────────────┴──────────────────┘
+
+  TABLEAUX DE BORD (8)
+  ┌───────────────────────────────┬─────────────────────────┬──────────────────┐
+  │ Dashboard général             │ /dashboard              │ DASHBOARD_VIEW   │
+  │ Dashboard agence              │ /dashboard/agence/{id}  │ DASHBOARD_AGENCY │
+  │ Dashboard siège               │ /dashboard/siege        │ DASHBOARD_SIEGE  │
+  │ Dashboard caissier            │ /dashboard/caissier     │ DASHBOARD_TELLER │
+  │ Dashboard crédit              │ /dashboard/credit       │ CREDIT_VIEW      │
+  │ Dashboard conformité          │ /dashboard/compliance   │ COMPLIANCE_VIEW  │
+  │ Dashboard comptable           │ /dashboard/comptable    │ ACCOUNTING_VIEW  │
+  │ Dashboard direction           │ /dashboard/direction    │ ADMIN            │
+  └───────────────────────────────┴─────────────────────────┴──────────────────┘
+
+  CLIENTS (20)
+  ┌───────────────────────────────┬─────────────────────────┬──────────────────┐
+  │ Liste clients                 │ /clients                │ CLIENT_VIEW      │
+  │ Recherche avancée             │ /clients/search         │ CLIENT_VIEW      │
+  │ Création client physique      │ /clients/create         │ CLIENT_CREATE    │
+  │ Création client moral         │ /clients/create-moral   │ CLIENT_CREATE    │
+  │ Fiche client                  │ /clients/{id}           │ CLIENT_VIEW      │
+  │ Modification client           │ /clients/{id}/edit      │ CLIENT_UPDATE    │
+  │ KYC client                    │ /clients/{id}/kyc       │ CLIENT_KYC       │
+  │ Documents KYC                 │ /clients/{id}/documents │ CLIENT_DOCUMENTS │
+  │ Bénéficiaires effectifs       │ /clients/{id}/beneficiaires │ CLIENT_VIEW │
+  │ Mandataires                   │ /clients/{id}/mandataires   │ CLIENT_VIEW │
+  │ Contacts rattachés            │ /clients/{id}/contacts  │ CLIENT_VIEW      │
+  │ Évaluation risque             │ /clients/{id}/risk      │ CLIENT_RISK      │
+  │ Screening conformité          │ /clients/{id}/screening │ COMPLIANCE_VIEW  │
+  │ Historique client             │ /clients/{id}/history   │ CLIENT_VIEW      │
+  │ Suspension client             │ /clients/{id}/suspend   │ CLIENT_SUSPEND   │
+  │ Réactivation client           │ /clients/{id}/reactivate│ CLIENT_SUSPEND   │
+  │ Archivage client              │ /clients/{id}/archive   │ CLIENT_ARCHIVE   │
+  │ Fusion doublons               │ /clients/merge          │ CLIENT_MERGE     │
+  │ Export clients                │ /clients/export         │ CLIENT_EXPORT    │
+  │ Statuts clients (graphique)   │ /clients/stats          │ CLIENT_VIEW      │
+  └───────────────────────────────┴─────────────────────────┴──────────────────┘
+
+  COMPTES (14)
+  ┌───────────────────────────────┬─────────────────────────┬──────────────────┐
+  │ Liste comptes                 │ /comptes                │ ACCOUNT_VIEW     │
+  │ Ouverture compte              │ /comptes/open           │ ACCOUNT_CREATE   │
+  │ Fiche compte                  │ /comptes/{num}          │ ACCOUNT_VIEW     │
+  │ Historique opérations         │ /comptes/{num}/history  │ ACCOUNT_VIEW     │
+  │ Relevé compte                 │ /comptes/{num}/statement│ ACCOUNT_STATEMENT│
+  │ Blocage compte (M-C)          │ /comptes/{num}/block    │ ACCOUNT_BLOCK    │
+  │ Déblocage compte (M-C)        │ /comptes/{num}/unblock  │ ACCOUNT_BLOCK    │
+  │ Opposition compte             │ /comptes/{num}/oppose   │ ACCOUNT_OPPOSE   │
+  │ Changement produit            │ /comptes/{num}/product  │ ACCOUNT_UPDATE   │
+  │ Paramètres compte             │ /comptes/{num}/settings │ ACCOUNT_UPDATE   │
+  │ Comptes dormants              │ /comptes/dormants       │ ACCOUNT_VIEW     │
+  │ Clôture compte (M-C)          │ /comptes/{num}/closure  │ ACCOUNT_CLOSURE  │
+  │ En attente validation         │ /comptes/pending        │ ACCOUNT_VALIDATE │
+  │ Comptes par agence            │ /comptes/agence/{id}    │ ACCOUNT_VIEW     │
+  └───────────────────────────────┴─────────────────────────┴──────────────────┘
+
+  OPÉRATIONS (12)
+  ┌───────────────────────────────┬─────────────────────────┬──────────────────┐
+  │ Dépôt                         │ /operations/depot       │ OPERATION_DEPOSIT│
+  │ Retrait                       │ /operations/retrait     │ OPERATION_WITHDRAW│
+  │ Virement                      │ /operations/virement    │ OPERATION_TRANSFER│
+  │ Opération déplacée            │ /operations/deplacee    │ OPERATION_AGENCY │
+  │ Historique opérations         │ /operations/history     │ OPERATION_VIEW   │
+  │ Détail opération              │ /operations/{ref}       │ OPERATION_VIEW   │
+  │ Reçu opération                │ /operations/{ref}/receipt│ OPERATION_VIEW  │
+  │ Annulation (M-C)              │ /operations/{ref}/cancel│ OPERATION_CANCEL │
+  │ Extourne (M-C)                │ /operations/{ref}/extourne│ OPERATION_CANCEL│
+  │ Validation superviseur        │ /operations/validation   │ OPERATION_VALIDATE│
+  │ Forçage superviseur           │ /operations/forcage      │ SUPERVISEUR      │
+  │ Journal caisse                │ /operations/teller-journal│ OPERATION_VIEW  │
+  └───────────────────────────────┴─────────────────────────┴──────────────────┘
+
+  CRÉDITS (31) — voir PRD principal pour la liste exhaustive
+
+  ÉPARGNE (17) — liste exhaustive dans le PRD M01 principal
+
+  CAISSES/EOD (18) — liste exhaustive dans PRD M01
+
+  COMPTABILITÉ (22) — liste exhaustive dans PRD M01
+
+  PAIEMENTS (26) — liste exhaustive dans PRD M01
+
+  CONFORMITÉ (16) — liste exhaustive dans PRD M01
+
+  RISQUES (12) — liste exhaustive dans PRD M01
+
+  SUPPORT/RH (20) — liste exhaustive dans PRD M01
+
+  ADMINISTRATION (18) — liste exhaustive dans PRD M01
+
+  VALIDATIONS M-C (10) — liste exhaustive dans PRD M01
+
+  REPORTING (12) — liste exhaustive dans PRD M01
+
+
+7. ÉCRAN CRITIQUE : DASHBOARD GÉNÉRAL
+─────────────────────────────────────────
+
+  Route : GET /dashboard
+  Template : backoffice/dashboard/general.html.twig
+  Layout : backoffice.html.twig
+
+  DONNÉES AFFICHÉES (appels API Java) :
+  ┌─ Ligne 1 — KPIs principaux (StatsGrid) ──────────────────────────┐
+  │ [Total Clients: 3 245] [Comptes Actifs: 4 105]                  │
+  │ [Encours Crédit: 1.2B] [Encours Épargne: 850M]                 │
+  │ [Opérations Jour: 145 - 23M] [Taux Impayés: 4.2%]              │
+  └──────────────────────────────────────────────────────────────────┘
+
+  ┌─ Ligne 2 — Graphiques (Chart.js via UX-Chartjs) ─────────────────┐
+  │ ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐ │
+  │ │ Évolution        │  │ Répartition       │  │ Évolution        │ │
+  │ │ Portefeuille     │  │ Crédits/Épargne   │  │ Opérations       │ │
+  │ │ (AreaChart)      │  │ (DoughnutChart)   │  │ (BarChart)       │ │
+  │ └──────────────────┘  └──────────────────┘  └──────────────────┘ │
+  └──────────────────────────────────────────────────────────────────┘
+
+  ┌─ Ligne 3 — Alertes & Validations ────────────────────────────────┐
+  │ ┌───────────────────────────┐  ┌───────────────────────────────┐ │
+  │ │ Alertes (top 5)           │  │ Validations en attente (top 5)│ │
+  │ │ • 3 paiements en échec   │  │ • Ouverture cpte KOUAME (M-C) │ │
+  │ │ • 1 alerte conformité    │  │ • Déblocage crédit (M-C)      │ │
+  │ └───────────────────────────┘  └───────────────────────────────┘ │
+  └──────────────────────────────────────────────────────────────────┘
+
+  ┌─ Ligne 4 — Opérations récentes ──────────────────────────────────┐
+  │ MfDataTable (10 dernières, scroll)                               │
+  │ [Ref] [Client] [Type] [Montant] [Statut] [Guichetier] [Date]    │
+  └──────────────────────────────────────────────────────────────────┘
+
+  APPELS API :
+  GET /api/dashboard/general → tous les KPIs + graphiques
+  GET /api/validations/actions-en-attente?page=0&size=5
+  GET /api/transactions?page=0&size=10&sort=createdAt,desc
+
+
+8. ÉCRAN CRITIQUE : CRÉATION CLIENT PHYSIQUE
+─────────────────────────────────────────────────
+
+  Route : GET /clients/create → form | POST /clients/create → submit
+  Template : backoffice/client/create_physique.html.twig
+  Maker-Checker : NON pour création (mais KYC oui)
+
+  ÉTAPES (Stepper à 3 étapes) :
+  ÉTAPE 1 — Identité
+    Champ                    Type      Validation                Requis
+    ─────────────────────────────────────────────────────────────────
+    Civilité                select    (M./Mme/Mlle)             OUI
+    Nom                     text      min=2, max=100            OUI
+    Prénom                  text      min=2, max=100            OUI
+    Date naissance          date      1900-01-01 à auj.-18ans   OUI
+    Lieu naissance          text      max=200                   OUI
+    Nationalité             select    liste pays UEMOA+autres   OUI
+    Sexe                    radio     M/F                       OUI
+    Situation familiale     select    célib./marié/divorcé/veuf OUI
+    Nombre enfants          number    0-50                      NON
+    Nom mère                text                                NON
+    Nom père                text                                NON
+    Profession              select                              OUI
+    Secteur activité        text                                NON
+
+  ÉTAPE 2 — Coordonnées
+    Champ                    Type      Validation                Requis
+    ─────────────────────────────────────────────────────────────────
+    Téléphone 1             tel       +225 format regex         OUI
+    Téléphone 2             tel       format regex              NON
+    Email                   email     format email              NON
+    Adresse (région)        select    régions UEMOA             OUI
+    Adresse (département)   select    filtré par région         OUI
+    Adresse (commune)       text                                OUI
+    Adresse (quartier)      text                                NON
+    Boîte postale           text      5 chiffres                NON
+
+  ÉTAPE 3 — Pièce d'identité + Photo
+    Champ                    Type      Validation                Requis
+    ─────────────────────────────────────────────────────────────────
+    Type pièce              select    CNI/PASSEPORT/PERMIS      OUI
+    Numéro pièce            text      6-20 caractères           OUI
+    Date délivrance         date                                OUI
+    Date expiration         date      > date délivrance         OUI
+    Photo                   file      max 2MB, jpg/png          OUI
+    Scan recto              file      max 5MB, jpg/png/pdf      OUI
+    Scan verso              file      max 5MB                   NON
+
+  VALIDATIONS MÉTIER :
+  - Téléphone doit être unique (vérification API)
+  - Email doit être unique si fourni
+  - Âge minimum 18 ans
+  - Pièce d'identité non expirée
+  - Scoring anti-fraude avant enregistrement
+
+  ACTIONS :
+  - [Enregistrer] → POST /api/clients → 201 Created
+  - [Annuler] → retour vers /clients
+  - [Importer CNI] → scan puce (fonctionnalité future)
+
+  ÉTATS :
+  - LOADING : spinner pendant validation API
+  - VALIDATION_ERROR : erreurs inline par champ + résumé en haut
+  - API_ERROR : message d'erreur API (timeout, conflit, rate limit)
+  - SUCCESS : redirection vers fiche client + notification toast
+
+
+9. ÉCRAN CRITIQUE : MAKER-CHECKER VALIDATION
+─────────────────────────────────────────────────
+
+  Route : GET /validations → liste actions en attente
+  Route : GET /validations/{id} → détail action
+  Route : POST /validations/{id}/approve → approbation
+  Route : POST /validations/{id}/reject → rejet
+
+  DONNÉES PAR ACTION :
+  - Type d'action (création client, blocage compte, décision crédit...)
+  - Résumé des données soumises (JSON formaté)
+  - Maker (nom, date de soumission)
+  - Date d'expiration (T+48h auto-rejet si non traité)
+  - Lien vers la ressource concernée (si existante)
+
+  AFFICHAGE :
+  ┌─ Carte action ───────────────────────────────────────────────────┐
+  │ 🔨 Maker: KOUAME Jean (GUICHETIER) — 02/05/2026 14:30          │
+  │ ─────────────────────────────────────────────────────────────── │
+  │ Action: Déblocage de crédit MF-CRE-2026-00421                  │
+  │ Client: BAKAYOKO Oumar - Compte: MF-2026-001230                │
+  │ Montant déblocage: 1 500 000 XOF                               │
+  │ Justification: Client a régularisé sa situation                 │
+  │ ─────────────────────────────────────────────────────────────── │
+  │ Pièces jointes: [attestation_regularisation.pdf]               │
+  │ Valeurs modifiées: statut BLOQUÉ → DÉBLOQUÉ (afficher diff)   │
+  │ ─────────────────────────────────────────────────────────────── │
+  │ [✓ Approuver] [✗ Rejeter] [⏎ Retour pour correction]          │
+  │ (motif requis si rejet ou retour)                              │
+  └──────────────────────────────────────────────────────────────────┘
+
+  RÈGLES :
+  - Checker ≠ Maker obligatoire
+  - Motif obligatoire pour rejet et retour
+  - Score de risque calculé pour chaque action
+  - SLA : 24h max pour traiter une action
+  - Escalade automatique à ADMIN si dépassé
+
+
+10. STIMULUS CONTROLLERS JS
+──────────────────────────────
+  assets/controllers/
+  ├── hello_controller.js              (exemple)
+  ├── csrf_protection_controller.js    (Auto refresh CSRF)
+  ├── confirm_modal_controller.js      (Confirmation actions)
+  ├── character_count_controller.js    (Compteur caractères)
+  ├── search_autocomplete_controller.js(UX Autocomplete clients)
+  ├── table_sort_controller.js         (Tri colonnes table)
+  ├── table_filter_controller.js       (Filtres inline table)
+  ├── date_range_controller.js         (Sélecteur période)
+  ├── chart_controller.js              (Chart.js dynamic data)
+  ├── notification_controller.js       (Toast notifications)
+  ├── stepper_controller.js            (Étapes formulaires)
+  ├── money_input_controller.js        (Format montant XOF)
+  ├── signature_controller.js          (Capture signature)
+  ├── qr_code_controller.js            (Scanneur QR code)
+  ├── document_upload_controller.js    (Upload documents)
+  ├── live_search_controller.js        (Recherche en direct)
+  ├── sidebar_controller.js            (Toggle/responsive sidebar)
+  ├── batch_select_controller.js       (Sélection multiple)
+  └── auto_submit_controller.js        (Auto-submit filtres)
+
+
+11. ASSETS CSS (Tailwind + Custom)
+─────────────────────────────────────
+  assets/css/app.css :
+  @tailwind base;
+  @tailwind components;
+  @tailwind utilities;
+
+  /* Design system custom components DESIGN.md */
+  @layer components {
+    .mf-card { @apply bg-white rounded-lg p-6 border border-teal-100 shadow-sm; }
+    .mf-table { @apply w-full border-collapse; }
+    .mf-table th { @apply sticky top-0 bg-surface text-label font-semibold
+                     text-on-surface-variant uppercase tracking-wider
+                     px-4 py-3 text-left text-xs; }
+    .mf-table td { @apply px-4 py-3 text-sm text-on-surface border-b
+                     border-gray-100; }
+    .mf-table tr:nth-child(even) { @apply bg-zebra-stripe; }
+    .mf-table tr:hover { @apply bg-primary-50; }
+    .mf-btn-primary { @apply bg-primary text-white px-4 py-2 rounded
+                        font-medium text-sm hover:bg-primary-600
+                        transition-colors duration-150 focus:outline-none
+                        focus:ring-2 focus:ring-primary-300; }
+    .mf-btn-secondary { @apply bg-white text-primary border border-primary
+                          px-4 py-2 rounded font-medium text-sm
+                          hover:bg-primary-50 transition-colors; }
+    .mf-input { @apply w-full px-3 py-2 border border-gray-300 rounded
+                  bg-white text-on-surface text-sm focus:border-primary
+                  focus:ring-2 focus:ring-primary-200
+                  transition-colors duration-150; }
+    .mf-badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full
+                  text-xs font-medium; }
+    .mf-badge-success { @apply bg-green-100 text-green-800; }
+    .mf-badge-pending { @apply bg-yellow-100 text-yellow-800; }
+    .mf-badge-error { @apply bg-red-100 text-red-800; }
+    .mf-progress-bar { @apply h-1.5 rounded-full bg-gray-200 overflow-hidden; }
+    .mf-progress-fill { @apply h-full rounded-full bg-gradient-to-r
+                          from-teal-300 to-primary transition-all duration-500; }
+    .mf-empty-state { @apply flex flex-col items-center justify-center py-16
+                        text-on-surface-variant; }
+    .mf-sidebar { @apply w-64 h-screen fixed left-0 top-0 bg-white
+                    border-r border-gray-200 z-30 transition-all duration-200; }
+    .mf-sidebar-item { @apply flex items-center gap-3 px-4 py-2.5 text-sm
+                         text-on-surface-variant hover:bg-primary-50
+                         hover:text-primary rounded-md mx-2 transition-colors; }
+    .mf-sidebar-item.active { @apply bg-primary text-white hover:bg-primary-600; }
+  }
+
+
+12. SÉCURITÉ DES ROUTES
+─────────────────────────
+  security.yaml :
+  security:
+    firewalls:
+      main:
+        pattern: ^/
+        provider: app_user_provider
+        custom_authenticators:
+          - lexik_jwt_authentication.security.jwt_authenticator
+        logout:
+          path: /logout
+        access_denied_handler: App\Security\AccessDeniedHandler
+        two_factor:
+          auth_form_path: /2fa
+          check_path: /2fa_check
+          enable_csrf: true
+
+    access_control:
+      - { path: ^/login, roles: PUBLIC_ACCESS }
+      - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
+      - { path: ^/reset-password, roles: PUBLIC_ACCESS }
+      - { path: ^/2fa, roles: IS_AUTHENTICATED_2FA_IN_PROGRESS }
+      - { path: ^/admin, roles: ROLE_ADMIN }
+      - { path: ^/dashboard, roles: ROLE_SUPERVISEUR }
+      - { path: ^/clients, roles: ROLE_GUICHETIER }
+      - { path: ^/comptes, roles: ROLE_GUICHETIER }
+      - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
+
+    role_hierarchy:
+      ROLE_ADMIN: [ROLE_SUPERVISEUR, ROLE_MANAGER]
+      ROLE_SUPERVISEUR: [ROLE_GUICHETIER]
+      ROLE_GUICHETIER: []
+      ROLE_CLIENT: []
+
+
+13. FICHIERS DE TRADUCTION (messages.fr.yaml extrait)
+────────────────────────────────────────────────────────
+  client:
+    title: Gestion des clients
+    create: Créer un client
+    edit: Modifier le client
+    list: Liste des clients
+    detail: Fiche client
+    kyc: KYC du client
+    search: Rechercher un client
+    fields:
+      nom: Nom
+      prenom: Prénom
+      telephone: Téléphone
+      email: Email
+      statut: Statut
+      date_naissance: Date de naissance
+      profession: Profession
+      type_piece: Type de pièce
+    status:
+      actif: Actif
+      suspendu: Suspendu
+      bloque: Bloqué
+      radie: Radié
+    messages:
+      created: Client créé avec succès
+      updated: Client mis à jour avec succès
+      deleted: Client supprimé
+      error:
+        not_found: Client introuvable
+        duplicate: Un client avec ce numéro existe déjà
+        kyc_required: KYC obligatoire avant ouverture de compte
+
+
+14. ROUTES COMPLÈTES (extrait du fichier routes/backoffice.yaml)
+────────────────────────────────────────────────────────────────────
+  client_list:
+    path: /clients
+    controller: App\Controller\Client\ClientListController::index
+    methods: GET
+
+  client_create:
+    path: /clients/create
+    controller: App\Controller\Client\ClientCreateController::index
+    methods: [GET, POST]
+
+  client_detail:
+    path: /clients/{id}
+    controller: App\Controller\Client\ClientDetailController::show
+    methods: GET
+    requirements:
+      id: \d+
+
+  client_edit:
+    path: /clients/{id}/edit
+    controller: App\Controller\Client\ClientDetailController::edit
+    methods: [GET, PUT]
+
+
+15. CALLBACKS JAVASCRIPT POUR L'API
+──────────────────────────────────────
+  Les controllers Symfony ne génèrent pas les vues Twig directement
+  à partir de l'API Java. Le flux est :
+
+  1. Controller reçoit la requête HTTP
+  2. Controller appelle ApiClientService (appel API Java)
+  3. Controller vérifie le format de réponse
+  4. Controller rend la vue Twig avec les données
+
+  Exemple ClientCreateController::index (POST) :
+  ┌────────────────────────────────────────────────────────────┐
+  │ $apiClient->post('/api/clients', $formData);              │
+  │ if ($response->getStatusCode() === 201) {                 │
+  │     $this->addFlash('success', 'Client créé');            │
+  │     return $this->redirectToRoute('client_detail',        │
+  │         ['id' => $response->getData()['idClient']]);      │
+  │ }                                                         │
+  │ if ($response->getStatusCode() === 202) {                 │
+  │     $this->addFlash('info', 'Action soumise (M-C)');     │
+  │     return $this->redirectToRoute('validation_queue');    │
+  │ }                                                         │
+  │ if ($response->getStatusCode() === 409) {                 │
+  │     $this->addFlash('error', 'Conflit: ' .               │
+  │         $response->getData()['message']);                 │
+  │     return $this->redirectToRoute('client_create');       │
+  │ }                                                         │
+  └────────────────────────────────────────────────────────────┘
+
+================================================================================
+  FIN DU FICHIER — M01 DÉTAIL WEB OPÉRATEUR
+================================================================================

@@ -1,0 +1,50 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Produits épargne - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Produits d'épargne</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Gestion des produits d'épargne</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for product in products %}
+        <div class="bg-white rounded-lg shadow-card border border-teal-100 p-5 hover:shadow-md transition-shadow">
+            <div class="flex items-start justify-between mb-3">
+                <div>
+                    <h3 class="font-heading font-semibold text-on-surface">{{ product.libelle }}</h3>
+                    <p class="text-xs text-on-surface-variant">{{ product.code }}</p>
+                </div>
+                {% include component('MfStatusBadge') with { status: product.statut|default('ACTIF') } %}
+            </div>
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Taux annuel</span>
+                    <span class="font-medium">{{ product.tauxAnnuel|default(0)|taux }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Solde min.</span>
+                    <span class="font-medium">{{ product.soldeMinimum|default(0)|montant }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-on-surface-variant">Dépôt min.</span>
+                    <span class="font-medium">{{ product.depotMinimum|default(0)|montant }}</span>
+                </div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-gray-100">
+                <a href="{{ path('epargne_rates') }}?produit={{ product.id }}" class="text-sm text-primary hover:text-primary-600">Voir les taux</a>
+            </div>
+        </div>
+    {% else %}
+        <div class="col-span-full">
+            {% include 'partials/_empty_state.html.twig' with {
+                title: 'Aucun produit',
+                message: 'Aucun produit d\'épargne disponible.',
+            } %}
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

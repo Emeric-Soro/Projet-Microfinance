@@ -1,0 +1,31 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Reporting Épargne - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfStatsGrid.html.twig' with { stats: [
+        { label: 'Encours Épargne', value: data.encours|default('—'), icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', icon_bg: 'bg-primary-50', icon_color: 'text-primary' },
+        { label: 'Nombre Comptes', value: data.nombre_comptes|default('—'), icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+        { label: 'Dépôts Mois', value: data.depots|default('—'), icon: 'M12 6v6m0 0v6m0-6h6m-6 0H6', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+        { label: 'Retraits Mois', value: data.retraits|default('—'), icon: 'M20 12H4', icon_bg: 'bg-red-50', icon_color: 'text-red-600' },
+    ] } %}{% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Répartition par Produit' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'produit', label: 'Produit' },
+                    { key: 'encours', label: 'Encours' },
+                    { key: 'nombre', label: 'Nombre' },
+                    { key: 'taux_moyen', label: 'Taux Moyen' },
+                ],
+                rows: data.produits|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

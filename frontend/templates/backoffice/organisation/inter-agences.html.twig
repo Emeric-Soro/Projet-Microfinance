@@ -1,0 +1,48 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Opérations Inter-Agences - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    <div class="mf-card p-6">
+        <form method="get" action="" class="flex flex-wrap gap-4 items-end">
+            <div>
+                <label class="block text-sm font-medium text-on-surface mb-1">Date début</label>
+                <input type="date" name="date_debut" value="{{ app.request.query.get('date_debut', date('Y-m-01')) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-on-surface mb-1">Date fin</label>
+                <input type="date" name="date_fin" value="{{ app.request.query.get('date_fin', date('Y-m-d')) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+            </div>
+            <button type="submit" class="mf-btn-primary">Filtrer</button>
+        </form>
+    </div>
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Opérations Inter-Agences' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'date', label: 'Date', sortable: true },
+                    { key: 'reference', label: 'Référence' },
+                    { key: 'agence_source', label: 'Agence source' },
+                    { key: 'agence_dest', label: 'Agence destination' },
+                    { key: 'montant', label: 'Montant' },
+                    { key: 'type', label: 'Type' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: operations,
+                actions: [{ label: 'Détails', url: (row) => '#', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' }],
+            } %}{% endembed %}
+            {% include 'partials/_pagination.html.twig' with {
+                route: 'organisation_inter_agences',
+                total_pages: total_pages,
+                total_items: total_items,
+                current_page: current_page,
+                page_size: page_size
+            } %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

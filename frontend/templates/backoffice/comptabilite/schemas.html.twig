@@ -1,0 +1,43 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Schémas comptables - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Schémas comptables</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Modèles d'écritures récurrentes</p>
+    </div>
+    <a href="#" class="mf-btn-primary" data-controller="modal" data-action="click->modal#open" data-modal-target="schema-modal">
+        <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Nouveau schéma
+    </a>
+</div>
+
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for schema in schemas %}
+    <div class="mf-card p-6">
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-mono font-medium text-primary bg-primary-50 px-2 py-1 rounded">{{ schema.code }}</span>
+            {% include 'partials/_status_badge.html.twig' with {status: schema.statut} %}
+        </div>
+        <h3 class="font-heading font-semibold text-on-surface mb-2">{{ schema.libelle }}</h3>
+        <p class="text-sm text-on-surface-variant mb-4">{{ schema.description|default('') }}</p>
+        <div class="flex items-center justify-between text-sm">
+            <span class="text-on-surface-variant">{{ schema.lignes|length }} ligne(s)</span>
+            <a href="{{ path('comptabilite_schema_test') }}?schema_id={{ schema.id }}" class="text-primary hover:text-primary-dark font-medium">
+                Tester →
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-span-full">
+        {% include 'partials/_empty_state.html.twig' with {title: 'Aucun schéma', message: 'Aucun schéma comptable trouvé.', action_url: '#', action_label: 'Créer un schéma'} %}
+    </div>
+    {% endfor %}
+</div>
+
+{% include 'partials/_pagination.html.twig' with {route: 'comptabilite_schemas'} %}
+{% endblock %}

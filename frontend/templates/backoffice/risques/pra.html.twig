@@ -1,0 +1,31 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Plan de Reprise d'Activité - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfStatsGrid.html.twig' with { cols: 3, stats: [
+        { label: 'Scénarios PRA', value: data.scenarios|default('—'), icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-primary-50', icon_color: 'text-primary' },
+        { label: 'Exercices Réalisés', value: data.exercices|default('—'), icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+        { label: 'Conformité', value: data.conformite|default('—'), icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+    ] } %}{% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Scénarios de Reprise' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'scenario', label: 'Scénario' },
+                    { key: 'type', label: 'Type' },
+                    { key: 'duree_reprise', label: 'Durée de Reprise' },
+                    { key: 'statut', label: 'Statut' },
+                    { key: 'dernier_test', label: 'Dernier Test' },
+                ],
+                rows: data.plans|default([]),
+                actions: [{ label: 'Détails', url: row => '#', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' }],
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

@@ -1,0 +1,189 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}{{ client.nom ?? client.raisonSociale ?? 'Client' }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Clients', url: path('client_list') }, { label: client.nom ?? client.raisonSociale ?? 'Détail' }] %}
+
+<div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-4">
+        <h1 class="text-2xl font-heading font-bold">{{ client.nom ?? client.raisonSociale ?? 'Client' }} {{ client.prenom ?? '' }}</h1>
+        {% include 'components/MfStatusBadge.html.twig' with { status: client.statut ?? 'ACTIF' } %}
+    </div>
+    <div class="flex items-center gap-2">
+        <a href="{{ path('client_edit', { id: client.id }) }}" class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm">Modifier</a>
+        {% if client.statut == 'ACTIF' %}
+            <a href="{{ path('client_suspend', { id: client.id }) }}" class="px-4 py-2 border border-yellow-300 text-yellow-700 rounded-lg hover:bg-yellow-50 transition-colors text-sm">Suspendre</a>
+        {% elseif client.statut == 'SUSPENDU' %}
+            <a href="{{ path('client_reactivate', { id: client.id }) }}" class="px-4 py-2 border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition-colors text-sm">Réactiver</a>
+        {% endif %}
+        <a href="{{ path('client_archive', { id: client.id }) }}" class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm">Archiver</a>
+    </div>
+</div>
+
+{% embed 'components/MfTabs.html.twig' with { tabs: [
+    { key: 'infos', label: 'Informations' },
+    { key: 'kyc', label: 'KYC' },
+    { key: 'comptes', label: 'Comptes', count: comptes|length },
+    { key: 'credits', label: 'Crédits', count: credits|length },
+    { key: 'epargne', label: 'Épargne', count: epargne|length },
+    { key: 'operations', label: 'Opérations' },
+    { key: 'documents', label: 'Documents' },
+] } %}
+    {% block tabs_content %}
+    <div data-tabs-content="infos">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2">
+                {% embed 'components/MfCard.html.twig' with { title: 'Identité' } %}
+                    {% block card_content %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% if client.type == 'PHYSIQUE' or client.type is null %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Nom', value: client.nom } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Prénom', value: client.prenom } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Date naissance', value: client.dateNaissance } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Lieu naissance', value: client.lieuNaissance } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Nationalité', value: client.nationalite } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Profession', value: client.profession } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Situation fam.', value: client.situationMatrimoniale } %}
+                        {% else %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Raison sociale', value: client.raisonSociale } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Sigle', value: client.sigle } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Registre commerce', value: client.registreCommerce } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'N° contribuable', value: client.numeroContribuable } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Forme juridique', value: client.formeJuridique } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Secteur', value: client.secteurActivite } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Capital social', value: client.capitalSocial } %}
+                        {% endif %}
+                    </div>
+                    {% endblock %}
+                {% endembed %}
+            </div>
+            <div>
+                {% embed 'components/MfCard.html.twig' with { title: 'Coordonnées' } %}
+                    {% block card_content %}
+                    <div class="space-y-3">
+                        {% include 'components/MfDetailRow.html.twig' with { label: 'Téléphone', value: client.telephone } %}
+                        {% include 'components/MfDetailRow.html.twig' with { label: 'Email', value: client.email } %}
+                        {% include 'components/MfDetailRow.html.twig' with { label: 'Adresse', value: client.adresse } %}
+                        {% include 'components/MfDetailRow.html.twig' with { label: 'Ville', value: client.ville } %}
+                        {% include 'components/MfDetailRow.html.twig' with { label: 'Pays', value: client.pays } %}
+                    </div>
+                    {% endblock %}
+                {% endembed %}
+                {% embed 'components/MfCard.html.twig' with { title: 'Statut', class: 'mt-4' } %}
+                    {% block card_content %}
+                    <div class="space-y-3">
+                        {% include 'components/MfDetailRow.html.twig' with { label: 'Compte', value: client.statut } %}
+                        {% include 'components/MfDetailRow.html.twig' with { label: 'KYC', value: client.kycStatus ?? 'NON_SOUMIS' } %}
+                        {% include 'components/MfDetailRow.html.twig' with { label: 'Date création', value: client.dateCreation ?? client.createdAt } %}
+                    </div>
+                    {% endblock %}
+                {% endembed %}
+            </div>
+        </div>
+    </div>
+
+    <div data-tabs-content="kyc">
+        {% embed 'components/MfCard.html.twig' with { title: 'KYC' } %}
+            {% block card_content %}
+            <p class="text-sm text-on-surface-variant">Gérez les informations KYC de ce client.</p>
+            <div class="mt-4">
+                <a href="{{ path('client_kyc', { id: client.id }) }}" class="mf-btn-primary">Gérer le KYC</a>
+            </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div data-tabs-content="comptes">
+        {% embed 'components/MfCard.html.twig' with { title: 'Comptes liés' } %}
+            {% block card_content %}
+                {% if comptes is not empty %}
+                    {% embed 'components/MfDataTable.html.twig' with {
+                        headers: [
+                            { key: 'numero', label: 'Numéro' },
+                            { key: 'type', label: 'Type' },
+                            { key: 'solde', label: 'Solde' },
+                            { key: 'statut', label: 'Statut' },
+                        ],
+                        rows: comptes,
+                        actions: [
+                            { label: 'Voir', url: function(row) { return path('account_detail', { num: row.numero }) }, icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
+                        ],
+                    } %}{% endembed %}
+                {% else %}
+                    {% include 'partials/_empty_state.html.twig' with { title: 'Aucun compte', message: 'Ce client n\'a pas encore de compte.' } %}
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div data-tabs-content="credits">
+        {% embed 'components/MfCard.html.twig' with { title: 'Crédits' } %}
+            {% block card_content %}
+                {% if credits is not empty %}
+                    {% embed 'components/MfDataTable.html.twig' with {
+                        headers: [
+                            { key: 'reference', label: 'Référence' },
+                            { key: 'montant', label: 'Montant' },
+                            { key: 'statut', label: 'Statut' },
+                            { key: 'dateOctroi', label: 'Date d\'octroi' },
+                        ],
+                        rows: credits,
+                        actions: [
+                            { label: 'Voir', url: function(row) { return path('credit_detail', { id: row.id }) }, icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
+                        ],
+                    } %}{% endembed %}
+                {% else %}
+                    {% include 'partials/_empty_state.html.twig' with { title: 'Aucun crédit', message: 'Ce client n\'a pas de crédit en cours.' } %}
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div data-tabs-content="epargne">
+        {% embed 'components/MfCard.html.twig' with { title: 'Épargne' } %}
+            {% block card_content %}
+                {% if epargne is not empty %}
+                    {% embed 'components/MfDataTable.html.twig' with {
+                        headers: [
+                            { key: 'produit', label: 'Produit' },
+                            { key: 'solde', label: 'Solde' },
+                            { key: 'statut', label: 'Statut' },
+                            { key: 'dateOuverture', label: 'Date ouverture' },
+                        ],
+                        rows: epargne,
+                        actions: [
+                            { label: 'Voir', url: function(row) { return path('epargne_movements', { id: row.id }) }, icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
+                        ],
+                    } %}{% endembed %}
+                {% else %}
+                    {% include 'partials/_empty_state.html.twig' with { title: 'Aucune épargne', message: 'Ce client n\'a pas de produit d\'épargne.' } %}
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div data-tabs-content="operations">
+        {% embed 'components/MfCard.html.twig' with { title: 'Opérations récentes' } %}
+            {% block card_content %}
+            <p class="text-sm text-on-surface-variant">Historique des opérations de ce client.</p>
+            <div class="mt-4">
+                <a href="{{ path('operation_history', { clientId: client.id }) }}" class="mf-btn-primary">Voir les opérations</a>
+            </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div data-tabs-content="documents">
+        {% embed 'components/MfCard.html.twig' with { title: 'Documents' } %}
+            {% block card_content %}
+            <p class="text-sm text-on-surface-variant">Gérez les documents de ce client.</p>
+            <div class="mt-4">
+                <a href="{{ path('client_documents', { id: client.id }) }}" class="mf-btn-primary">Gérer les documents</a>
+            </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+    {% endblock %}
+{% endembed %}
+{% endblock %}

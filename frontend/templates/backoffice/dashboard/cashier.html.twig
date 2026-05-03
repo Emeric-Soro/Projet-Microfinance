@@ -1,0 +1,53 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Caissier - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Tableau de bord Caissier</h1>
+    <p class="text-sm text-on-surface-variant mt-1">État des caisses et opérations du jour</p>
+</div>
+
+{% if data is defined and data is not empty %}
+    {% embed component('MfStatsGrid') with { cols: 4, stats: [
+        { label: 'Caisse ouverte', value: data.caisseOuverte|default(false) ? 'Oui' : 'Non', icon: data.caisseOuverte|default(false) ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' : 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: data.caisseOuverte|default(false) ? 'bg-green-50' : 'bg-red-50', icon_color: data.caisseOuverte|default(false) ? 'text-green-600' : 'text-red-600' },
+        { label: 'Solde caisse', value: data.soldeCaisse|default(0)|montant, icon: 'M12 4v16m8-8H4', icon_bg: 'bg-teal-50', icon_color: 'text-teal-600' },
+        { label: 'Opérations aujourd\'hui', value: data.operationsJour|default(0)|number_format(0, ',', ' '), icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+        { label: 'Total encaissé', value: data.totalEncaissement|default(0)|montant, icon: 'M12 4v16m8-8H4', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+    ]} %}
+        {% block card_content %}{{ parent() }}{% endblock %}
+    {% endembed %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {% embed component('MfCard') with { title: 'Dernières transactions' } %}
+            {% block card_content %}
+                {% set headers = [
+                    { label: 'Réf', key: 'reference' },
+                    { label: 'Client', key: 'client' },
+                    { label: 'Type', key: 'type' },
+                    { label: 'Montant', key: 'montant' },
+                    { label: 'Statut', key: 'statut' },
+                ] %}
+                {% set rows = data.dernieresTransactions|default([]) %}
+                {% include component('MfDataTable') with { headers: headers, rows: rows } %}
+            {% endblock %}
+        {% endembed %}
+
+        {% embed component('MfCard') with { title: 'Soldes par devise' } %}
+            {% block card_content %}
+                {% set items = [] %}
+                {% for devise in data.soldesDevises|default([]) %}
+                    {% set items = items|merge([{ label: devise.code, value: devise.montant|montant }]) %}
+                {% endfor %}
+                {% if items is not empty %}
+                    {% include component('MfSummaryCard') with { items: items } %}
+                {% else %}
+                    {% include 'partials/_empty_state.html.twig' with { title: 'Aucune devise', message: 'Aucune devise configurée.' } %}
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+{% else %}
+    {% include 'partials/_empty_state.html.twig' with { title: 'Chargement...', message: 'Données de la caisse en cours de chargement.' } %}
+{% endif %}
+{% endblock %}

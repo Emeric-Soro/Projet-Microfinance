@@ -1,0 +1,102 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block backoffice_content %}
+<div class="space-y-6">
+    <div>
+        <h2 class="text-xl font-heading font-semibold text-on-surface">Historique des transactions</h2>
+        <p class="text-sm text-on-surface-variant mt-1">Compte {{ compte.numero }} — {{ compte.client_nom|default('') }}</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-card border border-teal-100 p-6">
+        <form method="get" action="{{ path('account_history', { num: compte.numero }) }}" class="flex flex-col sm:flex-row items-end gap-3">
+            <div class="flex-1">
+                <label class="block text-sm font-medium text-on-surface mb-1">Date début</label>
+                <input type="date" name="date_debut" value="{{ date_debut }}" class="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary-200">
+            </div>
+            <div class="flex-1">
+                <label class="block text-sm font-medium text-on-surface mb-1">Date fin</label>
+                <input type="date" name="date_fin" value="{{ date_fin }}" class="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary-200">
+            </div>
+            <div class="flex-1">
+                <label class="block text-sm font-medium text-on-surface mb-1">Type</label>
+                <select name="type" class="w-full border border-gray-200 rounded px-3 py-2 text-sm bg-white focus:border-primary focus:ring-1 focus:ring-primary-200">
+                    <option value="">Tous</option>
+                    <option value="DEPOT" {{ filter_type == 'DEPOT' ? 'selected' : '' }}>Dépôt</option>
+                    <option value="RETRAIT" {{ filter_type == 'RETRAIT' ? 'selected' : '' }}>Retrait</option>
+                    <option value="VIREMENT" {{ filter_type == 'VIREMENT' ? 'selected' : '' }}>Virement</option>
+                    <option value="INTERET" {{ filter_type == 'INTERET' ? 'selected' : '' }}>Intérêt</option>
+                    <option value="FRAIS" {{ filter_type == 'FRAIS' ? 'selected' : '' }}>Frais</option>
+                </select>
+            </div>
+            <button type="submit" class="mf-btn-primary">Filtrer</button>
+            <a href="{{ path('account_history', { num: compte.numero }) }}" class="mf-btn-secondary">Réinitialiser</a>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-card border border-teal-100 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold text-on-surface">Transactions</h3>
+            <span class="text-sm text-on-surface-variant">{{ total_items }} opération(s)</span>
+        </div>
+
+        {% include 'partials/_table_toolbar.html.twig' with {
+            search_placeholder: 'Rechercher dans l\'historique...',
+            export_actions: true,
+        } %}
+
+        <div class="overflow-x-auto">
+            <table class="mf-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Référence</th>
+                        <th>Libellé</th>
+                        <th>Type</th>
+                        <th>Débit</th>
+                        <th>Crédit</th>
+                        <th>Solde</th>
+                        <th>Statut</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mvt in mouvements %}
+                    <tr>
+                        <td class="text-sm">{{ mvt.date|default('—')|date('d/m/Y H:i') }}</td>
+                        <td class="text-sm font-mono">{{ mvt.reference|default('—') }}</td>
+                        <td class="text-sm">{{ mvt.libelle|default('—') }}</td>
+                        <td>
+                            {% include 'components/MfStatusBadge.html.twig' with {
+                                status: mvt.type|default(''),
+                                label: mvt.type|default('—'),
+                            } %}
+                        </td>
+                        <td class="text-sm text-red-600">{{ mvt.debit|default(0) > 0 ? (mvt.debit|number_format(0, ',', ' ')) ~ ' FCFA' : '—' }}</td>
+                        <td class="text-sm text-green-600">{{ mvt.credit|default(0) > 0 ? (mvt.credit|number_format(0, ',', ' ')) ~ ' FCFA' : '—' }}</td>
+                        <td class="text-sm font-medium">{{ mvt.solde|default(0)|number_format(0, ',', ' ') }} FCFA</td>
+                        <td>
+                            {% include 'components/MfStatusBadge.html.twig' with { status: mvt.statut|default('') } %}
+                        </td>
+                        <td class="text-right">
+                            <a href="{{ path('operation_detail', { ref: mvt.reference }) }}" class="text-sm text-primary hover:text-primary-600">Détail</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center py-8">
+                            {% include 'partials/_empty_state.html.twig' with { title: 'Aucune transaction', message: 'Aucune transaction trouvée pour la période sélectionnée.' } %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% include 'partials/_pagination.html.twig' with {
+            route: 'account_history',
+            params: { num: compte.numero },
+            query: { date_debut: date_debut, date_fin: date_fin, type: filter_type },
+        } %}
+    </div>
+</div>
+{% endblock %}

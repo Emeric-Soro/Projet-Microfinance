@@ -1,0 +1,15 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block content %}
+  {% include 'partials/_breadcrumb.html.twig' with {'path': 'Accueil > Clients > Documents'} %}
+  {% include 'partials/_flash.html.twig' %}
+
+  <MfCard>
+    <h3>Documents du client</h3>
+    <MfDataTable headers="Nom,Type,Date" rows="{{ documents|length ? documents|json_encode : '[]' }}" />
+    <form method="post" action="/clients/{{ client_id ?? 0 }}/documents" enctype="multipart/form-data">
+      <MfFileUpload name="document" label="Télécharger" />
+      <MfButton label="Envoyer" type="primary" />
+    </form>
+  </MfCard>
+{% endblock %}

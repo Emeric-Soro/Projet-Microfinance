@@ -513,7 +513,7 @@ public class CreditExtensionService {
         remboursement.setInteretPaye(BigDecimal.ZERO);
         remboursement.setAssurancePayee(BigDecimal.ZERO);
         remboursement.setReferenceTransaction(referenceTransaction);
-        remboursement.setDatePaiement(dto.getDatePaiement() != null ? dto.getDatePaiement() : LocalDate.now());
+        remboursement.setDatePaiement(dto.getDatePaiement() != null ? dto.getDatePaiement().atStartOfDay() : LocalDateTime.now());
         remboursement.setStatut("COMPTABILISE");
         remboursementCreditRepository.save(remboursement);
 

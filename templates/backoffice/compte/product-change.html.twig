@@ -1,0 +1,22 @@
+{% extends 'backoffice.html.twig' %}
+{% block title %}Changer de produit - {{ num }}{% endblock %}
+{% block content %}
+  {% include 'partials/_breadcrumb.html.twig' with {'items': ['Accueil','Comptes','Changement de produit'] } %}
+  {% include 'partials/_flash.html.twig' %}
+  <div class="MfCard">
+    <div class="MfFormCard">
+      <h3>Changer de produit</h3>
+      <form method="post">
+        <div class="field">
+          <label>Produit</label>
+          <select name="product_id" class="mf-select">
+            {% for p in products %}
+              <option value="{{ p.id }}">{{ p.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button class="MfButton" type="submit">Changer</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

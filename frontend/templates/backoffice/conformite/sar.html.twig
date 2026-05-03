@@ -1,0 +1,59 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Déclarations SAR - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Nouvelle déclaration SAR' } %}
+        {% block card_content %}
+            <form method="post" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Client concerné</label>
+                        <input type="text" name="sar[client]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required placeholder="Nom ou identifiant client">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Type d'opération</label>
+                        <select name="sar[type_operation]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                            <option value="depot">Dépôt suspect</option>
+                            <option value="retrait">Retrait suspect</option>
+                            <option value="transfert">Transfert suspect</option>
+                            <option value="change">Opération de change suspecte</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Montant concerné</label>
+                    <input type="text" name="sar[montant]" placeholder="0 CFA" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Motif de la déclaration</label>
+                    <textarea name="sar[motif]" rows="4" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required placeholder="Décrire les éléments suspects..."></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="mf-btn-primary">Soumettre la déclaration SAR</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Déclarations soumises' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'date', label: 'Date' },
+                    { key: 'client', label: 'Client' },
+                    { key: 'type_operation', label: 'Type opération' },
+                    { key: 'montant', label: 'Montant' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: declarations.liste|default([]),
+                actions: [{ label: 'Rapports', url: row => path('conformite_sar_reports'), icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' }],
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

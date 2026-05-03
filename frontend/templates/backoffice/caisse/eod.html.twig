@@ -1,0 +1,54 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Clôture de journée - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Clôture de journée (EOD)</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Exécuter la clôture de fin de journée</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1">
+        {% embed component('MfFormCard') with { title: 'Exécution', description: 'Lancer la clôture de journée' } %}
+            {% block form_fields %}
+                <div class="space-y-4">
+                    {% include component('MfDatePicker') with { name: 'date', label: 'Date de clôture', required: true, value: 'now'|date('Y-m-d') } %}
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="force" name="force" class="rounded border-gray-300">
+                        <label for="force" class="text-sm text-on-surface">Forcer (ignorer les vérifications)</label>
+                    </div>
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-2">
+        {% if result is defined and result is not empty %}
+            {% embed component('MfCard') with { title: 'Résultat de la clôture' } %}
+                {% block card_content %}
+                    {% embed component('MfAlertBanner') with { type: result.success|default(false) ? 'success' : 'error', message: result.message|default('') } %}
+                        {% block card_content %}
+                            {{ parent() }}
+                        {% endblock %}
+                    {% endembed %}
+                    {% if result.details is defined and result.details is not empty %}
+                        <dl class="divide-y divide-gray-100 mt-4">
+                            {% for key, value in result.details %}
+                                {% include component('MfDetailRow') with { label: key|replace({'_': ' '})|title, value: value } %}
+                            {% endfor %}
+                        </dl>
+                    {% endif %}
+                {% endblock %}
+            {% endembed %}
+        {% else %}
+            {% include 'partials/_empty_state.html.twig' with {
+                title: 'Prêt pour la clôture',
+                message: 'Sélectionnez une date et lancez l\'exécution de la clôture de journée.',
+                action_url: path('caisse_eod_monitor'),
+                action_label: 'Voir le statut',
+            } %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

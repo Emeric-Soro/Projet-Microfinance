@@ -1,0 +1,29 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block content %}
+  {% include 'partials/_breadcrumb.html.twig' with {'path': 'Accueil > Clients > Créer (Physique)'} %}
+  {% include 'partials/_flash.html.twig' %}
+
+  <MfCard>
+    <MfFormCard>
+      <h3>Créer un client physique</h3>
+      <form method="post" action="/clients/create/physical">
+        <div class="grid">
+          <MfSelect name="civilite" label="Civilité" />
+          <MfInput name="nom" label="Nom" />
+          <MfInput name="prenom" label="Prénom" />
+          <MfDatePicker name="dateNaissance" label="Date de naissance" />
+          <MfInput name="lieuNaissance" label="Lieu de naissance" />
+          <MfInput name="nationalite" label="Nationalité" />
+          <MfInput name="telephone" label="Téléphone" />
+          <MfInput name="email" label="Email" />
+          <MfInput name="adresse" label="Adresse" />
+          <MfSelect name="pieceIdentite.type" label="Type de pièce d'identité" />
+          <MfInput name="pieceIdentite.numero" label="Numéro" />
+          <MfDatePicker name="pieceIdentite.date" label="Date d'expiration" />
+        </div>
+        <MfButton label="Enregistrer" type="primary" submitKey="Enter" />
+      </form>
+    </MfFormCard>
+  </MfCard>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Incidents Opérationnels - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Nouvel Incident' } %}
+        {% block card_content %}
+            <form method="post" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Type d'Incident</label>
+                        <select name="incident[type]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                            <option value="frais_operationnel">Frais Opérationnel</option>
+                            <option value="erreur_saisie">Erreur de Saisie</option>
+                            <option value="fraude">Fraude</option>
+                            <option value="technique">Incident Technique</option>
+                            <option value="securite">Incident de Sécurité</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Date</label>
+                        <input type="date" name="incident[date]" value="{{ 'now'|date('Y-m-d') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Description</label>
+                    <textarea name="incident[description]" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Impact Estimé</label>
+                    <input type="text" name="incident[impact]" placeholder="0 CFA" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="reset" class="mf-btn-secondary">Réinitialiser</button>
+                    <button type="submit" class="mf-btn-primary">Enregistrer l'Incident</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Liste des Incidents' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'date', label: 'Date' },
+                    { key: 'type', label: 'Type' },
+                    { key: 'description', label: 'Description' },
+                    { key: 'impact', label: 'Impact' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: incidents|default([]),
+                actions: [{ label: 'Détails', url: row => '#', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' }],
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

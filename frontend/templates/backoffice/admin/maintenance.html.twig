@@ -1,0 +1,47 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Maintenance - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Administration', url: path('admin_maintenance') }, { label: 'Maintenance' }] %}
+
+{% if mode == 'index' %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Mode maintenance</h1>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Statut' } %}
+        {% block card_content %}
+        <div class="space-y-3">
+            <div><strong>État:</strong> {% include 'components/MfStatusBadge.html.twig' with { status: status.actif is defined and status.actif ? 'ACTIF' : 'INACTIF' } %}</div>
+            <div><strong>Message:</strong> {{ status.message ?? '—' }}</div>
+        </div>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Actions' } %}
+        {% block card_content %}
+        <div class="space-y-3">
+            {% if status.actif is defined and status.actif %}
+            <a href="{{ path('admin_maintenance_disable') }}" class="block w-full text-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">Désactiver le mode maintenance</a>
+            {% else %}
+            <a href="{{ path('admin_maintenance_enable') }}" class="block w-full text-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Activer le mode maintenance</a>
+            {% endif %}
+        </div>
+        {% endblock %}
+    {% endembed %}
+</div>
+
+{% embed 'components/MfFormCard.html.twig' with { title: 'Message de maintenance' } %}
+    {% block form_fields %}
+    <form method="post" action="{{ path('admin_maintenance_message') }}">
+        {% include 'components/MfInput.html.twig' with { name: 'message', label: 'Message', value: status.message ?? '' } %}
+        <div class="mt-6">
+            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Mettre à jour</button>
+        </div>
+    </form>
+    {% endblock %}
+{% endembed %}
+{% endif %}
+{% endblock %}

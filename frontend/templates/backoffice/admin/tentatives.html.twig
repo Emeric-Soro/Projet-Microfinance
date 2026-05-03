@@ -1,0 +1,26 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Tentatives de connexion - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Administration', url: path('admin_tentatives_connexion') }, { label: 'Tentatives de connexion' }] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Tentatives de connexion</h1>
+</div>
+{% embed 'components/MfCard.html.twig' with { title: 'Historique' } %}
+    {% block card_content %}
+        {% embed 'components/MfDataTable.html.twig' with {
+            headers: [
+                { key: 'username', label: 'Identifiant' },
+                { key: 'ip', label: 'IP' },
+                { key: 'date', label: 'Date' },
+                { key: 'succes', label: 'Succès' },
+            ],
+            rows: items,
+            actions: false,
+        } %}{% endembed %}
+    {% endblock %}
+{% endembed %}
+{% include 'partials/_pagination.html.twig' with { current_page: page, total_pages: pages, total_items: total, route: 'admin_tentatives_connexion', query: {} } %}
+{% endblock %}

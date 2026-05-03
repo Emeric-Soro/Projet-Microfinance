@@ -1,0 +1,40 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Reporting Réglementaire - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Indicateurs Réglementaires' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'indicateur', label: 'Indicateur' },
+                    { key: 'valeur', label: 'Valeur' },
+                    { key: 'seuil', label: 'Seuil' },
+                    { key: 'conformite', label: 'Conformité' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: data.indicateurs|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'États Réglementaires' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'etat', label: 'État' },
+                    { key: 'periode', label: 'Période' },
+                    { key: 'date_soumission', label: 'Date Soumission' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: data.etats|default([]),
+                actions: [{ label: 'Voir', url: row => '#', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' }],
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

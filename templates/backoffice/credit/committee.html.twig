@@ -1,0 +1,22 @@
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Comité'] } %}
+{% include 'partials/_flash.html.twig' %}
+
+<h1>Assemblée du comité</h1>
+
+<section class="MfTable">
+    <h2>Membres</h2>
+    {% if members is defined and members|length > 0 %}
+        <ul>
+        {% for m in members %}
+            <li>{{ m.name ?? 'Membre' }} - {{ m.role ?? '' }}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>Aucun membre renseigné.</p>
+    {% endif %}
+    </section>
+
+<section class="MfTable">
+    <h2>Compte-rendu</h2>
+    <p>Réunions et votes enregistrés.</p>
+    </section>

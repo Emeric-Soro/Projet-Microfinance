@@ -1,0 +1,93 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Exercices comptables - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Exercices comptables</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Gestion des exercices fiscaux</p>
+    </div>
+    <a href="#" class="mf-btn-primary" data-controller="modal" data-action="click->modal#open" data-modal-target="exercice-modal">
+        <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Nouvel exercice
+    </a>
+</div>
+
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+<div class="mf-card overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="mf-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Libellé</th>
+                    <th>Date début</th>
+                    <th>Date fin</th>
+                    <th class="text-center">Statut</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for exercice in exercices %}
+                <tr>
+                    <td class="font-mono font-medium">{{ exercice.code }}</td>
+                    <td>{{ exercice.libelle }}</td>
+                    <td>{{ exercice.date_debut|date('d/m/Y') }}</td>
+                    <td>{{ exercice.date_fin|date('d/m/Y') }}</td>
+                    <td class="text-center">{% include 'partials/_status_badge.html.twig' with {status: exercice.statut} %}</td>
+                    <td class="text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            {% if exercice.statut == 'OUVERT' %}
+                                <a href="{{ path('comptabilite_closing') }}?exercice_id={{ exercice.id }}" class="mf-btn-icon text-primary" title="Clôturer">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                </a>
+                            {% endif %}
+                            <a href="{{ path('comptabilite_pnl') }}?exercice_id={{ exercice.id }}" class="mf-btn-icon text-on-surface-variant" title="Résultat">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-8 text-on-surface-variant">Aucun exercice trouvé</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'partials/_pagination.html.twig' with {route: 'comptabilite_fiscal_years'} %}
+</div>
+
+{% include 'partials/_modal.html.twig' with {
+    id: 'exercice-modal',
+    title: 'Nouvel exercice',
+    content: '
+    <form method="post" action="' ~ path('comptabilite_fiscal_years') ~ '" class="space-y-4">
+        <div>
+            <label class="mf-label">Code</label>
+            <input type="text" name="code" class="mf-input" placeholder="EX2025" required>
+        </div>
+        <div>
+            <label class="mf-label">Libellé</label>
+            <input type="text" name="libelle" class="mf-input" placeholder="Exercice 2025" required>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="mf-label">Date début</label>
+                <input type="date" name="date_debut" class="mf-input" required>
+            </div>
+            <div>
+                <label class="mf-label">Date fin</label>
+                <input type="date" name="date_fin" class="mf-input" required>
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 pt-4">
+            <button type="button" class="mf-btn-secondary" data-action="click->confirm-modal#close">Annuler</button>
+            <button type="submit" class="mf-btn-primary">Créer</button>
+        </div>
+    </form>
+'} %}
+{% endblock %}

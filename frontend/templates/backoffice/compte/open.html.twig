@@ -1,0 +1,134 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block backoffice_content %}
+<div class="max-w-3xl mx-auto">
+    <div class="mb-8">
+        <h2 class="text-xl font-heading font-semibold text-on-surface">Ouverture de compte</h2>
+        <p class="text-sm text-on-surface-variant mt-1">Suivez les étapes pour ouvrir un nouveau compte</p>
+    </div>
+
+    <div class="flex items-center gap-2 mb-8">
+        {% set steps = [
+            { num: 1, label: 'Client' },
+            { num: 2, label: 'Produit' },
+            { num: 3, label: 'Dépôt initial' },
+            { num: 4, label: 'Confirmation' },
+        ] %}
+        {% for step in steps %}
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium {{ data.step >= step.num ? 'bg-primary text-white' : 'bg-gray-100 text-on-surface-variant' }}">
+                    {{ step.num }}
+                </div>
+                <span class="text-sm {{ data.step >= step.num ? 'font-semibold text-primary' : 'text-on-surface-variant' }}">{{ step.label }}</span>
+            </div>
+            {% if not loop.last %}
+                <div class="flex-1 h-px {{ data.step > step.num ? 'bg-primary' : 'bg-gray-200' }}"></div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <div class="bg-white rounded-lg shadow-card border border-teal-100 p-6">
+        {% if data.step == 1 %}
+            <h3 class="text-lg font-heading font-semibold text-on-surface mb-4">Recherche du client</h3>
+            <form method="post" action="{{ path('account_open', { step: 1 }) }}">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Client</label>
+                        <select name="client_id" class="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary-200" required>
+                            <option value="">Sélectionner un client</option>
+                        </select>
+                        <p class="text-xs text-on-surface-variant mt-1">Saisissez le nom ou le code client pour rechercher</p>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <a href="{{ path('account_list') }}" class="mf-btn-secondary">Annuler</a>
+                        <button type="submit" class="mf-btn-primary">Suivant</button>
+                    </div>
+                </div>
+                <input type="hidden" name="step" value="1">
+            </form>
+
+        {% elseif data.step == 2 %}
+            <h3 class="text-lg font-heading font-semibold text-on-surface mb-4">Choix du produit</h3>
+            <form method="post" action="{{ path('account_open', { step: 2 }) }}">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Client sélectionné</label>
+                        <p class="text-sm bg-surface px-3 py-2 rounded border border-teal-100">{{ data.client_nom|default('Client #' ~ data.client_id) }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-2">Produit</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {% for product in data.products %}
+                            <label class="flex items-start gap-3 p-3 border border-gray-200 rounded cursor-pointer hover:border-primary transition-colors">
+                                <input type="radio" name="product_id" value="{{ product.id }}" class="mt-1" required>
+                                <div>
+                                    <p class="text-sm font-medium text-on-surface">{{ product.libelle }}</p>
+                                    <p class="text-xs text-on-surface-variant mt-0.5">{{ product.description|default('') }}</p>
+                                </div>
+                            </label>
+                            {% else %}
+                            <p class="text-sm text-on-surface-variant col-span-2">Aucun produit disponible</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <a href="{{ path('account_open', { step: 1 }) }}" class="mf-btn-secondary">Précédent</a>
+                        <button type="submit" class="mf-btn-primary">Suivant</button>
+                    </div>
+                </div>
+                <input type="hidden" name="step" value="2">
+            </form>
+
+        {% elseif data.step == 3 %}
+            <h3 class="text-lg font-heading font-semibold text-on-surface mb-4">Dépôt initial</h3>
+            <form method="post" action="{{ path('account_open', { step: 3 }) }}">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Montant du dépôt initial</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">FCFA</span>
+                            <input type="number" name="montant_initial" value="{{ data.montant_initial|default(0) }}" min="0" step="1" class="w-full pl-14 pr-3 py-2 border border-gray-200 rounded text-sm focus:border-primary focus:ring-1 focus:ring-primary-200" required>
+                        </div>
+                        <p class="text-xs text-on-surface-variant mt-1">Montant minimum requis selon le produit</p>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <a href="{{ path('account_open', { step: 2 }) }}" class="mf-btn-secondary">Précédent</a>
+                        <button type="submit" class="mf-btn-primary">Suivant</button>
+                    </div>
+                </div>
+                <input type="hidden" name="step" value="3">
+            </form>
+
+        {% elseif data.step == 4 %}
+            <h3 class="text-lg font-heading font-semibold text-on-surface mb-4">Confirmation</h3>
+            <form method="post" action="{{ path('account_open', { step: 4 }) }}">
+                <div class="space-y-4">
+                    <div class="bg-surface rounded p-4 border border-teal-100 space-y-3">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-on-surface-variant">Client</span>
+                            <span class="font-medium text-on-surface">{{ data.client_id }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-on-surface-variant">Produit</span>
+                            <span class="font-medium text-on-surface">{{ data.product_id }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-on-surface-variant">Dépôt initial</span>
+                            <span class="font-medium text-on-surface">{{ data.montant_initial|number_format(0, ',', ' ') }} FCFA</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Observation</label>
+                        <textarea name="observation" rows="3" class="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary-200" placeholder="Observation éventuelle..."></textarea>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <a href="{{ path('account_open', { step: 3 }) }}" class="mf-btn-secondary">Précédent</a>
+                        <button type="submit" class="mf-btn-primary">Confirmer l'ouverture</button>
+                    </div>
+                </div>
+                <input type="hidden" name="step" value="4">
+            </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

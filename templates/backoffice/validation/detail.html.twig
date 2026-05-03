@@ -1,0 +1,27 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block content %}
+  {% include 'backoffice/partials/_breadcrumb.html.twig' with {'path': ['Accueil','Validations/Conformité','Détails']} %}
+  <div class="MfCard">
+    <h2>Détail de la validation</h2>
+    <div class="MfAlertBanner">{% if flash|default(false) %}{{ flash }}{% endif %}</div>
+    <div class="MfSummaryCard">
+      <h3>Informations sur la validation</h3>
+      <p>Statut: {{ validation?.status ?? 'N/A' }}</p>
+      <p>Type: {{ validation?.type ?? 'N/A' }}</p>
+      <p>Montant: {{ validation?.amount ?? 'N/A' }}</p>
+    </div>
+    {% include 'backoffice/partials/_audit_timeline.html.twig' with {'timeline': auditTimeline ?? []} %}
+    <div class="MfToolbar">
+      <form method="post" action="/validations/{{ validation?.id ?? id }}/approve" style="display:inline;">
+        <button class="MfButton MfButton--primary" type="submit">Approuver</button>
+      </form>
+      <form method="post" action="/validations/{{ validation?.id ?? id }}/reject" style="display:inline;">
+        <button class="MfButton" type="submit">Rejeter</button>
+      </form>
+      <form method="post" action="/validations/{{ validation?.id ?? id }}/revision" style="display:inline;">
+        <button class="MfButton" type="submit">Révision</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

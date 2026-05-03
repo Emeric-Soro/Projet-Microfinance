@@ -1,0 +1,94 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Évaluation des risques - {{ client.nom ?? client.raisonSociale ?? 'Client' }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [
+    { label: 'Clients', url: path('client_list') },
+    { label: client.nom ?? client.raisonSociale ?? 'Client', url: path('client_detail', { id: client.id }) },
+    { label: 'Évaluation des risques' }
+] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Évaluation des risques</h1>
+    <p class="text-sm text-on-surface-variant mt-1">{{ client.nom ?? client.raisonSociale ?? 'Client' }} {{ client.prenom ?? '' }}</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+    {% set riskLevel = risk.niveau ?? risk.scoreTotal ?? 0 %}
+    {% set riskColor = riskLevel > 60 ? 'bg-red-100 text-red-800 border-red-200' : riskLevel > 30 ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 'bg-green-100 text-green-800 border-green-200' %}
+    <div class="bg-white rounded-lg shadow-card border {{ riskColor }} p-5">
+        <p class="text-sm font-medium text-on-surface-variant">Score de risque global</p>
+        <p class="text-3xl font-heading font-bold mt-1">{{ risk.scoreTotal ?? 'N/A' }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-card border border-teal-100 p-5">
+        <p class="text-sm font-medium text-on-surface-variant">Risque financier</p>
+        <p class="text-2xl font-heading font-bold mt-1">{{ risk.financier ?? 'N/A' }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-card border border-teal-100 p-5">
+        <p class="text-sm font-medium text-on-surface-variant">Risque réputationnel</p>
+        <p class="text-2xl font-heading font-bold mt-1">{{ risk.reputationnel ?? 'N/A' }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-card border border-teal-100 p-5">
+        <p class="text-sm font-medium text-on-surface-variant">Risque opérationnel</p>
+        <p class="text-2xl font-heading font-bold mt-1">{{ risk.operationnel ?? 'N/A' }}</p>
+    </div>
+</div>
+
+<form method="post" action="{{ path('client_risk', { id: client.id }) }}">
+    {% embed 'components/MfCard.html.twig' with { title: 'Facteurs de risque financier' } %}
+        {% block card_content %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfSelect.html.twig' with { name: 'risque_financier_situation', label: 'Situation financière', value: risk.financier_situation ?? '', options: [
+                { value: 'FAIBLE', label: 'Faible' },
+                { value: 'MOYEN', label: 'Moyen' },
+                { value: 'ELEVE', label: 'Élevé' },
+            ]} %}
+            {% include 'components/MfSelect.html.twig' with { name: 'risque_financier_ressources', label: 'Ressources', value: risk.financier_ressources ?? '', options: [
+                { value: 'STABLES', label: 'Stables' },
+                { value: 'IRREGULIERES', label: 'Irrégulières' },
+                { value: 'NON_JUSTIFIEES', label: 'Non justifiées' },
+            ]} %}
+        </div>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Facteurs de risque réputationnel', class: 'mt-6' } %}
+        {% block card_content %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfSelect.html.twig' with { name: 'risque_reputationnel_activite', label: 'Secteur d\'activité', value: risk.reputationnel_activite ?? '', options: [
+                { value: 'FAIBLE', label: 'Faible risque' },
+                { value: 'MOYEN', label: 'Risque moyen' },
+                { value: 'ELEVE', label: 'Risque élevé' },
+            ]} %}
+            {% include 'components/MfSelect.html.twig' with { name: 'risque_reputationnel_pep', label: 'Personne politiquement exposée', value: risk.reputationnel_pep ?? '', options: [
+                { value: 'NON', label: 'Non' },
+                { value: 'OUI', label: 'Oui' },
+            ]} %}
+        </div>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Facteurs de risque opérationnel', class: 'mt-6' } %}
+        {% block card_content %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% include 'components/MfSelect.html.twig' with { name: 'risque_operationnel_anciennete', label: 'Ancienneté relation', value: risk.operationnel_anciennete ?? '', options: [
+                { value: 'PLUS_2_ANS', label: 'Plus de 2 ans' },
+                { value: '6_MOIS_2_ANS', label: '6 mois à 2 ans' },
+                { value: 'MOINS_6_MOIS', label: 'Moins de 6 mois' },
+            ]} %}
+            {% include 'components/MfSelect.html.twig' with { name: 'risque_operationnel_incidents', label: 'Incidents passés', value: risk.operationnel_incidents ?? '', options: [
+                { value: 'AUCUN', label: 'Aucun' },
+                { value: 'MINEUR', label: 'Mineur' },
+                { value: 'MAJEUR', label: 'Majeur' },
+            ]} %}
+        </div>
+        {% endblock %}
+    {% endembed %}
+
+    <div class="flex items-center justify-end gap-3 mt-6">
+        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Enregistrer l'évaluation</button>
+        <a href="{{ path('client_detail', { id: client.id }) }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Annuler</a>
+    </div>
+</form>
+{% endblock %}

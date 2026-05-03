@@ -1,0 +1,63 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Bénéficiaires effectifs - {{ client.nom ?? client.raisonSociale ?? 'Client' }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [
+    { label: 'Clients', url: path('client_list') },
+    { label: client.nom ?? client.raisonSociale ?? 'Client', url: path('client_detail', { id: client.id }) },
+    { label: 'Bénéficiaires effectifs' }
+] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Bénéficiaires effectifs</h1>
+    <p class="text-sm text-on-surface-variant mt-1">{{ client.nom ?? client.raisonSociale ?? 'Client' }} {{ client.prenom ?? '' }}</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div>
+        {% embed 'components/MfCard.html.twig' with { title: 'Ajouter un bénéficiaire' } %}
+            {% block card_content %}
+            <form method="post" action="{{ path('client_beneficiaires', { id: client.id }) }}">
+                {% include 'components/MfInput.html.twig' with { name: 'nom', label: 'Nom', required: true } %}
+                {% include 'components/MfInput.html.twig' with { name: 'prenom', label: 'Prénom', required: true } %}
+                {% include 'components/MfDatePicker.html.twig' with { name: 'dateNaissance', label: 'Date de naissance' } %}
+                {% include 'components/MfInput.html.twig' with { name: 'nationalite', label: 'Nationalité' } %}
+                {% include 'components/MfInput.html.twig' with { name: 'pourcentage', label: 'Part (%)', type: 'number' } %}
+                {% include 'components/MfSelect.html.twig' with { name: 'typeLien', label: 'Type de lien', options: [
+                    { value: 'ACTIONNAIRE', label: 'Actionnaire' },
+                    { value: 'ASSOCIE', label: 'Associé' },
+                    { value: 'DIRIGEANT', label: 'Dirigeant' },
+                    { value: 'AUTRE', label: 'Autre' },
+                ]} %}
+                <div class="mt-4">
+                    <button type="submit" class="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Ajouter</button>
+                </div>
+            </form>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-2">
+        {% embed 'components/MfCard.html.twig' with { title: 'Liste des bénéficiaires effectifs (' ~ beneficiaires|length ~ ')' } %}
+            {% block card_content %}
+                {% if beneficiaires is not empty %}
+                    {% embed 'components/MfDataTable.html.twig' with {
+                        headers: [
+                            { key: 'nom', label: 'Nom' },
+                            { key: 'prenom', label: 'Prénom' },
+                            { key: 'dateNaissance', label: 'Date naissance' },
+                            { key: 'nationalite', label: 'Nationalité' },
+                            { key: 'pourcentage', label: 'Part (%)' },
+                            { key: 'typeLien', label: 'Type de lien' },
+                        ],
+                        rows: beneficiaires,
+                    } %}{% endembed %}
+                {% else %}
+                    {% include 'partials/_empty_state.html.twig' with { title: 'Aucun bénéficiaire', message: 'Aucun bénéficiaire effectif enregistré.' } %}
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

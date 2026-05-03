@@ -1,0 +1,51 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Virement automatique - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Virement automatique épargne</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Configurer des virements automatiques entre comptes</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        {% embed component('MfDataTable') with {
+            headers: [
+                { key: 'compteSource', label: 'Compte source', sortable: true },
+                { key: 'compteDestination', label: 'Compte destination', sortable: true },
+                { key: 'montant', label: 'Montant', sortable: true },
+                { key: 'frequence', label: 'Fréquence' },
+                { key: 'jourExecution', label: 'Jour exécution' },
+                { key: 'statut', label: 'Statut' },
+            ],
+            rows: transfers,
+            empty_title: 'Aucun virement automatique',
+            empty_message: 'Aucun virement automatique configuré.',
+        } %}
+            {% block card_content %}
+                {{ parent() }}
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-1">
+        {% embed component('MfFormCard') with { title: 'Configuration', description: 'Nouveau virement automatique' } %}
+            {% block form_fields %}
+                <div class="space-y-4">
+                    {% include component('MfSelect') with { name: 'compte_source', label: 'Compte source', required: true, options: accounts|map(a => { value: a.numero, label: a.numero }) } %}
+                    {% include component('MfSelect') with { name: 'compte_destination', label: 'Compte destination', required: true, options: accounts|map(a => { value: a.numero, label: a.numero }) } %}
+                    {% include component('MfMoneyInput') with { name: 'montant', label: 'Montant', required: true } %}
+                    {% include component('MfSelect') with { name: 'frequence', label: 'Fréquence', value: 'MENSUELLE', options: [
+                        { value: 'HEBDOMADAIRE', label: 'Hebdomadaire' },
+                        { value: 'MENSUELLE', label: 'Mensuelle' },
+                        { value: 'TRIMESTRIELLE', label: 'Trimestrielle' },
+                    ]} %}
+                    {% include component('MfInput') with { name: 'jour_execution', label: 'Jour d\'exécution', type: 'number', help: '1-31 pour mensuel, 1-7 pour hebdo' } %}
+                    {% include component('MfDatePicker') with { name: 'date_debut', label: 'Date début', value: 'now'|date('Y-m-d') } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

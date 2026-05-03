@@ -1,0 +1,92 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Reporting comptable - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Reporting comptable</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Synthèses et rapports comptables</p>
+    </div>
+</div>
+
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+<div class="mf-card p-6 mb-6">
+    <form method="get" action="" class="flex flex-wrap gap-4 items-end">
+        <div class="w-48">
+            <label class="mf-label">Type de rapport</label>
+            <select name="type" class="mf-input">
+                <option value="synthese" {{ type == 'synthese' ? 'selected' }}>Synthèse</option>
+                <option value="detail" {{ type == 'detail' ? 'selected' }}>Détaillé</option>
+                <option value="comparatif" {{ type == 'comparatif' ? 'selected' }}>Comparatif</option>
+                <option value="trend" {{ type == 'trend' ? 'selected' }}>Tendance</option>
+            </select>
+        </div>
+        <div>
+            <label class="mf-label">Date début</label>
+            <input type="date" name="date_debut" value="{{ date_debut }}" class="mf-input">
+        </div>
+        <div>
+            <label class="mf-label">Date fin</label>
+            <input type="date" name="date_fin" value="{{ date_fin }}" class="mf-input">
+        </div>
+        <button type="submit" class="mf-btn-primary">Générer</button>
+        <a href="#" class="mf-btn-secondary" onclick="window.print()">
+            <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Imprimer
+        </a>
+    </form>
+</div>
+
+{% if report is not empty %}
+<div class="space-y-6">
+    {% if report.sections is defined %}
+        {% for section in report.sections %}
+        <div class="mf-card p-6">
+            <h3 class="font-heading font-semibold text-lg text-on-surface mb-4">{{ section.titre }}</h3>
+            <div class="overflow-x-auto">
+                <table class="mf-table">
+                    <thead>
+                        <tr>
+                            {% for header in section.headers|default([]) %}
+                                <th class="{{ header.align|default('text-left') }}">{{ header.label }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in section.rows|default([]) %}
+                        <tr>
+                            {% for cell in row %}
+                                <td class="{{ loop.first ? 'font-medium' : '' }} {{ cell.align|default('') }}">{{ cell.value }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="10" class="text-center py-4 text-on-surface-variant">Aucune donnée</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="mf-card p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {% for key, value in report %}
+                    {% if key not in ['sections'] and value is numeric %}
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <p class="text-sm text-on-surface-variant">{{ key|replace({'_': ' '})|title }}</p>
+                        <p class="text-xl font-heading font-bold text-on-surface">{{ value|number_format(0, ',', ' ') }}</p>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% else %}
+<div class="mf-card p-8 text-center text-on-surface-variant">
+    <p>Sélectionnez un type de rapport et une période pour générer le reporting.</p>
+</div>
+{% endif %}
+{% endblock %}

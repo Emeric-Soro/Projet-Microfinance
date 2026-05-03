@@ -1,0 +1,24 @@
+<div id="{{ id|default('modal') }}" 
+     class="fixed inset-0 z-50 hidden" 
+     data-controller="confirm-modal"
+     role="dialog" 
+     aria-modal="true">
+    <div class="absolute inset-0 bg-black bg-opacity-30" data-action="click->confirm-modal#close"></div>
+    <div class="relative min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-modal w-full {{ size|default('max-w-lg') }} p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-heading font-semibold text-on-surface">{{ title|default('Confirmation') }}</h3>
+                <button type="button" class="text-on-surface-variant hover:text-on-surface" data-action="confirm-modal#close">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="mb-6">
+                {{ content|default('')|raw }}
+            </div>
+            <div class="flex justify-end gap-3">
+                <button type="button" class="mf-btn-secondary" data-action="confirm-modal#close">{{ cancel_label|default('Annuler') }}</button>
+                <button type="button" class="mf-btn-primary" data-action="confirm-modal#confirm">{{ confirm_label|default('Confirmer') }}</button>
+            </div>
+        </div>
+    </div>
+</div>

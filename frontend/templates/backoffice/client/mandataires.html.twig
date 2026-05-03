@@ -1,0 +1,65 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Mandataires - {{ client.nom ?? client.raisonSociale ?? 'Client' }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [
+    { label: 'Clients', url: path('client_list') },
+    { label: client.nom ?? client.raisonSociale ?? 'Client', url: path('client_detail', { id: client.id }) },
+    { label: 'Mandataires' }
+] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Mandataires</h1>
+    <p class="text-sm text-on-surface-variant mt-1">{{ client.nom ?? client.raisonSociale ?? 'Client' }} {{ client.prenom ?? '' }}</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div>
+        {% embed 'components/MfCard.html.twig' with { title: 'Ajouter un mandataire' } %}
+            {% block card_content %}
+            <form method="post" action="{{ path('client_mandataires', { id: client.id }) }}">
+                {% include 'components/MfInput.html.twig' with { name: 'nom', label: 'Nom', required: true } %}
+                {% include 'components/MfInput.html.twig' with { name: 'prenom', label: 'Prénom', required: true } %}
+                {% include 'components/MfInput.html.twig' with { name: 'telephone', label: 'Téléphone' } %}
+                {% include 'components/MfInput.html.twig' with { name: 'email', label: 'Email' } %}
+                {% include 'components/MfSelect.html.twig' with { name: 'typeMandat', label: 'Type de mandat', options: [
+                    { value: 'PROCURATION', label: 'Procuration' },
+                    { value: 'MANDAT_GESTION', label: 'Mandat de gestion' },
+                    { value: 'REPRESENTATION', label: 'Représentation légale' },
+                    { value: 'AUTRE', label: 'Autre' },
+                ]} %}
+                {% include 'components/MfDatePicker.html.twig' with { name: 'dateDebut', label: 'Date début' } %}
+                {% include 'components/MfDatePicker.html.twig' with { name: 'dateFin', label: 'Date fin' } %}
+                <div class="mt-4">
+                    <button type="submit" class="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Ajouter</button>
+                </div>
+            </form>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-2">
+        {% embed 'components/MfCard.html.twig' with { title: 'Liste des mandataires (' ~ mandataires|length ~ ')' } %}
+            {% block card_content %}
+                {% if mandataires is not empty %}
+                    {% embed 'components/MfDataTable.html.twig' with {
+                        headers: [
+                            { key: 'nom', label: 'Nom' },
+                            { key: 'prenom', label: 'Prénom' },
+                            { key: 'telephone', label: 'Téléphone' },
+                            { key: 'email', label: 'Email' },
+                            { key: 'typeMandat', label: 'Type de mandat' },
+                            { key: 'dateDebut', label: 'Début' },
+                            { key: 'dateFin', label: 'Fin' },
+                        ],
+                        rows: mandataires,
+                    } %}{% endembed %}
+                {% else %}
+                    {% include 'partials/_empty_state.html.twig' with { title: 'Aucun mandataire', message: 'Aucun mandataire enregistré pour ce client.' } %}
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

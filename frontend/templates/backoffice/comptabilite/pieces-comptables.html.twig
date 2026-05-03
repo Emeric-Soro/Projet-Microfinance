@@ -1,0 +1,73 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Pièces comptables - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Pièces comptables</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Consultation des pièces comptables justificatives</p>
+    </div>
+</div>
+
+{% include 'partials/_breadcrumb.html.twig' with {breadcrumbs: breadcrumbs} %}
+
+<div class="mf-card p-6 mb-6">
+    <form method="get" action="" class="flex flex-wrap gap-4 items-end">
+        <div class="flex-1 min-w-[200px]">
+            <label class="mf-label">Recherche</label>
+            <input type="text" name="search" value="{{ search }}" class="mf-input" placeholder="Référence, libellé...">
+        </div>
+        <div>
+            <label class="mf-label">Date début</label>
+            <input type="date" name="date_debut" value="{{ date_debut }}" class="mf-input">
+        </div>
+        <div>
+            <label class="mf-label">Date fin</label>
+            <input type="date" name="date_fin" value="{{ date_fin }}" class="mf-input">
+        </div>
+        <button type="submit" class="mf-btn-primary">Filtrer</button>
+        <a href="{{ path('comptabilite_documents') }}" class="mf-btn-secondary">Réinitialiser</a>
+    </form>
+</div>
+
+<div class="mf-card overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="mf-table">
+            <thead>
+                <tr>
+                    <th>Référence</th>
+                    <th>Date</th>
+                    <th>Libellé</th>
+                    <th>Journal</th>
+                    <th class="text-right">Montant</th>
+                    <th class="text-center">Statut</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for piece in pieces %}
+                <tr>
+                    <td class="font-mono font-medium">{{ piece.reference }}</td>
+                    <td>{{ piece.date_piece|date('d/m/Y') }}</td>
+                    <td>{{ piece.libelle }}</td>
+                    <td class="font-mono">{{ piece.journal_code|default('-') }}</td>
+                    <td class="text-right font-mono">{{ piece.montant|default(0)|number_format(0, ',', ' ') }}</td>
+                    <td class="text-center">{% include 'partials/_status_badge.html.twig' with {status: piece.statut} %}</td>
+                    <td class="text-center">
+                        <a href="#" class="mf-btn-icon" title="Voir">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-8 text-on-surface-variant">Aucune pièce comptable trouvée</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'partials/_pagination.html.twig' with {route: 'comptabilite_documents', query: {search: search, date_debut: date_debut, date_fin: date_fin}} %}
+</div>
+{% endblock %}

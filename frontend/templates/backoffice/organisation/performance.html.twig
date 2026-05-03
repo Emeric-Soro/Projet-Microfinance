@@ -1,0 +1,60 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Performance des Agences - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    <div class="mf-card p-6">
+        <form method="get" action="" class="flex flex-wrap gap-4 items-end">
+            <div>
+                <label class="block text-sm font-medium text-on-surface mb-1">Date début</label>
+                <input type="date" name="date_debut" value="{{ app.request.query.get('date_debut', date('Y-m-01')) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-on-surface mb-1">Date fin</label>
+                <input type="date" name="date_fin" value="{{ app.request.query.get('date_fin', date('Y-m-d')) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+            </div>
+            <div class="w-48">
+                <label class="block text-sm font-medium text-on-surface mb-1">Agence</label>
+                <select name="agence_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                    <option value="">Toutes</option>
+                    {% for a in agences %}
+                        <option value="{{ a.id }}" {{ app.request.query.get('agence_id') == a.id ? 'selected' }}>{{ a.libelle }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="mf-btn-primary">Générer</button>
+        </form>
+    </div>
+
+    {% if stats is not empty %}
+        {% embed 'components/MfStatsGrid.html.twig' with { stats: [
+            { label: 'Encours total', value: (stats.encoursTotal|default(0))|number_format(0, ',', ' ') ~ ' FCFA', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+            { label: 'Dépôts total', value: (stats.depotsTotal|default(0))|number_format(0, ',', ' ') ~ ' FCFA', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+            { label: 'Nombre clients', value: stats.nbClients|default(0), icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', icon_bg: 'bg-primary-50', icon_color: 'text-primary' },
+            { label: 'Performance', value: stats.performanceMoyenne|default(0) ~ '%', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', icon_bg: 'bg-teal-50', icon_color: 'text-teal-600' },
+        ] } %}{% endembed %}
+
+        {% embed 'components/MfCard.html.twig' with { title: 'Performance par Agence' } %}
+            {% block card_content %}
+                {% embed 'components/MfDataTable.html.twig' with {
+                    headers: [
+                        { key: 'agence', label: 'Agence', sortable: true },
+                        { key: 'encours', label: 'Encours' },
+                        { key: 'depots', label: 'Dépôts' },
+                        { key: 'nbClients', label: 'Clients' },
+                        { key: 'resultat', label: 'Résultat' },
+                        { key: 'performance', label: 'Performance' },
+                    ],
+                    rows: stats.agences|default([]),
+                    actions: false,
+                } %}{% endembed %}
+            {% endblock %}
+        {% endembed %}
+    {% else %}
+        {% include 'partials/_empty_state.html.twig' with { title: 'Aucune donnée', message: 'Sélectionnez une période pour générer le rapport de performance.' } %}
+    {% endif %}
+</div>
+{% endblock %}

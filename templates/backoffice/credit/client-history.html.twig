@@ -1,0 +1,16 @@
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Historique client'] } %}
+{% include 'partials/_flash.html.twig' %}
+
+<h1>Historique Crédit Client</h1>
+
+<section class="MfTimeline">
+    {% if timeline is defined and timeline|length > 0 %}
+        <ul>
+        {% for t in timeline %}
+            <li>{{ t.date ?? '' }} - {{ t.event ?? '' }}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>Aucun historique disponible.</p>
+    {% endif %}
+    </section>

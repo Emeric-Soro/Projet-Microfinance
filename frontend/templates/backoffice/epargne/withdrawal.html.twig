@@ -1,0 +1,36 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Retrait épargne - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Retrait épargne</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Effectuer un retrait sur un compte d'épargne</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        {% embed component('MfFormCard') with { title: 'Formulaire de retrait', description: 'Saisissez les informations' } %}
+            {% block form_fields %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% include component('MfSelect') with { name: 'compte', label: 'Compte épargne', required: true, options: accounts|map(a => { value: a.id, label: a.numero ~ ' - ' ~ a.client_nom }) } %}
+                    {% include component('MfMoneyInput') with { name: 'montant', label: 'Montant à retirer', required: true } %}
+                    {% include component('MfInput') with { name: 'motif', label: 'Motif du retrait', required: true } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-1">
+        {% embed component('MfCard') with { title: 'Règles' } %}
+            {% block card_content %}
+                <div class="text-sm text-on-surface-variant space-y-3">
+                    <p>Vérifiez le solde disponible avant le retrait.</p>
+                    <p>Des pénalités peuvent s'appliquer pour les DAT.</p>
+                    {% include component('MfAlertBanner') with { type: 'info', message: 'Retraits soumis aux conditions du produit.' } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

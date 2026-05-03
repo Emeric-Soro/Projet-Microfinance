@@ -1,0 +1,61 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Contributions tontine - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">{{ tontine.nom }}</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Gestion des contributions de la tontine</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1">
+        {% embed component('MfCard') with { title: 'Informations' } %}
+            {% block card_content %}
+                {% embed component('MfSummaryCard') with { items: [
+                    { label: 'Participants', value: tontine.nombreParticipants },
+                    { label: 'Montant cycle', value: tontine.montantCycle|montant },
+                    { label: 'Fréquence', value: tontine.frequence },
+                    { label: 'Statut', value: '' },
+                ]} %}
+                    {% block card_content %}
+                        {{ parent() }}
+                    {% endblock %}
+                {% endembed %}
+                <div class="mt-2">
+                    {% include component('MfStatusBadge') with { status: tontine.statut } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+
+        {% embed component('MfFormCard') with { title: 'Nouvelle contribution', description: 'Enregistrer une contribution', class: 'mt-6' } %}
+            {% block form_fields %}
+                <div class="space-y-4">
+                    {% include component('MfInput') with { name: 'membre', label: 'Membre', required: true } %}
+                    {% include component('MfMoneyInput') with { name: 'montant', label: 'Montant', required: true } %}
+                    {% include component('MfDatePicker') with { name: 'date', label: 'Date', required: true, value: 'now'|date('Y-m-d') } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-2">
+        {% embed component('MfDataTable') with {
+            headers: [
+                { key: 'date', label: 'Date', sortable: true },
+                { key: 'membre', label: 'Membre', sortable: true },
+                { key: 'montant', label: 'Montant', sortable: true },
+                { key: 'cycle', label: 'Cycle' },
+                { key: 'statut', label: 'Statut' },
+            ],
+            rows: contributions,
+            empty_title: 'Aucune contribution',
+            empty_message: 'Aucune contribution enregistrée pour cette tontine.',
+        } %}
+            {% block card_content %}
+                {{ parent() }}
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

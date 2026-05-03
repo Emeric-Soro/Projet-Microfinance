@@ -1,0 +1,89 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block backoffice_content %}
+<div class="max-w-2xl mx-auto">
+    <div>
+        <h2 class="text-xl font-heading font-semibold text-on-surface">Paramètres du compte</h2>
+        <p class="text-sm text-on-surface-variant mt-1">Compte {{ compte.numero }} — {{ compte.client_nom|default('') }}</p>
+    </div>
+
+    <div class="mt-6 space-y-6">
+        <div class="bg-white rounded-lg shadow-card border border-teal-100 p-6">
+            <h3 class="text-sm font-semibold text-on-surface mb-4">Alertes et notifications</h3>
+            <form method="post" action="{{ path('account_settings', { num: compte.numero }) }}">
+                <div class="space-y-4">
+                    <label class="flex items-center gap-3 p-3 border border-gray-200 rounded cursor-pointer hover:border-primary transition-colors">
+                        <input type="checkbox" name="alerte_solde_bas" value="1" {{ settings.alerte_solde_bas is defined and settings.alerte_solde_bas ? 'checked' : '' }} class="rounded border-gray-300">
+                        <div>
+                            <p class="text-sm font-medium text-on-surface">Alerte solde bas</p>
+                            <p class="text-xs text-on-surface-variant">Recevoir une notification lorsque le solde tombe sous un seuil défini</p>
+                        </div>
+                    </label>
+                    <div class="ml-8">
+                        <label class="block text-sm font-medium text-on-surface mb-1">Seuil d'alerte (FCFA)</label>
+                        <input type="number" name="seuil_solde_bas" value="{{ settings.seuil_solde_bas|default(10000) }}" min="0" step="1000" class="w-full max-w-xs border border-gray-200 rounded px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary-200">
+                    </div>
+
+                    <label class="flex items-center gap-3 p-3 border border-gray-200 rounded cursor-pointer hover:border-primary transition-colors">
+                        <input type="checkbox" name="alerte_grosse_operation" value="1" {{ settings.alerte_grosse_operation is defined and settings.alerte_grosse_operation ? 'checked' : '' }} class="rounded border-gray-300">
+                        <div>
+                            <p class="text-sm font-medium text-on-surface">Alerte grosse opération</p>
+                            <p class="text-xs text-on-surface-variant">Recevoir une notification pour toute opération dépassant un montant défini</p>
+                        </div>
+                    </label>
+                    <div class="ml-8">
+                        <label class="block text-sm font-medium text-on-surface mb-1">Seuil d'opération (FCFA)</label>
+                        <input type="number" name="seuil_grosse_operation" value="{{ settings.seuil_grosse_operation|default(500000) }}" min="0" step="10000" class="w-full max-w-xs border border-gray-200 rounded px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary-200">
+                    </div>
+
+                    <label class="flex items-center gap-3 p-3 border border-gray-200 rounded cursor-pointer hover:border-primary transition-colors">
+                        <input type="checkbox" name="alerte_email" value="1" {{ settings.alerte_email is defined and settings.alerte_email ? 'checked' : '' }} class="rounded border-gray-300">
+                        <div>
+                            <p class="text-sm font-medium text-on-surface">Notifications par email</p>
+                            <p class="text-xs text-on-surface-variant">Recevoir les alertes par email</p>
+                        </div>
+                    </label>
+
+                    <label class="flex items-center gap-3 p-3 border border-gray-200 rounded cursor-pointer hover:border-primary transition-colors">
+                        <input type="checkbox" name="alerte_sms" value="1" {{ settings.alerte_sms is defined and settings.alerte_sms ? 'checked' : '' }} class="rounded border-gray-300">
+                        <div>
+                            <p class="text-sm font-medium text-on-surface">Notifications par SMS</p>
+                            <p class="text-xs text-on-surface-variant">Recevoir les alertes par SMS</p>
+                        </div>
+                    </label>
+                </div>
+
+                <hr class="my-6 border-gray-100">
+
+                <h3 class="text-sm font-semibold text-on-surface mb-4">Ordres permanents</h3>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Compte à créditer</label>
+                            <input type="text" name="virement_permanent_compte" value="{{ settings.virement_permanent_compte|default('') }}" class="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary-200" placeholder="Numéro de compte">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Montant</label>
+                            <input type="number" name="virement_permanent_montant" value="{{ settings.virement_permanent_montant|default('') }}" min="0" step="100" class="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary-200" placeholder="Montant FCFA">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Périodicité</label>
+                            <select name="virement_permanent_periodicite" class="w-full border border-gray-200 rounded px-3 py-2 text-sm bg-white focus:border-primary focus:ring-1 focus:ring-primary-200">
+                                <option value="">Non défini</option>
+                                <option value="MENSUEL" {{ settings.virement_permanent_periodicite is defined and settings.virement_permanent_periodicite == 'MENSUEL' ? 'selected' : '' }}>Mensuel</option>
+                                <option value="TRIMESTRIEL" {{ settings.virement_permanent_periodicite is defined and settings.virement_permanent_periodicite == 'TRIMESTRIEL' ? 'selected' : '' }}>Trimestriel</option>
+                                <option value="ANNUEL" {{ settings.virement_permanent_periodicite is defined and settings.virement_permanent_periodicite == 'ANNUEL' ? 'selected' : '' }}>Annuel</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-100 mt-6">
+                    <a href="{{ path('account_detail', { num: compte.numero }) }}" class="mf-btn-secondary">Annuler</a>
+                    <button type="submit" class="mf-btn-primary">Enregistrer les paramètres</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

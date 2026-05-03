@@ -1,0 +1,62 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Clôture épargne - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Clôture de compte épargne</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Compte: {{ account.numero }}</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        {% embed component('MfCard') with { title: 'Détails du compte' } %}
+            {% block card_content %}
+                <dl class="divide-y divide-gray-100">
+                    {% include component('MfDetailRow') with { label: 'N° Compte', value: account.numero } %}
+                    {% include component('MfDetailRow') with { label: 'Client', value: account.client_nom } %}
+                    {% include component('MfDetailRow') with { label: 'Solde actuel', value: account.solde|montant } %}
+                    {% include component('MfDetailRow') with { label: 'Date ouverture', value: account.dateOuverture|date_fr } %}
+                    {% include component('MfDetailRow') with { label: 'Produit', value: account.produit } %}
+                    {% include component('MfDetailRow') with { label: 'Statut', value: '' } %}
+                </dl>
+                <div class="mt-2">
+                    {% include component('MfStatusBadge') with { status: account.statut } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+
+        {% embed component('MfFormCard') with { title: 'Motif de clôture', class: 'mt-6' } %}
+            {% block form_fields %}
+                <div class="space-y-4">
+                    {% include component('MfSelect') with { name: 'motif', label: 'Motif', required: true, options: [
+                        { value: 'INITIATIVE_CLIENT', label: 'Initiative du client' },
+                        { value: 'TRANSFERT', label: 'Transfert vers autre produit' },
+                        { value: 'NON_UTILISATION', label: 'Non utilisation' },
+                        { value: 'ANOMALIE', label: 'Anomalie' },
+                        { value: 'DECES', label: 'Décès du titulaire' },
+                        { value: 'AUTRE', label: 'Autre' },
+                    ]} %}
+                    {% include component('MfSelect') with { name: 'destination_fonds', label: 'Destination des fonds', options: [
+                        { value: 'REMISE_CLIENT', label: 'Remise au client' },
+                        { value: 'VIREMENT', label: 'Virement vers autre compte' },
+                        { value: 'CHEQUE', label: 'Chèque de banque' },
+                    ]} %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-1">
+        {% embed component('MfCard') with { title: 'Attention' } %}
+            {% block card_content %}
+                <div class="text-sm text-on-surface-variant space-y-3">
+                    {% include component('MfAlertBanner') with { type: 'warning', message: 'La clôture est irréversible.' } %}
+                    <p>Le solde sera versé selon le mode choisi.</p>
+                    <p>Vérifiez qu'aucune opération n'est en attente.</p>
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

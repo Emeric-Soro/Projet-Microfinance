@@ -168,4 +168,16 @@ public class Utilisateur extends BaseAuditEntity implements UserDetails {
 		String statut = client.getStatutClient().getLibelleStatut().trim().toUpperCase();
 		return !Set.of("BLOQUE", "SUSPENDU", "INACTIF", "FRAUDE").contains(statut);
 	}
+
+	public String getNom() {
+		if (client == null) {
+			return login;
+		}
+
+		String nom = client.getNom() == null ? "" : client.getNom().trim();
+		String prenom = client.getPrenom() == null ? "" : client.getPrenom().trim();
+		String nomComplet = (prenom + " " + nom).trim();
+
+		return nomComplet.isEmpty() ? login : nomComplet;
+	}
 }

@@ -1,0 +1,71 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Détail opération - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-heading font-bold text-on-surface">Détail opération</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Référence: {{ transaction.reference }}</p>
+    </div>
+    <div class="flex items-center gap-2">
+        <a href="{{ path('operation_receipt', { ref: transaction.reference }) }}" class="mf-btn-secondary flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Reçu
+        </a>
+        <a href="{{ path('operation_cancel', { ref: transaction.reference }) }}" class="mf-btn-secondary flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50">
+            Annuler
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        {% embed component('MfCard') with { title: 'Informations générales' } %}
+            {% block card_content %}
+                <dl class="divide-y divide-gray-100">
+                    {% include component('MfDetailRow') with { label: 'Référence', value: transaction.reference } %}
+                    {% include component('MfDetailRow') with { label: 'Type', value: transaction.type } %}
+                    {% include component('MfDetailRow') with { label: 'Montant', value: transaction.montant|montant } %}
+                    {% include component('MfDetailRow') with { label: 'Date', value: transaction.dateCreation|date_fr } %}
+                    {% include component('MfDetailRow') with { label: 'Statut', value: '' } %}
+                </dl>
+                <div class="mt-2">
+                    {% include component('MfStatusBadge') with { status: transaction.statut } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+
+        {% embed component('MfCard') with { title: 'Détails financiers', class: 'mt-6' } %}
+            {% block card_content %}
+                <dl class="divide-y divide-gray-100">
+                    {% include component('MfDetailRow') with { label: 'Compte débiteur', value: transaction.compteSource } %}
+                    {% include component('MfDetailRow') with { label: 'Compte créditeur', value: transaction.compteDestination } %}
+                    {% include component('MfDetailRow') with { label: 'Frais', value: (transaction.frais|default(0))|montant } %}
+                    {% include component('MfDetailRow') with { label: 'Devise', value: transaction.devise|default('XOF') } %}
+                </dl>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-1 space-y-6">
+        {% embed component('MfCard') with { title: 'Guichet / Agent' } %}
+            {% block card_content %}
+                <dl class="divide-y divide-gray-100">
+                    {% include component('MfDetailRow') with { label: 'Guichet', value: transaction.guichet } %}
+                    {% include component('MfDetailRow') with { label: 'Agent', value: transaction.agent } %}
+                    {% include component('MfDetailRow') with { label: 'Validation', value: transaction.validateur } %}
+                </dl>
+            {% endblock %}
+        {% endembed %}
+
+        {% if transaction.audit is defined and transaction.audit is not empty %}
+            {% embed component('MfCard') with { title: 'Audit' } %}
+                {% block card_content %}
+                    {% include component('MfTimeline') with { entries: transaction.audit } %}
+                {% endblock %}
+            {% endembed %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Documents - {{ client.nom ?? client.raisonSociale ?? 'Client' }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [
+    { label: 'Clients', url: path('client_list') },
+    { label: client.nom ?? client.raisonSociale ?? 'Client', url: path('client_detail', { id: client.id }) },
+    { label: 'Documents' }
+] %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold">Documents - {{ client.nom ?? client.raisonSociale ?? 'Client' }} {{ client.prenom ?? '' }}</h1>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div>
+        {% embed 'components/MfCard.html.twig' with { title: 'Ajouter un document' } %}
+            {% block card_content %}
+            <form method="post" action="{{ path('client_documents', { id: client.id }) }}" enctype="multipart/form-data">
+                {% include 'components/MfSelect.html.twig' with { name: 'typeDocument', label: 'Type de document', options: [
+                    { value: 'PIECE_IDENTITE', label: "Pièce d'identité" },
+                    { value: 'JUSTIFICATIF_DOMICILE', label: 'Justificatif de domicile' },
+                    { value: 'CONTRAT', label: 'Contrat' },
+                    { value: 'FACTURE', label: 'Facture' },
+                    { value: 'RELEVE_COMPTE', label: 'Relevé de compte' },
+                    { value: 'ATTESTATION', label: 'Attestation' },
+                    { value: 'AUTRE', label: 'Autre' },
+                ]} %}
+                {% include 'components/MfInput.html.twig' with { name: 'description', label: 'Description' } %}
+                {% include 'components/MfFileUpload.html.twig' with { name: 'fichier', label: 'Fichier' } %}
+                <div class="mt-4">
+                    <button type="submit" class="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">Uploader</button>
+                </div>
+            </form>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-2">
+        {% embed 'components/MfCard.html.twig' with { title: 'Documents (' ~ documents|length ~ ')' } %}
+            {% block card_content %}
+                {% if documents is not empty %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for doc in documents %}
+                        <div class="flex items-start gap-4 p-4 rounded-lg border border-gray-200 hover:border-primary-200 transition-colors">
+                            <div class="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-on-surface truncate">{{ doc.nom ?? doc.typeDocument ?? 'Document' }}</p>
+                                <p class="text-xs text-on-surface-variant">{{ doc.typeDocument ?? '—' }}</p>
+                                <p class="text-xs text-on-surface-variant">{{ doc.dateUpload ?? doc.createdAt ?? '' }}</p>
+                                {% if doc.description is defined and doc.description %}
+                                    <p class="text-xs text-on-surface-variant mt-1">{{ doc.description }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <a href="{{ doc.url ?? '#' }}" class="text-primary hover:text-primary-600" title="Télécharger">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                </a>
+                                {% include 'components/MfStatusBadge.html.twig' with { status: doc.statut ?? 'ACTIF' } %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {% include 'partials/_empty_state.html.twig' with { title: 'Aucun document', message: 'Aucun document téléchargé pour ce client.' } %}
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

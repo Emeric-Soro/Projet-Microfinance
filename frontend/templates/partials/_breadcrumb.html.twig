@@ -1,0 +1,13 @@
+<nav class="flex items-center gap-2 text-sm text-on-surface-variant mb-4" aria-label="Breadcrumb">
+    <a href="{{ path('dashboard_general') }}" class="hover:text-primary transition-colors">Accueil</a>
+    {% if breadcrumbs is defined and breadcrumbs is not empty %}
+        {% for crumb in breadcrumbs %}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            {% if crumb.url is defined and crumb.url %}
+                <a href="{{ crumb.url }}" class="hover:text-primary transition-colors">{{ crumb.label }}</a>
+            {% else %}
+                <span class="font-medium text-on-surface">{{ crumb.label }}</span>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+</nav>

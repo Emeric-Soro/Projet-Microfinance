@@ -1,0 +1,188 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Agences - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% if show_mode is defined and agence is defined %}
+        <div class="mb-6 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-heading font-bold text-on-surface">{{ agence.libelle }}</h1>
+                <p class="text-sm text-on-surface-variant mt-1">Code: {{ agence.code }}</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="{{ path('organisation_agences_edit', { id: agence.id }) }}" class="mf-btn-secondary flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    Modifier
+                </a>
+                <a href="{{ path('organisation_agences_params', { id: agence.id }) }}" class="mf-btn-secondary">Paramètres</a>
+                <a href="{{ path('organisation_agences') }}" class="mf-btn-secondary">Retour</a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2">
+                {% embed 'components/MfCard.html.twig' with { title: 'Informations générales' } %}
+                    {% block card_content %}
+                        <dl class="divide-y divide-gray-100">
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Code', value: agence.code } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Libellé', value: agence.libelle } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Région', value: agence.region } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Adresse', value: agence.adresse } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Téléphone', value: agence.telephone } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Email', value: agence.email } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Date ouverture', value: agence.dateOuverture|default('-') }}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Statut', value: '' } %}
+                        </dl>
+                        <div class="mt-2">
+                            {% include 'components/MfStatusBadge.html.twig' with { status: agence.statut } %}
+                        </div>
+                    {% endblock %}
+                {% endembed %}
+            </div>
+            <div class="lg:col-span-1 space-y-6">
+                {% embed 'components/MfCard.html.twig' with { title: 'Indicateurs' } %}
+                    {% block card_content %}
+                        <dl class="divide-y divide-gray-100">
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Guichets', value: agence.nbGuichets|default(0) } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Personnel', value: agence.nbPersonnel|default(0) } %}
+                            {% include 'components/MfDetailRow.html.twig' with { label: 'Clients', value: agence.nbClients|default(0) } %}
+                        </dl>
+                    {% endblock %}
+                {% endembed %}
+
+                {% if agence.responsable is defined %}
+                    {% embed 'components/MfCard.html.twig' with { title: 'Responsable' } %}
+                        {% block card_content %}
+                            <dl class="divide-y divide-gray-100">
+                                {% include 'components/MfDetailRow.html.twig' with { label: 'Nom', value: agence.responsable.nom|default('-') } %}
+                                {% include 'components/MfDetailRow.html.twig' with { label: 'Contact', value: agence.responsable.telephone|default('-') } %}
+                            </dl>
+                        {% endblock %}
+                    {% endembed %}
+                {% endif %}
+            </div>
+        </div>
+
+    {% elseif params_mode is defined and agence is defined %}
+        <div class="mb-6">
+            <h1 class="text-2xl font-heading font-bold text-on-surface">Paramètres - {{ agence.libelle }}</h1>
+        </div>
+        <div class="max-w-2xl">
+            {% embed 'components/MfFormCard.html.twig' with { title: 'Paramètres de l\'agence' } %}
+                {% block form_fields %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Plafond opérations (FCFA)</label>
+                            <input type="number" name="plafondOperations" value="{{ params.plafondOperations|default('') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Plafond caisse (FCFA)</label>
+                            <input type="number" name="plafondCaisse" value="{{ params.plafondCaisse|default('') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Devise</label>
+                            <select name="devise" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                                <option value="XOF" {{ params.devise|default('XOF') == 'XOF' ? 'selected' }}>XOF</option>
+                                <option value="EUR" {{ params.devise|default('') == 'EUR' ? 'selected' }}>EUR</option>
+                                <option value="USD" {{ params.devise|default('') == 'USD' ? 'selected' }}>USD</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Fuseau horaire</label>
+                            <input type="text" name="fuseauHoraire" value="{{ params.fuseauHoraire|default('UTC') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="estActive" name="estActive" class="rounded border-gray-300" {{ params.estActive|default(true) ? 'checked' }}>
+                        <label for="estActive" class="text-sm text-on-surface">Agence active</label>
+                    </div>
+                {% endblock %}
+            {% endembed %}
+        </div>
+
+    {% elseif create_mode is defined or edit_mode is defined %}
+        <div class="max-w-2xl">
+            {% embed 'components/MfFormCard.html.twig' with {
+                title: edit_mode is defined ? 'Modifier l\'agence' : 'Nouvelle agence',
+                description: edit_mode is defined ? 'Modifiez les informations de l\'agence' : 'Saisissez les informations de la nouvelle agence',
+            } %}
+                {% block form_fields %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Code</label>
+                            <input type="text" name="code" value="{{ agence.code|default('') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Libellé</label>
+                            <input type="text" name="libelle" value="{{ agence.libelle|default('') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Région</label>
+                            <select name="region_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                                <option value="">Sélectionner</option>
+                                {% for r in regions %}
+                                    <option value="{{ r.id }}" {{ agence.region_id|default('') == r.id ? 'selected' }}>{{ r.libelle }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Téléphone</label>
+                            <input type="text" name="telephone" value="{{ agence.telephone|default('') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Email</label>
+                            <input type="email" name="email" value="{{ agence.email|default('') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Date ouverture</label>
+                            <input type="date" name="dateOuverture" value="{{ agence.dateOuverture|default('now'|date('Y-m-d')) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Adresse</label>
+                        <textarea name="adresse" rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary">{{ agence.adresse|default('') }}</textarea>
+                    </div>
+                {% endblock %}
+            {% endembed %}
+        </div>
+
+    {% else %}
+        {% embed 'components/MfCard.html.twig' with { title: 'Agences' } %}
+            {% block card_content %}
+                {% include 'partials/_table_toolbar.html.twig' with {
+                    search_placeholder: 'Rechercher une agence...',
+                    filters: [
+                        { label: 'Région', options: regions|map(r => { value: r.id, label: r.libelle }) },
+                    ],
+                    action_button: { url: path('organisation_agences_create'), label: 'Nouvelle agence' }
+                } %}
+                {% embed 'components/MfDataTable.html.twig' with {
+                    headers: [
+                        { key: 'code', label: 'Code', sortable: true },
+                        { key: 'libelle', label: 'Libellé', sortable: true },
+                        { key: 'region', label: 'Région' },
+                        { key: 'telephone', label: 'Téléphone' },
+                        { key: 'statut', label: 'Statut' },
+                    ],
+                    rows: agences,
+                    actions: [
+                        { label: 'Détails', url: (row) => path('organisation_agences_show', { id: row.id }), icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
+                        { label: 'Modifier', url: (row) => path('organisation_agences_edit', { id: row.id }), icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' },
+                        { label: 'Fermer', url: (row) => path('organisation_fermeture', { id: row.id }), icon: 'M6 18L18 6M6 6l12 12' },
+                    ],
+                } %}{% endembed %}
+                {% include 'partials/_pagination.html.twig' with {
+                    route: 'organisation_agences',
+                    total_pages: total_pages,
+                    total_items: total_items,
+                    current_page: current_page,
+                    page_size: page_size
+                } %}
+            {% endblock %}
+        {% endembed %}
+    {% endif %}
+</div>
+{% endblock %}

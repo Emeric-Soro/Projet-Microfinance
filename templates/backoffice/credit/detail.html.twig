@@ -1,0 +1,13 @@
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Détails'] } %}
+{% include 'partials/_flash.html.twig' %}
+
+<h1>Détails du Crédit</h1>
+
+{% MfTabs %}
+  {% set tabs = ['Infos','Calendrier','Remboursements','Garanties','Documents'] %}
+{% endMfTabs %}
+
+<section class="MfTabsContent">
+    <div class="MfDetailRow">Informations générales</div>
+    <div class="MfDetailRow">État: {% include 'partials/_status_badge.html.twig' with {'status': status ?? 'en_attente'} %}</div>
+    </section>

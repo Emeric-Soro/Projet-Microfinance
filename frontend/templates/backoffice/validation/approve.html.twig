@@ -1,0 +1,24 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Approuver validation #{{ validation.id }} - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfCard.html.twig' with { title: 'Approuver la validation #' ~ validation.id } %}
+        {% block card_content %}
+            <form method="post" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Commentaire</label>
+                    <textarea name="commentaire" rows="4" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Commentaire optionnel..."></textarea>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <a href="{{ path('validation_detail', { id: validation.id }) }}" class="mf-btn-secondary">Annuler</a>
+                    <button type="submit" class="mf-btn-primary">Confirmer l'approbation</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

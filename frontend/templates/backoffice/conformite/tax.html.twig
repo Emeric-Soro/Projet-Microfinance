@@ -1,0 +1,62 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Conformité fiscale - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% include 'partials/_breadcrumb.html.twig' %}
+
+<div class="space-y-6">
+    {% embed 'components/MfStatsGrid.html.twig' with { stats: [
+        { label: 'Déclarations en attente', value: taxes.en_attente|default('—'), icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-yellow-50', icon_color: 'text-yellow-600' },
+        { label: 'Déclarations soumises', value: taxes.soumises|default('—'), icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+        { label: 'Montant total dû', value: taxes.montant_du|default('—'), icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+        { label: 'Pénalités', value: taxes.penalites|default('—'), icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z', icon_bg: 'bg-red-50', icon_color: 'text-red-600' },
+    ] } %}{% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Nouvelle déclaration fiscale' } %}
+        {% block card_content %}
+            <form method="post" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Type de déclaration</label>
+                        <select name="taxe[type]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                            <option value="tva">TVA</option>
+                            <option value="bic">BIC / IRPP</option>
+                            <option value="impot_societe">Impôt sur les sociétés</option>
+                            <option value="taux_IS">Taux d'IS</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-on-surface mb-1">Période</label>
+                        <input type="month" name="taxe[periode]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-on-surface mb-1">Montant déclaré</label>
+                    <input type="text" name="taxe[montant]" placeholder="0 CFA" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary" required>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="mf-btn-primary">Soumettre la déclaration</button>
+                </div>
+            </form>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'components/MfCard.html.twig' with { title: 'Historique des déclarations' } %}
+        {% block card_content %}
+            {% embed 'components/MfDataTable.html.twig' with {
+                headers: [
+                    { key: 'periode', label: 'Période' },
+                    { key: 'type', label: 'Type' },
+                    { key: 'montant', label: 'Montant' },
+                    { key: 'date_soumission', label: 'Date soumission' },
+                    { key: 'statut', label: 'Statut' },
+                ],
+                rows: taxes.historique|default([]),
+                actions: false,
+            } %}{% endembed %}
+        {% endblock %}
+    {% endembed %}
+</div>
+{% endblock %}

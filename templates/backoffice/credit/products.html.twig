@@ -1,0 +1,31 @@
+{# Liste des produits de crédit #}
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Produits']} %}
+{% include 'partials/_flash.html.twig' %}
+
+<h1>Produits de Crédit</h1>
+
+<section class="MfCard">
+    <header>Catalogue des produits</header>
+    <div class="MfDataTable" aria-label="Tableau des produits">
+        {% if data is defined and data|length > 0 %}
+            <table class="MfDataTable__Table">
+                <thead><tr><th>Nom</th><th>Taux</th><th>Durée</th><th>Catégorie</th><th>Actions</th></tr></thead>
+                <tbody>
+                {% for p in data %}
+                    <tr>
+                        <td>{{ p.name ?? 'Produit' }}</td>
+                        <td>{{ p.rate ?? 0 }}%</td>
+                        <td>{{ p.duration ?? '' }}</td>
+                        <td>{{ p.category ?? '' }}</td>
+                        <td><span class="MfStatusBadge" data-status="en_attente">Détails</span></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Aucun produit à afficher.</p>
+        {% endif %}
+    </div>
+    </section>
+
+{% include 'partials/_breadcrumb.html.twig' with {'path': ['Accueil','Crédit','Produits'] } %}

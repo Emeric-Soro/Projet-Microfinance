@@ -1,0 +1,76 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Siège - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Tableau de bord Siège</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Indicateurs multi-agences</p>
+</div>
+
+{% if data is defined and data is not empty %}
+    {% embed component('MfStatsGrid') with { cols: 4, stats: [
+        { label: 'Agences actives', value: data.agencesActives|default(0)|number_format(0, ',', ' '), icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', icon_bg: 'bg-blue-50', icon_color: 'text-blue-600' },
+        { label: 'Clients totaux', value: data.totalClients|default(0)|number_format(0, ',', ' '), icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z', icon_bg: 'bg-teal-50', icon_color: 'text-teal-600' },
+        { label: 'Encours total', value: data.encoursTotal|default(0)|montant, icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', icon_bg: 'bg-green-50', icon_color: 'text-green-600' },
+        { label: 'Épargne totale', value: data.epargneTotale|default(0)|montant, icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', icon_bg: 'bg-purple-50', icon_color: 'text-purple-600' },
+    ]} %}
+        {% block card_content %}{{ parent() }}{% endblock %}
+    {% endembed %}
+
+    <div class="mt-6">
+        {% embed component('MfCard') with { title: 'Comparatif par agence' } %}
+            {% block card_content %}
+                {% set headers = [
+                    { label: 'Agence', key: 'agence', sortable: true },
+                    { label: 'Clients', key: 'clients', sortable: true },
+                    { label: 'Encours crédit', key: 'encoursCredit' },
+                    { label: 'Épargne', key: 'epargne' },
+                    { label: 'Opérations jour', key: 'operationsJour' },
+                ] %}
+                {% set rows = data.agences|default([]) %}
+                {% include component('MfDataTable') with { headers: headers, rows: rows } %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {% embed component('MfCard') with { title: 'Indicateurs clés' } %}
+            {% block card_content %}
+                {% set items = [
+                    { label: 'Total actifs', value: data.totalActifs|default(0)|montant },
+                    { label: 'Total passifs', value: data.totalPassifs|default(0)|montant },
+                    { label: 'Produits nets', value: data.produitsNets|default(0)|montant },
+                    { label: 'Ratio de liquidité', value: (data.ratioLiquidite|default(0)) ~ '%' },
+                    { label: 'PAR > 30 jours', value: (data.par30|default(0)) ~ '%' },
+                ] %}
+                {% include component('MfSummaryCard') with { title: 'Synthèse financière', items: items } %}
+            {% endblock %}
+        {% endembed %}
+
+        {% embed component('MfCard') with { title: 'Alertes siège' } %}
+            {% block card_content %}
+                {% if data.alertes|default([]) is not empty %}
+                    <div class="space-y-3">
+                        {% for alerte in data.alertes %}
+                            <div class="flex items-start gap-3 p-3 rounded-lg {{ alerte.type == 'CRITIQUE' ? 'bg-red-50 border border-red-200' : alerte.type == 'ELEVE' ? 'bg-orange-50 border border-orange-200' : 'bg-yellow-50 border border-yellow-200' }}">
+                                <svg class="w-5 h-5 flex-shrink-0 mt-0.5 {{ alerte.type == 'CRITIQUE' ? 'text-red-500' : alerte.type == 'ELEVE' ? 'text-orange-500' : 'text-yellow-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-medium {{ alerte.type == 'CRITIQUE' ? 'text-red-800' : alerte.type == 'ELEVE' ? 'text-orange-800' : 'text-yellow-800' }}">{{ alerte.message }}</p>
+                                    <p class="text-xs {{ alerte.type == 'CRITIQUE' ? 'text-red-600' : alerte.type == 'ELEVE' ? 'text-orange-600' : 'text-yellow-600' }}">{{ alerte.agence }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {% include 'partials/_empty_state.html.twig' with { title: 'Aucune alerte', message: 'Toutes les agences sont en situation normale.' } %}
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+{% else %}
+    {% include 'partials/_empty_state.html.twig' with { title: 'Chargement...', message: 'Données du siège en cours de chargement.' } %}
+{% endif %}
+{% endblock %}

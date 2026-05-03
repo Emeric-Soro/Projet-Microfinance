@@ -1,0 +1,50 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Validation écart - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-heading font-bold text-on-surface">Traitement d'écart</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Écart {{ variance.type }} du {{ variance.date|date_fr }}</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        {% embed component('MfCard') with { title: 'Détails de l\'écart' } %}
+            {% block card_content %}
+                <dl class="divide-y divide-gray-100">
+                    {% include component('MfDetailRow') with { label: 'Date', value: variance.date|date_fr } %}
+                    {% include component('MfDetailRow') with { label: 'Guichet', value: variance.guichet } %}
+                    {% include component('MfDetailRow') with { label: 'Type', value: variance.type } %}
+                    {% include component('MfDetailRow') with { label: 'Montant attendu', value: variance.montantAttendu|montant } %}
+                    {% include component('MfDetailRow') with { label: 'Montant constaté', value: variance.montantConstate|montant } %}
+                    {% include component('MfDetailRow') with { label: 'Écart', value: (variance.montantConstate - variance.montantAttendu)|montant } %}
+                </dl>
+            {% endblock %}
+        {% endembed %}
+
+        {% embed component('MfFormCard') with { title: 'Action', class: 'mt-6' } %}
+            {% block form_fields %}
+                <div class="space-y-4">
+                    {% include component('MfSelect') with { name: 'action', label: 'Action', required: true, options: [
+                        { value: 'APPROVE', label: 'Approuver l\'écart' },
+                        { value: 'REJECT', label: 'Rejeter l\'écart' },
+                        { value: 'INVESTIGATE', label: 'Enquêter' },
+                    ]} %}
+                    {% include component('MfInput') with { name: 'commentaire', label: 'Commentaire' } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+
+    <div class="lg:col-span-1">
+        {% embed component('MfCard') with { title: 'Actions' } %}
+            {% block card_content %}
+                <div class="text-sm text-on-surface-variant space-y-3">
+                    {% include component('MfAlertBanner') with { type: variance.type == 'EXCEDENT' ? 'info' : 'error', message: variance.type == 'EXCEDENT' ? 'Excédent à justifier' : 'Déficit à régulariser' } %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+    </div>
+</div>
+{% endblock %}

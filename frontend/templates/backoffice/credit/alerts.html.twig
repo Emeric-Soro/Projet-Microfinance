@@ -1,0 +1,45 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block title %}Alertes crédit - MicroFin{% endblock %}
+
+{% block backoffice_content %}
+{% set breadcrumbs = [{ label: 'Crédit', url: path('credit_dashboard') }, { label: 'Alertes' }] %}
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-heading font-bold">Alertes crédit</h1>
+</div>
+
+<div class="space-y-3">
+    {% for alerte in alerts %}
+        <div class="rounded-lg border p-4 text-sm {{ alerte.type == 'error' ? 'bg-red-50 border-red-200 text-red-800' : alerte.type == 'warning' ? 'bg-yellow-50 border-yellow-200 text-yellow-800' : alerte.type == 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-blue-50 border-blue-200 text-blue-800' }}">
+            <div class="flex items-start gap-3">
+                <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {% if alerte.type == 'error' %}
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    {% elseif alerte.type == 'warning' %}
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    {% else %}
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    {% endif %}
+                </svg>
+                <div class="flex-1">
+                    <p class="font-medium">{{ alerte.message|default('') }}</p>
+                    {% if alerte.details is defined and alerte.details %}
+                        <p class="mt-1 text-xs opacity-80">{{ alerte.details }}</p>
+                    {% endif %}
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="text-xs opacity-60">{{ alerte.date|default('')|date('d/m/Y H:i') }}</span>
+                        {% if alerte.lien is defined and alerte.lien %}
+                            <a href="{{ alerte.lien }}" class="text-xs font-medium underline">Voir plus</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="bg-white rounded-lg border border-gray-200 p-8 text-center">
+            <p class="text-on-surface-variant">Aucune alerte pour le moment.</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

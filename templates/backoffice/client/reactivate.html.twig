@@ -1,0 +1,16 @@
+{% extends 'backoffice.html.twig' %}
+
+{% block content %}
+  {% include 'partials/_breadcrumb.html.twig' with {'path': 'Accueil > Clients > Réactiver'} %}
+  {% include 'partials/_flash.html.twig' %}
+
+  <MfCard>
+    <MfFormCard>
+      <h3>Réactiver le client</h3>
+      <form method="post" action="/clients/{{ id ?? 0 }}/reactivate">
+        <MfInput name="raison" label="Raison" />
+        <MfButton label="Soumettre" type="primary" />
+      </form>
+    </MfFormCard>
+  </MfCard>
+{% endblock %}

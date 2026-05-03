@@ -1,0 +1,186 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e6]: MF
+      - generic [ref=e7]: MicroFin
+    - navigation [ref=e8]:
+      - link "Tableau de bord" [ref=e9] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e10]
+        - text: Tableau de bord
+      - link "Clients" [ref=e12] [cursor=pointer]:
+        - /url: /clients
+        - img [ref=e13]
+        - text: Clients
+      - link "Comptes" [ref=e15] [cursor=pointer]:
+        - /url: /comptes
+        - img [ref=e16]
+        - text: Comptes
+      - link "Opérations" [ref=e18] [cursor=pointer]:
+        - /url: /operations/history
+        - img [ref=e19]
+        - text: Opérations
+      - link "Crédits" [ref=e21] [cursor=pointer]:
+        - /url: /credit/dashboard
+        - img [ref=e22]
+        - text: Crédits
+      - link "Épargne" [ref=e24] [cursor=pointer]:
+        - /url: /epargne/products
+        - img [ref=e25]
+        - text: Épargne
+      - link "Caisse" [ref=e27] [cursor=pointer]:
+        - /url: /caisse
+        - img [ref=e28]
+        - text: Caisse
+      - link "Paiements" [ref=e31] [cursor=pointer]:
+        - /url: /paiements/cheque/depot
+        - img [ref=e32]
+        - text: Paiements
+      - link "Comptabilité" [ref=e34] [cursor=pointer]:
+        - /url: /comptabilite/plan-comptable
+        - img [ref=e35]
+        - text: Comptabilité
+      - link "Conformité" [ref=e37] [cursor=pointer]:
+        - /url: /conformite
+        - img [ref=e38]
+        - text: Conformité
+      - link "Validations" [ref=e40] [cursor=pointer]:
+        - /url: /validations
+        - img [ref=e41]
+        - text: Validations
+      - link "Risques" [ref=e44] [cursor=pointer]:
+        - /url: /risques
+        - img [ref=e45]
+        - text: Risques
+      - link "Organisation" [ref=e47] [cursor=pointer]:
+        - /url: /organisation/regions
+        - img [ref=e48]
+        - text: Organisation
+      - link "Support/RH" [ref=e50] [cursor=pointer]:
+        - /url: /support/employes
+        - img [ref=e51]
+        - text: Support/RH
+      - link "Administration" [ref=e53] [cursor=pointer]:
+        - /url: /admin/utilisateurs
+        - img [ref=e54]
+        - text: Administration
+      - link "Reporting" [ref=e57] [cursor=pointer]:
+        - /url: /reporting/comptable
+        - img [ref=e58]
+        - text: Reporting
+    - generic [ref=e61]:
+      - generic [ref=e63]: d
+      - generic [ref=e64]:
+        - paragraph [ref=e65]: demo.admin
+        - paragraph
+      - button "Déconnexion" [ref=e67] [cursor=pointer]:
+        - img [ref=e68]
+  - generic [ref=e70]:
+    - banner [ref=e71]:
+      - generic [ref=e72]:
+        - generic [ref=e73]:
+          - textbox "Rechercher (Ctrl+K)" [ref=e74]
+          - img [ref=e75]
+        - link [ref=e77] [cursor=pointer]:
+          - /url: /notifications
+          - img [ref=e78]
+        - link "demo.admin d" [ref=e80] [cursor=pointer]:
+          - /url: /profile
+          - generic [ref=e81]: demo.admin
+          - generic [ref=e83]: d
+    - main [ref=e84]:
+      - generic [ref=e85]:
+        - navigation "Breadcrumb" [ref=e86]:
+          - link "Accueil" [ref=e87] [cursor=pointer]:
+            - /url: /dashboard
+          - img [ref=e88]
+          - generic [ref=e90]: Tableau de bord
+        - generic [ref=e91]:
+          - heading "Tableau de bord" [level=1] [ref=e92]
+          - paragraph [ref=e93]: Vue d'ensemble de l'activité
+        - generic [ref=e94]:
+          - generic [ref=e96]:
+            - generic [ref=e97]:
+              - paragraph [ref=e98]: Clients total
+              - paragraph [ref=e99]: "1"
+            - img [ref=e101]
+          - generic [ref=e104]:
+            - generic [ref=e105]:
+              - paragraph [ref=e106]: Comptes ouverts
+              - paragraph [ref=e107]: "0"
+            - img [ref=e109]
+          - generic [ref=e112]:
+            - generic [ref=e113]:
+              - paragraph [ref=e114]: Opérations aujourd'hui
+              - paragraph [ref=e115]: "0"
+            - img [ref=e117]
+          - generic [ref=e120]:
+            - generic [ref=e121]:
+              - paragraph [ref=e122]: Validations en attente
+              - paragraph [ref=e123]: "0"
+            - img [ref=e125]
+        - generic [ref=e127]:
+          - generic [ref=e128]:
+            - generic [ref=e129]:
+              - heading "Dernières opérations" [level=3] [ref=e130]
+              - link "Voir tout" [ref=e131] [cursor=pointer]:
+                - /url: /operations/history
+            - table [ref=e133]:
+              - rowgroup [ref=e134]:
+                - row "Réf Type Montant Statut" [ref=e135]:
+                  - columnheader "Réf" [ref=e136]:
+                    - generic [ref=e137]: Réf
+                  - columnheader "Type" [ref=e138]:
+                    - generic [ref=e139]: Type
+                  - columnheader "Montant" [ref=e140]:
+                    - generic [ref=e141]: Montant
+                  - columnheader "Statut" [ref=e142]:
+                    - generic [ref=e143]: Statut
+              - rowgroup [ref=e144]:
+                - row "Aucune donnée Aucun enregistrement trouvé" [ref=e145]:
+                  - cell "Aucune donnée Aucun enregistrement trouvé" [ref=e146]:
+                    - generic [ref=e147]:
+                      - img [ref=e148]
+                      - heading "Aucune donnée" [level=3] [ref=e150]
+                      - paragraph [ref=e151]: Aucun enregistrement trouvé
+          - generic [ref=e152]:
+            - heading "Actions rapides" [level=3] [ref=e154]
+            - generic [ref=e155]:
+              - link "Nouveau client" [ref=e156] [cursor=pointer]:
+                - /url: /clients/create
+                - img [ref=e157]
+                - text: Nouveau client
+              - link "Dépôt" [ref=e159] [cursor=pointer]:
+                - /url: /operations/depot
+                - img [ref=e160]
+                - text: Dépôt
+              - link "Retrait" [ref=e162] [cursor=pointer]:
+                - /url: /operations/retrait
+                - img [ref=e163]
+                - text: Retrait
+              - link "Demande de crédit" [ref=e164] [cursor=pointer]:
+                - /url: /credit/requests/create
+                - img [ref=e165]
+                - text: Demande de crédit
+        - generic [ref=e168]:
+          - heading "Encours par produit" [level=3] [ref=e170]
+          - table [ref=e172]:
+            - rowgroup [ref=e173]:
+              - row "Produit Nombre Encours" [ref=e174]:
+                - columnheader "Produit" [ref=e175]:
+                  - generic [ref=e176]: Produit
+                - columnheader "Nombre" [ref=e177]:
+                  - generic [ref=e178]: Nombre
+                - columnheader "Encours" [ref=e179]:
+                  - generic [ref=e180]: Encours
+            - rowgroup [ref=e181]:
+              - row "Aucune donnée Aucun enregistrement trouvé" [ref=e182]:
+                - cell "Aucune donnée Aucun enregistrement trouvé" [ref=e183]:
+                  - generic [ref=e184]:
+                    - img [ref=e185]
+                    - heading "Aucune donnée" [level=3] [ref=e187]
+                    - paragraph [ref=e188]: Aucun enregistrement trouvé
+    - contentinfo [ref=e189]:
+      - generic [ref=e190]:
+        - generic [ref=e191]: MicroFin v1.0.0
+        - generic [ref=e192]: © 2026 MicroFin. Tous droits réservés.
