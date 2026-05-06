@@ -150,6 +150,11 @@ public class Client extends BaseAuditEntity {
 	// Statut courant du client.
 	private StatutClient statutClient;
 
+	@ManyToOne
+	@JoinColumn(name = "id_agence")
+	// Agence de rattachement du client.
+	private Agence agence;
+
 	@OneToOne(mappedBy = "client")
 	// Utilisateur applicatif lie a ce client.
 	private Utilisateur utilisateur;

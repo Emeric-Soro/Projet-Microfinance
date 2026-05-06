@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.api.controller.credit;
 
+import com.microfinance.core_banking.audit.AuditLog;
 import com.microfinance.core_banking.dto.request.credit.DemandeCreditRequestDTO;
 import com.microfinance.core_banking.dto.request.credit.DecisionCreditRequestDTO;
 import com.microfinance.core_banking.dto.response.credit.DemandeCreditResponseDTO;
@@ -12,11 +13,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/credits/demandes")
-// Controller REST pour la gestion des demandes de credit.
 public class DemandeCreditController {
 
 	private final CreditService creditService;
@@ -27,8 +28,9 @@ public class DemandeCreditController {
 		this.creditMapper = creditMapper;
 	}
 
-	// Soumet une nouvelle demande de credit.
 	@PostMapping
+	@PreAuthorize("hasAnyAuthority('ADMIN','CHEF_AGENCE','GUICHETIER')")
+	@AuditLog(action = "CREDIT_DEMAND_SUBMIT", resource = "CREDIT")
 	public ResponseEntity<DemandeCreditResponseDTO> soumettreDemande(
 			@Valid @RequestBody DemandeCreditRequestDTO request) {
 
@@ -45,22 +47,23 @@ public class DemandeCreditController {
 				.body(creditMapper.toDemandeCreditResponseDTO(demande));
 	}
 
-	// Liste les demandes en attente de decision (pour l'agent de credit).
 	@GetMapping
+	@PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','CHEF_AGENCE')")
 	public ResponseEntity<Page<DemandeCreditResponseDTO>> listerDemandes(Pageable pageable) {
 		Page<DemandeCredit> demandes = creditService.listerDemandesEnAttente(pageable);
 		return ResponseEntity.ok(demandes.map(creditMapper::toDemandeCreditResponseDTO));
 	}
 
-	// Consulte le detail d'une demande.
 	@GetMapping("/{idDemande}")
+	@PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','CHEF_AGENCE','GUICHETIER')")
 	public ResponseEntity<DemandeCreditResponseDTO> consulterDemande(@PathVariable Long idDemande) {
 		DemandeCredit demande = creditService.consulterDemande(idDemande);
 		return ResponseEntity.ok(creditMapper.toDemandeCreditResponseDTO(demande));
 	}
 
-	// Approuve ou rejette une demande de credit.
 	@PutMapping("/{idDemande}/decision")
+	@PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','CHEF_AGENCE')")
+	@AuditLog(action = "CREDIT_DEMAND_DECISION", resource = "CREDIT")
 	public ResponseEntity<?> decider(@PathVariable Long idDemande,
 									  @Valid @RequestBody DecisionCreditRequestDTO request) {
 

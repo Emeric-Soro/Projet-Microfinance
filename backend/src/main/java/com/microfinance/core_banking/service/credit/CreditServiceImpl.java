@@ -228,10 +228,11 @@ public class CreditServiceImpl implements CreditService {
 		);
 
 		// Rattachement des echeances au credit
+		credit.getEcheances().clear();
 		for (Echeance echeance : echeances) {
 			echeance.setCredit(credit);
+			credit.getEcheances().add(echeance);
 		}
-		credit.setEcheances(echeances);
 
 		return creditRepository.save(credit);
 	}

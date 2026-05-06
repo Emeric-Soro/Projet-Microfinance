@@ -2,6 +2,8 @@ package com.microfinance.core_banking.api.controller.compte;
 
 import com.microfinance.core_banking.audit.AuditLog;
 import com.microfinance.core_banking.dto.request.compte.ChangementDecouvertRequestDTO;
+import com.microfinance.core_banking.dto.request.compte.ChangementStatutCompteRequestDTO;
+import com.microfinance.core_banking.dto.request.compte.ClotureCompteRequestDTO;
 import com.microfinance.core_banking.dto.request.compte.OuvertureCompteRequestDTO;
 import com.microfinance.core_banking.dto.response.compte.CompteResponseDTO;
 import com.microfinance.core_banking.entity.Compte;
@@ -117,11 +119,56 @@ public class CompteController {
     @PutMapping("/{numCompte}/cloture")
     @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
     @AuditLog(action = "ACCOUNT_CLOSE", resource = "COMPTE")
-    public ResponseEntity<CompteResponseDTO> cloturerCompte(@PathVariable String numCompte) {
-		// Marque le compte comme ferme via l'historique des statuts.
-		Compte compte = compteService.cloturerCompte(numCompte);
-		return ResponseEntity.ok(toCompteResponse(compte));
-	}
+    public ResponseEntity<CompteResponseDTO> cloturerCompte(
+            @PathVariable String numCompte,
+            @Valid @RequestBody(required = false) ClotureCompteRequestDTO requestDTO
+    ) {
+        String motif = requestDTO != null ? requestDTO.getMotif() : null;
+        Compte compte = compteService.cloturerCompte(numCompte);
+        return ResponseEntity.ok(toCompteResponse(compte));
+    }
+
+    @Operation(
+            summary = "Bloquer un compte",
+            description = "Bloque un compte actif avec un motif"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Compte bloque avec succes"),
+            @ApiResponse(responseCode = "404", description = "Compte introuvable"),
+            @ApiResponse(responseCode = "409", description = "Compte deja bloque ou cloture")
+    })
+    @PutMapping("/{numCompte}/blocage")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @AuditLog(action = "ACCOUNT_BLOCK", resource = "COMPTE")
+    public ResponseEntity<CompteResponseDTO> bloquerCompte(
+            @PathVariable String numCompte,
+            @Valid @RequestBody(required = false) ChangementStatutCompteRequestDTO requestDTO
+    ) {
+        String motif = requestDTO != null ? requestDTO.getMotif() : null;
+        Compte compte = compteService.bloquerCompte(numCompte, motif);
+        return ResponseEntity.ok(toCompteResponse(compte));
+    }
+
+    @Operation(
+            summary = "Debloquer un compte",
+            description = "Debloque un compte bloque avec un motif"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Compte debloque avec succes"),
+            @ApiResponse(responseCode = "404", description = "Compte introuvable"),
+            @ApiResponse(responseCode = "409", description = "Le compte n'est pas bloque")
+    })
+    @PutMapping("/{numCompte}/deblocage")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @AuditLog(action = "ACCOUNT_UNBLOCK", resource = "COMPTE")
+    public ResponseEntity<CompteResponseDTO> debloquerCompte(
+            @PathVariable String numCompte,
+            @Valid @RequestBody(required = false) ChangementStatutCompteRequestDTO requestDTO
+    ) {
+        String motif = requestDTO != null ? requestDTO.getMotif() : null;
+        Compte compte = compteService.debloquerCompte(numCompte, motif);
+        return ResponseEntity.ok(toCompteResponse(compte));
+    }
 
 	private CompteResponseDTO toCompteResponse(Compte compte) {
 		CompteResponseDTO responseDTO = compteMapper.toCompteResponseDTO(compte);

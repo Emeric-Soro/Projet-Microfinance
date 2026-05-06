@@ -110,6 +110,11 @@ public class Utilisateur extends BaseAuditEntity implements UserDetails {
 	// Transaction creees par l'utilisateur.
 	private List<Transaction> transactions = new ArrayList<>();
 
+	@ManyToOne
+	@JoinColumn(name = "id_agence")
+	// Agence de rattachement de l'utilisateur.
+	private Agence agence;
+
 	@Override
 	// Transforme les roles metier en autorites Spring Security.
 	public Collection<? extends GrantedAuthority> getAuthorities() {

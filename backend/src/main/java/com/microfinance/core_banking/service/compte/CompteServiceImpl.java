@@ -113,7 +113,7 @@ public class CompteServiceImpl implements CompteService {
                 .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
 
         if (compte.getSolde().compareTo(BigDecimal.ZERO) != 0) {
-            throw new IllegalStateException("Impossible de clôturer un compte avec un solde non nul");
+            throw new IllegalStateException("Impossible de cloturer un compte avec un solde non nul");
         }
 
         StatutCompte statutFerme = new StatutCompte();
@@ -124,6 +124,61 @@ public class CompteServiceImpl implements CompteService {
         compte.getStatutsCompte().add(statutFermeSauvegarde);
 
         return compte;
+    }
+
+    @Override
+    @Transactional
+    public Compte bloquerCompte(String numCompte, String motif) {
+        Compte compte = compteRepository.findByNumCompte(numCompte)
+                .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
+
+        String statutCourant = extraireStatutCourant(compte);
+        if ("FERME".equalsIgnoreCase(statutCourant)) {
+            throw new IllegalStateException("Impossible de bloquer un compte deja cloture");
+        }
+        if ("BLOQUE".equalsIgnoreCase(statutCourant)) {
+            throw new IllegalStateException("Le compte est deja bloque");
+        }
+
+        StatutCompte statutBloque = new StatutCompte();
+        statutBloque.setCompte(compte);
+        statutBloque.setLibelleStatut("BLOQUE");
+        statutBloque.setDateStatut(LocalDateTime.now());
+        StatutCompte statutBloqueSauvegarde = statutCompteRepository.save(statutBloque);
+        compte.getStatutsCompte().add(statutBloqueSauvegarde);
+
+        return compte;
+    }
+
+    @Override
+    @Transactional
+    public Compte debloquerCompte(String numCompte, String motif) {
+        Compte compte = compteRepository.findByNumCompte(numCompte)
+                .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
+
+        String statutCourant = extraireStatutCourant(compte);
+        if (!"BLOQUE".equalsIgnoreCase(statutCourant)) {
+            throw new IllegalStateException("Le compte n'est pas bloque, statut actuel: " + statutCourant);
+        }
+
+        StatutCompte statutActif = new StatutCompte();
+        statutActif.setCompte(compte);
+        statutActif.setLibelleStatut("ACTIF");
+        statutActif.setDateStatut(LocalDateTime.now());
+        StatutCompte statutActifSauvegarde = statutCompteRepository.save(statutActif);
+        compte.getStatutsCompte().add(statutActifSauvegarde);
+
+        return compte;
+    }
+
+    private String extraireStatutCourant(Compte compte) {
+        if (compte.getStatutsCompte() == null || compte.getStatutsCompte().isEmpty()) {
+            return null;
+        }
+        return compte.getStatutsCompte().stream()
+                .max(java.util.Comparator.comparing(StatutCompte::getDateStatut, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())))
+                .map(StatutCompte::getLibelleStatut)
+                .orElse(null);
     }
 
     private String genererNumeroCompteUnique(Client client) {
