@@ -1,6 +1,9 @@
 package com.microfinance.core_banking.service.operation;
 
 import com.microfinance.core_banking.config.TransactionWorkflowProperties;
+import com.microfinance.core_banking.constant.AppConstants;
+import com.microfinance.core_banking.entity.Caisse;
+import com.microfinance.core_banking.entity.CarteVisa;
 import com.microfinance.core_banking.entity.Compte;
 import com.microfinance.core_banking.entity.LigneEcriture;
 import com.microfinance.core_banking.entity.RoleUtilisateur;
@@ -10,7 +13,9 @@ import com.microfinance.core_banking.entity.Transaction;
 import com.microfinance.core_banking.entity.TypeTransaction;
 import com.microfinance.core_banking.entity.Utilisateur;
 import com.microfinance.core_banking.repository.client.UtilisateurRepository;
+import com.microfinance.core_banking.repository.compte.CarteVisaRepository;
 import com.microfinance.core_banking.repository.compte.CompteRepository;
+import com.microfinance.core_banking.repository.operation.CaisseRepository;
 import com.microfinance.core_banking.repository.operation.LigneEcritureRepository;
 import com.microfinance.core_banking.repository.operation.TransactionRepository;
 import com.microfinance.core_banking.repository.operation.TypeTransactionRepository;
@@ -24,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
@@ -31,13 +37,16 @@ import java.util.UUID;
 @Service
 public class TransactionServiceImpl implements TransactionService {
 
-    private static final Set<String> ROLES_SUPERVISION = Set.of("ADMIN", "SUPERVISEUR", "CHEF_AGENCE");
+    private static final Set<String> ROLES_SUPERVISION = Set.of(
+            AppConstants.ROLE_ADMIN, AppConstants.ROLE_SUPERVISEUR, AppConstants.ROLE_CHEF_AGENCE);
 
     private final TransactionRepository transactionRepository;
     private final LigneEcritureRepository ligneEcritureRepository;
     private final TypeTransactionRepository typeTransactionRepository;
     private final CompteRepository compteRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final CarteVisaRepository carteVisaRepository;
+    private final CaisseRepository caisseRepository;
     private final TransactionFeeCalculator transactionFeeCalculator;
     private final ApplicationEventPublisher eventPublisher;
     private final TransactionWorkflowProperties transactionWorkflowProperties;
@@ -48,6 +57,8 @@ public class TransactionServiceImpl implements TransactionService {
             TypeTransactionRepository typeTransactionRepository,
             CompteRepository compteRepository,
             UtilisateurRepository utilisateurRepository,
+            CarteVisaRepository carteVisaRepository,
+            CaisseRepository caisseRepository,
             TransactionFeeCalculator transactionFeeCalculator,
             ApplicationEventPublisher eventPublisher,
             TransactionWorkflowProperties transactionWorkflowProperties
@@ -57,6 +68,8 @@ public class TransactionServiceImpl implements TransactionService {
         this.typeTransactionRepository = typeTransactionRepository;
         this.compteRepository = compteRepository;
         this.utilisateurRepository = utilisateurRepository;
+        this.carteVisaRepository = carteVisaRepository;
+        this.caisseRepository = caisseRepository;
         this.transactionFeeCalculator = transactionFeeCalculator;
         this.eventPublisher = eventPublisher;
         this.transactionWorkflowProperties = transactionWorkflowProperties;
@@ -67,9 +80,12 @@ public class TransactionServiceImpl implements TransactionService {
     public Transaction faireDepot(String numCompte, BigDecimal montant, Long idUser) {
         validerMontantPositif(montant);
 
+        Caisse caisse = caisseRepository.findByUtilisateur_IdUserAndStatut(idUser, Caisse.StatutCaisse.OUVERTE)
+                .orElseThrow(() -> new IllegalStateException("Vous devez ouvrir une caisse avant d'effectuer un depot"));
+
         Compte compte = chargerCompte(numCompte);
         Utilisateur utilisateur = chargerUtilisateur(idUser);
-        TypeTransaction typeDepot = chargerTypeStrict("DEPOT");
+        TypeTransaction typeDepot = chargerTypeStrict(AppConstants.TX_DEPOT);
         BigDecimal frais = transactionFeeCalculator.calculerFrais(typeDepot.getCodeTypeTransaction(), montant);
         BigDecimal montantNet = montant.subtract(frais);
         if (montantNet.compareTo(BigDecimal.ZERO) <= 0) {
@@ -90,17 +106,46 @@ public class TransactionServiceImpl implements TransactionService {
             return transaction;
         }
 
-        return executerTransaction(transaction);
+        Transaction executed = executerTransaction(transaction);
+        mettreAJourCaisse(caisse, montant);
+        return executed;
     }
 
     @Override
     @Transactional
-    public Transaction faireRetrait(String numCompte, BigDecimal montant, Long idUser) {
+    public Transaction faireRetrait(String numCompte, BigDecimal montant, Long idUser, String numeroCarte) {
         validerMontantPositif(montant);
+
+        // Si le retrait est effectue via une carte VISA
+        if (numeroCarte != null && !numeroCarte.isBlank()) {
+            CarteVisa carte = carteVisaRepository.findByNumeroCarte(numeroCarte)
+                    .orElseThrow(() -> new EntityNotFoundException("Carte VISA introuvable"));
+            if (!Boolean.TRUE.equals(carte.getStatut())) {
+                throw new IllegalStateException("Cette carte VISA est inactive ou en opposition.");
+            }
+            if (carte.getDateExpiration().isBefore(LocalDate.now())) {
+                throw new IllegalStateException("Cette carte VISA est expiree.");
+            }
+            if (montant.compareTo(carte.getPlafondJournalier()) > 0) {
+                throw new IllegalStateException("Le montant demande depasse le plafond journalier de la carte ("
+                        + carte.getPlafondJournalier() + " FCFA).");
+            }
+        }
+
+        if (montant.compareTo(transactionWorkflowProperties.getMaxRetraitGuichet()) > 0) {
+            throw new IllegalStateException(
+                    "Le montant du retrait (" + montant + " FCFA) depasse le plafond maximum autorise au guichet ("
+                            + transactionWorkflowProperties.getMaxRetraitGuichet() + " FCFA). "
+                            + "Veuillez contacter un superviseur."
+            );
+        }
+
+        Caisse caisse = caisseRepository.findByUtilisateur_IdUserAndStatut(idUser, Caisse.StatutCaisse.OUVERTE)
+                .orElseThrow(() -> new IllegalStateException("Vous devez ouvrir une caisse avant d'effectuer un retrait"));
 
         Compte compte = chargerCompte(numCompte);
         Utilisateur utilisateur = chargerUtilisateur(idUser);
-        TypeTransaction typeRetrait = chargerTypeStrict("RETRAIT");
+        TypeTransaction typeRetrait = chargerTypeStrict(AppConstants.TX_RETRAIT);
         BigDecimal frais = transactionFeeCalculator.calculerFrais(typeRetrait.getCodeTypeTransaction(), montant);
 
         Transaction transaction = creerTransaction(
@@ -117,7 +162,9 @@ public class TransactionServiceImpl implements TransactionService {
             return transaction;
         }
 
-        return executerTransaction(transaction);
+        Transaction executed = executerTransaction(transaction);
+        mettreAJourCaisse(caisse, montant.negate());
+        return executed;
     }
 
     @Override
@@ -131,7 +178,7 @@ public class TransactionServiceImpl implements TransactionService {
         Compte source = chargerCompte(compteSource);
         Compte destination = chargerCompte(compteDest);
         Utilisateur utilisateur = chargerUtilisateur(idUser);
-        TypeTransaction typeVirement = chargerTypeStrict("VIREMENT");
+        TypeTransaction typeVirement = chargerTypeStrict(AppConstants.TX_VIREMENT);
         BigDecimal frais = transactionFeeCalculator.calculerFrais(typeVirement.getCodeTypeTransaction(), montant);
 
         Transaction transaction = creerTransaction(
@@ -141,6 +188,51 @@ public class TransactionServiceImpl implements TransactionService {
                 frais,
                 source,
                 destination,
+                necessiteValidationSuperviseur(montant)
+        );
+
+        if (Boolean.TRUE.equals(transaction.getValidationSuperviseurRequise())) {
+            return transaction;
+        }
+
+        return executerTransaction(transaction);
+    }
+
+    @Override
+    @Transactional
+    public Transaction fairePaiementCarte(String numeroCarte, BigDecimal montant, Long idUser) {
+        validerMontantPositif(montant);
+
+        CarteVisa carte = carteVisaRepository.findByNumeroCarte(numeroCarte)
+                .orElseThrow(() -> new EntityNotFoundException("Carte introuvable : " + numeroCarte));
+
+        if (Boolean.FALSE.equals(carte.getStatut())) {
+            throw new IllegalStateException("La carte " + numeroCarte + " est inactive");
+        }
+
+        if (carte.getDateExpiration() != null && carte.getDateExpiration().isBefore(LocalDate.now())) {
+            throw new IllegalStateException("La carte " + numeroCarte + " a expire le " + carte.getDateExpiration());
+        }
+
+        if (montant.compareTo(carte.getPlafondJournalier()) > 0) {
+            throw new IllegalStateException(
+                    "Le montant du paiement (" + montant + " FCFA) depasse le plafond journalier de la carte ("
+                            + carte.getPlafondJournalier() + " FCFA)"
+            );
+        }
+
+        Compte compte = carte.getCompte();
+        Utilisateur utilisateur = chargerUtilisateur(idUser);
+        TypeTransaction typePaiementCarte = chargerTypeStrict(AppConstants.TX_PAIEMENT_CARTE);
+        BigDecimal frais = transactionFeeCalculator.calculerFrais(typePaiementCarte.getCodeTypeTransaction(), montant);
+
+        Transaction transaction = creerTransaction(
+                utilisateur,
+                typePaiementCarte,
+                montant,
+                frais,
+                compte,
+                null,
                 necessiteValidationSuperviseur(montant)
         );
 
@@ -249,12 +341,14 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         String codeType = transaction.getTypeTransaction().getCodeTypeTransaction();
-        if ("DEPOT".equalsIgnoreCase(codeType)) {
+        if (AppConstants.TX_DEPOT.equalsIgnoreCase(codeType)) {
             executerDepot(transaction);
-        } else if ("RETRAIT".equalsIgnoreCase(codeType)) {
+        } else if (AppConstants.TX_RETRAIT.equalsIgnoreCase(codeType)) {
             executerRetrait(transaction);
-        } else if ("VIREMENT".equalsIgnoreCase(codeType)) {
+        } else if (AppConstants.TX_VIREMENT.equalsIgnoreCase(codeType)) {
             executerVirement(transaction);
+        } else if (AppConstants.TX_PAIEMENT_CARTE.equalsIgnoreCase(codeType)) {
+            executerPaiementCarte(transaction);
         } else {
             throw new IllegalStateException("Type d'operation non supporte pour execution : " + codeType);
         }
@@ -367,6 +461,24 @@ public class TransactionServiceImpl implements TransactionService {
         return montant.compareTo(transactionWorkflowProperties.getApprovalThreshold()) >= 0;
     }
 
+    private void executerPaiementCarte(Transaction transaction) {
+        Compte compte = rechargerCompteTransaction(transaction.getCompteSource());
+        BigDecimal montantTotal = transaction.getMontantGlobal().add(transaction.getFrais());
+        verifierFondsDisponibles(
+                compte,
+                montantTotal,
+                "Solde insuffisant pour le paiement par carte. Fonds disponibles : " + fondsDisponibles(compte)
+        );
+
+        compte.setSolde(compte.getSolde().subtract(montantTotal));
+        compteRepository.save(compte);
+
+        creerLigne(transaction, compte, SensEcriture.DEBIT, transaction.getMontantGlobal());
+        if (transaction.getFrais().compareTo(BigDecimal.ZERO) > 0) {
+            creerLigne(transaction, compte, SensEcriture.DEBIT, transaction.getFrais());
+        }
+    }
+
     private void creerLigne(Transaction transaction, Compte compte, SensEcriture sens, BigDecimal montant) {
         LigneEcriture ligne = new LigneEcriture();
         ligne.setTransaction(transaction);
@@ -374,5 +486,10 @@ public class TransactionServiceImpl implements TransactionService {
         ligne.setSens(sens);
         ligne.setMontant(montant);
         ligneEcritureRepository.save(ligne);
+    }
+
+    private void mettreAJourCaisse(Caisse caisse, BigDecimal variation) {
+        caisse.setSoldeCourant(caisse.getSoldeCourant().add(variation));
+        caisseRepository.save(caisse);
     }
 }

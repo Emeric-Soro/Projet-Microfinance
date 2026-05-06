@@ -1,6 +1,7 @@
 package com.microfinance.core_banking.api.controller.operation;
 
 import com.microfinance.core_banking.audit.AuditLog;
+import com.microfinance.core_banking.dto.request.operation.PaiementCarteRequestDTO;
 import com.microfinance.core_banking.dto.request.operation.TransactionSimpleRequestDTO;
 import com.microfinance.core_banking.dto.request.operation.ValidationTransactionRequestDTO;
 import com.microfinance.core_banking.dto.request.operation.VirementRequestDTO;
@@ -97,7 +98,8 @@ public class TransactionController {
         Transaction transaction = transactionService.faireRetrait(
                 requestDTO.getNumCompte(),
                 requestDTO.getMontant(),
-                utilisateurAuthentifie.getIdUser()
+                utilisateurAuthentifie.getIdUser(),
+                requestDTO.getNumeroCarte()
         );
         return construireReponseTransaction(transaction);
     }
@@ -180,6 +182,34 @@ public class TransactionController {
                 requestDTO.getMotif()
         );
         return ResponseEntity.ok(operationMapper.toRecuResponseDTO(transaction));
+    }
+
+    @Operation(
+            summary = "Paiement par carte VISA",
+            description = "Debite le compte lie a la carte; verifie le statut, la date d'expiration et le plafond journalier"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Paiement execute avec succes"),
+            @ApiResponse(responseCode = "202", description = "Paiement en attente de validation"),
+            @ApiResponse(responseCode = "400", description = "Carte invalide, expiree ou plafond depasse"),
+            @ApiResponse(responseCode = "404", description = "Carte introuvable"),
+            @ApiResponse(responseCode = "409", description = "Fonds insuffisants")
+    })
+    @PostMapping("/paiement-carte")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @AuditLog(action = "TRANSACTION_CARD_PAYMENT", resource = "TRANSACTION")
+    public ResponseEntity<RecuTransactionResponseDTO> fairePaiementCarte(
+            @Valid @RequestBody PaiementCarteRequestDTO requestDTO,
+            Authentication authentication
+    ) {
+        Utilisateur utilisateurAuthentifie = extraireUtilisateurAuthentifie(authentication);
+        verifierCorrespondanceUtilisateur(requestDTO.getIdGuichetier(), utilisateurAuthentifie.getIdUser(), "guichetier");
+        Transaction transaction = transactionService.fairePaiementCarte(
+                requestDTO.getNumeroCarte(),
+                requestDTO.getMontant(),
+                utilisateurAuthentifie.getIdUser()
+        );
+        return construireReponseTransaction(transaction);
     }
 
     @Operation(

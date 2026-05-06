@@ -4,11 +4,14 @@ import com.microfinance.core_banking.entity.Agio;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -45,4 +48,8 @@ public interface AgioRepository extends JpaRepository<Agio, Long> {
 
 	// Liste paginee des agios crees entre deux dates.
 	Page<Agio> findByCreatedAtBetween(LocalDateTime dateDebut, LocalDateTime dateFin, Pageable pageable);
+
+	// Requete optimisee : charge les IDs des comptes deja factures en UNE SEULE requete par lot.
+	@Query("SELECT a.compte.idCompte FROM Agio a WHERE a.typeAgio.idTypeAgio = :idTypeAgio AND a.dateCalcul = :dateCalcul")
+	List<Long> findCompteIdsDejaFactures(@Param("idTypeAgio") Long idTypeAgio, @Param("dateCalcul") LocalDate dateCalcul);
 }

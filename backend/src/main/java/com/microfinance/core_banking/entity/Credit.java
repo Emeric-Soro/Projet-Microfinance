@@ -95,4 +95,9 @@ public class Credit extends BaseAuditEntity {
 	@OneToMany(mappedBy = "credit", cascade = CascadeType.ALL, orphanRemoval = true)
 	// Garanties associees au credit.
 	private List<Garantie> garanties = new ArrayList<>();
+
+	@Version
+	@Column(name = "version", nullable = false)
+	// Version pour verrouillage optimiste.
+	private Integer version = 0;
 }

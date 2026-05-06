@@ -7,6 +7,7 @@ import com.microfinance.core_banking.repository.compte.CompteRepository;
 import com.microfinance.core_banking.repository.tarification.AgioRepository;
 import com.microfinance.core_banking.repository.tarification.TypeAgioRepository;
 import com.microfinance.core_banking.service.operation.TransactionService;
+import org.springframework.beans.factory.annotation.Value;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +27,9 @@ import java.util.Optional;
 public class AgioServiceImpl implements AgioService {
 
     private static final Logger log = LoggerFactory.getLogger(AgioServiceImpl.class);
+
+    @Value("${app.batch.chunk-size}")
+    private int batchChunkSize;
 
     private final AgioRepository agioRepository;
     private final TypeAgioRepository typeAgioRepository;
@@ -55,20 +59,18 @@ public class AgioServiceImpl implements AgioService {
         BigDecimal fraisTenueMensuel = tarificationParametreService.lireValeurDecimale("AGIO_FRAIS_TENUE_MENSUEL");
         List<Agio> resultats = new ArrayList<>();
 
-        // Traitement par lots (Batch) : On charge les comptes par pages de 500 pour ne pas saturer la RAM
+        // Traitement par lots (Batch) : On charge les comptes par pages pour ne pas saturer la RAM
         int page = 0;
         Page<Compte> comptesPage;
 
+        // On charge TOUS les IDs des comptes deja factures ce mois-ci en UNE SEULE requete
+        List<Long> comptesDejaFactures = agioRepository.findCompteIdsDejaFactures(typeTenueCompte.getIdTypeAgio(), dateCalcul);
+
         do {
-            comptesPage = compteRepository.findAll(PageRequest.of(page, 500));
+            comptesPage = compteRepository.findAll(PageRequest.of(page, batchChunkSize));
 
             for (Compte compte : comptesPage.getContent()) {
-                boolean existe = agioRepository.existsByCompte_IdCompteAndTypeAgio_IdTypeAgioAndDateCalcul(
-                        compte.getIdCompte(),
-                        typeTenueCompte.getIdTypeAgio(),
-                        dateCalcul
-                );
-                if (existe) {
+                if (comptesDejaFactures.contains(compte.getIdCompte())) {
                     continue;
                 }
 
@@ -129,13 +131,13 @@ public class AgioServiceImpl implements AgioService {
     @Override
     @Transactional
     public List<Agio> executerPrelevementsEnAttente(Long idUserSysteme) {
-        Page<Agio> page = agioRepository.findByEstPreleve(Boolean.FALSE, PageRequest.of(0, 1000));
+        Page<Agio> page = agioRepository.findByEstPreleve(Boolean.FALSE, PageRequest.of(0, batchChunkSize));
         List<Agio> preleves = new ArrayList<>();
 
         for (Agio agio : page.getContent()) {
             try {
                 // On tente de prélever
-                transactionService.faireRetrait(agio.getCompte().getNumCompte(), agio.getMontant(), idUserSysteme);
+                transactionService.faireRetrait(agio.getCompte().getNumCompte(), agio.getMontant(), idUserSysteme, null);
                 agio.setEstPreleve(Boolean.TRUE);
                 preleves.add(agioRepository.save(agio));
             } catch (IllegalStateException e) {

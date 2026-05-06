@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.service.operation.fees;
 
+import com.microfinance.core_banking.constant.AppConstants;
 import com.microfinance.core_banking.service.tarification.TarificationParametreService;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +19,7 @@ public class RetraitTransactionFeeStrategy implements TransactionFeeStrategy {
 
     @Override
     public String codeTypeTransaction() {
-        return "RETRAIT";
+        return AppConstants.TX_RETRAIT;
     }
 
     @Override

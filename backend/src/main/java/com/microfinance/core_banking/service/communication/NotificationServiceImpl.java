@@ -10,6 +10,7 @@ import com.microfinance.core_banking.repository.communication.NotificationReposi
 import com.microfinance.core_banking.repository.communication.StatutEnvoiRepository;
 import com.microfinance.core_banking.repository.communication.TypeCanalRepository;
 import com.microfinance.core_banking.repository.compte.CompteRepository;
+import org.springframework.beans.factory.annotation.Value;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,15 @@ public class NotificationServiceImpl implements NotificationService {
     private static final String CODE_STATUT_EN_ATTENTE = "EN_ATTENTE";
     private static final String CODE_STATUT_ENVOYE = "ENVOYE";
     private static final String CODE_STATUT_ECHEC = "ECHEC";
+
+    @Value("${app.sms.template.virement}")
+    private String templateVirement;
+
+    @Value("${app.sms.template.alerte-securite}")
+    private String templateAlerteSecurite;
+
+    @Value("${app.sms.template.otp}")
+    private String templateOtp;
 
     private final NotificationRepository notificationRepository;
     private final CompteRepository compteRepository;
@@ -57,7 +67,7 @@ public class NotificationServiceImpl implements NotificationService {
         Compte compte = compteRepository.findByNumCompte(numCompte)
                 .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
 
-        String message = "Vous avez reçu un virement de " + montant + " FCFA sur le compte " + numCompte;
+        String message = String.format(templateVirement, montant, numCompte);
         return creerNotification(compte.getClient(), message);
     }
 
@@ -67,7 +77,7 @@ public class NotificationServiceImpl implements NotificationService {
         Client client = clientRepository.findById(idClient)
                 .orElseThrow(() -> new EntityNotFoundException("Client introuvable: " + idClient));
 
-        String message = "Alerte sécurité : une connexion suspecte a été détectée sur votre espace client.";
+        String message = templateAlerteSecurite;
         return creerNotification(client, message);
     }
 
@@ -77,7 +87,7 @@ public class NotificationServiceImpl implements NotificationService {
         Client client = clientRepository.findById(idClient)
                 .orElseThrow(() -> new EntityNotFoundException("Client introuvable: " + idClient));
 
-        String message = "Votre code d'authentification est " + codeOtp + ". Il expire dans 5 minutes.";
+        String message = String.format(templateOtp, codeOtp);
         return creerNotification(client, message);
     }
 

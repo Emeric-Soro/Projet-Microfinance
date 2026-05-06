@@ -20,4 +20,8 @@ public class TransactionWorkflowProperties {
     @NotNull
     @DecimalMin(value = "0.00")
     private BigDecimal approvalThreshold = new BigDecimal("500000.00");
+
+    @NotNull
+    @DecimalMin(value = "0.00")
+    private BigDecimal maxRetraitGuichet = new BigDecimal("1000000.00");
 }

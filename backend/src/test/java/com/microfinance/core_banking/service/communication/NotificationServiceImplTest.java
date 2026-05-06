@@ -10,11 +10,13 @@ import com.microfinance.core_banking.repository.communication.NotificationReposi
 import com.microfinance.core_banking.repository.communication.StatutEnvoiRepository;
 import com.microfinance.core_banking.repository.communication.TypeCanalRepository;
 import com.microfinance.core_banking.repository.compte.CompteRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -50,6 +52,16 @@ class NotificationServiceImplTest {
 
     @InjectMocks
     private NotificationServiceImpl notificationService;
+
+    @BeforeEach
+    void injectTemplates() {
+        ReflectionTestUtils.setField(notificationService, "templateVirement",
+                "Vous avez recu un virement de %s FCFA sur le compte %s");
+        ReflectionTestUtils.setField(notificationService, "templateAlerteSecurite",
+                "Alerte securite : une connexion suspecte a ete detectee sur votre espace client.");
+        ReflectionTestUtils.setField(notificationService, "templateOtp",
+                "Votre code d'authentification est %s. Il expire dans 5 minutes.");
+    }
 
     @Test
     void shouldMoveNotificationFromPendingToSentOnSuccessfulDelivery() {

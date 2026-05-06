@@ -4,6 +4,7 @@ import com.microfinance.core_banking.entity.CarteVisa;
 import com.microfinance.core_banking.entity.Compte;
 import com.microfinance.core_banking.repository.compte.CarteVisaRepository;
 import com.microfinance.core_banking.repository.compte.CompteRepository;
+import org.springframework.beans.factory.annotation.Value;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +15,12 @@ import java.time.LocalDate;
 
 @Service
 public class CarteVisaServiceImpl implements CarteVisaService {
+
+    @Value("${app.carte.plafond-journalier-defaut}")
+    private BigDecimal plafondDefaut;
+
+    @Value("${app.carte.validite-annees}")
+    private int validiteAnnees;
 
     private final CarteVisaRepository carteVisaRepository;
     private final CompteRepository compteRepository;
@@ -38,9 +45,9 @@ public class CarteVisaServiceImpl implements CarteVisaService {
         CarteVisa carte = new CarteVisa();
         carte.setCompte(compte);
         carte.setNumeroCarte(genererNumeroCarteUnique());
-        carte.setDateExpiration(LocalDate.now().plusYears(3));
+        carte.setDateExpiration(LocalDate.now().plusYears(validiteAnnees));
         carte.setStatut(Boolean.TRUE);
-        carte.setPlafondJournalier(new BigDecimal("500000.00")); // Plafond standard par défaut
+        carte.setPlafondJournalier(plafondDefaut);
         // Le CVV n'est volontairement ni genere ni persiste dans ce domaine applicatif.
 
         return carteVisaRepository.save(carte);

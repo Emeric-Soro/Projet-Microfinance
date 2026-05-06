@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.service.client;
 
+import com.microfinance.core_banking.constant.AppConstants;
 import com.microfinance.core_banking.dto.request.client.DecisionKycClientRequestDTO;
 import com.microfinance.core_banking.dto.request.client.MiseAJourKycClientRequestDTO;
 import com.microfinance.core_banking.entity.Client;
@@ -48,7 +49,7 @@ public class ClientServiceImpl implements ClientService {
         client.setNiveauRisque(NiveauRisqueClient.FAIBLE);
         initialiserWorkflowKyc(client);
 
-        StatutClient statutParDefaut = statutClientRepository.findByLibelleStatutIgnoreCase("NOUVEAU")
+        StatutClient statutParDefaut = statutClientRepository.findByLibelleStatutIgnoreCase(AppConstants.STATUT_CLIENT_NOUVEAU)
                 .orElseThrow(() -> new IllegalStateException("Erreur critique : Le statut 'NOUVEAU' n'est pas paramétré en base."));
 
         client.setStatutClient(statutParDefaut);
@@ -109,9 +110,9 @@ public class ClientServiceImpl implements ClientService {
         client.setDateValidationKyc(LocalDate.now());
 
         if (requestDTO.getStatutKyc() == StatutKycClient.VALIDE) {
-            client.setStatutClient(chargerStatutStrict("ACTIF"));
+            client.setStatutClient(chargerStatutStrict(AppConstants.STATUT_CLIENT_ACTIF));
         } else if (requestDTO.getStatutKyc() == StatutKycClient.REJETE) {
-            client.setStatutClient(chargerStatutStrict("BLOQUE"));
+            client.setStatutClient(chargerStatutStrict(AppConstants.STATUT_CLIENT_BLOQUE));
         }
 
         return clientRepository.save(client);

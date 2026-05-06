@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.service.operation.fees;
 
+import com.microfinance.core_banking.constant.AppConstants;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -9,7 +10,7 @@ public class DepotTransactionFeeStrategy implements TransactionFeeStrategy {
 
     @Override
     public String codeTypeTransaction() {
-        return "DEPOT";
+        return AppConstants.TX_DEPOT;
     }
 
     @Override

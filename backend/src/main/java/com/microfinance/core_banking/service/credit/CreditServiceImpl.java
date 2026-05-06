@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.service.credit;
 
+import com.microfinance.core_banking.constant.AppConstants;
 import com.microfinance.core_banking.entity.*;
 import com.microfinance.core_banking.repository.client.ClientRepository;
 import com.microfinance.core_banking.repository.client.UtilisateurRepository;
@@ -128,7 +129,7 @@ public class CreditServiceImpl implements CreditService {
 		// Creation du credit associe
 		ProduitCredit produit = demande.getProduitCredit();
 
-		StatutCredit statutApprouve = statutCreditRepository.findByCodeStatut("APPROUVE")
+		StatutCredit statutApprouve = statutCreditRepository.findByCodeStatut(AppConstants.CREDIT_APPROUVE)
 				.orElseThrow(() -> new IllegalStateException("Alerte Systeme : Le statut 'APPROUVE' n'est pas configure en base."));
 
 		Credit credit = new Credit();
@@ -183,10 +184,10 @@ public class CreditServiceImpl implements CreditService {
 		Credit credit = creditRepository.findById(idCredit)
 				.orElseThrow(() -> new EntityNotFoundException("Credit introuvable: " + idCredit));
 
-		StatutCredit statutApprouve = statutCreditRepository.findByCodeStatut("APPROUVE")
+		StatutCredit statutApprouve = statutCreditRepository.findByCodeStatut(AppConstants.CREDIT_APPROUVE)
 				.orElseThrow(() -> new IllegalStateException("Statut APPROUVE non configure."));
 
-		if (!credit.getStatutCredit().getCodeStatut().equals("APPROUVE")) {
+		if (!AppConstants.CREDIT_APPROUVE.equals(credit.getStatutCredit().getCodeStatut())) {
 			throw new IllegalStateException("Seul un credit APPROUVE peut etre decaisse. Statut actuel: "
 					+ credit.getStatutCredit().getCodeStatut());
 		}
@@ -206,15 +207,18 @@ public class CreditServiceImpl implements CreditService {
 		);
 
 		// Decaissement via le moteur transactionnel existant
-		// On utilise un utilisateur systeme (id=1) pour le decaissement automatique
-		transactionService.faireDepot(numCompteCible, montantNet, 1L);
+		// On recupere l'administrateur systeme par defaut (cree par DemoDataLoader)
+		Utilisateur systemUser = utilisateurRepository.findByLogin("demo.admin")
+				.orElseThrow(() -> new IllegalStateException("Utilisateur systeme introuvable pour le decaissement automatique."));
+
+		transactionService.faireDepot(numCompteCible, montantNet, systemUser.getIdUser());
 
 		// Mise a jour du credit
 		credit.setDateDecaissement(LocalDate.now());
 		credit.setDateFinPrevue(LocalDate.now().plusMonths(credit.getDureeMois()));
 		credit.setCompteDecaissement(compte);
 
-		StatutCredit statutDecaisse = statutCreditRepository.findByCodeStatut("DECAISSE")
+		StatutCredit statutDecaisse = statutCreditRepository.findByCodeStatut(AppConstants.CREDIT_DECAISSE)
 				.orElseThrow(() -> new IllegalStateException("Statut DECAISSE non configure."));
 		credit.setStatutCredit(statutDecaisse);
 
@@ -248,7 +252,9 @@ public class CreditServiceImpl implements CreditService {
 				.orElseThrow(() -> new EntityNotFoundException("Credit introuvable: " + idCredit));
 
 		String statutCode = credit.getStatutCredit().getCodeStatut();
-		if (!statutCode.equals("DECAISSE") && !statutCode.equals("EN_COURS") && !statutCode.equals("EN_RETARD")) {
+		if (!AppConstants.CREDIT_DECAISSE.equals(statutCode)
+				&& !AppConstants.CREDIT_EN_COURS.equals(statutCode)
+				&& !AppConstants.CREDIT_EN_RETARD.equals(statutCode)) {
 			throw new IllegalStateException("Le credit n'est pas dans un etat permettant le remboursement.");
 		}
 
@@ -287,14 +293,14 @@ public class CreditServiceImpl implements CreditService {
 		// Verification si toutes les echeances sont soldees
 		long echeancesRestantes = echeanceRepository.countByCredit_IdCreditAndEstPayeeFalse(idCredit);
 		if (echeancesRestantes == 0) {
-			StatutCredit statutSolde = statutCreditRepository.findByCodeStatut("SOLDE")
+			StatutCredit statutSolde = statutCreditRepository.findByCodeStatut(AppConstants.CREDIT_SOLDE)
 					.orElseThrow(() -> new IllegalStateException("Statut SOLDE non configure."));
 			credit.setStatutCredit(statutSolde);
 			credit.setMontantRestantDu(BigDecimal.ZERO);
 		} else {
 			// Passer en EN_COURS si c'etait le premier remboursement
-			if (credit.getStatutCredit().getCodeStatut().equals("DECAISSE")) {
-				StatutCredit statutEnCours = statutCreditRepository.findByCodeStatut("EN_COURS")
+			if (AppConstants.CREDIT_DECAISSE.equals(credit.getStatutCredit().getCodeStatut())) {
+				StatutCredit statutEnCours = statutCreditRepository.findByCodeStatut(AppConstants.CREDIT_EN_COURS)
 						.orElseThrow(() -> new IllegalStateException("Statut EN_COURS non configure."));
 				credit.setStatutCredit(statutEnCours);
 			}

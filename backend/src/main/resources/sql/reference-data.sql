@@ -85,6 +85,12 @@ ON (tt.code_type_transaction = src.code_type_transaction)
 WHEN NOT MATCHED THEN INSERT (code_type_transaction, libelle, created_at, updated_at)
 VALUES ('REMBOURSEMENT_CREDIT', 'Remboursement d echeance', SYSTIMESTAMP, SYSTIMESTAMP);
 
+MERGE INTO type_transaction tt
+USING (SELECT 'PAIEMENT_CARTE' AS code_type_transaction FROM dual) src
+ON (tt.code_type_transaction = src.code_type_transaction)
+WHEN NOT MATCHED THEN INSERT (code_type_transaction, libelle, created_at, updated_at)
+VALUES ('PAIEMENT_CARTE', 'Paiement par carte VISA', SYSTIMESTAMP, SYSTIMESTAMP);
+
 -- ============================================================
 -- 4. ROLES UTILISATEUR (existants + nouveaux microfinance)
 -- ============================================================

@@ -1,5 +1,6 @@
 package com.microfinance.core_banking.service.compte;
 
+import com.microfinance.core_banking.constant.AppConstants;
 import com.microfinance.core_banking.entity.Client;
 import com.microfinance.core_banking.entity.Compte;
 import com.microfinance.core_banking.entity.StatutClient;
@@ -10,6 +11,7 @@ import com.microfinance.core_banking.repository.client.ClientRepository;
 import com.microfinance.core_banking.repository.compte.CompteRepository;
 import com.microfinance.core_banking.repository.compte.StatutCompteRepository;
 import com.microfinance.core_banking.repository.compte.TypeCompteRepository;
+import org.springframework.beans.factory.annotation.Value;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,9 @@ import java.time.LocalDateTime;
 public class CompteServiceImpl implements CompteService {
 
     private static final String PREFIXE_COMPTE = "CPT";
+
+    @Value("${app.default.currency}")
+    private String defaultCurrency;
 
     private final CompteRepository compteRepository;
     private final ClientRepository clientRepository;
@@ -68,7 +73,7 @@ public class CompteServiceImpl implements CompteService {
         compte.setTypeCompte(typeCompte);
         compte.setDateOuverture(LocalDate.now());
         compte.setSolde(depotInitial);
-        compte.setDevise("XOF");
+        compte.setDevise(defaultCurrency);
         compte.setTauxInteret(BigDecimal.ZERO);
         compte.setDecouvertAutorise(BigDecimal.ZERO);
 
@@ -76,7 +81,7 @@ public class CompteServiceImpl implements CompteService {
 
         StatutCompte statutActif = new StatutCompte();
         statutActif.setCompte(compteSauvegarde);
-        statutActif.setLibelleStatut("ACTIF");
+        statutActif.setLibelleStatut(AppConstants.STATUT_COMPTE_ACTIF);
         statutActif.setDateStatut(LocalDateTime.now());
         StatutCompte statutActifSauvegarde = statutCompteRepository.save(statutActif);
         compteSauvegarde.getStatutsCompte().add(statutActifSauvegarde);
@@ -118,7 +123,7 @@ public class CompteServiceImpl implements CompteService {
 
         StatutCompte statutFerme = new StatutCompte();
         statutFerme.setCompte(compte);
-        statutFerme.setLibelleStatut("FERME");
+        statutFerme.setLibelleStatut(AppConstants.STATUT_COMPTE_FERME);
         statutFerme.setDateStatut(LocalDateTime.now());
         StatutCompte statutFermeSauvegarde = statutCompteRepository.save(statutFerme);
         compte.getStatutsCompte().add(statutFermeSauvegarde);
@@ -133,16 +138,16 @@ public class CompteServiceImpl implements CompteService {
                 .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
 
         String statutCourant = extraireStatutCourant(compte);
-        if ("FERME".equalsIgnoreCase(statutCourant)) {
+        if (AppConstants.STATUT_COMPTE_FERME.equalsIgnoreCase(statutCourant)) {
             throw new IllegalStateException("Impossible de bloquer un compte deja cloture");
         }
-        if ("BLOQUE".equalsIgnoreCase(statutCourant)) {
+        if (AppConstants.STATUT_COMPTE_BLOQUE.equalsIgnoreCase(statutCourant)) {
             throw new IllegalStateException("Le compte est deja bloque");
         }
 
         StatutCompte statutBloque = new StatutCompte();
         statutBloque.setCompte(compte);
-        statutBloque.setLibelleStatut("BLOQUE");
+        statutBloque.setLibelleStatut(AppConstants.STATUT_COMPTE_BLOQUE);
         statutBloque.setDateStatut(LocalDateTime.now());
         StatutCompte statutBloqueSauvegarde = statutCompteRepository.save(statutBloque);
         compte.getStatutsCompte().add(statutBloqueSauvegarde);
@@ -157,13 +162,13 @@ public class CompteServiceImpl implements CompteService {
                 .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
 
         String statutCourant = extraireStatutCourant(compte);
-        if (!"BLOQUE".equalsIgnoreCase(statutCourant)) {
+        if (!AppConstants.STATUT_COMPTE_BLOQUE.equalsIgnoreCase(statutCourant)) {
             throw new IllegalStateException("Le compte n'est pas bloque, statut actuel: " + statutCourant);
         }
 
         StatutCompte statutActif = new StatutCompte();
         statutActif.setCompte(compte);
-        statutActif.setLibelleStatut("ACTIF");
+        statutActif.setLibelleStatut(AppConstants.STATUT_COMPTE_ACTIF);
         statutActif.setDateStatut(LocalDateTime.now());
         StatutCompte statutActifSauvegarde = statutCompteRepository.save(statutActif);
         compte.getStatutsCompte().add(statutActifSauvegarde);
@@ -206,6 +211,8 @@ public class CompteServiceImpl implements CompteService {
             return false;
         }
         String statut = statutClient.getLibelleStatut().trim().toUpperCase();
-        return "BLOQUE".equals(statut) || "SUSPENDU".equals(statut) || "INACTIF".equals(statut);
+        return AppConstants.STATUT_CLIENT_BLOQUE.equals(statut)
+                || AppConstants.STATUT_CLIENT_SUSPENDU.equals(statut)
+                || AppConstants.STATUT_CLIENT_INACTIF.equals(statut);
     }
 }

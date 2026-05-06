@@ -86,5 +86,9 @@ public class Compte extends BaseAuditEntity {
     // Produit d'epargne associe (nullable, uniquement pour les comptes epargne).
     private ProduitEpargne produitEpargne;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    // Version pour verrouillage optimiste.
+    private Integer version = 0;
 
 }
