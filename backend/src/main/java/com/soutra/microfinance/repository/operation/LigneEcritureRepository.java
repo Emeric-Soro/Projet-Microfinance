@@ -1,0 +1,24 @@
+package com.soutra.microfinance.repository.operation;
+
+import com.soutra.microfinance.entity.LigneEcriture;
+import com.soutra.microfinance.entity.SensEcriture;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Repository
+public interface LigneEcritureRepository extends JpaRepository<LigneEcriture, Long> {
+
+    // Liste paginee des lignes d'une transaction.
+    Page<LigneEcriture> findByCompte_IdCompte(Long idCompte, Pageable pageable);
+
+    // Liste paginee des lignes selon leur sens comptable.
+    Page<LigneEcriture> findBySens(SensEcriture sens, Pageable pageable);
+
+    // Liste paginee des lignes selon une plage de montant.
+    Page<LigneEcriture> findByCreatedAtBetween(LocalDateTime dateDebut, LocalDateTime dateFin, Pageable pageable);
+}
