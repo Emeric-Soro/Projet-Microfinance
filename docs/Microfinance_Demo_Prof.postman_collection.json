@@ -1,0 +1,511 @@
+{
+  "info": {
+    "name": "Demo Microfinance - Parcours Professeur",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "idUser",
+      "value": ""
+    },
+    {
+      "key": "idClient",
+      "value": ""
+    },
+    {
+      "key": "seedCompteAdmin",
+      "value": "CI23CB000100000001"
+    },
+    {
+      "key": "seedCompteClientA",
+      "value": "CI23CB000100000005"
+    },
+    {
+      "key": "seedCompteClientB",
+      "value": "CI23CB000100000010"
+    },
+    {
+      "key": "newClientId",
+      "value": ""
+    },
+    {
+      "key": "newAccountNumber",
+      "value": ""
+    },
+    {
+      "key": "idDemande",
+      "value": ""
+    },
+    {
+      "key": "idCredit",
+      "value": ""
+    },
+    {
+      "key": "caisseSoldeCourant",
+      "value": ""
+    },
+    {
+      "key": "newEmail",
+      "value": ""
+    },
+    {
+      "key": "newPhone",
+      "value": ""
+    },
+    {
+      "key": "newPiece",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Login demo.admin",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Login OK', function () { pm.response.to.have.status(200); });",
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('token', body.token);",
+              "pm.collectionVariables.set('idUser', body.utilisateur.idUser);",
+              "pm.collectionVariables.set('idClient', body.utilisateur.idClient);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"login\": \"demo.admin\",\n  \"motDePasse\": \"Demo@12345\"\n}"
+        },
+        "url": "{{baseUrl}}/api/utilisateurs/login"
+      }
+    },
+    {
+      "name": "02 - Lister les clients seedés",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/clients?page=0&size=10"
+      }
+    },
+    {
+      "name": "03 - Lister les produits de crédit",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/produits/credits"
+      }
+    },
+    {
+      "name": "04 - KPI initiaux",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/statistiques/kpi"
+      }
+    },
+    {
+      "name": "05 - Ouvrir une caisse",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"soldeInitial\": 1000000\n}"
+        },
+        "url": "{{baseUrl}}/api/caisses/ouverture"
+      }
+    },
+    {
+      "name": "06 - Etat de caisse",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "  const body = pm.response.json();",
+              "  pm.collectionVariables.set('caisseSoldeCourant', body.soldeCourant);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/caisses/etat"
+      }
+    },
+    {
+      "name": "07 - Solde avant opérations",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/comptes/{{seedCompteClientA}}/solde"
+      }
+    },
+    {
+      "name": "08 - Dépôt client",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"numCompte\": \"{{seedCompteClientA}}\",\n  \"montant\": 25000,\n  \"idGuichetier\": {{idUser}}\n}"
+        },
+        "url": "{{baseUrl}}/api/transactions/depot"
+      }
+    },
+    {
+      "name": "09 - Retrait client",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"numCompte\": \"{{seedCompteClientA}}\",\n  \"montant\": 10000,\n  \"idGuichetier\": {{idUser}}\n}"
+        },
+        "url": "{{baseUrl}}/api/transactions/retrait"
+      }
+    },
+    {
+      "name": "10 - Virement entre comptes",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"compteSource\": \"{{seedCompteClientA}}\",\n  \"compteDestination\": \"{{seedCompteClientB}}\",\n  \"montant\": 15000\n}"
+        },
+        "url": "{{baseUrl}}/api/transactions/virement?idGuichetier={{idUser}}"
+      }
+    },
+    {
+      "name": "11 - Historique du compte",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/transactions/comptes/{{seedCompteClientA}}/historique?page=0&size=20"
+      }
+    },
+    {
+      "name": "12 - Créer un nouveau client",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const suffix = Date.now().toString().slice(-8);",
+              "pm.collectionVariables.set('newEmail', `mariam.akissi.${suffix}@microfin.local`);",
+              "pm.collectionVariables.set('newPhone', `+225 07 88 ${suffix.slice(0, 2)} ${suffix.slice(2, 4)} ${suffix.slice(4, 6)}`);",
+              "pm.collectionVariables.set('newPiece', `CNI-CI-DEMO-${suffix}`);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Client créé', function () { pm.response.to.have.status(201); });",
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('newClientId', body.idClient);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nom\": \"Akissi\",\n  \"prenom\": \"Mariam\",\n  \"dateNaissance\": \"1995-04-12\",\n  \"email\": \"{{newEmail}}\",\n  \"telephone\": \"{{newPhone}}\",\n  \"adresse\": \"Abidjan, Koumassi\",\n  \"profession\": \"Commercante\",\n  \"employeur\": \"Marche de Koumassi\",\n  \"typePieceIdentite\": \"CNI\",\n  \"numeroPieceIdentite\": \"{{newPiece}}\",\n  \"dateExpirationPieceIdentite\": \"2031-12-31\",\n  \"photoIdentiteUrl\": \"demo/kyc/mariam/photo.jpg\",\n  \"justificatifDomicileUrl\": \"demo/kyc/mariam/domicile.pdf\",\n  \"justificatifRevenusUrl\": \"demo/kyc/mariam/revenus.pdf\",\n  \"paysNationalite\": \"Cote d'Ivoire\",\n  \"paysResidence\": \"Cote d'Ivoire\",\n  \"pep\": false\n}"
+        },
+        "url": "{{baseUrl}}/api/clients"
+      }
+    },
+    {
+      "name": "13 - Soumettre KYC du nouveau client",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"profession\": \"Commercante\",\n  \"employeur\": \"Marche de Koumassi\",\n  \"typePieceIdentite\": \"CNI\",\n  \"numeroPieceIdentite\": \"{{newPiece}}\",\n  \"dateExpirationPieceIdentite\": \"2031-12-31\",\n  \"photoIdentiteUrl\": \"demo/kyc/mariam/photo.jpg\",\n  \"justificatifDomicileUrl\": \"demo/kyc/mariam/domicile.pdf\",\n  \"justificatifRevenusUrl\": \"demo/kyc/mariam/revenus.pdf\",\n  \"paysNationalite\": \"Cote d'Ivoire\",\n  \"paysResidence\": \"Cote d'Ivoire\",\n  \"pep\": false,\n  \"dateSoumission\": \"2026-05-27\"\n}"
+        },
+        "url": "{{baseUrl}}/api/clients/{{newClientId}}/kyc"
+      }
+    },
+    {
+      "name": "14 - Valider KYC du nouveau client",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"statutKyc\": \"VALIDE\",\n  \"niveauRisque\": \"FAIBLE\",\n  \"commentaire\": \"Dossier complet et conforme pour la demo.\",\n  \"validateurKyc\": \"demo.admin\"\n}"
+        },
+        "url": "{{baseUrl}}/api/clients/{{newClientId}}/kyc/decision"
+      }
+    },
+    {
+      "name": "15 - Ouvrir compte nouveau client",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Compte créé', function () { pm.response.to.have.status(201); });",
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('newAccountNumber', body.numCompte);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"idClient\": {{newClientId}},\n  \"codeTypeCompte\": \"EPARGNE\",\n  \"depotInitial\": 50000\n}"
+        },
+        "url": "{{baseUrl}}/api/comptes"
+      }
+    },
+    {
+      "name": "16 - Simulation crédit",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"montant\": 300000,\n  \"taux\": 18,\n  \"duree\": 12,\n  \"methode\": \"DEGRESSIF\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/credits/simulation"
+      }
+    },
+    {
+      "name": "17 - Soumettre demande de crédit",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Demande créée', function () { pm.response.to.have.status(201); });",
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('idDemande', body.idDemande);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"idClient\": {{newClientId}},\n  \"codeProduitCredit\": \"MC-COMMERCE\",\n  \"montantDemande\": 300000,\n  \"dureeSouhaitee\": 12,\n  \"objetCredit\": \"Renforcement du stock de marchandises\",\n  \"idAgentCredit\": {{idUser}}\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/credits/demandes"
+      }
+    },
+    {
+      "name": "18 - Approuver demande de crédit",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Crédit créé', function () { pm.response.to.have.status(200); });",
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('idCredit', body.idCredit);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"idDemande\": {{idDemande}},\n  \"decision\": \"APPROUVEE\",\n  \"motifRejet\": null\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/credits/demandes/{{idDemande}}/decision"
+      }
+    },
+    {
+      "name": "19 - Décaisser crédit",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"numCompteCible\": \"{{newAccountNumber}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/credits/{{idCredit}}/decaissement"
+      }
+    },
+    {
+      "name": "20 - Echéancier crédit",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/credits/{{idCredit}}/echeancier"
+      }
+    },
+    {
+      "name": "21 - Rembourser crédit",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"montant\": 30000\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/credits/{{idCredit}}/remboursement"
+      }
+    },
+    {
+      "name": "22 - KPI après opérations",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/statistiques/kpi"
+      }
+    },
+    {
+      "name": "23 - Etat caisse final",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "  const body = pm.response.json();",
+              "  pm.collectionVariables.set('caisseSoldeCourant', body.soldeCourant);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/caisses/etat"
+      }
+    },
+    {
+      "name": "24 - Fermer caisse",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"soldePhysiqueConstate\": {{caisseSoldeCourant}}\n}"
+        },
+        "url": "{{baseUrl}}/api/caisses/fermeture"
+      }
+    }
+  ]
+}
