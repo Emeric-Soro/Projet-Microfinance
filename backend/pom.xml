@@ -8,8 +8,8 @@
 		<version>3.5.13</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.microfinance</groupId>
-	<artifactId>core-banking</artifactId>
+	<groupId>com.soutra</groupId>
+	<artifactId>soutra-core-banking</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name/>
 	<description/>
