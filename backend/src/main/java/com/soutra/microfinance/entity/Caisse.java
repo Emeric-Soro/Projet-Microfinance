@@ -1,5 +1,6 @@
 package com.soutra.microfinance.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -33,6 +34,7 @@ public class Caisse extends BaseAuditEntity {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "id_user", nullable = false)
+    @JsonIgnore
     private Utilisateur utilisateur;
 
     @Column(name = "solde_ouverture", nullable = false, precision = 19, scale = 2)
