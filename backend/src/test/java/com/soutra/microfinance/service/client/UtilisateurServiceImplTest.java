@@ -1,12 +1,14 @@
 package com.soutra.microfinance.service.client;
 
 import com.soutra.microfinance.config.AuthSecurityProperties;
+import com.soutra.microfinance.config.PasswordResetProperties;
 import com.soutra.microfinance.entity.Client;
 import com.soutra.microfinance.entity.StatutClient;
 import com.soutra.microfinance.entity.Utilisateur;
 import com.soutra.microfinance.repository.client.ClientRepository;
 import com.soutra.microfinance.repository.client.RoleUtilisateurRepository;
 import com.soutra.microfinance.repository.client.UtilisateurRepository;
+import com.soutra.microfinance.service.communication.EmailService;
 import com.soutra.microfinance.service.communication.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,12 +25,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -54,6 +58,12 @@ class UtilisateurServiceImplTest {
     @Mock
     private NotificationService notificationService;
 
+    @Mock
+    private EmailService emailService;
+
+    @Mock
+    private PasswordResetProperties passwordResetProperties;
+
     @InjectMocks
     private UtilisateurServiceImpl utilisateurService;
 
@@ -65,6 +75,7 @@ class UtilisateurServiceImplTest {
         when(authSecurityProperties.getOtpValidity()).thenReturn(Duration.ofMinutes(5));
         when(authSecurityProperties.getOtpLength()).thenReturn(6);
         when(authSecurityProperties.getMaxOtpAttempts()).thenReturn(3);
+        when(passwordResetProperties.getTokenValidity()).thenReturn(Duration.ofMinutes(30));
     }
 
     @Test
@@ -150,6 +161,86 @@ class UtilisateurServiceImplTest {
         assertThat(resultat.getOtpHash()).isNull();
         assertThat(resultat.getOtpExpireLe()).isNull();
         assertThat(resultat.getDerniereConnexionReussie()).isNotNull();
+    }
+
+    @Test
+    void shouldGenerateResetTokenAndSendEmailWhenUserFoundByLogin() {
+        Utilisateur utilisateur = buildUtilisateur();
+        when(utilisateurRepository.findByLogin("client@example.com")).thenReturn(Optional.of(utilisateur));
+        when(passwordEncoder.encode(any(String.class))).thenReturn("bcrypt-hash");
+        when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        utilisateurService.demanderResetMotDePasse("client@example.com");
+
+        ArgumentCaptor<Utilisateur> captor = ArgumentCaptor.forClass(Utilisateur.class);
+        verify(utilisateurRepository).save(captor.capture());
+        Utilisateur saved = captor.getValue();
+        assertThat(saved.getResetTokenHash()).isEqualTo("bcrypt-hash");
+        assertThat(saved.getResetTokenExpireLe()).isAfter(LocalDateTime.now().plusMinutes(25));
+
+        ArgumentCaptor<String> tokenCaptor = ArgumentCaptor.forClass(String.class);
+        verify(emailService).envoyerResetMotDePasse(eq(utilisateur), tokenCaptor.capture());
+        assertThat(tokenCaptor.getValue()).isNotBlank();
+        assertThat(tokenCaptor.getValue().length()).isEqualTo(36);
+    }
+
+    @Test
+    void shouldReturnSilentlyWhenUserNotFoundForResetRequest() {
+        when(utilisateurRepository.findByLogin("unknown@example.com")).thenReturn(Optional.empty());
+        when(utilisateurRepository.findByClient_EmailIgnoreCase("unknown@example.com")).thenReturn(Optional.empty());
+
+        utilisateurService.demanderResetMotDePasse("unknown@example.com");
+
+        verify(utilisateurRepository, never()).save(any(Utilisateur.class));
+        verify(emailService, never()).envoyerResetMotDePasse(any(), any());
+    }
+
+    @Test
+    void shouldUpdatePasswordAndClearTokenWhenResetTokenIsValid() {
+        Utilisateur utilisateur = buildUtilisateur();
+        utilisateur.setResetTokenHash("bcrypt-hash");
+        utilisateur.setResetTokenExpireLe(LocalDateTime.now().plusMinutes(15));
+        utilisateur.setNombreEchecsConnexion(2);
+        utilisateur.setCompteVerrouilleJusquAu(LocalDateTime.now().plusMinutes(10));
+
+        when(utilisateurRepository.findAll()).thenReturn(List.of(utilisateur));
+        when(passwordEncoder.matches("clear-token-123", "bcrypt-hash")).thenReturn(true);
+        when(passwordEncoder.encode("NouveauMotDePasse1!")).thenReturn("new-bcrypt-hash");
+        when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        utilisateurService.reinitialiserMotDePasse("clear-token-123", "NouveauMotDePasse1!");
+
+        ArgumentCaptor<Utilisateur> captor = ArgumentCaptor.forClass(Utilisateur.class);
+        verify(utilisateurRepository).save(captor.capture());
+        Utilisateur saved = captor.getValue();
+        assertThat(saved.getPassword()).isEqualTo("new-bcrypt-hash");
+        assertThat(saved.getResetTokenHash()).isNull();
+        assertThat(saved.getResetTokenExpireLe()).isNull();
+        assertThat(saved.getLastPasswordChange()).isNotNull();
+        assertThat(saved.getMotDePasseModifieLe()).isNotNull();
+        assertThat(saved.getNombreEchecsConnexion()).isZero();
+        assertThat(saved.getCompteVerrouilleJusquAu()).isNull();
+        assertThat(saved.getIdentifiantsExpirentLe()).isAfter(LocalDateTime.now().plusDays(80));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenResetTokenInvalid() {
+        when(utilisateurRepository.findAll()).thenReturn(List.of());
+
+        assertThatThrownBy(() -> utilisateurService.reinitialiserMotDePasse("invalid-token", "NouveauMotDePasse1!"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Token invalide ou expire");
+
+        verify(utilisateurRepository, never()).save(any(Utilisateur.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenNewPasswordTooShort() {
+        assertThatThrownBy(() -> utilisateurService.reinitialiserMotDePasse("any-token", "court"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Le nouveau mot de passe doit contenir au moins 8 caracteres");
+
+        verify(utilisateurRepository, never()).save(any(Utilisateur.class));
     }
 
     private Client buildClient() {

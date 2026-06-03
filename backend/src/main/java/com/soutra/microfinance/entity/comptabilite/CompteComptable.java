@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "compte_comptable")
+@Table(name = "soutra_compte_comptable")
 // Plan comptable SYSCOHADA-SFD : represente un compte du grand livre general.
 public class CompteComptable extends BaseAuditEntity {
 

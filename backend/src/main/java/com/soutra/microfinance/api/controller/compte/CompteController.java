@@ -1,21 +1,26 @@
 package com.soutra.microfinance.api.controller.compte;
 
 import com.soutra.microfinance.audit.AuditLog;
+import com.soutra.microfinance.dto.request.client.ReleveRequestDTO;
 import com.soutra.microfinance.dto.request.compte.ChangementDecouvertRequestDTO;
 import com.soutra.microfinance.dto.request.compte.ChangementStatutCompteRequestDTO;
 import com.soutra.microfinance.dto.request.compte.ClotureCompteRequestDTO;
 import com.soutra.microfinance.dto.request.compte.OuvertureCompteRequestDTO;
 import com.soutra.microfinance.dto.response.compte.CompteResponseDTO;
 import com.soutra.microfinance.entity.Compte;
+import com.soutra.microfinance.entity.ReleveFormat;
 import com.soutra.microfinance.entity.StatutCompte;
 import com.soutra.microfinance.mapper.CompteMapper;
 import com.soutra.microfinance.service.compte.CompteService;
+import com.soutra.microfinance.service.compte.ReleveService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,16 +36,18 @@ import java.math.BigDecimal;
 import java.util.Comparator;
 
 @RestController
-@RequestMapping("/api/comptes")
+@RequestMapping("/api/v1/comptes")
 @Tag(name = "Comptes", description = "API de gestion des comptes bancaires")
 public class CompteController {
 
 	private final CompteService compteService;
 	private final CompteMapper compteMapper;
+	private final ReleveService releveService;
 
-	public CompteController(CompteService compteService, CompteMapper compteMapper) {
+	public CompteController(CompteService compteService, CompteMapper compteMapper, ReleveService releveService) {
 		this.compteService = compteService;
 		this.compteMapper = compteMapper;
+		this.releveService = releveService;
 	}
 
 	@Operation(
@@ -168,6 +175,46 @@ public class CompteController {
         String motif = requestDTO != null ? requestDTO.getMotif() : null;
         Compte compte = compteService.debloquerCompte(numCompte, motif);
         return ResponseEntity.ok(toCompteResponse(compte));
+    }
+
+    @Operation(
+            summary = "Generer un releve de compte",
+            description = "Genere un releve de compte au format PDF ou CSV. " +
+                    "Plafond : 90 jours pour PDF, 365 jours pour CSV."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Releve genere avec succes"),
+            @ApiResponse(responseCode = "400", description = "Parametres invalides ou plage depasse le plafond"),
+            @ApiResponse(responseCode = "404", description = "Compte introuvable")
+    })
+    @GetMapping("/{numCompte}/releve")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
+    @AuditLog(action = "ACCOUNT_STATEMENT", resource = "COMPTE")
+    public ResponseEntity<byte[]> genererReleve(
+            @PathVariable String numCompte,
+            @Valid ReleveRequestDTO requestDTO
+    ) {
+        byte[] content = releveService.genererReleve(
+                numCompte,
+                requestDTO.getDu(),
+                requestDTO.getAu(),
+                requestDTO.getFormat()
+        );
+
+        String filename = "releve_" + numCompte + "_" + requestDTO.getDu() + "_" + requestDTO.getAu();
+        MediaType mediaType;
+        if (requestDTO.getFormat() == ReleveFormat.PDF) {
+            mediaType = MediaType.APPLICATION_PDF;
+            filename += ".pdf";
+        } else {
+            mediaType = MediaType.parseMediaType("text/csv");
+            filename += ".csv";
+        }
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                .contentType(mediaType)
+                .body(content);
     }
 
 	private CompteResponseDTO toCompteResponse(Compte compte) {

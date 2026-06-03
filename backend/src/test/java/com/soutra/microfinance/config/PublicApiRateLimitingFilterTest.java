@@ -23,18 +23,18 @@ class PublicApiRateLimitingFilterTest {
         );
 
         for (int attempt = 0; attempt < 3; attempt++) {
-            MockHttpServletResponse response = executePost(filter, "/api/utilisateurs", "203.0.113.10");
+            MockHttpServletResponse response = executePost(filter, "/api/v1/utilisateurs", "203.0.113.10");
             assertThat(response.getStatus()).isEqualTo(200);
             assertThat(response.getHeader("X-Rate-Limit-Remaining")).isNotBlank();
         }
 
-        MockHttpServletResponse blockedResponse = executePost(filter, "/api/utilisateurs", "203.0.113.10");
+        MockHttpServletResponse blockedResponse = executePost(filter, "/api/v1/utilisateurs", "203.0.113.10");
 
         assertThat(blockedResponse.getStatus()).isEqualTo(429);
         assertThat(blockedResponse.getHeader("Retry-After")).isNotBlank();
         assertThat(blockedResponse.getContentAsString())
                 .contains("Trop de requetes")
-                .contains("/api/utilisateurs");
+                .contains("/api/v1/utilisateurs");
     }
 
     @Test

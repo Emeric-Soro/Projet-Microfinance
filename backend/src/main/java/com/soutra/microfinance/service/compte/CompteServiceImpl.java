@@ -13,6 +13,8 @@ import com.soutra.microfinance.repository.compte.StatutCompteRepository;
 import com.soutra.microfinance.repository.compte.TypeCompteRepository;
 import org.springframework.beans.factory.annotation.Value;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -95,6 +97,22 @@ public class CompteServiceImpl implements CompteService {
         return compteRepository.findByNumCompte(numCompte)
                 .map(Compte::getSolde)
                 .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Compte consulterCompte(Long idCompte) {
+        return compteRepository.findById(idCompte)
+                .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + idCompte));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Compte> listerComptesClient(Long idClient, Pageable pageable) {
+        if (!clientRepository.existsById(idClient)) {
+            throw new EntityNotFoundException("Client introuvable: " + idClient);
+        }
+        return compteRepository.findByClient_IdClient(idClient, pageable);
     }
 
     @Override

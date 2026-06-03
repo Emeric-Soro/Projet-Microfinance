@@ -174,4 +174,8 @@ public class Client extends BaseAuditEntity {
 	@OneToMany(mappedBy = "client")
 	// Credits actifs de ce client.
 	private List<Credit> credits = new ArrayList<>();
+
+	@Version
+	@Column(name = "version", nullable = false)
+	private Integer version = 0;
 }

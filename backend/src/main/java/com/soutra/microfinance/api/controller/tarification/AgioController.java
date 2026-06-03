@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/agios")
+@RequestMapping("/api/v1/agios")
 @Tag(name = "Agios", description = "API de calcul et prelevement des frais")
 public class AgioController {
 

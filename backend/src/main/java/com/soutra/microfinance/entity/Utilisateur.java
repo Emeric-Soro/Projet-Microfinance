@@ -92,12 +92,24 @@ public class Utilisateur extends BaseAuditEntity implements UserDetails {
 	// Nombre de tentatives OTP restantes.
 	private Integer otpTentativesRestantes = 0;
 
+	@Column(name = "reset_token_hash", length = 255)
+	// Hash BCrypt du token de reinitialisation de mot de passe en cours.
+	private String resetTokenHash;
+
+	@Column(name = "reset_token_expire_le")
+	// Date d'expiration du token de reinitialisation de mot de passe.
+	private LocalDateTime resetTokenExpireLe;
+
+	@Column(name = "last_password_change")
+	// Timestamp du dernier changement de mot de passe (permet d'invalider les JWT anterieurs).
+	private LocalDateTime lastPasswordChange;
+
 	@OneToOne(optional = false)
 	@JoinColumn(name = "id_client", nullable = false, unique = true)
 	// Client associe a cet utilisateur.
 	private Client client;
 
-	@ManyToMany(fetch = FetchType.EAGER)
+	@ManyToMany(fetch = FetchType.LAZY)
 	@JoinTable(
 			name = "utilisateur_role",
 			joinColumns = @JoinColumn(name = "id_user"),

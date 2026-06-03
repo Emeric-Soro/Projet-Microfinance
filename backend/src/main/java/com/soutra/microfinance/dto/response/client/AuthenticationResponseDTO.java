@@ -11,6 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class AuthenticationResponseDTO {
     private String token;
+    private String refreshToken;
     private UtilisateurResponseDTO utilisateur;
     private AuthenticationStepStatus statutAuthentification;
     private Boolean otpRequis;

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/tarification/parametres")
+@RequestMapping("/api/v1/tarification/parametres")
 @Tag(name = "Parametres tarification", description = "API de gestion du cache de parametres de tarification")
 public class TarificationParametreController {
 

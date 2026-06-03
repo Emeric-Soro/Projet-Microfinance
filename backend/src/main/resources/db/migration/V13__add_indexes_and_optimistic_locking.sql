@@ -1,0 +1,81 @@
+-- V13: Performance indexes and optimistic locking for high-concurrency tables.
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE soutra_compte ADD version NUMBER(10,0) DEFAULT 0 NOT NULL';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE NOT IN (-1430, -942) THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE soutra_credit ADD version NUMBER(10,0) DEFAULT 0 NOT NULL';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE NOT IN (-1430, -942) THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE soutra_transaction ADD version NUMBER(10,0) DEFAULT 0 NOT NULL';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE NOT IN (-1430, -942) THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE soutra_caisse ADD version NUMBER(10,0) DEFAULT 0 NOT NULL';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE NOT IN (-1430, -942) THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE soutra_client ADD version NUMBER(10,0) DEFAULT 0 NOT NULL';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE NOT IN (-1430, -942) THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'CREATE INDEX ix_soutra_transaction_statut ON soutra_transaction(statut_operation)';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE NOT IN (-955, -942) THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'CREATE INDEX ix_soutra_transaction_date ON soutra_transaction(date_heure_transaction)';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE NOT IN (-955, -942) THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'CREATE INDEX ix_soutra_credit_statut ON soutra_credit(id_statut_credit)';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE NOT IN (-955, -942) THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'CREATE INDEX ix_soutra_transaction_created_at ON soutra_transaction(created_at)';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE NOT IN (-955, -942, -904) THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'CREATE INDEX ix_soutra_transaction_updated_at ON soutra_transaction(updated_at)';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE NOT IN (-955, -942, -904) THEN RAISE; END IF;
+END;
+/

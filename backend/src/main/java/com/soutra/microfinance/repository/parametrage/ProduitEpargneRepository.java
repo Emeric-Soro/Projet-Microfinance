@@ -1,6 +1,8 @@
 package com.soutra.microfinance.repository.parametrage;
 
 import com.soutra.microfinance.entity.ProduitEpargne;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,4 +17,7 @@ public interface ProduitEpargneRepository extends JpaRepository<ProduitEpargne, 
 
 	// Liste les produits actifs.
 	List<ProduitEpargne> findByEstActifTrue();
+
+	// Liste paginee des produits epargne actifs.
+	Page<ProduitEpargne> findAllByEstActifTrue(Pageable pageable);
 }

@@ -18,5 +18,11 @@ public interface ClientService {
 
     Client obtenirDetailsClient(Long idClient);
 
+    Client modifierProfilMobile(Long idClient, String telephone, String email, String adresse);
+
+    Client mettreAJourKycMobile(Long idClient, String profession, String secteurActivite, java.math.BigDecimal revenuMensuel);
+
+    Client enregistrerDocumentKycMobile(Long idClient, String typeDocument, String nomFichier);
+
     Page<Client> listerClients(Pageable pageable);
 }

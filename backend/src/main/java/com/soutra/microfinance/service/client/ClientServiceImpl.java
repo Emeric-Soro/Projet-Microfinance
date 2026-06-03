@@ -121,8 +121,53 @@ public class ClientServiceImpl implements ClientService {
     @Override
     @Transactional(readOnly = true)
     public Client obtenirDetailsClient(Long idClient) {
-        return clientRepository.findById(idClient)
-                .orElseThrow(() -> new EntityNotFoundException("Client introuvable: " + idClient));
+        return chargerClient(idClient);
+    }
+
+    @Override
+    @Transactional
+    public Client modifierProfilMobile(Long idClient, String telephone, String email, String adresse) {
+        Client client = chargerClient(idClient);
+        if (telephone != null) {
+            client.setTelephone(telephone);
+        }
+        if (email != null) {
+            client.setEmail(email);
+        }
+        if (adresse != null) {
+            client.setAdresse(adresse);
+        }
+        return clientRepository.save(client);
+    }
+
+    @Override
+    @Transactional
+    public Client mettreAJourKycMobile(Long idClient, String profession, String secteurActivite, java.math.BigDecimal revenuMensuel) {
+        Client client = chargerClient(idClient);
+        if (profession != null) {
+            client.setProfession(profession);
+        }
+        if (secteurActivite != null) {
+            client.setSecteurActivite(secteurActivite);
+        }
+        if (revenuMensuel != null) {
+            client.setRevenuMensuel(revenuMensuel);
+        }
+        return clientRepository.save(client);
+    }
+
+    @Override
+    @Transactional
+    public Client enregistrerDocumentKycMobile(Long idClient, String typeDocument, String nomFichier) {
+        Client client = chargerClient(idClient);
+        String documentUrl = "upload/" + nomFichier;
+        switch (typeDocument.toUpperCase()) {
+            case "PIECE_IDENTITE" -> client.setPhotoIdentiteUrl(documentUrl);
+            case "JUSTIFICATIF_DOMICILE" -> client.setJustificatifDomicileUrl(documentUrl);
+            case "JUSTIFICATIF_REVENUS" -> client.setJustificatifRevenusUrl(documentUrl);
+            default -> throw new IllegalArgumentException("Type de document KYC invalide");
+        }
+        return clientRepository.save(client);
     }
 
     @Override
@@ -141,6 +186,11 @@ public class ClientServiceImpl implements ClientService {
             }
         }
         throw new IllegalStateException("Impossible de generer un code client unique");
+    }
+
+    private Client chargerClient(Long idClient) {
+        return clientRepository.findById(idClient)
+                .orElseThrow(() -> new EntityNotFoundException("Client introuvable: " + idClient));
     }
 
     private void initialiserWorkflowKyc(Client client) {
