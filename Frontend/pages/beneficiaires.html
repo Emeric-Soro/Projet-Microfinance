@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bénéficiaires - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Bénéficiaires</div>
+            <div class="topbar-breadcrumb">Accueil / Comptes & Cartes / Bénéficiaires</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Gestion des bénéficiaires</h1>
+            <p class="page-subtitle">Liste, création, modification et suppression des bénéficiaires de virement.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('beneficiaireModal')">Nouveau bénéficiaire</button>
+        </div>
+
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Bénéficiaires enregistrés</div>
+              <div class="card-subtitle">Endpoint : /api/v1/beneficiaires</div>
+            </div>
+          </div>
+          <div class="filter-bar">
+            <input class="form-control" placeholder="Nom, compte, banque">
+            <select class="form-control">
+              <option>Tous les types</option>
+              <option>Interne</option>
+              <option>Externe</option>
+            </select>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Bénéficiaire</th>
+                <th>Compte</th>
+                <th>Banque</th>
+                <th>Type</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Traoré Sékou</td><td>CI23CB010010000123456</td><td>Soutra MicroFinance</td><td>Interne</td><td><span class="badge badge-active">Validé</span></td><td><button class="btn btn-outline btn-sm">Modifier</button></td></tr>
+              <tr><td>Awa Koné</td><td>CI05BKCI00099887766</td><td>Banque partenaire</td><td>Externe</td><td><span class="badge badge-pending">À confirmer</span></td><td><button class="btn btn-outline btn-sm">Supprimer</button></td></tr>
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="beneficiaireModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Nouveau bénéficiaire</div>
+        <button class="modal-close" onclick="closeModal('beneficiaireModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Nom complet</label><input class="form-control"></div>
+          <div class="form-group"><label class="form-label">Type</label><select class="form-control"><option>Interne</option><option>Externe</option></select></div>
+        </div>
+        <div class="form-group"><label class="form-label">Numéro de compte / IBAN</label><input class="form-control"></div>
+        <div class="form-group"><label class="form-label">Banque</label><input class="form-control"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('beneficiaireModal')">Annuler</button>
+        <button class="btn btn-primary" onclick="closeModal('beneficiaireModal'); showToast('Bénéficiaire créé.', 'success')">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>

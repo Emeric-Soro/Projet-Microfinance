@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ajouter Personnel - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Ajouter un membre du personnel</div>
+            <div class="topbar-breadcrumb">Accueil / Paramétrage / Personnel</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Nouveau membre du personnel</h1>
+            <p class="page-subtitle">Création de la fiche interne, rattachement agence et préparation de l’accès utilisateur.</p>
+          </div>
+          <a href="utilisateurs.html" class="btn btn-outline">Gestion utilisateurs</a>
+        </div>
+
+        <div class="stepper">
+          <div class="step active"><span class="step-circle">1</span><span class="step-label">Identité</span></div>
+          <span class="step-line"></span>
+          <div class="step"><span class="step-circle">2</span><span class="step-label">Affectation</span></div>
+          <span class="step-line"></span>
+          <div class="step"><span class="step-circle">3</span><span class="step-label">Accès</span></div>
+        </div>
+
+        <section class="grid-3">
+          <form class="card" id="personnelForm" data-autosave>
+            <div class="step-content">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Informations personnelles</div>
+                  <div class="card-subtitle">Données d’identification du collaborateur</div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Nom *</label>
+                  <input class="form-control" name="nom" required placeholder="Ex: Kouassi">
+                  <div class="field-error">Nom obligatoire.</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Prénom *</label>
+                  <input class="form-control" name="prenom" required placeholder="Ex: Mireille">
+                  <div class="field-error">Prénom obligatoire.</div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Email professionnel *</label>
+                  <input class="form-control" name="email" type="email" required placeholder="prenom.nom@soutra.local">
+                  <div class="field-error">Email obligatoire.</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Téléphone *</label>
+                  <input class="form-control" name="telephone" required placeholder="+225 07 00 00 00 00">
+                  <div class="field-error">Téléphone obligatoire.</div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Date de naissance</label>
+                  <input class="form-control" name="dateNaissance" type="date">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Numéro pièce interne</label>
+                  <input class="form-control" name="piece" placeholder="CNI / passeport / matricule RH">
+                </div>
+              </div>
+            </div>
+
+            <div class="step-content" style="display:none;">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Affectation métier</div>
+                  <div class="card-subtitle">Agence, fonction, caisse et périmètre de travail</div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Agence *</label>
+                  <select class="form-control" name="agence" required>
+                    <option value="">Sélectionner une agence</option>
+                    <option>Agence Plateau</option>
+                    <option>Agence Cocody</option>
+                    <option>Agence Yopougon</option>
+                  </select>
+                  <div class="field-error">Agence obligatoire.</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Fonction *</label>
+                  <select class="form-control" name="fonction" required>
+                    <option value="">Sélectionner une fonction</option>
+                    <option>Agent commercial</option>
+                    <option>Agent guichet</option>
+                    <option>Caissier</option>
+                    <option>Agent de crédit</option>
+                    <option>Superviseur</option>
+                    <option>Compliance Officer</option>
+                    <option>Auditeur interne</option>
+                  </select>
+                  <div class="field-error">Fonction obligatoire.</div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Caisse rattachée</label>
+                  <select class="form-control" name="caisse">
+                    <option>Aucune</option>
+                    <option>Caisse C-01</option>
+                    <option>Caisse C-02</option>
+                    <option>Caisse mobile</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Limite validation</label>
+                  <div class="input-group">
+                    <input class="form-control" name="limiteValidation" type="number" placeholder="0">
+                    <span class="input-addon">FCFA</span>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Périmètre agence</label>
+                <select class="form-control" name="scope">
+                  <option>Agence uniquement</option>
+                  <option>Multi-agences</option>
+                  <option>Toutes agences</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="step-content" style="display:none;">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Accès utilisateur</div>
+                  <div class="card-subtitle">À raccorder à /api/v1/securite/utilisateurs</div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Login proposé *</label>
+                  <input class="form-control" name="login" required placeholder="m.kouassi">
+                  <div class="field-error">Login obligatoire.</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Rôle principal *</label>
+                  <select class="form-control" name="role" required>
+                    <option value="">Sélectionner un rôle</option>
+                    <option>AGENT_COMMERCIAL</option>
+                    <option>CAISSIER</option>
+                    <option>AGENT_CREDIT</option>
+                    <option>SUPERVISEUR</option>
+                    <option>COMPLIANCE</option>
+                    <option>AUDITEUR</option>
+                    <option>ADMIN</option>
+                  </select>
+                  <div class="field-error">Rôle obligatoire.</div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Mot de passe temporaire *</label>
+                  <div class="input-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <input class="form-control" name="password" type="password" required placeholder="Temp@2026!">
+                  </div>
+                  <div class="field-error">Mot de passe temporaire obligatoire.</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">2FA</label>
+                  <select class="form-control" name="secondFacteur">
+                    <option>Activer à la première connexion</option>
+                    <option>Activer immédiatement</option>
+                    <option>Désactivé temporairement</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="filter-tab active" style="display:flex;justify-content:space-between;">
+                  Forcer le changement de mot de passe à la première connexion
+                  <input type="checkbox" checked>
+                </label>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;gap:12px;margin-top:20px;">
+              <button type="button" class="btn btn-outline btn-prev-step">Précédent</button>
+              <button type="button" class="btn btn-primary btn-next-step">Suivant</button>
+              <button type="button" class="btn btn-primary" onclick="showToast('Membre du personnel prêt à être créé.', 'success')">Créer le membre</button>
+            </div>
+          </form>
+
+          <aside class="card">
+            <div class="card-title" style="margin-bottom:16px;">Règles de création</div>
+            <div class="info-row"><span class="info-label">Compte actif</span><span class="info-value">Oui</span></div>
+            <div class="info-row"><span class="info-label">2FA</span><span class="info-value">Recommandé</span></div>
+            <div class="info-row"><span class="info-label">Audit</span><span class="info-value">Création tracée</span></div>
+            <div class="info-row"><span class="info-label">Endpoint actuel</span><span class="info-value">/api/v1/securite/utilisateurs</span></div>
+            <hr style="border:0;border-top:1px solid #C9DFE8;margin:20px 0;">
+            <p class="page-subtitle">Le backend actuel expose la création d’utilisateur. Si une fiche RH/personnel dédiée est ajoutée plus tard, cette page pourra envoyer les deux blocs séparément.</p>
+          </aside>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>

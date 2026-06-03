@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suivi Crédit - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Suivi crédit</div>
+            <div class="topbar-breadcrumb">Accueil / Crédits / Suivi avancé</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Suivi avancé des crédits</h1>
+            <p class="page-subtitle">Instruction, garanties, restructuration, échéances en retard et passation.</p>
+          </div>
+          <button class="btn btn-primary" onclick="showToast('Dossier crédit ouvert.', 'info')">Ouvrir dossier</button>
+        </div>
+
+        <section class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Échéances en retard</div><div class="kpi-value">31</div><div class="kpi-trend down">8 critiques</div></div></div>
+          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Restructurations</div><div class="kpi-value">5</div><div class="kpi-trend up">En cours</div></div></div>
+          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Garanties à compléter</div><div class="kpi-value">12</div><div class="kpi-trend down">Avant décaissement</div></div></div>
+          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Passations pertes</div><div class="kpi-value">2</div><div class="kpi-trend down">Validation requise</div></div></div>
+        </section>
+
+        <section class="grid-2">
+          <div class="card">
+            <div class="card-header"><div><div class="card-title">Échéances en retard</div><div class="card-subtitle">Endpoint : /api/v1/credits/echeances-retard</div></div></div>
+            <table class="data-table">
+              <thead><tr><th>Crédit</th><th>Client</th><th>Échéance</th><th>Retard</th><th>Montant</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td>CR-2026-101</td><td>Yao Patricia</td><td>31/05/2026</td><td><span class="badge badge-danger">3 jours</span></td><td>180 000 FCFA</td><td><button class="btn btn-outline btn-sm">Relancer</button></td></tr>
+                <tr><td>CR-2026-087</td><td>Bamba Konan</td><td>28/05/2026</td><td><span class="badge badge-danger">6 jours</span></td><td>240 000 FCFA</td><td><button class="btn btn-outline btn-sm">Restructurer</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><div><div class="card-title">Actions crédit</div><div class="card-subtitle">Endpoints : /instruire, /approuver, /garanties, /restructurer, /passation</div></div></div>
+            <div class="form-group"><label class="form-label">Crédit cible</label><input class="form-control" placeholder="CR-2026-..."></div>
+            <div class="form-group"><label class="form-label">Action</label><select class="form-control"><option>Instruire</option><option>Approuver</option><option>Ajouter garantie</option><option>Restructurer</option><option>Passation en perte</option></select></div>
+            <div class="form-group"><label class="form-label">Commentaire</label><textarea class="form-control" placeholder="Motif et éléments de décision"></textarea></div>
+            <button class="btn btn-primary btn-block" onclick="showToast('Action crédit enregistrée.', 'success')">Soumettre</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header"><div><div class="card-title">Garanties à régulariser</div><div class="card-subtitle">Endpoint : /api/v1/credits/{idCredit}/garanties</div></div></div>
+          <table class="data-table">
+            <thead><tr><th>Crédit</th><th>Client</th><th>Type garantie</th><th>Valeur estimée</th><th>Document</th><th>Statut</th></tr></thead>
+            <tbody>
+              <tr><td>CR-2026-120</td><td>Diallo Moussa</td><td>Caution</td><td>1 500 000 FCFA</td><td>Manquant</td><td><span class="badge badge-warning">À compléter</span></td></tr>
+              <tr><td>CR-2026-118</td><td>Kouamé Aya</td><td>Salaire</td><td>900 000 FCFA</td><td>Reçu</td><td><span class="badge badge-active">Validée</span></td></tr>
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cartes Visa - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Cartes Visa</div>
+            <div class="topbar-breadcrumb">Accueil / Comptes & Cartes / Cartes Visa</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Gestion des cartes Visa</h1>
+            <p class="page-subtitle">Commande, liste, opposition et modification des paramètres carte.</p>
+          </div>
+          <button class="btn btn-primary" onclick="window.location.href='comptes.html'">Commander une carte</button>
+        </div>
+
+        <section class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Cartes actives</div><div class="kpi-value">684</div><div class="kpi-trend up">+22 ce mois</div></div></div>
+          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Oppositions</div><div class="kpi-value">11</div><div class="kpi-trend down">3 urgentes</div></div></div>
+          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Commandes en cours</div><div class="kpi-value">37</div><div class="kpi-trend up">Délai moyen 4j</div></div></div>
+          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Paiements jour</div><div class="kpi-value">14.8M</div><div class="kpi-trend up">FCFA</div></div></div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div><div class="card-title">Cartes enregistrées</div><div class="card-subtitle">Endpoint : /api/v1/cartes-visa</div></div>
+          </div>
+          <div class="filter-bar">
+            <input class="form-control" placeholder="Numéro masqué, titulaire, compte">
+            <select class="form-control"><option>Statut : Tous</option><option>Active</option><option>Opposée</option><option>Expirée</option></select>
+            <select class="form-control"><option>Type : Tous</option><option>Classic</option><option>Gold</option><option>Platinum</option></select>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Carte</th><th>Titulaire</th><th>Compte</th><th>Type</th><th>Expiration</th><th>Statut</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr><td>4532 **** **** 1234</td><td>Kouamé Aya</td><td>CI23CB0100...</td><td>Classic</td><td>12/2028</td><td><span class="badge badge-active">Active</span></td><td><button class="btn btn-outline btn-sm">Modifier</button></td></tr>
+              <tr><td>4532 **** **** 7788</td><td>Bamba Konan</td><td>CI23CB0100...</td><td>Gold</td><td>07/2027</td><td><span class="badge badge-danger">Opposée</span></td><td><button class="btn btn-outline btn-sm">Détail</button></td></tr>
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>

@@ -34,6 +34,8 @@
       title: 'Comptes & Cartes',
       items: [
         { href: 'comptes.html', label: 'Comptes', icon: icons.card, match: ['comptes.html'] },
+        { href: 'cartes.html', label: 'Cartes Visa', icon: icons.card, match: ['cartes.html'] },
+        { href: 'beneficiaires.html', label: 'Bénéficiaires', icon: icons.users, match: ['beneficiaires.html'] },
         { href: 'paiement-carte.html', label: 'Paiement carte', icon: icons.card, match: ['paiement-carte.html'] }
       ]
     },
@@ -44,6 +46,7 @@
         { href: 'guichet.html', label: 'Guichet', icon: icons.cash, match: ['guichet.html'] },
         { href: 'versement.html', label: 'Versement', icon: icons.transfer, match: ['versement.html'] },
         { href: 'virement.html', label: 'Virement', icon: icons.transfer, match: ['virement.html'] },
+        { href: 'mobile-money.html', label: 'Mobile Money', icon: icons.cash, match: ['mobile-money.html'] },
         { href: 'validation.html', label: 'Validation 4-eyes', icon: icons.audit, badge: '12', match: ['validation.html'] },
         { href: 'historique.html', label: 'Historique', icon: icons.audit, match: ['historique.html'] }
       ]
@@ -53,7 +56,8 @@
       items: [
         { href: 'credit-simulation.html', label: 'Simulation', icon: icons.credit, match: ['credit-simulation.html'] },
         { href: 'credit-demandes.html', label: 'Demandes', icon: icons.credit, badge: '7', match: ['credit-demandes.html'] },
-        { href: 'credit-detail.html', label: 'Dossier crédit', icon: icons.credit, match: ['credit-detail.html'] }
+        { href: 'credit-detail.html', label: 'Dossier crédit', icon: icons.credit, match: ['credit-detail.html'] },
+        { href: 'credit-suivi.html', label: 'Suivi avancé', icon: icons.credit, match: ['credit-suivi.html'] }
       ]
     },
     {
@@ -61,7 +65,11 @@
       items: [
         { href: 'produits.html', label: 'Produits', icon: icons.settings, match: ['produits.html'] },
         { href: 'agences.html', label: 'Agences', icon: icons.settings, match: ['agences.html'] },
-        { href: 'cache.html', label: 'Cache tarification', icon: icons.settings, match: ['cache.html'] }
+        { href: 'personnel-create.html', label: 'Ajouter personnel', icon: icons.users, match: ['personnel-create.html'] },
+        { href: 'utilisateurs.html', label: 'Utilisateurs', icon: icons.users, match: ['utilisateurs.html'] },
+        { href: 'parametres-systeme.html', label: 'Paramètres système', icon: icons.settings, match: ['parametres-systeme.html'] },
+        { href: 'cache.html', label: 'Cache tarification', icon: icons.settings, match: ['cache.html'] },
+        { href: 'securite.html', label: 'Sécurité & rôles', icon: icons.settings, match: ['securite.html'] }
       ]
     },
     {
@@ -70,6 +78,10 @@
         { href: 'dashboard.html', label: 'Tableau de bord', icon: icons.dashboard, match: ['dashboard.html'] },
         { href: 'direction.html', label: 'Direction', icon: icons.dashboard, match: ['direction.html'] },
         { href: 'agios.html', label: 'Agios', icon: icons.credit, match: ['agios.html'] },
+        { href: 'conformite.html', label: 'Conformité', icon: icons.audit, badge: '18', match: ['conformite.html'] },
+        { href: 'exceptions.html', label: 'Dérogations & escalades', icon: icons.audit, badge: '9', match: ['exceptions.html'] },
+        { href: 'reporting.html', label: 'Reporting', icon: icons.dashboard, match: ['reporting.html'] },
+        { href: 'notifications.html', label: 'Notifications', icon: icons.audit, badge: '3', match: ['notifications.html'] },
         { href: 'audit.html', label: "Journal d'audit", icon: icons.audit, match: ['audit.html'] }
       ]
     }
