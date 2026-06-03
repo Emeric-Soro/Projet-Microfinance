@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sécurité & Rôles - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Sécurité & Rôles</div>
+            <div class="topbar-breadcrumb">Accueil / Paramétrage / Sécurité</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Administration des accès</h1>
+            <p class="page-subtitle">Utilisateurs, rôles, permissions et sessions actives.</p>
+          </div>
+          <button class="btn btn-primary" onclick="showToast('Formulaire utilisateur prêt.', 'info')">Nouvel utilisateur</button>
+        </div>
+
+        <section class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Utilisateurs backoffice</div>
+                <div class="card-subtitle">Endpoint : /api/v1/securite/utilisateurs</div>
+              </div>
+            </div>
+            <div class="filter-bar">
+              <input class="form-control" placeholder="Recherche login, nom, email">
+              <select class="form-control">
+                <option>Rôle : Tous</option>
+                <option>Admin</option>
+                <option>Superviseur</option>
+                <option>Caissier</option>
+              </select>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Utilisateur</th>
+                  <th>Rôle</th>
+                  <th>Agence</th>
+                  <th>2FA</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>admin.principal</td>
+                  <td>ADMIN</td>
+                  <td>Toutes</td>
+                  <td><span class="badge badge-success">Actif</span></td>
+                  <td><span class="badge badge-active">Actif</span></td>
+                  <td><button class="btn btn-outline btn-sm">Modifier</button></td>
+                </tr>
+                <tr>
+                  <td>caisse.plateau01</td>
+                  <td>CAISSIER</td>
+                  <td>Plateau</td>
+                  <td><span class="badge badge-warning">À activer</span></td>
+                  <td><span class="badge badge-active">Actif</span></td>
+                  <td><button class="btn btn-outline btn-sm">Désactiver</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Rôles & permissions</div>
+                <div class="card-subtitle">Endpoints : /roles, /permissions</div>
+              </div>
+              <button class="btn btn-secondary btn-sm">Nouveau rôle</button>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Rôle</th>
+                  <th>Permissions clés</th>
+                  <th>Utilisateurs</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>SUPERVISEUR</td>
+                  <td>VALIDATE_TRANSACTION, KYC_DECIDE, ACCOUNT_BLOCK</td>
+                  <td>8</td>
+                  <td><button class="btn btn-outline btn-sm">Configurer</button></td>
+                </tr>
+                <tr>
+                  <td>COMPLIANCE</td>
+                  <td>KYC_DECIDE, AUDIT_READ, LCBFT_MANAGE</td>
+                  <td>3</td>
+                  <td><button class="btn btn-outline btn-sm">Configurer</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Sessions actives</div>
+              <div class="card-subtitle">Endpoint : /api/v1/securite/sessions</div>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="showToast('Session révoquée côté UI.', 'warning')">Révoquer sélection</button>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Login</th>
+                <th>IP</th>
+                <th>Appareil</th>
+                <th>Dernière activité</th>
+                <th>Expiration</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>admin.principal</td>
+                <td>10.0.0.14</td>
+                <td>Chrome Windows</td>
+                <td>03/06/2026 14:58</td>
+                <td>03/06/2026 15:28</td>
+                <td><button class="btn btn-outline btn-sm">Révoquer</button></td>
+              </tr>
+              <tr>
+                <td>superviseur.plateau</td>
+                <td>10.0.0.21</td>
+                <td>Edge Windows</td>
+                <td>03/06/2026 14:47</td>
+                <td>03/06/2026 15:17</td>
+                <td><button class="btn btn-outline btn-sm">Révoquer</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paiement Carte - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Paiement par Carte</div>
+            <div class="topbar-breadcrumb">Opérations / Paiement Carte</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <div style="display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start;">
+          <div class="card">
+            <div class="card-title" style="font-size: 18px; margin-bottom: 24px;">Terminal de paiement virtuel</div>
+
+            <div class="form-group">
+              <label class="form-label">Numéro de carte *</label>
+              <input type="text" class="form-control" placeholder="XXXX XXXX XXXX XXXX" id="cardNumber" maxlength="19" oninput="formatCardNumber(this)">
+            </div>
+
+            <div class="form-row-3">
+              <div class="form-group">
+                <label class="form-label">Expiration *</label>
+                <input type="text" class="form-control" placeholder="MM/AA" maxlength="5">
+              </div>
+              <div class="form-group">
+                <label class="form-label">CVV *</label>
+                <input type="password" class="form-control" placeholder="•••" maxlength="3">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nom du porteur</label>
+                <input type="text" class="form-control" placeholder="NOM PRÉNOM">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Montant *</label>
+              <div class="input-group">
+                <input type="number" class="form-control" placeholder="0" id="cardAmount" min="1">
+                <span class="input-addon">FCFA</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Référence marchand</label>
+              <input type="text" class="form-control" placeholder="Ex: REF-2026-001">
+            </div>
+
+            <button class="btn btn-primary btn-lg btn-block" onclick="processCardPayment()" style="margin-top: 16px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              Traiter le paiement
+            </button>
+          </div>
+
+          <div>
+            <div class="card" style="margin-bottom: 16px;">
+              <div class="card-title" style="margin-bottom: 16px;">Derniers paiements carte</div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #C9DFE8;">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 600;">•••• 4532</div>
+                    <div style="font-size: 11px; color: #4A7A8A;">14:20 - Achat</div>
+                  </div>
+                  <div style="font-weight: 700; color: #084355;">85 000</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #C9DFE8;">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 600;">•••• 8891</div>
+                    <div style="font-size: 11px; color: #4A7A8A;">13:55 - Retrait DAB</div>
+                  </div>
+                  <div style="font-weight: 700; color: #084355;">200 000</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0;">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 600;">•••• 1234</div>
+                    <div style="font-size: 11px; color: #4A7A8A;">13:10 - Achat</div>
+                  </div>
+                  <div style="font-weight: 700; color: #084355;">42 500</div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div style="background: rgba(140,213,250,0.1); border-radius: 8px; padding: 14px 16px; display: flex; align-items: center; gap: 10px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#084355" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <span style="font-size: 12px; color: #084355; font-weight: 500;">Les données de carte sont chiffrées et ne sont jamais stockées.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Processing -->
+  <div class="modal-overlay" id="cardProcessingModal">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-body" style="text-align: center; padding: 40px 24px;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; border: 4px solid #C9DFE8; border-top-color: #fab482; margin: 0 auto 20px; animation: spin 1s linear infinite;"></div>
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Traitement en cours...</h3>
+        <p style="color: #4A7A8A; font-size: 13px;">Vérification auprès du réseau Visa</p>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    function formatCardNumber(input) {
+      let value = input.value.replace(/\D/g, '');
+      value = value.replace(/(.{4})/g, '$1 ').trim();
+      input.value = value;
+    }
+
+    function processCardPayment() {
+      const amount = document.getElementById('cardAmount').value;
+      if (!amount || amount <= 0) { showToast('Veuillez saisir un montant valide', 'error'); return; }
+      openModal('cardProcessingModal');
+      setTimeout(() => {
+        closeModal('cardProcessingModal');
+        showToast('Paiement de ' + parseInt(amount).toLocaleString('fr-FR') + ' FCFA accepté', 'success');
+        document.getElementById('cardAmount').value = '';
+        document.getElementById('cardNumber').value = '';
+      }, 2500);
+    }
+  </script>
+</body>
+</html>
+
+
+

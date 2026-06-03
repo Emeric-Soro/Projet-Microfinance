@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dérogations & Escalades - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Dérogations & Escalades</div>
+            <div class="topbar-breadcrumb">Accueil / Pilotage & Audit / Exceptions</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Workflow des exceptions</h1>
+            <p class="page-subtitle">Dérogations, escalades et règles de traitement.</p>
+          </div>
+          <button class="btn btn-primary">Nouvelle dérogation</button>
+        </div>
+
+        <section class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Dérogations ouvertes</div><div class="kpi-value">9</div><div class="kpi-trend down">3 urgentes</div></div></div>
+          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Escalades en attente</div><div class="kpi-value">6</div><div class="kpi-trend down">2 hors délai</div></div></div>
+          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Règles actives</div><div class="kpi-value">14</div><div class="kpi-trend up">À jour</div></div></div>
+          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Temps moyen</div><div class="kpi-value">3h12</div><div class="kpi-trend up">-18%</div></div></div>
+        </section>
+
+        <section class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Dérogations</div><div class="card-subtitle">Endpoint : /api/v1/exceptions/derogations</div></div>
+            </div>
+            <table class="data-table">
+              <thead><tr><th>#</th><th>Objet</th><th>Demandeur</th><th>Montant</th><th>Statut</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td>DER-092</td><td>Dépassement plafond retrait</td><td>caisse.plateau01</td><td>6 500 000 FCFA</td><td><span class="badge badge-pending">En attente</span></td><td><button class="btn btn-outline btn-sm">Décider</button></td></tr>
+                <tr><td>DER-091</td><td>KYC complément tardif</td><td>agent.commercial02</td><td>-</td><td><span class="badge badge-info">Escaladée</span></td><td><button class="btn btn-outline btn-sm">Ouvrir</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Escalades</div><div class="card-subtitle">Endpoint : /api/v1/exceptions/escalades</div></div>
+            </div>
+            <table class="data-table">
+              <thead><tr><th>#</th><th>Niveau</th><th>Objet</th><th>Assigné à</th><th>SLA</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td>ESC-044</td><td><span class="badge badge-danger">N2</span></td><td>Suspicion fraude carte</td><td>Compliance</td><td>1h12</td><td><button class="btn btn-outline btn-sm">Traiter</button></td></tr>
+                <tr><td>ESC-043</td><td><span class="badge badge-warning">N1</span></td><td>Validation crédit seuil</td><td>Superviseur</td><td>4h30</td><td><button class="btn btn-outline btn-sm">Traiter</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header"><div><div class="card-title">Règles dérogation / escalade</div><div class="card-subtitle">Endpoint : /api/v1/exceptions/regles</div></div></div>
+          <table class="data-table">
+            <thead><tr><th>Règle</th><th>Déclencheur</th><th>Niveau</th><th>Validateur</th><th>Statut</th></tr></thead>
+            <tbody>
+              <tr><td>Retrait hors plafond</td><td>Montant > plafond journalier</td><td>N1</td><td>Superviseur agence</td><td><span class="badge badge-active">Actif</span></td></tr>
+              <tr><td>Alerte LCB/FT critique</td><td>Score risque > 80</td><td>N2</td><td>Compliance Officer</td><td><span class="badge badge-active">Actif</span></td></tr>
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>

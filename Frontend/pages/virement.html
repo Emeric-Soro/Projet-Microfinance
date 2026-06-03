@@ -1,0 +1,176 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Virement - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Virement</div>
+            <div class="topbar-breadcrumb">Opérations / Virement</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <div class="card" style="max-width: 720px; margin: 0 auto;">
+          <div class="card-title" style="font-size: 18px; margin-bottom: 24px;">Effectuer un virement</div>
+
+          <!-- BLOC SOURCE -->
+          <div style="background: #F0F6FA; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <div style="font-size: 12px; font-weight: 700; color: #084355; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Compte source</div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <input type="text" class="form-control" placeholder="Rechercher un compte..." id="sourceAccount">
+              <div id="sourceInfo" style="margin-top: 8px; display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <div style="font-weight: 700; font-size: 14px; color: #084355;">Kouamé Aya</div>
+                    <div style="font-size: 11px; color: #4A7A8A;">MFN-2024-001234-A</div>
+                  </div>
+                  <div style="font-weight: 700; color: #084355;">2 100 000 FCFA</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ARROW -->
+          <div style="text-align: center; margin: 8px 0;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#8cd5fa" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+          </div>
+
+          <!-- BLOC DESTINATION -->
+          <div style="background: #F0F6FA; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <div style="font-size: 12px; font-weight: 700; color: #084355; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Compte destination</div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <input type="text" class="form-control" placeholder="Rechercher un compte bénéficiaire..." id="destAccount">
+              <div id="destInfo" style="margin-top: 8px; display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <div style="font-weight: 700; font-size: 14px; color: #084355;">Diallo Moussa</div>
+                    <div style="font-size: 11px; color: #4A7A8A;">MFN-2023-005678-A</div>
+                  </div>
+                  <span class="badge badge-active">Actif</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MONTANT -->
+          <div class="form-group">
+            <label class="form-label">Montant *</label>
+            <div class="input-group">
+              <input type="number" class="form-control" placeholder="0" id="transferAmount" min="1">
+              <span class="input-addon">FCFA</span>
+            </div>
+          </div>
+
+          <!-- LIBELLÉ -->
+          <div class="form-group">
+            <label class="form-label">Libellé</label>
+            <input type="text" class="form-control" placeholder="Ex: Remboursement prêt">
+          </div>
+
+          <button class="btn btn-primary btn-lg btn-block" onclick="openTransferModal()" style="margin-top: 16px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            Transférer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Récapitulatif -->
+  <div class="modal-overlay" id="transferModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Récapitulatif du virement</div>
+        <button class="modal-close" onclick="closeModal('transferModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 16px;">
+            <div style="text-align: center;">
+              <div style="font-size: 12px; color: #4A7A8A;">De</div>
+              <div style="font-weight: 700; font-size: 14px;">Kouamé A.</div>
+              <div style="font-size: 11px; color: #4A7A8A;">MFN-...1234-A</div>
+            </div>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fab482" stroke-width="2"><polyline points="5 12 19 12"/><polyline points="12 5 19 12 12 19"/></svg>
+            <div style="text-align: center;">
+              <div style="font-size: 12px; color: #4A7A8A;">Vers</div>
+              <div style="font-weight: 700; font-size: 14px;">Diallo M.</div>
+              <div style="font-size: 11px; color: #4A7A8A;">MFN-...5678-A</div>
+            </div>
+          </div>
+        </div>
+        <div style="background: #F0F6FA; border-radius: 8px; padding: 16px; text-align: center; margin-bottom: 16px;">
+          <div style="font-size: 12px; color: #4A7A8A;">Montant</div>
+          <div style="font-size: 28px; font-weight: 800; color: #084355;" id="transferAmountDisplay">500 000 FCFA</div>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Frais</span>
+          <span class="info-value">0 FCFA</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Solde source après</span>
+          <span class="info-value">1 600 000 FCFA</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('transferModal')">Annuler</button>
+        <button class="btn btn-primary" onclick="confirmTransfer()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Confirmer le virement
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    document.getElementById('sourceAccount').addEventListener('input', function() {
+      document.getElementById('sourceInfo').style.display = this.value.length >= 3 ? 'block' : 'none';
+    });
+    document.getElementById('destAccount').addEventListener('input', function() {
+      document.getElementById('destInfo').style.display = this.value.length >= 3 ? 'block' : 'none';
+    });
+
+    function openTransferModal() {
+      const amount = document.getElementById('transferAmount').value;
+      if (!amount || amount <= 0) {
+        showToast('Veuillez saisir un montant valide', 'error');
+        return;
+      }
+      document.getElementById('transferAmountDisplay').textContent = parseInt(amount).toLocaleString('fr-FR') + ' FCFA';
+      openModal('transferModal');
+    }
+
+    function confirmTransfer() {
+      closeModal('transferModal');
+      showToast('Virement effectué avec succès !', 'success');
+      document.getElementById('transferAmount').value = '';
+      document.getElementById('sourceAccount').value = '';
+      document.getElementById('destAccount').value = '';
+      document.getElementById('sourceInfo').style.display = 'none';
+      document.getElementById('destInfo').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
+
+
+

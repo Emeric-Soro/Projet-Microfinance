@@ -1,0 +1,195 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Journal d'audit - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Journal d'audit</div>
+            <div class="topbar-breadcrumb">Administration / Audit</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="export-btn" onclick="exportAudit()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export pour Investigation
+          </button>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <!-- FILTERS -->
+        <div class="card" style="margin-bottom: 20px; padding: 16px 20px;">
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Agent</label>
+              <select class="form-control" style="width: 160px;">
+                <option value="">Tous les agents</option>
+                <option value="AGT-001">AGT-001 (Admin)</option>
+                <option value="AGT-002">AGT-002 (Caissier 1)</option>
+                <option value="AGT-003">AGT-003 (Caissier 2)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Date début</label>
+              <input type="date" class="form-control" style="width: 150px;">
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Date fin</label>
+              <input type="date" class="form-control" style="width: 150px;">
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Type d'action</label>
+              <select class="form-control" style="width: 130px;">
+                <option value="">Tous</option>
+                <option value="INSERT">INSERT</option>
+                <option value="UPDATE">UPDATE</option>
+                <option value="DELETE">DELETE</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Table</label>
+              <select class="form-control" style="width: 160px;">
+                <option value="">Toutes les tables</option>
+                <option value="TABLE_CLIENTS">TABLE_CLIENTS</option>
+                <option value="TABLE_COMPTES">TABLE_COMPTES</option>
+                <option value="TABLE_OPERATIONS">TABLE_OPERATIONS</option>
+                <option value="TABLE_AGENTS">TABLE_AGENTS</option>
+              </select>
+            </div>
+            <div style="align-self: flex-end;">
+              <button class="btn btn-secondary btn-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Filtrer
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- AUDIT TABLE -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="card-title">Journal des modifications</div>
+            <span style="font-size: 12px; color: #4A7A8A;">50 enregistrements max par page</span>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Horodatage</th>
+                  <th>Agent</th>
+                  <th>Action</th>
+                  <th>Table</th>
+                  <th>Enregistrement</th>
+                  <th>Diff avant</th>
+                  <th>Diff après</th>
+                  <th>Adresse IP</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="font-size: 12px; white-space: nowrap;">18/05/2026 14:32:15</td>
+                  <td style="font-size: 12px;"><span class="badge badge-info">AGT-001</span></td>
+                  <td><span style="background: rgba(46,125,50,0.12); color: #2E7D32; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">INSERT</span></td>
+                  <td style="font-size: 11px; font-family: monospace;">TABLE_OPERATIONS</td>
+                  <td style="font-size: 11px;">OPS-2026-004521</td>
+                  <td style="font-size: 11px; color: #4A7A8A;">—</td>
+                  <td style="font-size: 11px;">Versement +250K</td>
+                  <td style="font-size: 11px; font-family: monospace;">192.168.1.45</td>
+                </tr>
+                <tr>
+                  <td style="font-size: 12px; white-space: nowrap;">18/05/2026 14:18:42</td>
+                  <td style="font-size: 12px;"><span class="badge badge-info">AGT-003</span></td>
+                  <td><span style="background: rgba(217,48,37,0.12); color: #D93025; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">UPDATE</span></td>
+                  <td style="font-size: 11px; font-family: monospace;">TABLE_COMPTES</td>
+                  <td style="font-size: 11px;">MFN-...5678-A</td>
+                  <td style="font-size: 11px;">Solde: 850 000</td>
+                  <td style="font-size: 11px;">Solde: 750 000</td>
+                  <td style="font-size: 11px; font-family: monospace;">192.168.1.47</td>
+                </tr>
+                <tr>
+                  <td style="font-size: 12px; white-space: nowrap;">18/05/2026 13:55:08</td>
+                  <td style="font-size: 12px;"><span class="badge badge-info">AGT-001</span></td>
+                  <td><span style="background: rgba(217,48,37,0.12); color: #D93025; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">UPDATE</span></td>
+                  <td style="font-size: 11px; font-family: monospace;">TABLE_COMPTES</td>
+                  <td style="font-size: 11px;">MFN-...9012-A</td>
+                  <td style="font-size: 11px;">Solde: 1 200 000</td>
+                  <td style="font-size: 11px;">Solde: 700 000</td>
+                  <td style="font-size: 11px; font-family: monospace;">192.168.1.45</td>
+                </tr>
+                <tr>
+                  <td style="font-size: 12px; white-space: nowrap;">18/05/2026 12:30:00</td>
+                  <td style="font-size: 12px;"><span class="badge badge-info">AGT-001</span></td>
+                  <td><span style="background: rgba(46,125,50,0.12); color: #2E7D32; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">INSERT</span></td>
+                  <td style="font-size: 11px; font-family: monospace;">TABLE_CLIENTS</td>
+                  <td style="font-size: 11px;">CLI-2026-0249</td>
+                  <td style="font-size: 11px; color: #4A7A8A;">—</td>
+                  <td style="font-size: 11px;">Nouveau: Adjoua F.</td>
+                  <td style="font-size: 11px; font-family: monospace;">192.168.1.45</td>
+                </tr>
+                <tr>
+                  <td style="font-size: 12px; white-space: nowrap;">17/05/2026 16:45:22</td>
+                  <td style="font-size: 12px;"><span class="badge badge-info">AGT-002</span></td>
+                  <td><span style="background: rgba(250,180,130,0.2); color: #E65100; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">DELETE</span></td>
+                  <td style="font-size: 11px; font-family: monospace;">TABLE_COMPTES</td>
+                  <td style="font-size: 11px;">MFN-...XXXX-B</td>
+                  <td style="font-size: 11px;">Compte clôturé</td>
+                  <td style="font-size: 11px; color: #4A7A8A;">—</td>
+                  <td style="font-size: 11px; font-family: monospace;">192.168.1.46</td>
+                </tr>
+                <tr>
+                  <td style="font-size: 12px; white-space: nowrap;">17/05/2026 11:20:15</td>
+                  <td style="font-size: 12px;"><span class="badge badge-info">AGT-001</span></td>
+                  <td><span style="background: rgba(217,48,37,0.12); color: #D93025; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">UPDATE</span></td>
+                  <td style="font-size: 11px; font-family: monospace;">TABLE_AGENTS</td>
+                  <td style="font-size: 11px;">AGT-005</td>
+                  <td style="font-size: 11px;">Statut: Actif</td>
+                  <td style="font-size: 11px;">Statut: Suspendu</td>
+                  <td style="font-size: 11px; font-family: monospace;">192.168.1.45</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination">
+            <div class="pagination-info">Affichage 1-6 sur 1 247 entrées d'audit</div>
+            <div class="pagination-buttons">
+              <button class="page-btn">‹</button>
+              <button class="page-btn active">1</button>
+              <button class="page-btn">2</button>
+              <button class="page-btn">3</button>
+              <button class="page-btn">...</button>
+              <button class="page-btn">25</button>
+              <button class="page-btn">›</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    function exportAudit() {
+      showToast('Export CSV en cours de téléchargement...', 'success');
+    }
+  </script>
+</body>
+</html>
+
+
+

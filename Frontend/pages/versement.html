@@ -1,0 +1,199 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Versement - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Effectuer un versement</div>
+            <div class="topbar-breadcrumb">Opérations / Versement</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <div style="display: grid; grid-template-columns: 1fr 360px; gap: 24px; align-items: start;">
+          <!-- FORM -->
+          <div class="card">
+            <div class="card-title" style="font-size: 18px; margin-bottom: 24px;">Nouveau versement</div>
+            
+            <div class="form-group">
+              <label class="form-label">N° de compte *</label>
+              <input type="text" class="form-control" placeholder="Ex: MFN-2024-001234-A" id="accountNumber" oninput="lookupAccount()">
+              <div id="accountInfo" style="margin-top: 8px; display: none;">
+                <div style="background: #F0F6FA; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <div style="font-weight: 700; font-size: 14px; color: #084355;" id="accountHolder">Kouamé Aya</div>
+                    <div style="font-size: 11px; color: #4A7A8A;">Compte Courant</div>
+                  </div>
+                  <div style="text-align: right;">
+                    <div style="font-size: 11px; color: #4A7A8A;">Solde actuel</div>
+                    <div style="font-weight: 700; color: #084355;" id="accountBalance">2 100 000 FCFA</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Montant *</label>
+              <input type="number" class="amount-input-large" placeholder="0" id="amountInput" min="1" oninput="updateDailyLimit()">
+              <div style="font-size: 12px; color: #4A7A8A; margin-top: 8px; text-align: center;">
+                Plafond restant aujourd'hui : <strong style="color: #084355;" id="dailyLimit">3 500 000 FCFA</strong>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Libellé (optionnel)</label>
+              <input type="text" class="form-control" placeholder="Ex: Dépôt espèces">
+            </div>
+
+            <button class="btn btn-primary btn-lg btn-block" onclick="validateDeposit()" style="margin-top: 16px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              Valider le versement
+            </button>
+          </div>
+
+          <!-- QUICK AMOUNTS -->
+          <div>
+            <div class="card" style="margin-bottom: 16px;">
+              <div class="card-title" style="margin-bottom: 16px;">Montants rapides</div>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                <button class="btn btn-outline btn-sm" onclick="setAmount(50000)">50 000</button>
+                <button class="btn btn-outline btn-sm" onclick="setAmount(100000)">100 000</button>
+                <button class="btn btn-outline btn-sm" onclick="setAmount(200000)">200 000</button>
+                <button class="btn btn-outline btn-sm" onclick="setAmount(500000)">500 000</button>
+                <button class="btn btn-outline btn-sm" onclick="setAmount(1000000)">1 000 000</button>
+                <button class="btn btn-outline btn-sm" onclick="setAmount(2000000)">2 000 000</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title" style="margin-bottom: 16px;">Derniers versements</div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #C9DFE8;">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 600;">Kouamé A.</div>
+                    <div style="font-size: 11px; color: #4A7A8A;">15/05 - 14:32</div>
+                  </div>
+                  <div style="font-weight: 700; color: #2E7D32;">+250 000</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #C9DFE8;">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 600;">Diallo M.</div>
+                    <div style="font-size: 11px; color: #4A7A8A;">15/05 - 13:45</div>
+                  </div>
+                  <div style="font-weight: 700; color: #2E7D32;">+100 000</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0;">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 600;">Bamba K.</div>
+                    <div style="font-size: 11px; color: #4A7A8A;">15/05 - 13:42</div>
+                  </div>
+                  <div style="font-weight: 700; color: #2E7D32;">+75 000</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmation -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Confirmer le versement</div>
+        <button class="modal-close" onclick="closeModal('confirmModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="info-row">
+          <span class="info-label">Compte</span>
+          <span class="info-value" id="confirmAccount">MFN-2024-001234-A</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Titulaire</span>
+          <span class="info-value" id="confirmHolder">Kouamé Aya</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Montant</span>
+          <span class="info-value" id="confirmAmount" style="font-size: 18px; color: #084355;">250 000 FCFA</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Nouveau solde</span>
+          <span class="info-value" id="confirmNewBalance">2 350 000 FCFA</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('confirmModal')">Annuler</button>
+        <button class="btn btn-primary" onclick="confirmDeposit()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Confirmer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    function lookupAccount() {
+      const val = document.getElementById('accountNumber').value;
+      const info = document.getElementById('accountInfo');
+      if (val.length >= 5) {
+        info.style.display = 'block';
+      } else {
+        info.style.display = 'none';
+      }
+    }
+
+    function setAmount(amount) {
+      document.getElementById('amountInput').value = amount;
+      updateDailyLimit();
+    }
+
+    function updateDailyLimit() {
+      const amount = parseInt(document.getElementById('amountInput').value) || 0;
+      const remaining = Math.max(0, 3500000 - amount);
+      document.getElementById('dailyLimit').textContent = remaining.toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function validateDeposit() {
+      const amount = parseInt(document.getElementById('amountInput').value);
+      if (!amount || amount <= 0) {
+        showToast('Veuillez saisir un montant valide', 'error');
+        return;
+      }
+      document.getElementById('confirmAmount').textContent = amount.toLocaleString('fr-FR') + ' FCFA';
+      document.getElementById('confirmNewBalance').textContent = (2100000 + amount).toLocaleString('fr-FR') + ' FCFA';
+      openModal('confirmModal');
+    }
+
+    function confirmDeposit() {
+      closeModal('confirmModal');
+      showToast('Versement effectué avec succès ! Reçu en cours d\'impression...', 'success');
+      document.getElementById('amountInput').value = '';
+      document.getElementById('accountNumber').value = '';
+      document.getElementById('accountInfo').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
+
+
+

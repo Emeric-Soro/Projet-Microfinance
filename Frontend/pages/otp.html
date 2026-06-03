@@ -1,0 +1,41 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vérification OTP - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-card">
+      <img src="../assets/img/logo.png" alt="Logo MicroFinance" class="login-logo">
+      <h1 class="login-title">Vérification en deux étapes</h1>
+      <p class="login-subtitle">Un code à 6 chiffres a été envoyé à votre numéro ···456</p>
+
+      <form id="otpForm" class="login-form" novalidate>
+        <div class="otp-inputs" aria-label="Code OTP">
+          <input class="otp-input" inputmode="numeric" autocomplete="one-time-code" maxlength="1" aria-label="Chiffre 1">
+          <input class="otp-input" inputmode="numeric" maxlength="1" aria-label="Chiffre 2">
+          <input class="otp-input" inputmode="numeric" maxlength="1" aria-label="Chiffre 3">
+          <input class="otp-input" inputmode="numeric" maxlength="1" aria-label="Chiffre 4">
+          <input class="otp-input" inputmode="numeric" maxlength="1" aria-label="Chiffre 5">
+          <input class="otp-input" inputmode="numeric" maxlength="1" aria-label="Chiffre 6">
+        </div>
+
+        <p class="login-subtitle" data-otp-timer>Code valide encore 4:32</p>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block">
+          Valider
+        </button>
+      </form>
+
+      <a href="#" class="login-forgot" onclick="showToast('Nouveau code envoyé.', 'info'); return false;">Renvoyer le code</a>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paramètres système - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Paramètres système</div>
+            <div class="topbar-breadcrumb">Accueil / Paramétrage / Système</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Référentiels système</h1>
+            <p class="page-subtitle">Paramètres globaux, jours fériés et tarification générale.</p>
+          </div>
+          <button class="btn btn-primary" onclick="showToast('Paramètres sauvegardés.', 'success')">Enregistrer</button>
+        </div>
+
+        <section class="grid-2">
+          <div class="card">
+            <div class="card-header"><div><div class="card-title">Paramètres généraux</div><div class="card-subtitle">Endpoint : /api/v1/parametrages/systeme</div></div></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Devise par défaut</label><select class="form-control"><option>XOF</option><option>EUR</option></select></div>
+              <div class="form-group"><label class="form-label">Fuseau horaire</label><input class="form-control" value="Africa/Abidjan"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Durée session inactive</label><div class="input-group"><input class="form-control" value="30"><span class="input-addon">min</span></div></div>
+              <div class="form-group"><label class="form-label">Alerte avant déconnexion</label><div class="input-group"><input class="form-control" value="5"><span class="input-addon">min</span></div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><div><div class="card-title">Tarification générale</div><div class="card-subtitle">Endpoint : /api/v1/parametrages/tarification</div></div></div>
+            <table class="data-table">
+              <thead><tr><th>Paramètre</th><th>Valeur</th><th>Statut</th></tr></thead>
+              <tbody>
+                <tr><td>Frais virement interne</td><td>0 FCFA</td><td><span class="badge badge-active">Actif</span></td></tr>
+                <tr><td>Frais retrait guichet</td><td>1%</td><td><span class="badge badge-active">Actif</span></td></tr>
+                <tr><td>Seuil 4-eyes</td><td>5 000 000 FCFA</td><td><span class="badge badge-warning">À valider</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div><div class="card-title">Jours fériés</div><div class="card-subtitle">Endpoints : /api/v1/parametrages/jours-feries</div></div>
+            <button class="btn btn-secondary btn-sm">Ajouter un jour</button>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Date</th><th>Libellé</th><th>Récurrent</th><th>Impact opérations</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr><td>07/08/2026</td><td>Fête nationale</td><td>Oui</td><td>Batchs reportés</td><td><button class="btn btn-outline btn-sm">Modifier</button></td></tr>
+              <tr><td>25/12/2026</td><td>Noël</td><td>Oui</td><td>Agence fermée</td><td><button class="btn btn-outline btn-sm">Modifier</button></td></tr>
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>

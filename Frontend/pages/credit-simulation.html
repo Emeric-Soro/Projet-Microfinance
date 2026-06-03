@@ -1,0 +1,192 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulation Crédit - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Simulation & Demande de Crédit</div>
+            <div class="topbar-breadcrumb">Crédits / Simulation</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
+          <!-- LEFT: SAISIE -->
+          <div class="card">
+            <div class="card-title" style="font-size: 18px; margin-bottom: 24px;">Paramètres du crédit</div>
+
+            <div class="form-group">
+              <label class="form-label">Client *</label>
+              <input type="text" class="form-control" placeholder="Rechercher un client..." id="creditClientSearch">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Produit de crédit *</label>
+              <select class="form-control" id="creditProduct" onchange="simulateCredit()">
+                <option value="">Sélectionner un produit...</option>
+                <option value="perso">Crédit Personnel (Taux: 12%/an)</option>
+                <option value="immo">Crédit Immobilier (Taux: 8%/an)</option>
+                <option value="auto">Crédit Automobile (Taux: 10%/an)</option>
+                <option value="equip">Crédit Équipement (Taux: 14%/an)</option>
+                <option value="agri">Crédit Agricole (Taux: 9%/an)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Montant demandé *</label>
+              <div class="input-group">
+                <input type="number" class="form-control" placeholder="0" id="creditAmount" min="100000" oninput="simulateCredit()">
+                <span class="input-addon">FCFA</span>
+              </div>
+              <div style="font-size: 11px; color: #4A7A8A; margin-top: 4px;">Min: 100 000 FCFA - Max: 50 000 000 FCFA</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Durée (mois) *</label>
+              <input type="range" id="creditDuration" min="6" max="60" value="24" step="6" oninput="simulateCredit()" style="width:100%;accent-color:#084355;">
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:#4A7A8A;">
+                <span>6 mois</span>
+                <span id="durationDisplay" style="font-weight:700;color:#084355;font-size:14px;">24 mois</span>
+                <span>60 mois</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Garantie</label>
+              <select class="form-control">
+                <option value="">Sélectionner...</option>
+                <option value="salaire">Domiciliation de salaire</option>
+                <option value="hypothecaire">Hypothèque immobilière</option>
+                <option value="vehicule">Nantissement véhicule</option>
+                <option value="caution">Caution solidaire</option>
+              </select>
+            </div>
+
+            <button class="btn btn-primary btn-lg btn-block" onclick="submitCreditRequest()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Soumettre le dossier
+            </button>
+          </div>
+
+          <!-- RIGHT: SIMULATION -->
+          <div>
+            <div class="card" style="margin-bottom: 16px;">
+              <div class="card-title" style="font-size: 18px; margin-bottom: 20px;">Simulation</div>
+              
+              <div style="text-align: center; padding: 20px 0; border-bottom: 1px solid #C9DFE8; margin-bottom: 16px;">
+                <div style="font-size: 12px; color: #4A7A8A; margin-bottom: 4px;">Mensualité estimée</div>
+                <div style="font-size: 36px; font-weight: 800; color: #084355;" id="monthlyPayment">0 FCFA</div>
+              </div>
+
+              <div class="info-row">
+                <span class="info-label">Montant du crédit</span>
+                <span class="info-value" id="simAmount">0 FCFA</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Taux d'intérêt</span>
+                <span class="info-value" id="simRate">-</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Durée</span>
+                <span class="info-value" id="simDuration">24 mois</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Total intérêts</span>
+                <span class="info-value" id="simInterest" style="color: #D93025;">0 FCFA</span>
+              </div>
+              <div class="info-row" style="background: #F0F6FA; border-radius: 8px; padding: 10px 14px; margin-top: 8px;">
+                <span class="info-label" style="font-weight: 700;">Coût total du crédit</span>
+                <span class="info-value" style="font-size: 16px;" id="simTotal">0 FCFA</span>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title" style="margin-bottom: 12px;">Répartition</div>
+              <div class="chart-container" style="height: 180px;">
+                <canvas id="creditPieChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const rates = { perso: 12, immo: 8, auto: 10, equip: 14, agri: 9 };
+    let pieChart;
+
+    function simulateCredit() {
+      const product = document.getElementById('creditProduct').value;
+      const amount = parseInt(document.getElementById('creditAmount').value) || 0;
+      const duration = parseInt(document.getElementById('creditDuration').value);
+
+      document.getElementById('durationDisplay').textContent = duration + ' mois';
+
+      if (!product || amount <= 0) {
+        document.getElementById('monthlyPayment').textContent = '0 FCFA';
+        document.getElementById('simAmount').textContent = '0 FCFA';
+        document.getElementById('simRate').textContent = '-';
+        document.getElementById('simInterest').textContent = '0 FCFA';
+        document.getElementById('simTotal').textContent = '0 FCFA';
+        return;
+      }
+
+      const annualRate = rates[product] / 100;
+      const monthlyRate = annualRate / 12;
+      const monthly = amount * monthlyRate * Math.pow(1 + monthlyRate, duration) / (Math.pow(1 + monthlyRate, duration) - 1);
+      const totalPayment = monthly * duration;
+      const totalInterest = totalPayment - amount;
+
+      document.getElementById('monthlyPayment').textContent = Math.round(monthly).toLocaleString('fr-FR') + ' FCFA';
+      document.getElementById('simAmount').textContent = amount.toLocaleString('fr-FR') + ' FCFA';
+      document.getElementById('simRate').textContent = rates[product] + '%/an';
+      document.getElementById('simDuration').textContent = duration + ' mois';
+      document.getElementById('simInterest').textContent = Math.round(totalInterest).toLocaleString('fr-FR') + ' FCFA';
+      document.getElementById('simTotal').textContent = Math.round(totalPayment).toLocaleString('fr-FR') + ' FCFA';
+
+      if (pieChart) pieChart.destroy();
+      pieChart = new Chart(document.getElementById('creditPieChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Capital', 'Intérêts'],
+          datasets: [{ data: [amount, Math.round(totalInterest)], backgroundColor: ['#8cd5fa', '#fab482'], borderWidth: 0 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '60%',
+          plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } } }
+        }
+      });
+    }
+
+    function submitCreditRequest() {
+      const amount = parseInt(document.getElementById('creditAmount').value);
+      if (!amount || amount <= 0) { showToast('Veuillez remplir tous les champs', 'error'); return; }
+      showToast('Dossier de crédit soumis avec succès !', 'success');
+    }
+  </script>
+</body>
+</html>
+
+
+

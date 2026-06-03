@@ -1,0 +1,179 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agios & Prélèvements - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Agios & Prélèvements</div>
+            <div class="topbar-breadcrumb">Pilotage / Traitements de masse</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <span style="font-size: 12px; color: #4A7A8A;">Dernier traitement: 01/05/2026</span>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <div class="grid-3-equal">
+          <!-- FRAIS MENSUELS -->
+          <div class="card" style="text-align: center;">
+            <div style="width: 56px; height: 56px; border-radius: 12px; background: rgba(140,213,250,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#084355" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            </div>
+            <div class="card-title" style="font-size: 16px; margin-bottom: 8px;">Frais de tenue mensuels</div>
+            <p style="font-size: 12px; color: #4A7A8A; margin-bottom: 16px;">Prélèvement automatique des frais de tenue de compte sur tous les comptes actifs</p>
+            <div style="background: #F0F6FA; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+              <div style="font-size: 11px; color: #4A7A8A;">Comptes éligibles</div>
+              <div style="font-size: 24px; font-weight: 800; color: #084355;">1 248</div>
+            </div>
+            <div style="font-size: 12px; color: #4A7A8A; margin-bottom: 16px;">Montant estimé: <strong>6 240 000 FCFA</strong></div>
+            <button class="btn btn-primary btn-block" onclick="executeBatch('frais')" id="btnFrais">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Exécuter le prélèvement
+            </button>
+          </div>
+
+          <!-- PÉNALITÉS DÉCOUVERTS -->
+          <div class="card" style="text-align: center;">
+            <div style="width: 56px; height: 56px; border-radius: 12px; background: rgba(250,180,130,0.2); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E65100" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div class="card-title" style="font-size: 16px; margin-bottom: 8px;">Pénalités découverts</div>
+            <p style="font-size: 12px; color: #4A7A8A; margin-bottom: 16px;">Application des pénalités sur les comptes en découvert non autorisé</p>
+            <div style="background: #F0F6FA; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+              <div style="font-size: 11px; color: #4A7A8A;">Comptes éligibles</div>
+              <div style="font-size: 24px; font-weight: 800; color: #E65100;">23</div>
+            </div>
+            <div style="font-size: 12px; color: #4A7A8A; margin-bottom: 16px;">Montant estimé: <strong>345 000 FCFA</strong></div>
+            <button class="btn btn-primary btn-block" style="background: #E65100;" onclick="executeBatch('penalites')" id="btnPenalites">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Exécuter le prélèvement
+            </button>
+          </div>
+
+          <!-- AGIOS -->
+          <div class="card" style="text-align: center;">
+            <div style="width: 56px; height: 56px; border-radius: 12px; background: rgba(217,48,37,0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div class="card-title" style="font-size: 16px; margin-bottom: 8px;">Agios</div>
+            <p style="font-size: 12px; color: #4A7A8A; margin-bottom: 16px;">Calcul et prélèvement des agios sur les découverts autorisés utilisés</p>
+            <div style="background: #F0F6FA; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+              <div style="font-size: 11px; color: #4A7A8A;">Comptes éligibles</div>
+              <div style="font-size: 24px; font-weight: 800; color: #D93025;">15</div>
+            </div>
+            <div style="font-size: 12px; color: #4A7A8A; margin-bottom: 16px;">Montant estimé: <strong>892 000 FCFA</strong></div>
+            <button class="btn btn-primary btn-block" style="background: #D93025;" onclick="executeBatch('agios')" id="btnAgios">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Exécuter le prélèvement
+            </button>
+          </div>
+        </div>
+
+        <!-- LAST EXECUTION LOG -->
+        <div class="card" style="margin-top: 24px;">
+          <div class="card-header">
+            <div class="card-title">Historique des traitements</div>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Comptes traités</th>
+                <th>Montant total</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-size:12px;">01/05/2026 00:00</td>
+                <td><span class="badge badge-info">Frais mensuels</span></td>
+                <td>1 235</td>
+                <td style="font-weight:700;">6 175 000 FCFA</td>
+                <td><span class="badge badge-active">Terminé</span></td>
+              </tr>
+              <tr>
+                <td style="font-size:12px;">01/05/2026 00:05</td>
+                <td><span class="badge badge-pending">Pénalités</span></td>
+                <td>18</td>
+                <td style="font-weight:700;">270 000 FCFA</td>
+                <td><span class="badge badge-active">Terminé</span></td>
+              </tr>
+              <tr>
+                <td style="font-size:12px;">01/05/2026 00:10</td>
+                <td><span class="badge badge-blocked">Agios</span></td>
+                <td>12</td>
+                <td style="font-weight:700;">720 000 FCFA</td>
+                <td><span class="badge badge-active">Terminé</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Processing -->
+  <div class="modal-overlay" id="batchModal">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-body" style="text-align: center; padding: 40px 24px;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; border: 4px solid #C9DFE8; border-top-color: #fab482; margin: 0 auto 20px; animation: spin 1s linear infinite;"></div>
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;" id="batchTitle">Traitement en cours...</h3>
+        <p style="color: #4A7A8A; font-size: 13px;" id="batchDesc">Prélèvement des frais sur 1 248 comptes</p>
+        <div style="margin-top: 16px; background: #F0F6FA; border-radius: 8px; padding: 12px;">
+          <div style="font-size: 12px; color: #4A7A8A;">Progression</div>
+          <div style="height: 6px; background: #C9DFE8; border-radius: 3px; margin-top: 8px; overflow: hidden;">
+            <div style="height: 100%; background: #fab482; border-radius: 3px; width: 0%; transition: width 0.3s;" id="batchProgress"></div>
+          </div>
+          <div style="font-size: 12px; font-weight: 700; color: #084355; margin-top: 4px;" id="batchPercent">0%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    function executeBatch(type) {
+      const titles = { frais: 'Frais de tenue', penalites: 'Pénalités découverts', agios: 'Agios' };
+      const counts = { frais: '1 248', penalites: '23', agios: '15' };
+      document.getElementById('batchTitle').textContent = 'Traitement: ' + titles[type];
+      document.getElementById('batchDesc').textContent = 'Prélèvement sur ' + counts[type] + ' comptes';
+      openModal('batchModal');
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 15 + 5;
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(interval);
+          setTimeout(() => {
+            closeModal('batchModal');
+            showToast(titles[type] + ' prélevés avec succès', 'success');
+          }, 500);
+        }
+        document.getElementById('batchProgress').style.width = progress + '%';
+        document.getElementById('batchPercent').textContent = Math.round(progress) + '%';
+      }, 400);
+    }
+  </script>
+</body>
+</html>
+
+
+

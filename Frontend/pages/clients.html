@@ -1,0 +1,237 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clients - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar"></aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Clients</div>
+            <div class="topbar-breadcrumb">Accueil / Clients</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Rechercher un client...">
+          </div>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <!-- HEADER -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+          <div>
+            <h1 style="font-size: 24px; font-weight: 800; color: #084355;">Clients</h1>
+            <p style="font-size: 13px; color: #4A7A8A;">248 clients enregistrés</p>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <div class="export-buttons">
+              <button class="export-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                CSV
+              </button>
+              <button class="export-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                PDF
+              </button>
+            </div>
+            <a href="client-create.html" class="btn btn-primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nouveau Client
+            </a>
+          </div>
+        </div>
+
+        <!-- SEARCH BAR -->
+        <div class="card" style="margin-bottom: 20px; padding: 16px 20px;">
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <input type="text" class="form-control" placeholder="N° de compte" style="width: 180px;">
+            <input type="text" class="form-control" placeholder="Téléphone" style="width: 180px;">
+            <input type="text" class="form-control" placeholder="Pièce d'identité" style="width: 200px;">
+            <button class="btn btn-secondary btn-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Rechercher
+            </button>
+          </div>
+        </div>
+
+        <!-- FILTER TABS -->
+        <div class="filter-tabs">
+          <span class="filter-tab active">Tous (248)</span>
+          <span class="filter-tab">Actifs (210)</span>
+          <span class="filter-tab">Suspendus (28)</span>
+          <span class="filter-tab">Archivés (10)</span>
+        </div>
+
+        <!-- CLIENTS TABLE -->
+        <div class="card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nom / Prénom</th>
+                <th>Contact</th>
+                <th>Immatriculation</th>
+                <th>Comptes</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:32px;height:32px;border-radius:50%;background:#8cd5fa;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#084355;">KA</div>
+                    <div>
+                      <div style="font-weight:600;">Kouamé Aya</div>
+                      <div style="font-size:11px;color:#4A7A8A;">Née le 15/03/1990</div>
+                    </div>
+                  </div>
+                </td>
+                <td>+225 07 08 09 10 11</td>
+                <td>CI-AB-2024-001234</td>
+                <td><span class="badge badge-info">3 comptes</span></td>
+                <td><span class="badge badge-active">Actif</span></td>
+                <td>
+                  <div class="action-icons">
+                    <button class="action-icon" title="Voir" onclick="window.location.href='client-detail.html'">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <button class="action-icon" title="Modifier">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button class="action-icon" title="Historique">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:32px;height:32px;border-radius:50%;background:#fab482;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#084355;">DM</div>
+                    <div>
+                      <div style="font-weight:600;">Diallo Moussa</div>
+                      <div style="font-size:11px;color:#4A7A8A;">Né le 22/07/1985</div>
+                    </div>
+                  </div>
+                </td>
+                <td>+225 05 06 07 08 09</td>
+                <td>CI-AB-2023-005678</td>
+                <td><span class="badge badge-info">2 comptes</span></td>
+                <td><span class="badge badge-active">Actif</span></td>
+                <td>
+                  <div class="action-icons">
+                    <button class="action-icon" title="Voir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <button class="action-icon" title="Modifier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="action-icon" title="Historique"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:32px;height:32px;border-radius:50%;background:#8cd5fa;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#084355;">TS</div>
+                    <div>
+                      <div style="font-weight:600;">Traoré Sékou</div>
+                      <div style="font-size:11px;color:#4A7A8A;">Né le 08/11/1992</div>
+                    </div>
+                  </div>
+                </td>
+                <td>+225 01 02 03 04 05</td>
+                <td>CI-AB-2024-009012</td>
+                <td><span class="badge badge-info">1 compte</span></td>
+                <td><span class="badge badge-pending">En attente</span></td>
+                <td>
+                  <div class="action-icons">
+                    <button class="action-icon" title="Voir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <button class="action-icon" title="Modifier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="action-icon" title="Historique"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:32px;height:32px;border-radius:50%;background:#D93025;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;">BK</div>
+                    <div>
+                      <div style="font-weight:600;">Bamba Konan</div>
+                      <div style="font-size:11px;color:#4A7A8A;">Né le 30/01/1988</div>
+                    </div>
+                  </div>
+                </td>
+                <td>+225 07 11 22 33 44</td>
+                <td>CI-AB-2022-003456</td>
+                <td><span class="badge badge-info">4 comptes</span></td>
+                <td><span class="badge badge-blocked">Bloqué</span></td>
+                <td>
+                  <div class="action-icons">
+                    <button class="action-icon" title="Voir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <button class="action-icon" title="Modifier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="action-icon" title="Historique"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:32px;height:32px;border-radius:50%;background:#8cd5fa;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#084355;">YP</div>
+                    <div>
+                      <div style="font-weight:600;">Yao Patricia</div>
+                      <div style="font-size:11px;color:#4A7A8A;">Née le 14/06/1995</div>
+                    </div>
+                  </div>
+                </td>
+                <td>+225 05 44 55 66 77</td>
+                <td>CI-AB-2024-007890</td>
+                <td><span class="badge badge-info">2 comptes</span></td>
+                <td><span class="badge badge-active">Actif</span></td>
+                <td>
+                  <div class="action-icons">
+                    <button class="action-icon" title="Voir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <button class="action-icon" title="Modifier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="action-icon" title="Historique"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <div class="pagination">
+            <div class="pagination-info">Affichage 1-5 sur 248 clients</div>
+            <div class="pagination-buttons">
+              <button class="page-btn">‹</button>
+              <button class="page-btn active">1</button>
+              <button class="page-btn">2</button>
+              <button class="page-btn">3</button>
+              <button class="page-btn">...</button>
+              <button class="page-btn">50</button>
+              <button class="page-btn">›</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>
+
+
+
