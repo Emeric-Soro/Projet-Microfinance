@@ -1,0 +1,783 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comptes - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Gestion des Comptes</div>
+            <div class="topbar-breadcrumb">Accueil / Comptes</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <!-- TABS NAVIGATION -->
+        <div style="display: flex; gap: 6px; margin-bottom: 24px; flex-wrap: wrap;">
+          <span class="filter-tab active" onclick="showTab('open')">Ouverture</span>
+          <span class="filter-tab" onclick="showTab('consult')">Consulter</span>
+          <span class="filter-tab" onclick="showTab('block')">Blocage</span>
+          <span class="filter-tab" onclick="showTab('unblock')">Déblocage</span>
+          <span class="filter-tab" onclick="showTab('close')">Clôture</span>
+          <span class="filter-tab" onclick="showTab('overdraft')">Découvert</span>
+          <span class="filter-tab" onclick="showTab('card-order')">Commande carte</span>
+          <span class="filter-tab" onclick="showTab('card-oppose')">Opposition carte</span>
+        </div>
+
+        <!-- TAB: Ouverture de compte -->
+        <div id="tab-open">
+          <div class="card" style="max-width: 640px;">
+            <div class="card-title" style="font-size: 18px; margin-bottom: 24px;">Ouvrir un nouveau compte</div>
+            <div class="form-group">
+              <label class="form-label">Sélectionner le client *</label>
+              <div class="search-predictive">
+                <input type="text" class="form-control" placeholder="Rechercher par nom ou N° compte..." id="clientSearch">
+                <div class="search-results" id="clientResults">
+                  <div class="search-result-item"><strong>Kouamé Aya</strong> - MFN-2024-001234</div>
+                  <div class="search-result-item"><strong>Diallo Moussa</strong> - MFN-2023-005678</div>
+                  <div class="search-result-item"><strong>Traoré Sékou</strong> - MFN-2024-009012</div>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Type de compte (Gabarit) *</label>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                <label style="border: 2px solid #C9DFE8; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.3s;" class="gabarit-option">
+                  <input type="radio" name="gabarit" value="epargne" style="display:none;">
+                  <div style="font-size: 28px; margin-bottom: 8px;">💰</div>
+                  <div style="font-weight: 700; font-size: 14px; color: #084355;">Épargne</div>
+                  <div style="font-size: 11px; color: #4A7A8A;">Min: 5 000 FCFA</div>
+                </label>
+                <label style="border: 2px solid #C9DFE8; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.3s;" class="gabarit-option">
+                  <input type="radio" name="gabarit" value="courant" style="display:none;">
+                  <div style="font-size: 28px; margin-bottom: 8px;">🏦</div>
+                  <div style="font-weight: 700; font-size: 14px; color: #084355;">Courant</div>
+                  <div style="font-size: 11px; color: #4A7A8A;">Min: 10 000 FCFA</div>
+                </label>
+                <label style="border: 2px solid #C9DFE8; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.3s;" class="gabarit-option">
+                  <input type="radio" name="gabarit" value="dat" style="display:none;">
+                  <div style="font-size: 28px; margin-bottom: 8px;">📊</div>
+                  <div style="font-weight: 700; font-size: 14px; color: #084355;">DAT</div>
+                  <div style="font-size: 11px; color: #4A7A8A;">Min: 50 000 FCFA</div>
+                </label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Versement initial *</label>
+              <div class="input-group">
+                <input type="number" class="form-control" placeholder="0" id="initialDeposit" min="5000">
+                <span class="input-addon">FCFA</span>
+              </div>
+              <div style="font-size: 11px; color: #4A7A8A; margin-top: 4px;">Le montant minimum dépend du type de compte choisi.</div>
+            </div>
+            <button class="btn btn-primary btn-lg btn-block" onclick="generateContract()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Générer le contrat
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB: Consulter un compte -->
+        <div id="tab-consult" style="display: none;">
+          <div class="card" style="margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+              <div>
+                <div style="font-size: 20px; font-weight: 800; color: #084355;">MFN-2024-001234-A</div>
+                <div style="font-size: 13px; color: #4A7A8A;">Compte Courant - Kouamé Aya</div>
+              </div>
+              <span class="badge badge-active">Actif</span>
+            </div>
+          </div>
+          <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 24px;">
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <div class="kpi-label">Solde disponible</div>
+                <div class="kpi-value">2 100 000 <span style="font-size: 13px; font-weight: 600;">FCFA</span></div>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <div class="kpi-label">Solde minimal d'immobilisation</div>
+                <div class="kpi-value">10 000 <span style="font-size: 13px; font-weight: 600;">FCFA</span></div>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <div class="kpi-label">Plafond journalier</div>
+                <div class="kpi-value">5 000 000 <span style="font-size: 13px; font-weight: 600;">FCFA</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header"><div class="card-title">Évolution du solde</div></div>
+              <div class="chart-container"><canvas id="accountChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">20 derniers mouvements</div></div>
+              <table class="data-table">
+                <thead><tr><th>Date</th><th>Type</th><th>Montant</th></tr></thead>
+                <tbody>
+                  <tr><td style="font-size:11px;">15/05/2026</td><td><span class="badge badge-info">Versement</span></td><td style="color:#2E7D32;font-weight:600;">+250 000</td></tr>
+                  <tr><td style="font-size:11px;">12/05/2026</td><td><span class="badge badge-pending">Retrait</span></td><td style="color:#D93025;font-weight:600;">-100 000</td></tr>
+                  <tr><td style="font-size:11px;">08/05/2026</td><td><span class="badge badge-info">Virement reçu</span></td><td style="color:#2E7D32;font-weight:600;">+500 000</td></tr>
+                  <tr><td style="font-size:11px;">03/05/2026</td><td><span class="badge badge-info">Versement</span></td><td style="color:#2E7D32;font-weight:600;">+75 000</td></tr>
+                  <tr><td style="font-size:11px;">28/04/2026</td><td><span class="badge badge-pending">Retrait</span></td><td style="color:#D93025;font-weight:600;">-200 000</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Blocage de compte -->
+        <div id="tab-block" style="display: none;">
+          <div class="card" style="max-width: 640px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(217,48,37,0.12); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+              <div>
+                <div class="card-title" style="font-size: 18px;">Blocage de compte</div>
+                <div style="font-size: 12px; color: #4A7A8A;">Immobiliser un compte temporairement ou définitivement</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">N° de compte à bloquer *</label>
+              <input type="text" class="form-control" placeholder="Ex: MFN-2024-001234-A" id="blockAccountNumber" oninput="lookupBlockAccount()">
+              <div id="blockAccountInfo" style="margin-top: 8px; display: none;">
+                <div style="background: #F0F6FA; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <div style="font-weight: 700; font-size: 14px; color: #084355;">Kouamé Aya</div>
+                    <div style="font-size: 11px; color: #4A7A8A;">Compte Courant - Solde: 2 100 000 FCFA</div>
+                  </div>
+                  <span class="badge badge-active">Actif</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Type de blocage *</label>
+              <div style="display: flex; gap: 12px;">
+                <label style="border: 2px solid #C9DFE8; border-radius: 12px; padding: 14px 20px; cursor: pointer; flex: 1; text-align: center; transition: all 0.3s;" class="block-type-option">
+                  <input type="radio" name="blockType" value="temporaire" style="display:none;">
+                  <div style="font-size: 20px; margin-bottom: 4px;">⏸️</div>
+                  <div style="font-weight: 700; font-size: 13px; color: #084355;">Temporaire</div>
+                  <div style="font-size: 11px; color: #4A7A8A;">Déblocage possible</div>
+                </label>
+                <label style="border: 2px solid #C9DFE8; border-radius: 12px; padding: 14px 20px; cursor: pointer; flex: 1; text-align: center; transition: all 0.3s;" class="block-type-option">
+                  <input type="radio" name="blockType" value="definitif" style="display:none;">
+                  <div style="font-size: 20px; margin-bottom: 4px;">🔒</div>
+                  <div style="font-weight: 700; font-size: 13px; color: #084355;">Définitif</div>
+                  <div style="font-size: 11px; color: #4A7A8A;">Irréversible</div>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Motif du blocage *</label>
+              <select class="form-control">
+                <option value="">Sélectionner un motif...</option>
+                <option value="fraude">Suspicion de fraude</option>
+                <option value="lab">Alerte LAB/FT</option>
+                <option value="judiciaire">Réquisition judiciaire</option>
+                <option value="impaye">Impayé / Incident</option>
+                <option value="demande">Demande du client</option>
+                <option value="autre">Autre motif</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Commentaire détaillé</label>
+              <textarea class="form-control" rows="3" placeholder="Précisez les raisons du blocage..."></textarea>
+            </div>
+
+            <div style="background: rgba(217,48,37,0.08); border-radius: 8px; padding: 14px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span style="font-size: 12px; color: #D93025; font-weight: 500;">Le blocage empêchera toute opération de débit et de crédit sur ce compte.</span>
+            </div>
+
+            <button class="btn btn-danger btn-lg btn-block" onclick="confirmBlock()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Bloquer le compte
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB: Déblocage de compte -->
+        <div id="tab-unblock" style="display: none;">
+          <div class="card" style="max-width: 640px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(46,125,50,0.12); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+              </div>
+              <div>
+                <div class="card-title" style="font-size: 18px;">Déblocage de compte</div>
+                <div style="font-size: 12px; color: #4A7A8A;">Réactiver un compte précédemment bloqué</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">N° de compte à débloquer *</label>
+              <input type="text" class="form-control" placeholder="Ex: MFN-2024-001234-A" id="unblockAccountNumber" oninput="lookupUnblockAccount()">
+              <div id="unblockAccountInfo" style="margin-top: 8px; display: none;">
+                <div style="background: rgba(217,48,37,0.08); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <div style="font-weight: 700; font-size: 14px; color: #084355;">Bamba Konan</div>
+                    <div style="font-size: 11px; color: #4A7A8A;">Compte Courant - Solde: 395 000 FCFA</div>
+                  </div>
+                  <span class="badge badge-blocked">Bloqué</span>
+                </div>
+                <div style="margin-top: 8px; font-size: 12px; color: #4A7A8A;">
+                  <strong>Motif du blocage :</strong> Suspicion de fraude<br>
+                  <strong>Date de blocage :</strong> 10/05/2026<br>
+                  <strong>Agent :</strong> AGT-001
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Motif du déblocage *</label>
+              <select class="form-control">
+                <option value="">Sélectionner un motif...</option>
+                <option value="levee">Levée de suspicion</option>
+                <option value="regularisation">Régularisation effectuée</option>
+                <option value="decision">Décision judiciaire</option>
+                <option value="demande">Demande du client</option>
+                <option value="autre">Autre motif</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Commentaire</label>
+              <textarea class="form-control" rows="3" placeholder="Justification du déblocage..."></textarea>
+            </div>
+
+            <button class="btn btn-primary btn-lg btn-block" onclick="confirmUnblock()" style="background: #2E7D32;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+              Débloquer le compte
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB: Clôture de compte -->
+        <div id="tab-close" style="display: none;">
+          <div class="card" style="max-width: 640px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(250,180,130,0.2); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E65100" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </div>
+              <div>
+                <div class="card-title" style="font-size: 18px;">Clôture de compte</div>
+                <div style="font-size: 12px; color: #4A7A8A;">Fermer définitivement un compte</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">N° de compte à clôturer *</label>
+              <input type="text" class="form-control" placeholder="Ex: MFN-2024-001234-A" id="closeAccountNumber" oninput="lookupCloseAccount()">
+              <div id="closeAccountInfo" style="margin-top: 8px; display: none;">
+                <div style="background: #F0F6FA; border-radius: 8px; padding: 12px 16px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <div style="font-weight: 700; font-size: 14px; color: #084355;">Kouamé Aya</div>
+                      <div style="font-size: 11px; color: #4A7A8A;">Compte Courant</div>
+                    </div>
+                    <span class="badge badge-active">Actif</span>
+                  </div>
+                  <div style="margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+                    <div><span style="color: #4A7A8A;">Solde :</span> <strong>2 100 000 FCFA</strong></div>
+                    <div><span style="color: #4A7A8A;">Opérations en attente :</span> <strong>0</strong></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Motif de clôture *</label>
+              <select class="form-control">
+                <option value="">Sélectionner un motif...</option>
+                <option value="demande">Demande du client</option>
+                <option value="deces">Décès du titulaire</option>
+                <option value="fusion">Fusion de comptes</option>
+                <option value="inactivite">Inactivité prolongée</option>
+                <option value="autre">Autre motif</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Compte de remboursement des fonds *</label>
+              <input type="text" class="form-control" placeholder="N° du compte où virer le solde restant">
+              <div style="font-size: 11px; color: #4A7A8A; margin-top: 4px;">Le solde de 2 100 000 FCFA sera viré sur ce compte avant clôture.</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Commentaire</label>
+              <textarea class="form-control" rows="3" placeholder="Raison détaillée de la clôture..."></textarea>
+            </div>
+
+            <div style="background: rgba(250,180,130,0.15); border-radius: 8px; padding: 14px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E65100" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span style="font-size: 12px; color: #E65100; font-weight: 500;">La clôture est irréversible. Le solde sera automatiquement viré avant fermeture.</span>
+            </div>
+
+            <button class="btn btn-lg btn-block" onclick="confirmClose()" style="background: #E65100; color: #fff;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Clôturer le compte
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB: Changement découvert autorisé -->
+        <div id="tab-overdraft" style="display: none;">
+          <div class="card" style="max-width: 640px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(140,213,250,0.2); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#084355" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <div>
+                <div class="card-title" style="font-size: 18px;">Changement du découvert autorisé</div>
+                <div style="font-size: 12px; color: #4A7A8A;">Modifier le plafond de découvert d'un compte courant</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">N° de compte *</label>
+              <input type="text" class="form-control" placeholder="Ex: MFN-2024-001234-A" id="overdraftAccountNumber" oninput="lookupOverdraftAccount()">
+              <div id="overdraftAccountInfo" style="margin-top: 8px; display: none;">
+                <div style="background: #F0F6FA; border-radius: 8px; padding: 12px 16px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <div style="font-weight: 700; font-size: 14px; color: #084355;">Kouamé Aya</div>
+                      <div style="font-size: 11px; color: #4A7A8A;">Compte Courant</div>
+                    </div>
+                    <div style="text-align: right;">
+                      <div style="font-size: 11px; color: #4A7A8A;">Découvert actuel</div>
+                      <div style="font-weight: 700; color: #084355;">500 000 FCFA</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Nouveau montant du découvert *</label>
+              <div class="input-group">
+                <input type="number" class="form-control" placeholder="0" id="newOverdraft" min="0">
+                <span class="input-addon">FCFA</span>
+              </div>
+              <div style="font-size: 11px; color: #4A7A8A; margin-top: 4px;">Plafond maximum autorisé : 2 000 000 FCFA pour un compte courant standard.</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Durée de validité</label>
+              <select class="form-control">
+                <option value="illimite">Illimitée</option>
+                <option value="30">30 jours</option>
+                <option value="90">90 jours</option>
+                <option value="180">180 jours</option>
+                <option value="365">1 an</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Justification *</label>
+              <textarea class="form-control" rows="3" placeholder="Raison de la modification du découvert..."></textarea>
+            </div>
+
+            <div style="background: rgba(140,213,250,0.1); border-radius: 8px; padding: 14px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#084355" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span style="font-size: 12px; color: #084355; font-weight: 500;">Cette modification nécessite une validation du superviseur si le montant dépasse 1 000 000 FCFA.</span>
+            </div>
+
+            <button class="btn btn-primary btn-lg btn-block" onclick="confirmOverdraft()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Modifier le découvert
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB: Commande carte Visa -->
+        <div id="tab-card-order" style="display: none;">
+          <div class="card" style="max-width: 640px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(140,213,250,0.2); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#084355" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              </div>
+              <div>
+                <div class="card-title" style="font-size: 18px;">Commande de carte Visa</div>
+                <div style="font-size: 12px; color: #4A7A8A;">Commander une carte bancaire pour un client</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Client *</label>
+              <input type="text" class="form-control" placeholder="Rechercher un client..." id="cardClientSearch" oninput="lookupCardClient()">
+              <div id="cardClientInfo" style="margin-top: 8px; display: none;">
+                <div style="background: #F0F6FA; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <div style="font-weight: 700; font-size: 14px; color: #084355;">Kouamé Aya</div>
+                    <div style="font-size: 11px; color: #4A7A8A;">MFN-2024-001234</div>
+                  </div>
+                  <span class="badge badge-active">Éligible</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Compte rattaché *</label>
+              <select class="form-control">
+                <option value="">Sélectionner un compte...</option>
+                <option value="A">MFN-2024-001234-A (Courant) - 2 100 000 FCFA</option>
+                <option value="B">MFN-2024-001234-B (Épargne) - 1 800 000 FCFA</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Type de carte *</label>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                <label style="border: 2px solid #C9DFE8; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.3s;" class="card-type-option">
+                  <input type="radio" name="cardType" value="classic" style="display:none;">
+                  <div style="font-size: 11px; font-weight: 700; color: #084355; margin-bottom: 4px;">CLASSIC</div>
+                  <div style="font-size: 10px; color: #4A7A8A;">Plafond: 500K/mois</div>
+                </label>
+                <label style="border: 2px solid #C9DFE8; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.3s;" class="card-type-option">
+                  <input type="radio" name="cardType" value="gold" style="display:none;">
+                  <div style="font-size: 11px; font-weight: 700; color: #E65100; margin-bottom: 4px;">GOLD</div>
+                  <div style="font-size: 10px; color: #4A7A8A;">Plafond: 2M/mois</div>
+                </label>
+                <label style="border: 2px solid #C9DFE8; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.3s;" class="card-type-option">
+                  <input type="radio" name="cardType" value="platinum" style="display:none;">
+                  <div style="font-size: 11px; font-weight: 700; color: #4A7A8A; margin-bottom: 4px;">PLATINUM</div>
+                  <div style="font-size: 10px; color: #4A7A8A;">Plafond: 5M/mois</div>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Mode de remise *</label>
+              <select class="form-control">
+                <option value="">Sélectionner...</option>
+                <option value="agence">Retrait en agence</option>
+                <option value="domicile">Livraison à domicile</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Frais de commande</label>
+              <div style="background: #F0F6FA; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between;">
+                <span style="font-size: 13px; color: #4A7A8A;">Carte Visa Classic</span>
+                <span style="font-weight: 700; color: #084355;">5 000 FCFA</span>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-lg btn-block" onclick="confirmCardOrder()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              Commander la carte
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB: Opposition carte Visa -->
+        <div id="tab-card-oppose" style="display: none;">
+          <div class="card" style="max-width: 640px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(217,48,37,0.12); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+              </div>
+              <div>
+                <div class="card-title" style="font-size: 18px;">Opposition sur carte Visa</div>
+                <div style="font-size: 12px; color: #4A7A8A;">Bloquer immédiatement une carte bancaire</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">N° de carte *</label>
+              <input type="text" class="form-control" placeholder="Ex: 4XXX-XXXX-XXXX-1234" id="opposeCardNumber" oninput="lookupCard()">
+              <div id="opposeCardInfo" style="margin-top: 8px; display: none;">
+                <div style="background: #F0F6FA; border-radius: 8px; padding: 12px 16px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <div style="font-weight: 700; font-size: 14px; color: #084355;">Kouamé Aya</div>
+                      <div style="font-size: 11px; color: #4A7A8A; font-family: monospace;">4532 •••• •••• 1234</div>
+                    </div>
+                    <span class="badge badge-active">Active</span>
+                  </div>
+                  <div style="margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+                    <div><span style="color: #4A7A8A;">Type :</span> <strong>Visa Classic</strong></div>
+                    <div><span style="color: #4A7A8A;">Expiration :</span> <strong>12/2028</strong></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Motif de l'opposition *</label>
+              <select class="form-control">
+                <option value="">Sélectionner un motif...</option>
+                <option value="perte">Perte de la carte</option>
+                <option value="vol">Vol de la carte</option>
+                <option value="fraude">Utilisation frauduleuse</option>
+                <option value="compromise">Carte compromise</option>
+                <option value="autre">Autre motif</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Date et lieu du dernier usage connu</label>
+              <div class="form-row">
+                <input type="date" class="form-control">
+                <input type="text" class="form-control" placeholder="Ex: DAB Agence Plateau">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Commentaire</label>
+              <textarea class="form-control" rows="3" placeholder="Détails sur les circonstances..."></textarea>
+            </div>
+
+            <div style="background: rgba(217,48,37,0.08); border-radius: 8px; padding: 14px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span style="font-size: 12px; color: #D93025; font-weight: 500;">L'opposition est immédiate et irréversible. Une nouvelle carte devra être commandée.</span>
+            </div>
+
+            <button class="btn btn-danger btn-lg btn-block" onclick="confirmCardOppose()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+              Faire opposition
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Contrat généré -->
+  <div class="modal-overlay" id="contractModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Contrat généré</div>
+        <button class="modal-close" onclick="closeModal('contractModal')">✕</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(46,125,50,0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Compte créé avec succès</h3>
+        <p style="color: #4A7A8A; font-size: 13px; margin-bottom: 16px;">Le contrat a été généré et est prêt à être signé.</p>
+        <div style="background: #F0F6FA; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+          <div style="font-size: 20px; font-weight: 800; color: #084355;">MFN-2024-001234-D</div>
+          <div style="font-size: 12px; color: #4A7A8A;">Compte Épargne</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('contractModal')">Fermer</button>
+        <button class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Télécharger le contrat
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmation blocage -->
+  <div class="modal-overlay" id="blockModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Confirmer le blocage</div>
+        <button class="modal-close" onclick="closeModal('blockModal')">✕</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(217,48,37,0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Bloquer ce compte ?</h3>
+        <p style="color: #4A7A8A; font-size: 13px;">MFN-2024-001234-A - Kouamé Aya</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('blockModal')">Annuler</button>
+        <button class="btn btn-danger" onclick="executeBlock()">Confirmer le blocage</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmation déblocage -->
+  <div class="modal-overlay" id="unblockModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Confirmer le déblocage</div>
+        <button class="modal-close" onclick="closeModal('unblockModal')">✕</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(46,125,50,0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Débloquer ce compte ?</h3>
+        <p style="color: #4A7A8A; font-size: 13px;">MFN-2024-003456-A - Bamba Konan</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('unblockModal')">Annuler</button>
+        <button class="btn btn-primary" style="background: #2E7D32;" onclick="executeUnblock()">Confirmer le déblocage</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmation clôture -->
+  <div class="modal-overlay" id="closeModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Confirmer la clôture</div>
+        <button class="modal-close" onclick="closeModal('closeModal')">✕</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(250,180,130,0.2); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#E65100" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Clôturer ce compte ?</h3>
+        <p style="color: #4A7A8A; font-size: 13px;">Le solde de 2 100 000 FCFA sera viré avant clôture.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('closeModal')">Annuler</button>
+        <button class="btn btn-primary" style="background: #E65100;" onclick="executeClose()">Confirmer la clôture</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmation carte -->
+  <div class="modal-overlay" id="cardModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="cardModalTitle">Confirmation</div>
+        <button class="modal-close" onclick="closeModal('cardModal')">✕</button>
+      </div>
+      <div class="modal-body" style="text-align: center;" id="cardModalBody"></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('cardModal')">Annuler</button>
+        <button class="btn btn-primary" id="cardModalConfirm">Confirmer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    const tabs = ['open', 'consult', 'block', 'unblock', 'close', 'overdraft', 'card-order', 'card-oppose'];
+
+    function showTab(tab) {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      tabs.forEach(t => {
+        const el = document.getElementById('tab-' + t);
+        if (el) el.style.display = t === tab ? 'block' : 'none';
+      });
+    }
+
+    function generateContract() { openModal('contractModal'); }
+
+    document.querySelectorAll('.gabarit-option').forEach(option => {
+      option.addEventListener('click', function() {
+        document.querySelectorAll('.gabarit-option').forEach(o => { o.style.borderColor = '#C9DFE8'; o.style.background = 'transparent'; });
+        this.style.borderColor = '#8cd5fa';
+        this.style.background = 'rgba(140, 213, 250, 0.08)';
+        this.querySelector('input').checked = true;
+      });
+    });
+
+    document.querySelectorAll('.block-type-option').forEach(option => {
+      option.addEventListener('click', function() {
+        document.querySelectorAll('.block-type-option').forEach(o => { o.style.borderColor = '#C9DFE8'; o.style.background = 'transparent'; });
+        this.style.borderColor = '#D93025';
+        this.style.background = 'rgba(217,48,37,0.08)';
+        this.querySelector('input').checked = true;
+      });
+    });
+
+    document.querySelectorAll('.card-type-option').forEach(option => {
+      option.addEventListener('click', function() {
+        document.querySelectorAll('.card-type-option').forEach(o => { o.style.borderColor = '#C9DFE8'; o.style.background = 'transparent'; });
+        this.style.borderColor = '#084355';
+        this.style.background = 'rgba(8,67,85,0.08)';
+        this.querySelector('input').checked = true;
+      });
+    });
+
+    function lookupBlockAccount() {
+      document.getElementById('blockAccountInfo').style.display = document.getElementById('blockAccountNumber').value.length >= 5 ? 'block' : 'none';
+    }
+    function lookupUnblockAccount() {
+      document.getElementById('unblockAccountInfo').style.display = document.getElementById('unblockAccountNumber').value.length >= 5 ? 'block' : 'none';
+    }
+    function lookupCloseAccount() {
+      document.getElementById('closeAccountInfo').style.display = document.getElementById('closeAccountNumber').value.length >= 5 ? 'block' : 'none';
+    }
+    function lookupOverdraftAccount() {
+      document.getElementById('overdraftAccountInfo').style.display = document.getElementById('overdraftAccountNumber').value.length >= 5 ? 'block' : 'none';
+    }
+    function lookupCardClient() {
+      document.getElementById('cardClientInfo').style.display = document.getElementById('cardClientSearch').value.length >= 2 ? 'block' : 'none';
+    }
+    function lookupCard() {
+      document.getElementById('opposeCardInfo').style.display = document.getElementById('opposeCardNumber').value.length >= 4 ? 'block' : 'none';
+    }
+
+    function confirmBlock() { openModal('blockModal'); }
+    function executeBlock() { closeModal('blockModal'); showToast('Compte bloqué avec succès', 'success'); }
+    function confirmUnblock() { openModal('unblockModal'); }
+    function executeUnblock() { closeModal('unblockModal'); showToast('Compte débloqué avec succès', 'success'); }
+    function confirmClose() { openModal('closeModal'); }
+    function executeClose() { closeModal('closeModal'); showToast('Compte clôturé avec succès', 'success'); }
+    function confirmOverdraft() { showToast('Découvert modifié avec succès', 'success'); }
+
+    function confirmCardOrder() {
+      document.getElementById('cardModalTitle').textContent = 'Confirmer la commande';
+      document.getElementById('cardModalBody').innerHTML = '<div style="width:64px;height:64px;border-radius:50%;background:rgba(140,213,250,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#084355" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">Commander cette carte ?</h3><p style="color:#4A7A8A;font-size:13px;">Visa Classic - Kouamé Aya<br>Frais: 5 000 FCFA</p>';
+      document.getElementById('cardModalConfirm').onclick = function() { closeModal('cardModal'); showToast('Carte commandée avec succès', 'success'); };
+      openModal('cardModal');
+    }
+
+    function confirmCardOppose() {
+      document.getElementById('cardModalTitle').textContent = 'Confirmer l\'opposition';
+      document.getElementById('cardModalBody').innerHTML = '<div style="width:64px;height:64px;border-radius:50%;background:rgba(217,48,37,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div><h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">Faire opposition sur cette carte ?</h3><p style="color:#4A7A8A;font-size:13px;">4532 •••• •••• 1234 - Kouamé Aya<br>L\'opposition est immédiate et irréversible.</p>';
+      document.getElementById('cardModalConfirm').onclick = function() { closeModal('cardModal'); showToast('Opposition effectuée avec succès', 'success'); };
+      openModal('cardModal');
+    }
+
+    const actx = document.getElementById('accountChart');
+    if (actx) {
+      new Chart(actx.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: ['01/05', '05/05', '10/05', '15/05', '18/05'],
+          datasets: [{ label: 'Solde', data: [1800000, 1875000, 2175000, 2075000, 2100000], borderColor: '#084355', backgroundColor: 'rgba(8,67,85,0.08)', tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#084355' }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 11 }, callback: v => (v/1000000).toFixed(1) + 'M' } }, x: { grid: { display: false }, ticks: { font: { size: 11 } } } } }
+      });
+    }
+
+    const clientSearch = document.getElementById('clientSearch');
+    const clientResults = document.getElementById('clientResults');
+    if (clientSearch && clientResults) {
+      clientSearch.addEventListener('input', function() { clientResults.classList.toggle('show', this.value.length >= 2); });
+      document.addEventListener('click', function(e) { if (!clientSearch.contains(e.target) && !clientResults.contains(e.target)) clientResults.classList.remove('show'); });
+    }
+  </script>
+</body>
+</html>
+
+
+

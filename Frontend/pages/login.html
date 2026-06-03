@@ -1,0 +1,71 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-card">
+      <img src="../assets/img/logo.png" alt="Logo MicroFinance" class="login-logo">
+      <h1 class="login-title">Connexion Backoffice</h1>
+      <p class="login-subtitle">Accès réservé au personnel autorisé</p>
+      
+      <form class="login-form" id="loginForm" novalidate>
+        <div class="form-group">
+          <label class="form-label">Identifiant</label>
+          <div class="input-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" class="form-control" placeholder="Votre identifiant" id="loginId" required>
+          </div>
+          <div class="field-error">Identifiant obligatoire.</div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <div class="input-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" class="form-control" placeholder="Votre mot de passe" id="loginPassword" required>
+          </div>
+          <div class="field-error">Mot de passe obligatoire.</div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-lg btn-block" style="margin-top: 8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          Se connecter
+        </button>
+      </form>
+      
+      <a href="#" class="login-forgot">Mot de passe oublié ?</a>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+
+  <script src="../assets/js/app.js"></script>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const id = document.getElementById('loginId').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      if (id === 'admin' && password === 'admin') {
+        showToast('Connexion réussie. Vérification OTP requise.', 'success');
+        setTimeout(() => { window.location.href = 'otp.html'; }, 700);
+      } else {
+        document.getElementById('loginId').classList.toggle('is-invalid', !id);
+        document.getElementById('loginPassword').classList.toggle('is-invalid', !password);
+        document.querySelectorAll('.login-form .field-error').forEach((message) => {
+          const input = message.closest('.form-group').querySelector('.form-control');
+          message.classList.toggle('is-visible', !input.value.trim());
+        });
+        showToast(id && password ? 'Identifiants incorrects' : 'Veuillez compléter les champs obligatoires.', 'error');
+      }
+    });
+  </script>
+</body>
+</html>
+
+

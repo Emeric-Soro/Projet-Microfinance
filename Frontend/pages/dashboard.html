@@ -1,0 +1,315 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de bord - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar"></aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Tableau de bord</div>
+            <div class="topbar-breadcrumb">Accueil / Vue d'ensemble</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Rechercher...">
+          </div>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- CONTENT AREA -->
+      <div class="content-area">
+        <!-- KPI CARDS -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Clients actifs</div>
+              <div class="kpi-value">1 248</div>
+              <div class="kpi-trend up">+12% ce mois</div>
+            </div>
+          </div>
+          
+          <div class="kpi-card">
+            <div class="kpi-icon orange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Trésor de dépôt</div>
+              <div class="kpi-value">847M FCFA</div>
+              <div class="kpi-trend up">+8.3% ce mois</div>
+            </div>
+          </div>
+          
+          <div class="kpi-card">
+            <div class="kpi-icon green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Fonds de crédits</div>
+              <div class="kpi-value">523M FCFA</div>
+              <div class="kpi-trend up">+5.7% ce mois</div>
+            </div>
+          </div>
+          
+          <div class="kpi-card">
+            <div class="kpi-icon blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Taux de remboursement</div>
+              <div class="kpi-value">94.2%</div>
+              <div class="kpi-trend up">+1.2% ce mois</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHARTS ROW -->
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Activité (30 derniers jours)</div>
+                <div class="card-subtitle">Versements vs Retraits</div>
+              </div>
+              <div class="filter-tabs">
+                <span class="filter-tab active">30 jours</span>
+                <span class="filter-tab">90 jours</span>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="activityChart"></canvas>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Répartition des comptes</div>
+                <div class="card-subtitle">Par typologie</div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="accountsChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTTOM ROW -->
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Opérations récentes</div>
+              <a href="historique.html" class="btn btn-ghost btn-sm">Voir tout →</a>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Action</th>
+                  <th>Montant</th>
+                  <th>Client</th>
+                  <th>Heure</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="badge badge-info">Versement</span></td>
+                  <td><strong>250 000 FCFA</strong></td>
+                  <td>Kouamé A.</td>
+                  <td>14:32</td>
+                  <td><span class="badge badge-active">Confirmé</span></td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-pending">Retrait</span></td>
+                  <td><strong>100 000 FCFA</strong></td>
+                  <td>Diallo M.</td>
+                  <td>14:18</td>
+                  <td><span class="badge badge-active">Confirmé</span></td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-info">Virement</span></td>
+                  <td><strong>500 000 FCFA</strong></td>
+                  <td>Traoré S.</td>
+                  <td>13:55</td>
+                  <td><span class="badge badge-pending">En cours</span></td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-info">Versement</span></td>
+                  <td><strong>75 000 FCFA</strong></td>
+                  <td>Bamba K.</td>
+                  <td>13:42</td>
+                  <td><span class="badge badge-active">Confirmé</span></td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-pending">Retrait</span></td>
+                  <td><strong>1 200 000 FCFA</strong></td>
+                  <td>Yao P.</td>
+                  <td>13:20</td>
+                  <td><span class="badge badge-blocked">Bloqué</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Alertes & Ratios</div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+              <div style="font-size: 12px; font-weight: 700; color: #084355; margin-bottom: 10px;">Vigie LAB</div>
+              <ul class="alert-list">
+                <li class="alert-item">
+                  <span class="alert-dot"></span>
+                  <span class="alert-text">Compte MFN-2024-0847 immobilisé</span>
+                  <span class="alert-time">Il y a 2h</span>
+                </li>
+                <li class="alert-item">
+                  <span class="alert-dot"></span>
+                  <span class="alert-text">Transaction suspecte > 5M FCFA</span>
+                  <span class="alert-time">Il y a 5h</span>
+                </li>
+                <li class="alert-item">
+                  <span class="alert-dot"></span>
+                  <span class="alert-text">Pièce d'identité expirée - Client #1204</span>
+                  <span class="alert-time">Hier</span>
+                </li>
+              </ul>
+            </div>
+            
+            <div>
+              <div style="font-size: 12px; font-weight: 700; color: #084355; margin-bottom: 16px;">Ratios Prudentiels BCEAO</div>
+              <div class="gauge-row">
+                <div class="gauge-item">
+                  <div class="gauge-circle" style="--rotation: 270deg;">
+                    <span class="gauge-percent">85%</span>
+                  </div>
+                  <div class="gauge-name">Liquidité</div>
+                </div>
+                <div class="gauge-item">
+                  <div class="gauge-circle" style="--rotation: 200deg;">
+                    <span class="gauge-percent">72%</span>
+                  </div>
+                  <div class="gauge-name">Solvabilité</div>
+                </div>
+                <div class="gauge-item">
+                  <div class="gauge-circle" style="--rotation: 310deg;">
+                    <span class="gauge-percent">91%</span>
+                  </div>
+                  <div class="gauge-name">Transformation</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+
+  <script src="../assets/js/app.js"></script>
+  <script>
+    // Activity Chart
+    const activityCtx = document.getElementById('activityChart').getContext('2d');
+    new Chart(activityCtx, {
+      type: 'line',
+      data: {
+        labels: ['1 Mai', '5 Mai', '10 Mai', '15 Mai', '20 Mai', '25 Mai', '30 Mai'],
+        datasets: [{
+          label: 'Versements',
+          data: [120, 190, 170, 250, 220, 300, 280],
+          borderColor: '#8cd5fa',
+          backgroundColor: 'rgba(140, 213, 250, 0.1)',
+          tension: 0.4,
+          fill: true,
+          pointRadius: 4,
+          pointBackgroundColor: '#8cd5fa'
+        }, {
+          label: 'Retraits',
+          data: [80, 120, 100, 150, 130, 180, 160],
+          borderColor: '#fab482',
+          backgroundColor: 'rgba(250, 180, 130, 0.1)',
+          tension: 0.4,
+          fill: true,
+          pointRadius: 4,
+          pointBackgroundColor: '#fab482'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: { usePointStyle: true, padding: 20, font: { size: 12 } }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            ticks: { font: { size: 11 } }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { size: 11 } }
+          }
+        }
+      }
+    });
+
+    // Accounts Distribution Chart
+    const accountsCtx = document.getElementById('accountsChart').getContext('2d');
+    new Chart(accountsCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Compte Courant', 'Épargne', 'DAT'],
+        datasets: [{
+          data: [45, 35, 20],
+          backgroundColor: ['#8cd5fa', '#fab482', '#084355'],
+          borderWidth: 0,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { usePointStyle: true, padding: 16, font: { size: 12 } }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
+
+
+

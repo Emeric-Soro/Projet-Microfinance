@@ -1,0 +1,93 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cache Tarification - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Cache Tarification</div>
+            <div class="topbar-breadcrumb">Paramétrage / Système</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <div class="card" style="max-width: 640px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 32px;">
+            <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(140,213,250,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#084355" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            </div>
+            <h2 style="font-size: 22px; font-weight: 800; color: #084355;">Gestion du cache tarification</h2>
+            <p style="font-size: 13px; color: #4A7A8A; margin-top: 4px;">Appliquer immédiatement les nouveaux taux en production sans redémarrer le serveur</p>
+          </div>
+
+          <div style="background: #F0F6FA; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div>
+                <div style="font-size: 11px; color: #4A7A8A; text-transform: uppercase; letter-spacing: 0.5px;">Dernier rafraîchissement</div>
+                <div style="font-size: 16px; font-weight: 700; color: #084355; margin-top: 4px;">18/05/2026 08:00</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: #4A7A8A; text-transform: uppercase; letter-spacing: 0.5px;">Statut du cache</div>
+                <div style="margin-top: 4px;"><span class="badge badge-active">Actif</span></div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: #4A7A8A; text-transform: uppercase; letter-spacing: 0.5px;">Produits en cache</div>
+                <div style="font-size: 16px; font-weight: 700; color: #084355; margin-top: 4px;">8</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: #4A7A8A; text-transform: uppercase; letter-spacing: 0.5px;">Modifications en attente</div>
+                <div style="font-size: 16px; font-weight: 700; color: #fab482; margin-top: 4px;">2</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="background: rgba(250,180,130,0.1); border-radius: 8px; padding: 14px 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E65100" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span style="font-size: 12px; color: #E65100; font-weight: 500;">Le rafraîchissement du cache appliquera les 2 modifications de tarification en attente sur l'ensemble des agences.</span>
+          </div>
+
+          <button class="btn btn-primary btn-lg btn-block" onclick="refreshCache()" id="refreshBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Purger et rafraîchir le cache
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    function refreshCache() {
+      const btn = document.getElementById('refreshBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<div style="width:20px;height:20px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;"></div> Rafraîchissement en cours...';
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Purger et rafraîchir le cache';
+        showToast('Cache tarification rafraîchi avec succès', 'success');
+      }, 3000);
+    }
+  </script>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+</body>
+</html>
+
+
+
