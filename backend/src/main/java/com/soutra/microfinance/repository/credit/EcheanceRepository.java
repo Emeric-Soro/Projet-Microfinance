@@ -2,8 +2,11 @@ package com.soutra.microfinance.repository.credit;
 
 import com.soutra.microfinance.entity.Echeance;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -21,4 +24,14 @@ public interface EcheanceRepository extends JpaRepository<Echeance, Long> {
 
 	// Compte le nombre d'echeances impayees d'un credit.
 	long countByCredit_IdCreditAndEstPayeeFalse(Long idCredit);
+
+	// --- Aggregation queries for PAR reporting ---
+
+	@Query("SELECT COALESCE(SUM(e.montantTotal - e.montantPaye), 0) FROM Echeance e " +
+	       "WHERE e.estPayee = false AND e.dateEcheance < :dateSeuil")
+	BigDecimal sumImpayesBeforeDate(@Param("dateSeuil") LocalDate dateSeuil);
+
+	@Query("SELECT COALESCE(SUM(e.montantCapital), 0) FROM Echeance e " +
+	       "WHERE e.estPayee = false AND e.dateEcheance < :dateSeuil")
+	BigDecimal sumCapitalImpayesBeforeDate(@Param("dateSeuil") LocalDate dateSeuil);
 }

@@ -4,9 +4,11 @@ import com.soutra.microfinance.entity.Client;
 import com.soutra.microfinance.entity.TypeCanal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
+@ConditionalOnProperty(name = "app.sms.delivery-mode", havingValue = "logging", matchIfMissing = true)
 public class LoggingSmsNotificationDeliveryGateway implements NotificationDeliveryGateway {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LoggingSmsNotificationDeliveryGateway.class);

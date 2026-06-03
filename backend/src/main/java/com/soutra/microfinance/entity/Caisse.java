@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -53,6 +54,10 @@ public class Caisse extends BaseAuditEntity {
 
     @Column(name = "ecart_fermeture", precision = 19, scale = 2)
     private BigDecimal ecartFermeture;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Integer version = 0;
 
     public enum StatutCaisse {
         OUVERTE, FERMEE

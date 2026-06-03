@@ -19,11 +19,18 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
+    private static final String CLAIM_TOKEN_TYPE = "token_type";
+    private static final String TOKEN_TYPE_ACCESS = "access";
+    private static final String TOKEN_TYPE_REFRESH = "refresh";
+
     @Value("${application.security.jwt.secret-key}")
     private String secretKey;
 
     @Value("${application.security.jwt.expiration}")
     private long jwtExpiration;
+
+    @Value("${application.security.jwt.refresh-expiration}")
+    private long refreshExpiration;
 
     // 1. Extraire le nom d'utilisateur (Login) du Token
     public String extractUsername(String token) {
@@ -34,13 +41,29 @@ public class JwtService {
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("jti", UUID.randomUUID().toString());
+        extraClaims.put(CLAIM_TOKEN_TYPE, TOKEN_TYPE_ACCESS);
         return buildToken(extraClaims, userDetails, jwtExpiration);
+    }
+
+    public String generateRefreshToken(UserDetails userDetails) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("jti", UUID.randomUUID().toString());
+        extraClaims.put(CLAIM_TOKEN_TYPE, TOKEN_TYPE_REFRESH);
+        return buildToken(extraClaims, userDetails, refreshExpiration);
     }
 
     // 3. Vérifier si le badge appartient bien à cet utilisateur et n'est pas périmé
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+    }
+
+    public boolean isAccessToken(String token) {
+        return TOKEN_TYPE_ACCESS.equals(extractTokenType(token));
+    }
+
+    public boolean isRefreshToken(String token) {
+        return TOKEN_TYPE_REFRESH.equals(extractTokenType(token));
     }
 
     public String extractJti(String token) {
@@ -53,6 +76,10 @@ public class JwtService {
 
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
+    }
+
+    private String extractTokenType(String token) {
+        return extractClaim(token, claims -> claims.get(CLAIM_TOKEN_TYPE, String.class));
     }
 
     // --- Méthodes privées de cuisine interne (Cryptographie) ---

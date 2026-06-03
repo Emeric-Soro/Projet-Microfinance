@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "ecriture_comptable")
+@Table(name = "soutra_ecriture_comptable")
 // Ligne d'ecriture comptable : mouvement debit ou credit sur un compte du grand livre.
 public class EcritureComptable extends BaseAuditEntity {
 

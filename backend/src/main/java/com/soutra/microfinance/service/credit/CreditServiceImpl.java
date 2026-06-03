@@ -1,13 +1,17 @@
 package com.soutra.microfinance.service.credit;
 
 import com.soutra.microfinance.constant.AppConstants;
+import com.soutra.microfinance.dto.request.credit.GarantieRequestDTO;
 import com.soutra.microfinance.entity.*;
+import com.soutra.microfinance.api.exception.CreditNotFoundException;
 import com.soutra.microfinance.repository.client.ClientRepository;
 import com.soutra.microfinance.repository.client.UtilisateurRepository;
 import com.soutra.microfinance.repository.compte.CompteRepository;
 import com.soutra.microfinance.repository.credit.*;
 import com.soutra.microfinance.service.operation.TransactionService;
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,6 +28,8 @@ import java.util.concurrent.ThreadLocalRandom;
 @Service
 public class CreditServiceImpl implements CreditService {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(CreditServiceImpl.class);
+
 	private final DemandeCreditRepository demandeCreditRepository;
 	private final CreditRepository creditRepository;
 	private final EcheanceRepository echeanceRepository;
@@ -32,6 +38,7 @@ public class CreditServiceImpl implements CreditService {
 	private final ClientRepository clientRepository;
 	private final UtilisateurRepository utilisateurRepository;
 	private final CompteRepository compteRepository;
+	private final GarantieRepository garantieRepository;
 	private final AmortissementService amortissementService;
 	private final TransactionService transactionService;
 
@@ -44,6 +51,7 @@ public class CreditServiceImpl implements CreditService {
 			ClientRepository clientRepository,
 			UtilisateurRepository utilisateurRepository,
 			CompteRepository compteRepository,
+			GarantieRepository garantieRepository,
 			AmortissementService amortissementService,
 			TransactionService transactionService
 	) {
@@ -55,6 +63,7 @@ public class CreditServiceImpl implements CreditService {
 		this.clientRepository = clientRepository;
 		this.utilisateurRepository = utilisateurRepository;
 		this.compteRepository = compteRepository;
+		this.garantieRepository = garantieRepository;
 		this.amortissementService = amortissementService;
 		this.transactionService = transactionService;
 	}
@@ -108,7 +117,9 @@ public class CreditServiceImpl implements CreditService {
 			demande.setAgentCredit(agent);
 		}
 
-		return demandeCreditRepository.save(demande);
+		DemandeCredit saved = demandeCreditRepository.save(demande);
+		LOGGER.info("Demande de credit {} soumise pour le client {}", saved.getReferenceDemande(), idClient);
+		return saved;
 	}
 
 	@Override
@@ -154,7 +165,9 @@ public class CreditServiceImpl implements CreditService {
 			credit.setFraisDossier(BigDecimal.ZERO);
 		}
 
-		return creditRepository.save(credit);
+		Credit saved = creditRepository.save(credit);
+		LOGGER.info("Demande {} approuvee, credit {} cree", demande.getReferenceDemande(), saved.getReferenceCredit());
+		return saved;
 	}
 
 	@Override
@@ -313,7 +326,7 @@ public class CreditServiceImpl implements CreditService {
 	@Transactional(readOnly = true)
 	public List<Echeance> consulterTableauAmortissement(Long idCredit) {
 		if (!creditRepository.existsById(idCredit)) {
-			throw new EntityNotFoundException("Credit introuvable: " + idCredit);
+			throw new CreditNotFoundException(idCredit);
 		}
 		return echeanceRepository.findByCredit_IdCreditOrderByNumeroEcheanceAsc(idCredit);
 	}
@@ -331,7 +344,7 @@ public class CreditServiceImpl implements CreditService {
 	@Transactional(readOnly = true)
 	public Credit consulterCredit(Long idCredit) {
 		return creditRepository.findById(idCredit)
-				.orElseThrow(() -> new EntityNotFoundException("Credit introuvable: " + idCredit));
+				.orElseThrow(() -> new CreditNotFoundException(idCredit));
 	}
 
 	@Override
@@ -345,6 +358,125 @@ public class CreditServiceImpl implements CreditService {
 	public DemandeCredit consulterDemande(Long idDemande) {
 		return demandeCreditRepository.findById(idDemande)
 				.orElseThrow(() -> new EntityNotFoundException("Demande introuvable: " + idDemande));
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<DemandeCredit> consulterDemandesClient(Long idClient, Pageable pageable) {
+		if (!clientRepository.existsById(idClient)) {
+			throw new EntityNotFoundException("Client introuvable: " + idClient);
+		}
+		return demandeCreditRepository.findByClient_IdClient(idClient, pageable);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<Credit> consulterTousLesCredits(Pageable pageable) {
+		return creditRepository.findAll(pageable);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<Credit> consulterCreditsParStatut(String codeStatut, Pageable pageable) {
+		return creditRepository.findByStatutCredit_CodeStatut(codeStatut, pageable);
+	}
+
+	@Override
+	@Transactional
+	public Credit instruireCredit(Long idCredit) {
+		Credit credit = creditRepository.findById(idCredit)
+				.orElseThrow(() -> new CreditNotFoundException(idCredit));
+
+		StatutCredit statutInstruction = statutCreditRepository.findByCodeStatut(AppConstants.CREDIT_EN_ETUDE)
+				.orElseThrow(() -> new IllegalStateException("Statut EN_ETUDE non configure."));
+
+		credit.setStatutCredit(statutInstruction);
+		return creditRepository.save(credit);
+	}
+
+	@Override
+	@Transactional
+	public Credit approuverCredit(Long idCredit) {
+		Credit credit = creditRepository.findById(idCredit)
+				.orElseThrow(() -> new CreditNotFoundException(idCredit));
+
+		StatutCredit statutApprouve = statutCreditRepository.findByCodeStatut(AppConstants.CREDIT_APPROUVE)
+				.orElseThrow(() -> new IllegalStateException("Statut APPROUVE non configure."));
+
+		credit.setStatutCredit(statutApprouve);
+		return creditRepository.save(credit);
+	}
+
+	@Override
+	@Transactional
+	public List<Garantie> ajouterGaranties(Long idCredit, List<GarantieRequestDTO> garanties) {
+		Credit credit = creditRepository.findById(idCredit)
+				.orElseThrow(() -> new CreditNotFoundException(idCredit));
+
+		return garanties.stream().map(dto -> {
+			Garantie garantie = new Garantie();
+			garantie.setCredit(credit);
+			garantie.setTypeGarantie(TypeGarantie.valueOf(dto.getTypeGarantie()));
+			garantie.setDescription(dto.getDescription());
+			garantie.setValeurEstimee(dto.getValeurEstimee());
+			garantie.setEstActive(true);
+			return garantieRepository.save(garantie);
+		}).toList();
+	}
+
+	@Override
+	@Transactional
+	public Credit restructurerCredit(Long idCredit, Integer nouvelleDureeMois, BigDecimal nouveauTaux) {
+		Credit credit = creditRepository.findById(idCredit)
+				.orElseThrow(() -> new CreditNotFoundException(idCredit));
+
+		if (nouvelleDureeMois != null && nouvelleDureeMois > 0) {
+			credit.setDureeMois(nouvelleDureeMois);
+		}
+		if (nouveauTaux != null && nouveauTaux.compareTo(BigDecimal.ZERO) > 0) {
+			credit.setTauxInteretAnnuel(nouveauTaux);
+		}
+
+		// Regeneration du tableau d'amortissement
+		List<Echeance> nouvellesEcheances = amortissementService.genererTableau(
+				credit.getMontantRestantDu(),
+				credit.getTauxInteretAnnuel(),
+				credit.getDureeMois(),
+				credit.getMethodeCalcul(),
+				LocalDate.now()
+		);
+
+		credit.getEcheances().clear();
+		for (Echeance echeance : nouvellesEcheances) {
+			echeance.setCredit(credit);
+			credit.getEcheances().add(echeance);
+		}
+
+		StatutCredit statutRestructure = statutCreditRepository.findByCodeStatut(AppConstants.CREDIT_RESTRUCTURE)
+				.orElseThrow(() -> new IllegalStateException("Statut RESTRUCTURE non configure."));
+		credit.setStatutCredit(statutRestructure);
+
+		return creditRepository.save(credit);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<Echeance> consulterEcheancesRetard() {
+		LocalDate aujourdHui = LocalDate.now();
+		return echeanceRepository.findByDateEcheanceBeforeAndEstPayeeFalse(aujourdHui);
+	}
+
+	@Override
+	@Transactional
+	public Credit passerEnSouffrance(Long idCredit) {
+		Credit credit = creditRepository.findById(idCredit)
+				.orElseThrow(() -> new CreditNotFoundException(idCredit));
+
+		StatutCredit statutSouffrance = statutCreditRepository.findByCodeStatut(AppConstants.CREDIT_SOUFFRANCE)
+				.orElseThrow(() -> new IllegalStateException("Statut SOUFFRANCE non configure."));
+
+		credit.setStatutCredit(statutSouffrance);
+		return creditRepository.save(credit);
 	}
 
 	// --- METHODES UTILITAIRES PRIVEES ---

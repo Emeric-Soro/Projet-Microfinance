@@ -90,4 +90,8 @@ public class Transaction extends BaseAuditEntity {
 	@OneToMany(mappedBy = "transaction", targetEntity = LigneEcriture.class)
 	// Lignes comptables composees par la transaction.
 	private List<LigneEcriture> lignesEcriture = new ArrayList<>();
+
+	@Version
+	@Column(name = "version", nullable = false)
+	private Integer version = 0;
 }

@@ -1,6 +1,8 @@
 package com.soutra.microfinance.service.compte;
 
 import com.soutra.microfinance.entity.Compte;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 
@@ -9,6 +11,10 @@ public interface CompteService {
     Compte ouvrirCompte(Long idClient, String codeTypeCompte, BigDecimal depotInitial);
 
     BigDecimal consulterSolde(String numCompte);
+
+    Compte consulterCompte(Long idCompte);
+
+    Page<Compte> listerComptesClient(Long idClient, Pageable pageable);
 
     Compte changerDecouvertAutorise(String numCompte, BigDecimal nouveauPlafond);
 

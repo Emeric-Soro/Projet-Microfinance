@@ -1,6 +1,8 @@
 package com.soutra.microfinance.repository.parametrage;
 
 import com.soutra.microfinance.entity.Agence;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -18,4 +20,7 @@ public interface AgenceRepository extends JpaRepository<Agence, Long> {
 
 	// Verifie si un code agence existe deja.
 	boolean existsByCodeAgence(String codeAgence);
+
+	// Liste paginee des agences.
+	Page<Agence> findAllByOrderByNomAsc(Pageable pageable);
 }

@@ -1,14 +1,18 @@
 package com.soutra.microfinance.service.client;
 
 import com.soutra.microfinance.config.AuthSecurityProperties;
+import com.soutra.microfinance.config.PasswordResetProperties;
 import com.soutra.microfinance.entity.Client;
 import com.soutra.microfinance.entity.RoleUtilisateur;
 import com.soutra.microfinance.entity.Utilisateur;
 import com.soutra.microfinance.repository.client.ClientRepository;
 import com.soutra.microfinance.repository.client.RoleUtilisateurRepository;
 import com.soutra.microfinance.repository.client.UtilisateurRepository;
+import com.soutra.microfinance.service.communication.EmailService;
 import com.soutra.microfinance.service.communication.NotificationService;
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AccountExpiredException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.CredentialsExpiredException;
@@ -21,9 +25,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UtilisateurServiceImpl implements UtilisateurService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UtilisateurServiceImpl.class);
 
     private final UtilisateurRepository utilisateurRepository;
     private final ClientRepository clientRepository;
@@ -31,6 +39,8 @@ public class UtilisateurServiceImpl implements UtilisateurService {
     private final PasswordEncoder passwordEncoder;
     private final AuthSecurityProperties authSecurityProperties;
     private final NotificationService notificationService;
+    private final EmailService emailService;
+    private final PasswordResetProperties passwordResetProperties;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public UtilisateurServiceImpl(
@@ -39,7 +49,9 @@ public class UtilisateurServiceImpl implements UtilisateurService {
             RoleUtilisateurRepository roleUtilisateurRepository,
             PasswordEncoder passwordEncoder,
             AuthSecurityProperties authSecurityProperties,
-            NotificationService notificationService
+            NotificationService notificationService,
+            EmailService emailService,
+            PasswordResetProperties passwordResetProperties
     ) {
         this.utilisateurRepository = utilisateurRepository;
         this.clientRepository = clientRepository;
@@ -47,6 +59,8 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         this.passwordEncoder = passwordEncoder;
         this.authSecurityProperties = authSecurityProperties;
         this.notificationService = notificationService;
+        this.emailService = emailService;
+        this.passwordResetProperties = passwordResetProperties;
     }
 
     @Override
@@ -222,6 +236,190 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         return utilisateurRepository.save(utilisateur);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Utilisateur chargerUtilisateurParLogin(String login) {
+        return utilisateurRepository.findByLogin(login.trim())
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Utilisateur introuvable: " + login));
+    }
+
+    @Override
+    @Transactional
+    public Utilisateur activerOuDesactiver2FA(Long idUser, boolean activer, String codeOtp) {
+        Utilisateur utilisateur = utilisateurRepository.findById(idUser)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur introuvable: " + idUser));
+
+        verifierCodeOtpDisponible(utilisateur);
+        if (activer) {
+            verifierStatutsAuthentification(utilisateur);
+            if (!passwordEncoder.matches(codeOtp, utilisateur.getOtpHash())) {
+                throw new IllegalArgumentException("Code OTP invalide");
+            }
+        } else {
+            if (!passwordEncoder.matches(codeOtp, utilisateur.getOtpHash())) {
+                throw new IllegalArgumentException("Code OTP invalide pour desactivation");
+            }
+        }
+
+        utilisateur.setSecondFacteurActive(activer);
+        return utilisateurRepository.save(utilisateur);
+    }
+
+    @Override
+    @Transactional
+    public void verifierCodeOtp(Long idUser, String codeOtp) {
+        Utilisateur utilisateur = utilisateurRepository.findById(idUser)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur introuvable: " + idUser));
+
+        verifierCodeOtpDisponible(utilisateur);
+        boolean otpValide = utilisateur.getOtpHash() != null
+                && passwordEncoder.matches(codeOtp, utilisateur.getOtpHash())
+                && utilisateur.getOtpExpireLe() != null
+                && utilisateur.getOtpExpireLe().isAfter(LocalDateTime.now());
+
+        if (!otpValide) {
+            enregistrerEchecOtp(utilisateur);
+            throw new IllegalArgumentException("Code OTP invalide ou expire");
+        }
+    }
+
+    private void verifierCodeOtpDisponible(Utilisateur utilisateur) {
+        if (utilisateur.getOtpHash() == null || utilisateur.getOtpExpireLe() == null) {
+            throw new IllegalArgumentException("Aucun code OTP actif. Demandez d'abord un nouveau code.");
+        }
+    }
+
+    @Override
+    @Transactional
+    public void changerMotDePasse(Long idUser, String ancienMotDePasse, String nouveauMotDePasse) {
+        if (ancienMotDePasse == null || ancienMotDePasse.isBlank()) {
+            throw new IllegalArgumentException("L'ancien mot de passe est obligatoire");
+        }
+        if (nouveauMotDePasse == null || nouveauMotDePasse.length() < 8) {
+            throw new IllegalArgumentException("Le nouveau mot de passe doit contenir au moins 8 caracteres");
+        }
+
+        Utilisateur utilisateur = utilisateurRepository.findById(idUser)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur introuvable: " + idUser));
+
+        if (!passwordEncoder.matches(ancienMotDePasse, utilisateur.getPassword())) {
+            throw new IllegalArgumentException("L'ancien mot de passe est incorrect");
+        }
+
+        utilisateur.setPassword(passwordEncoder.encode(nouveauMotDePasse));
+        utilisateur.setMotDePasseModifieLe(LocalDateTime.now());
+        utilisateur.setIdentifiantsExpirentLe(LocalDateTime.now().plusDays(authSecurityProperties.getCredentialsValidityDays()));
+        utilisateurRepository.save(utilisateur);
+    }
+
+    @Override
+    @Transactional
+    public Utilisateur modifierCompteWeb(Long idUser, String email, String motDePasse) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("L'email est obligatoire");
+        }
+        if (motDePasse == null || motDePasse.length() < 8) {
+            throw new IllegalArgumentException("Le mot de passe doit contenir au moins 8 caracteres");
+        }
+
+        Utilisateur utilisateur = utilisateurRepository.findById(idUser)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur introuvable: " + idUser));
+
+        if (email != null && !email.isBlank() && !email.equalsIgnoreCase(utilisateur.getLogin())) {
+            String nouveauLogin = email.trim().toLowerCase();
+            if (utilisateurRepository.existsByLogin(nouveauLogin)) {
+                throw new IllegalArgumentException("Cet email est deja utilise par un autre compte");
+            }
+            utilisateur.setLogin(nouveauLogin);
+        }
+
+        utilisateur.setPassword(passwordEncoder.encode(motDePasse));
+        utilisateur.setMotDePasseModifieLe(LocalDateTime.now());
+        utilisateur.setIdentifiantsExpirentLe(LocalDateTime.now().plusDays(authSecurityProperties.getCredentialsValidityDays()));
+
+        return utilisateurRepository.save(utilisateur);
+    }
+
+    @Override
+    @Transactional
+    public void demanderResetMotDePasse(String loginOuEmail) {
+        if (loginOuEmail == null || loginOuEmail.isBlank()) {
+            return;
+        }
+
+        String identifiant = loginOuEmail.trim();
+        Optional<Utilisateur> utilisateurOpt = trouverUtilisateurParLoginOuEmail(identifiant);
+
+        if (utilisateurOpt.isEmpty()) {
+            LOGGER.info("Demande de reset recue pour un identifiant inconnu : {}", identifiant);
+            return;
+        }
+
+        Utilisateur utilisateur = utilisateurOpt.get();
+        String tokenClair = UUID.randomUUID().toString();
+        utilisateur.setResetTokenHash(passwordEncoder.encode(tokenClair));
+        utilisateur.setResetTokenExpireLe(LocalDateTime.now().plus(passwordResetProperties.getTokenValidity()));
+        utilisateurRepository.save(utilisateur);
+
+        emailService.envoyerResetMotDePasse(utilisateur, tokenClair);
+    }
+
+    @Override
+    @Transactional
+    public void reinitialiserMotDePasse(String token, String nouveauMotDePasse) {
+        if (token == null || token.isBlank()) {
+            throw new IllegalArgumentException("Le token de reinitialisation est obligatoire");
+        }
+        if (nouveauMotDePasse == null || nouveauMotDePasse.length() < 8) {
+            throw new IllegalArgumentException("Le nouveau mot de passe doit contenir au moins 8 caracteres");
+        }
+
+        // Recherche de l'utilisateur par token. On ne peut pas hasher le token recu
+        // et comparer directement (BCrypt produit un hash non-deterministe avec salt).
+        // Strategie : on recupere tous les utilisateurs ayant un reset_token_hash non null,
+        // et on compare avec matches() cote service.
+        LocalDateTime maintenant = LocalDateTime.now();
+        Utilisateur utilisateurTrouve = null;
+        for (Utilisateur u : utilisateurRepository.findAll()) {
+            if (u.getResetTokenHash() == null || u.getResetTokenExpireLe() == null) {
+                continue;
+            }
+            if (u.getResetTokenExpireLe().isBefore(maintenant)) {
+                continue;
+            }
+            if (passwordEncoder.matches(token, u.getResetTokenHash())) {
+                utilisateurTrouve = u;
+                break;
+            }
+        }
+
+        if (utilisateurTrouve == null) {
+            throw new IllegalArgumentException("Token invalide ou expire");
+        }
+
+        LocalDateTime maintenant2 = LocalDateTime.now();
+        utilisateurTrouve.setPassword(passwordEncoder.encode(nouveauMotDePasse));
+        utilisateurTrouve.setResetTokenHash(null);
+        utilisateurTrouve.setResetTokenExpireLe(null);
+        utilisateurTrouve.setMotDePasseModifieLe(maintenant2);
+        utilisateurTrouve.setLastPasswordChange(maintenant2);
+        utilisateurTrouve.setIdentifiantsExpirentLe(maintenant2.plusDays(authSecurityProperties.getCredentialsValidityDays()));
+        utilisateurTrouve.setNombreEchecsConnexion(0);
+        utilisateurTrouve.setCompteVerrouilleJusquAu(null);
+        utilisateurRepository.save(utilisateurTrouve);
+    }
+
+    private Optional<Utilisateur> trouverUtilisateurParLoginOuEmail(String identifiant) {
+        Optional<Utilisateur> parLogin = utilisateurRepository.findByLogin(identifiant);
+        if (parLogin.isPresent()) {
+            return parLogin;
+        }
+        if (identifiant.contains("@")) {
+            return utilisateurRepository.findByClient_EmailIgnoreCase(identifiant);
+        }
+        return Optional.empty();
+    }
+
     private void verifierStatutsAuthentification(Utilisateur utilisateur) {
         if (!utilisateur.isEnabled()) {
             throw new DisabledException("Compte desactive");
@@ -250,6 +448,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         if (utilisateur.getNombreEchecsConnexion() >= authSecurityProperties.getMaxFailedAttempts()) {
             utilisateur.setCompteVerrouilleJusquAu(maintenant.plus(authSecurityProperties.getLockDuration()));
             utilisateur.setNombreEchecsConnexion(0);
+            LOGGER.warn("Compte utilisateur {} verrouille apres echecs de connexion", utilisateur.getLogin());
             notificationService.envoyerAlerteConnexionSuspecte(utilisateur.getClient().getIdClient());
         }
 
@@ -271,6 +470,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
             utilisateur.setOtpHash(null);
             utilisateur.setOtpExpireLe(null);
             utilisateur.setOtpTentativesRestantes(0);
+            LOGGER.warn("Compte utilisateur {} verrouille apres echecs OTP", utilisateur.getLogin());
             notificationService.envoyerAlerteConnexionSuspecte(utilisateur.getClient().getIdClient());
         }
 
