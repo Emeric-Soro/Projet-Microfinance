@@ -1,5 +1,5 @@
 ﻿/* ============================================
-   BACKOFFICE MICROFINANCE - Shared UI kernel
+   BACKOFFICE SOUTRA FINANCE - Shared UI kernel
    ============================================ */
 
 (function () {
@@ -154,8 +154,8 @@
 
     sidebar.innerHTML = `
       <div class="sidebar-header">
-        <img src="../assets/img/logo.png" alt="Logo MicroFinance" class="sidebar-logo">
-        <div class="sidebar-brand">MicroFinance</div>
+        <img src="../assets/img/logo.png" alt="Logo Soutra Finance" class="sidebar-logo">
+        <div class="sidebar-brand">SOUTRA FINANCE</div>
         <div class="sidebar-subtitle">Backoffice</div>
       </div>
       <div class="sidebar-user">
@@ -251,8 +251,11 @@
     const stepper = document.querySelector('.stepper');
     if (!stepper) return;
 
+    const scope = stepper.closest('.content-area') || document;
     const steps = Array.from(stepper.querySelectorAll('.step'));
-    const stepContents = Array.from(document.querySelectorAll('.step-content'));
+    const stepContents = Array.from(scope.querySelectorAll('.step-content'));
+    const nextButtons = Array.from(scope.querySelectorAll('.btn-next-step'));
+    const prevButtons = Array.from(scope.querySelectorAll('.btn-prev-step'));
     let currentStep = 0;
 
     function showStep(index) {
@@ -275,14 +278,18 @@
     } catch (_) {}
     showStep(Number.isNaN(savedStep) ? 0 : Math.min(savedStep, steps.length - 1));
 
-    document.querySelector('.btn-next-step')?.addEventListener('click', () => {
-      if (currentStep >= steps.length - 1) return;
-      if (stepContents[currentStep] && !validateStep(stepContents[currentStep])) return;
-      showStep(currentStep + 1);
+    nextButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        if (currentStep >= steps.length - 1) return;
+        if (stepContents[currentStep] && !validateStep(stepContents[currentStep])) return;
+        showStep(currentStep + 1);
+      });
     });
 
-    document.querySelector('.btn-prev-step')?.addEventListener('click', () => {
-      if (currentStep > 0) showStep(currentStep - 1);
+    prevButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        if (currentStep > 0) showStep(currentStep - 1);
+      });
     });
 
     steps.forEach((step, index) => {
