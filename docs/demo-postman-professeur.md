@@ -68,12 +68,24 @@ Pour toutes les requêtes protégées :
 Authorization -> Bearer Token -> {{token}}
 ```
 
+Le fichier Postman prêt à importer est :
+
+```text
+docs/Microfinance_Demo_Prof.postman_collection.json
+```
+
+Dans cette collection :
+
+- les requêtes `01` à `24` correspondent au parcours professeur dans l'ordre ;
+- le dossier `25 - Nouveaux endpoints backend (tous les tests)` reprend tous les nouveaux endpoints ajoutés après les modifications GitHub ;
+- les variables communes (`clientId`, `compteNumero`, `userId`, `roleId`, `transactionRef`, etc.) sont déjà préparées pour tester rapidement les nouveaux modules.
+
 ## 3. Authentification
 
 ### Requête : se connecter
 
 ```http
-POST {{baseUrl}}/api/utilisateurs/login
+POST {{baseUrl}}/api/v1/utilisateurs/login
 ```
 
 Body JSON :
@@ -101,7 +113,7 @@ pm.collectionVariables.set("idClient", body.utilisateur.idClient);
 ### Lister les clients
 
 ```http
-GET {{baseUrl}}/api/clients?page=0&size=10
+GET {{baseUrl}}/api/v1/clients?page=0&size=10
 ```
 
 À montrer : les noms ivoiriens créés par le seeder.
@@ -109,7 +121,7 @@ GET {{baseUrl}}/api/clients?page=0&size=10
 ### Lister les produits de crédit
 
 ```http
-GET {{baseUrl}}/api/produits/credits
+GET {{baseUrl}}/api/v1/parametrages/produits-credit
 ```
 
 À montrer : `MC-COMMERCE`, `MC-AGRICULTURE`, `PRET-SALARIE`.
@@ -117,7 +129,7 @@ GET {{baseUrl}}/api/produits/credits
 ### Consulter les KPI
 
 ```http
-GET {{baseUrl}}/api/statistiques/kpi
+GET {{baseUrl}}/api/v1/statistiques/kpi
 ```
 
 À montrer : nombre de clients actifs, total des dépôts, crédits en cours.
@@ -127,7 +139,7 @@ GET {{baseUrl}}/api/statistiques/kpi
 Avant dépôt ou retrait, l'utilisateur doit ouvrir une caisse.
 
 ```http
-POST {{baseUrl}}/api/caisses/ouverture
+POST {{baseUrl}}/api/v1/caisses/ouverture
 ```
 
 Body JSON :
@@ -143,7 +155,7 @@ Si Postman répond que la caisse est déjà ouverte, ce n'est pas bloquant : con
 ### Vérifier l'état de caisse
 
 ```http
-GET {{baseUrl}}/api/caisses/etat
+GET {{baseUrl}}/api/v1/caisses/etat
 ```
 
 Dans `Tests`, mettre :
@@ -156,7 +168,7 @@ pm.collectionVariables.set("caisseSoldeCourant", body.soldeCourant);
 ## 6. Consulter un solde avant opération
 
 ```http
-GET {{baseUrl}}/api/comptes/{{seedCompteClientA}}/solde
+GET {{baseUrl}}/api/v1/comptes/{{seedCompteClientA}}/solde
 ```
 
 À montrer : le solde initial du compte.
@@ -164,7 +176,7 @@ GET {{baseUrl}}/api/comptes/{{seedCompteClientA}}/solde
 ## 7. Faire un dépôt
 
 ```http
-POST {{baseUrl}}/api/transactions/depot
+POST {{baseUrl}}/api/v1/transactions/depot
 ```
 
 Body JSON :
@@ -182,7 +194,7 @@ Body JSON :
 ## 8. Faire un retrait
 
 ```http
-POST {{baseUrl}}/api/transactions/retrait
+POST {{baseUrl}}/api/v1/transactions/retrait
 ```
 
 Body JSON :
@@ -200,7 +212,7 @@ Body JSON :
 ## 9. Faire un virement
 
 ```http
-POST {{baseUrl}}/api/transactions/virement?idGuichetier={{idUser}}
+POST {{baseUrl}}/api/v1/transactions/virement?idGuichetier={{idUser}}
 ```
 
 Body JSON :
@@ -218,7 +230,7 @@ Body JSON :
 ## 10. Consulter l'historique du compte
 
 ```http
-GET {{baseUrl}}/api/transactions/comptes/{{seedCompteClientA}}/historique?page=0&size=20
+GET {{baseUrl}}/api/v1/transactions/comptes/{{seedCompteClientA}}/historique?page=0&size=20
 ```
 
 À montrer : les lignes d'écriture `DEBIT` et `CREDIT`.
@@ -226,7 +238,7 @@ GET {{baseUrl}}/api/transactions/comptes/{{seedCompteClientA}}/historique?page=0
 ## 11. Créer un nouveau client
 
 ```http
-POST {{baseUrl}}/api/clients
+POST {{baseUrl}}/api/v1/clients
 ```
 
 Body JSON :
@@ -265,7 +277,7 @@ pm.collectionVariables.set("newClientId", body.idClient);
 ## 12. Soumettre le KYC du client
 
 ```http
-PUT {{baseUrl}}/api/clients/{{newClientId}}/kyc
+PUT {{baseUrl}}/api/v1/clients/{{newClientId}}/kyc
 ```
 
 Body JSON :
@@ -290,7 +302,7 @@ Body JSON :
 ## 13. Valider le KYC
 
 ```http
-PUT {{baseUrl}}/api/clients/{{newClientId}}/kyc/decision
+PUT {{baseUrl}}/api/v1/clients/{{newClientId}}/kyc/decision
 ```
 
 Body JSON :
@@ -309,7 +321,7 @@ Body JSON :
 ## 14. Ouvrir un compte au nouveau client
 
 ```http
-POST {{baseUrl}}/api/comptes
+POST {{baseUrl}}/api/v1/comptes
 ```
 
 Body JSON :
@@ -442,7 +454,7 @@ Body JSON :
 ## 21. Revoir les KPI
 
 ```http
-GET {{baseUrl}}/api/statistiques/kpi
+GET {{baseUrl}}/api/v1/statistiques/kpi
 ```
 
 À montrer : les chiffres ont évolué après opérations.
@@ -452,13 +464,13 @@ GET {{baseUrl}}/api/statistiques/kpi
 Avant de fermer, refaire :
 
 ```http
-GET {{baseUrl}}/api/caisses/etat
+GET {{baseUrl}}/api/v1/caisses/etat
 ```
 
 Copier `soldeCourant`, puis :
 
 ```http
-POST {{baseUrl}}/api/caisses/fermeture
+POST {{baseUrl}}/api/v1/caisses/fermeture
 ```
 
 Body JSON :
@@ -470,6 +482,27 @@ Body JSON :
 ```
 
 À expliquer : si le solde physique est égal au solde informatique, l'écart de caisse est zéro.
+
+## 23. Tester les nouveaux endpoints
+
+Après le parcours principal, ouvrir dans Postman le dossier :
+
+```text
+25 - Nouveaux endpoints backend (tous les tests)
+```
+
+Ce dossier permet de tester les modules ajoutés par les dernières modifications :
+
+- Paramétrage : agences, produits crédit, produits épargne, système, jours fériés et tarification.
+- Comptes avancés : bénéficiaires, cartes Visa, découvert, blocage, déblocage, clôture et relevé.
+- Transactions avancées : paiement carte, Mobile Money, validation, rejet, reçu, reversement et export.
+- Crédit avancé : instruction, garanties, restructuration, passation et échéances en retard.
+- Pilotage : dashboards agence/direction, reporting, exports, statistiques et audit logs.
+- Administration : sécurité, rôles, permissions, utilisateurs, sessions et notifications.
+- Conformité : SAR, réclamations, RGPD, KYC expirés, PEP, alertes LCB-FT, dérogations et escalades.
+- Mobile : authentification, comptes, crédits, virements, profil, notifications, bénéficiaires et opérations.
+
+Conseil pour la démonstration : présenter seulement 2 ou 3 familles en plus du parcours principal, par exemple `Reporting`, `Sécurité` et `Conformité`, pour ne pas perdre le professeur dans 200 requêtes.
 
 ## Plan oral conseillé
 

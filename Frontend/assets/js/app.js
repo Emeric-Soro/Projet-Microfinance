@@ -1,5 +1,138 @@
 ﻿/* ============================================
-   BACKOFFICE MICROFINANCE - Shared UI kernel
+   API CLIENT — Soutra Finance Backoffice
+   Couche centralisée : token, fetch, session
+   ============================================ */
+
+(function () {
+  'use strict';
+
+  var API_BASE = 'http://localhost:8080';
+
+  /* ── Gestion du token & session ─────────────────────── */
+
+  function getToken() {
+    return localStorage.getItem('sf_token') || null;
+  }
+
+  function setSession(data) {
+    if (data.token) localStorage.setItem('sf_token', data.token);
+    else localStorage.removeItem('sf_token');
+
+    if (data.refreshToken) localStorage.setItem('sf_refresh_token', data.refreshToken);
+    else localStorage.removeItem('sf_refresh_token');
+
+    if (data.utilisateur) localStorage.setItem('sf_user', JSON.stringify(data.utilisateur));
+    else localStorage.removeItem('sf_user');
+
+    if (data.challengeId) {
+      sessionStorage.setItem('sf_challenge_id', data.challengeId);
+    }
+  }
+
+  function clearSession() {
+    localStorage.removeItem('sf_token');
+    localStorage.removeItem('sf_refresh_token');
+    localStorage.removeItem('sf_user');
+    sessionStorage.removeItem('sf_challenge_id');
+  }
+
+  function getUser() {
+    try {
+      return JSON.parse(localStorage.getItem('sf_user') || 'null');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function getChallengeId() {
+    return sessionStorage.getItem('sf_challenge_id') || null;
+  }
+
+  /* ── fetch générique authentifié ───────────────────── */
+
+  async function apiFetch(path, options) {
+    options = options || {};
+    var token = getToken();
+    var headers = Object.assign(
+      { 'Content-Type': 'application/json' },
+      token ? { 'Authorization': 'Bearer ' + token } : {},
+      options.headers || {}
+    );
+    var res;
+    try {
+      res = await fetch(API_BASE + path, Object.assign({}, options, { headers: headers }));
+    } catch (_) {
+      throw new Error('Impossible de joindre le serveur. Vérifiez que le backend est démarré.');
+    }
+    if (res.status === 401) {
+      clearSession();
+      var pg = (window.location.pathname.split('/').pop() || '').replace(/\.html$/i, '');
+      if (pg !== 'login') { window.location.href = 'login.html'; }
+      return null;
+    }
+    return res;
+  }
+
+  /* ── Endpoints Auth ─────────────────────────────────── */
+
+  var Auth = {
+    login: async function (login, motDePasse) {
+      return await fetch(API_BASE + '/api/v1/utilisateurs/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login: login, motDePasse: motDePasse })
+      });
+    },
+    verifierOtp: async function (login, codeOtp) {
+      return await fetch(API_BASE + '/api/v1/utilisateurs/login/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login: login, challengeId: getChallengeId(), codeOtp: codeOtp })
+      });
+    },
+    logout: async function () {
+      if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+        return;
+      }
+      var token = getToken();
+      if (token) {
+        try {
+          await fetch(API_BASE + '/api/v1/utilisateurs/logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
+          });
+        } catch (_) {}
+      }
+      clearSession();
+      window.location.href = './login.html';
+    }
+  };
+
+  /* ── Guard de session ───────────────────────────────── */
+  // Redirige vers login.html si pas de token, sauf sur les pages publiques.
+  // npx serve supprime .html → normaliser le nom de page avant comparaison.
+
+  var AUTH_BASES = ['login', 'otp'];
+
+  function guardSession() {
+    var currentPage = (window.location.pathname.split('/').pop() || '')
+      .replace(/\.html$/i, '');
+    if (!AUTH_BASES.includes(currentPage) && !getToken()) {
+      window.location.href = 'login.html';
+    }
+  }
+
+  guardSession(); // s'exécute immédiatement, avant DOMContentLoaded
+
+  /* ── Exposition globale ─────────────────────────────── */
+
+  window.SF   = { API_BASE, getToken, setSession, clearSession, getUser, getChallengeId, apiFetch };
+  window.Auth = Auth;
+
+}());
+
+/* ============================================
+   BACKOFFICE SOUTRA FINANCE - Shared UI kernel
    ============================================ */
 
 (function () {
@@ -141,6 +274,12 @@
     const sidebar = document.querySelector('.app-layout > .sidebar');
     if (!sidebar) return;
 
+    // Données utilisateur depuis la session
+    const user = (window.SF && window.SF.getUser()) || {};
+    const login = user.login || 'Utilisateur';
+    const roles = Array.isArray(user.roles) && user.roles.length ? user.roles[0] : 'Agent';
+    const initiales = login.substring(0, 2).toUpperCase();
+
     const groups = navGroups.map(group => `
       <div class="nav-section-title">${group.title}</div>
       ${group.items.map(item => `
@@ -154,22 +293,32 @@
 
     sidebar.innerHTML = `
       <div class="sidebar-header">
-        <img src="../assets/img/logo.png" alt="Logo MicroFinance" class="sidebar-logo">
-        <div class="sidebar-brand">MicroFinance</div>
+        <img src="../assets/img/logo.png" alt="Logo Soutra Finance" class="sidebar-logo">
+        <div class="sidebar-brand">SOUTRA FINANCE</div>
         <div class="sidebar-subtitle">Backoffice</div>
       </div>
       <div class="sidebar-user">
-        <div class="sidebar-avatar">AD</div>
+        <div class="sidebar-avatar">${initiales}</div>
         <div class="sidebar-user-info">
-          <div class="sidebar-user-name">Admin Principal</div>
-          <div class="sidebar-user-role">Superviseur</div>
+          <div class="sidebar-user-name">${login}</div>
+          <div class="sidebar-user-role">${roles}</div>
         </div>
       </div>
       <nav class="sidebar-nav" aria-label="Navigation backoffice">${groups}</nav>
       <div class="sidebar-footer">
-        <a href="login.html" class="nav-item">${icons.logout}<span>Déconnexion</span></a>
+        <a href="#" class="nav-item" id="logoutBtn">${icons.logout}<span>Déconnexion</span></a>
       </div>
     `;
+
+    // Handler de déconnexion (appel API + effacement session)
+    const logoutBtn = sidebar.querySelector('#logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (window.Auth) Auth.logout();
+        else { localStorage.clear(); window.location.href = 'login.html'; }
+      });
+    }
   }
 
   function enhanceTopbar() {
@@ -188,15 +337,25 @@
 
     const right = topbar.querySelector('.topbar-right');
     if (right && !right.querySelector('.topbar-context')) {
+      const user = (window.SF && window.SF.getUser()) || {};
+      const displayName = user.login || 'Utilisateur';
       const context = document.createElement('div');
       context.className = 'topbar-context';
       context.innerHTML = `
         <span class="topbar-chip">Agence Plateau</span>
-        <span class="topbar-chip">Caisse C-01</span>
-        <span class="topbar-chip">Admin Principal</span>
-        <a class="topbar-chip topbar-link" href="login.html">Déco</a>
+        <span class="topbar-chip">${displayName}</span>
+        <a class="topbar-chip topbar-link" href="#" id="topbarLogoutLink">Déco</a>
       `;
       right.prepend(context);
+      // Logout depuis topbar
+      const topbarLogout = right.querySelector('#topbarLogoutLink');
+      if (topbarLogout) {
+        topbarLogout.addEventListener('click', function (e) {
+          e.preventDefault();
+          if (window.Auth) Auth.logout();
+          else { localStorage.clear(); window.location.href = 'login.html'; }
+        });
+      }
     }
   }
 
@@ -251,8 +410,11 @@
     const stepper = document.querySelector('.stepper');
     if (!stepper) return;
 
+    const scope = stepper.closest('.content-area') || document;
     const steps = Array.from(stepper.querySelectorAll('.step'));
-    const stepContents = Array.from(document.querySelectorAll('.step-content'));
+    const stepContents = Array.from(scope.querySelectorAll('.step-content'));
+    const nextButtons = Array.from(scope.querySelectorAll('.btn-next-step'));
+    const prevButtons = Array.from(scope.querySelectorAll('.btn-prev-step'));
     let currentStep = 0;
 
     function showStep(index) {
@@ -275,14 +437,18 @@
     } catch (_) {}
     showStep(Number.isNaN(savedStep) ? 0 : Math.min(savedStep, steps.length - 1));
 
-    document.querySelector('.btn-next-step')?.addEventListener('click', () => {
-      if (currentStep >= steps.length - 1) return;
-      if (stepContents[currentStep] && !validateStep(stepContents[currentStep])) return;
-      showStep(currentStep + 1);
+    nextButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        if (currentStep >= steps.length - 1) return;
+        if (stepContents[currentStep] && !validateStep(stepContents[currentStep])) return;
+        showStep(currentStep + 1);
+      });
     });
 
-    document.querySelector('.btn-prev-step')?.addEventListener('click', () => {
-      if (currentStep > 0) showStep(currentStep - 1);
+    prevButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        if (currentStep > 0) showStep(currentStep - 1);
+      });
     });
 
     steps.forEach((step, index) => {
@@ -495,16 +661,38 @@
       }
     }, 1000);
 
-    form.addEventListener('submit', event => {
+    form.addEventListener('submit', async event => {
       event.preventDefault();
       const code = inputs.map(input => input.value).join('');
-      if (code === '123456') {
-        showToast('Vérification réussie.', 'success');
-        setTimeout(() => { window.location.href = 'dashboard.html'; }, 700);
-      } else {
+      const login = sessionStorage.getItem('sf_otp_login');
+
+      if (!login || !(window.SF && window.SF.getChallengeId())) {
+        showToast('Session OTP expirée. Reconnectez-vous.', 'warning');
+        setTimeout(() => { window.location.href = 'login.html'; }, 900);
+        return;
+      }
+
+      try {
+        if (submit) submit.disabled = true;
+        const res = await Auth.verifierOtp(login, code);
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok) {
+          SF.setSession(data);
+          sessionStorage.removeItem('sf_otp_login');
+          sessionStorage.removeItem('sf_challenge_id');
+          showToast('Vérification réussie.', 'success');
+          setTimeout(() => { window.location.href = 'dashboard.html'; }, 700);
+          return;
+        }
+
         form.querySelector('.otp-inputs')?.classList.add('is-shaking');
         setTimeout(() => form.querySelector('.otp-inputs')?.classList.remove('is-shaking'), 320);
-        showToast('Code incorrect.', 'error');
+        showToast(data.message || 'Code incorrect.', 'error');
+      } catch (_) {
+        showToast('Impossible de joindre le serveur. Vérifiez que le backend est démarré.', 'error');
+      } finally {
+        syncSubmitState();
       }
     });
 
@@ -605,4 +793,3 @@
   window.formatDate = formatDate;
   window.initSearchPredictive = initSearchPredictive;
 })();
-
