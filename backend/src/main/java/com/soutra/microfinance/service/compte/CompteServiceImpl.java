@@ -194,6 +194,13 @@ public class CompteServiceImpl implements CompteService {
         return compte;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Compte obtenirCompteParNumero(String numCompte) {
+        return compteRepository.findByNumCompte(numCompte)
+                .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
+    }
+
     private String extraireStatutCourant(Compte compte) {
         if (compte.getStatutsCompte() == null || compte.getStatutsCompte().isEmpty()) {
             return null;

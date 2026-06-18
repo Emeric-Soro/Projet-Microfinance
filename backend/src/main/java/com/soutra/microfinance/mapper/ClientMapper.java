@@ -1,6 +1,7 @@
 package com.soutra.microfinance.mapper;
 
 import com.soutra.microfinance.dto.request.client.CreationClientRequestDTO;
+import com.soutra.microfinance.dto.response.client.ClientConfidentielResponseDTO;
 import com.soutra.microfinance.dto.response.client.ClientResponseDTO;
 import com.soutra.microfinance.entity.Client;
 import org.mapstruct.Mapper;
@@ -36,8 +37,26 @@ public interface ClientMapper {
     @Mapping(target = "dateValidationKyc", ignore = true)
     @Mapping(target = "commentaireKyc", ignore = true)
     @Mapping(target = "validateurKyc", ignore = true)
+    @Mapping(target = "revenuMensuel", ignore = true)
+    @Mapping(target = "secteurActivite", ignore = true)
+    @Mapping(target = "agence", ignore = true)
+    @Mapping(target = "demandesCredit", ignore = true)
+    @Mapping(target = "credits", ignore = true)
+    @Mapping(target = "version", ignore = true)
     Client toEntity(CreationClientRequestDTO dto);
 
+    // --- Mapping confidentiel (admin) : données sensibles en clair ---
+    @Mapping(target = "nomComplet", expression = "java(client.getNom() + \" \" + client.getPrenom())")
+    @Mapping(source = "statutClient.libelleStatut", target = "statut")
+    @Mapping(target = "typePieceIdentite", expression = "java(client.getTypePieceIdentite() == null ? null : client.getTypePieceIdentite().name())")
+    @Mapping(target = "numeroPieceIdentite", source = "numeroPieceIdentite")
+    @Mapping(target = "numeroPieceIdentiteMasque", expression = "java(masquerPiece(client.getNumeroPieceIdentite()))")
+    @Mapping(target = "niveauRisque", expression = "java(client.getNiveauRisque() == null ? null : client.getNiveauRisque().name())")
+    @Mapping(target = "statutKyc", expression = "java(client.getStatutKyc() == null ? null : client.getStatutKyc().name())")
+    @Mapping(target = "kycComplet", expression = "java(estKycComplet(client))")
+    ClientConfidentielResponseDTO toConfidentielDTO(Client client);
+
+    @org.mapstruct.Named("masquerPiece")
     default String masquerPiece(String numeroPiece) {
         if (numeroPiece == null || numeroPiece.length() <= 4) {
             return numeroPiece;

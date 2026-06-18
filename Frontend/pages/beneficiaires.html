@@ -26,7 +26,7 @@
             <h1 class="page-title">Gestion des bénéficiaires</h1>
             <p class="page-subtitle">Liste, création, modification et suppression des bénéficiaires de virement.</p>
           </div>
-          <button class="btn btn-primary" onclick="openModal('beneficiaireModal')">Nouveau bénéficiaire</button>
+          <button class="btn btn-primary" onclick="prepareNewBeneficiaire()">Nouveau bénéficiaire</button>
         </div>
 
         <section class="card">
@@ -37,11 +37,11 @@
             </div>
           </div>
           <div class="filter-bar">
-            <input class="form-control" placeholder="Nom, compte, banque">
-            <select class="form-control">
-              <option>Tous les types</option>
-              <option>Interne</option>
-              <option>Externe</option>
+            <input class="form-control" id="filterSearch" placeholder="Nom, compte, banque...">
+            <select class="form-control" id="filterType">
+              <option value="ALL">Tous les types</option>
+              <option value="INTERNE">Interne</option>
+              <option value="EXTERNE">Externe</option>
             </select>
           </div>
           <table class="data-table">
@@ -55,9 +55,8 @@
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody>
-              <tr><td>Traoré Sékou</td><td>CI23CB010010000123456</td><td>Soutra MicroFinance</td><td>Interne</td><td><span class="badge badge-active">Validé</span></td><td><button class="btn btn-outline btn-sm">Modifier</button></td></tr>
-              <tr><td>Awa Koné</td><td>CI05BKCI00099887766</td><td>Banque partenaire</td><td>Externe</td><td><span class="badge badge-pending">À confirmer</span></td><td><button class="btn btn-outline btn-sm">Supprimer</button></td></tr>
+            <tbody id="beneficiairesTableBody">
+              <tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 20px;">Chargement des bénéficiaires...</td></tr>
             </tbody>
           </table>
         </section>
@@ -68,25 +67,317 @@
   <div class="modal-overlay" id="beneficiaireModal">
     <div class="modal">
       <div class="modal-header">
-        <div class="modal-title">Nouveau bénéficiaire</div>
+        <div class="modal-title" id="modalTitle">Nouveau bénéficiaire</div>
         <button class="modal-close" onclick="closeModal('beneficiaireModal')">×</button>
       </div>
       <div class="modal-body">
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Nom complet</label><input class="form-control"></div>
-          <div class="form-group"><label class="form-label">Type</label><select class="form-control"><option>Interne</option><option>Externe</option></select></div>
+        <div class="form-group" style="position: relative; margin-bottom: 15px;">
+          <label class="form-label">Client associé (Propriétaire de la liste)</label>
+          <input type="text" class="form-control" id="modalClientSearch" placeholder="Rechercher un client par nom ou code...">
+          <div id="modalClientResults" class="search-results"></div>
         </div>
-        <div class="form-group"><label class="form-label">Numéro de compte / IBAN</label><input class="form-control"></div>
-        <div class="form-group"><label class="form-label">Banque</label><input class="form-control"></div>
+        <div class="form-row" style="margin-bottom: 15px;">
+          <div class="form-group" style="flex: 1; margin-right: 10px;">
+            <label class="form-label">Nom</label>
+            <input type="text" class="form-control" id="benefNom" placeholder="ex. Traoré">
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">Prénom</label>
+            <input type="text" class="form-control" id="benefPrenom" placeholder="ex. Sékou">
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom: 15px;">
+          <div class="form-group" style="flex: 1; margin-right: 10px;">
+            <label class="form-label">Type</label>
+            <select class="form-control" id="benefType">
+              <option value="INTERNE">Interne (Soutra MicroFinance)</option>
+              <option value="EXTERNE">Externe (Autre Banque)</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">Banque</label>
+            <input type="text" class="form-control" id="benefBanque" placeholder="Soutra MicroFinance" value="Soutra MicroFinance" disabled>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Numéro de compte / IBAN</label>
+          <input type="text" class="form-control" id="benefCompte" placeholder="Numéro de compte du bénéficiaire...">
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline" onclick="closeModal('beneficiaireModal')">Annuler</button>
-        <button class="btn btn-primary" onclick="closeModal('beneficiaireModal'); showToast('Bénéficiaire créé.', 'success')">Enregistrer</button>
+        <button class="btn btn-primary" onclick="saveBeneficiaire()">Enregistrer</button>
       </div>
     </div>
   </div>
 
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
+  <script>
+    let allBeneficiaires = [];
+    let selectedClientId = null;
+    let editingBeneficiaireId = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof renderSidebar === 'function') {
+        renderSidebar();
+      }
+      chargerBeneficiaires();
+      setupClientSearch();
+      setupFilters();
+      setupTypeChange();
+    });
+
+    async function chargerBeneficiaires() {
+      try {
+        let res = await Beneficiaires.lister();
+        if (res && res.ok) {
+          allBeneficiaires = await res.json();
+          renderBeneficiaires();
+        } else {
+          showToast("Erreur lors du chargement des bénéficiaires", "error");
+        }
+      } catch (e) {
+        showToast(e.message, "error");
+      }
+    }
+
+    function renderBeneficiaires() {
+      const query = document.getElementById('filterSearch').value.toLowerCase().trim();
+      const selectedType = document.getElementById('filterType').value;
+      const tbody = document.getElementById('beneficiairesTableBody');
+      tbody.innerHTML = '';
+
+      let filtered = allBeneficiaires.filter(b => {
+        const matchQuery = !query || 
+          (b.nom || '').toLowerCase().includes(query) ||
+          (b.prenom || '').toLowerCase().includes(query) ||
+          (b.compteBeneficiaire || '').toLowerCase().includes(query) ||
+          (b.banque || '').toLowerCase().includes(query);
+
+        const isInterne = !b.banque || b.banque.toLowerCase() === 'soutra microfinance' || b.banque.trim() === '';
+        let matchType = true;
+        if (selectedType === 'INTERNE') {
+          matchType = isInterne;
+        } else if (selectedType === 'EXTERNE') {
+          matchType = !isInterne;
+        }
+        return matchQuery && matchType;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 20px;">Aucun bénéficiaire trouvé</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(b => {
+        const isInterne = !b.banque || b.banque.toLowerCase() === 'soutra microfinance' || b.banque.trim() === '';
+        const typeLabel = isInterne ? 'Interne' : 'Externe';
+        const typeBadge = isInterne ? 'badge-active' : 'badge-pending';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${b.nom || ''} ${b.prenom || ''}</strong></td>
+          <td><code>${b.compteBeneficiaire || ''}</code></td>
+          <td>${b.banque || 'Soutra MicroFinance'}</td>
+          <td><span class="badge ${typeBadge}">${typeLabel}</span></td>
+          <td><span class="badge badge-active">Actif</span></td>
+          <td>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-outline btn-sm" onclick="editBeneficiaire(${b.idBeneficiaire}, ${b.idClient}, '${b.nom || ''}', '${b.prenom || ''}', '${b.compteBeneficiaire || ''}', '${b.banque || ''}')">Modifier</button>
+              <button class="btn btn-outline btn-sm" style="color: var(--danger-color); border-color: var(--danger-color);" onclick="deleteBeneficiaire(${b.idBeneficiaire}, ${b.idClient})">Supprimer</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function setupFilters() {
+      document.getElementById('filterSearch').addEventListener('input', renderBeneficiaires);
+      document.getElementById('filterType').addEventListener('change', renderBeneficiaires);
+    }
+
+    function setupTypeChange() {
+      const benefType = document.getElementById('benefType');
+      const benefBanque = document.getElementById('benefBanque');
+      benefType.addEventListener('change', function() {
+        if (this.value === 'INTERNE') {
+          benefBanque.value = 'Soutra MicroFinance';
+          benefBanque.disabled = true;
+        } else {
+          benefBanque.value = '';
+          benefBanque.disabled = false;
+          benefBanque.placeholder = 'Entrez le nom de la banque...';
+        }
+      });
+    }
+
+    function setupClientSearch() {
+      const clientSearch = document.getElementById('modalClientSearch');
+      const clientResults = document.getElementById('modalClientResults');
+      
+      clientSearch.addEventListener('input', async function() {
+        let query = this.value.trim();
+        if (query.length < 2) {
+          clientResults.classList.remove('show');
+          return;
+        }
+        try {
+          let res = await Clients.lister(0, 10, query);
+          if (res && res.ok) {
+            let page = await res.json();
+            let clients = page.content || [];
+            let html = '';
+            clients.forEach(c => {
+              html += `<div class="search-result-item" onclick="selectModalClient('${c.idClient}', '${c.nomComplet}', '${c.codeClient}')"><strong>${c.nomComplet}</strong> - ${c.codeClient}</div>`;
+            });
+            clientResults.innerHTML = html;
+            clientResults.classList.add('show');
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      });
+
+      document.addEventListener('click', function(e) {
+        if (!clientSearch.contains(e.target) && !clientResults.contains(e.target)) {
+          clientResults.classList.remove('show');
+        }
+      });
+    }
+
+    function selectModalClient(id, name, code) {
+      selectedClientId = id;
+      document.getElementById('modalClientSearch').value = name + ' (' + code + ')';
+      document.getElementById('modalClientResults').classList.remove('show');
+    }
+
+    function prepareNewBeneficiaire() {
+      editingBeneficiaireId = null;
+      selectedClientId = null;
+      document.getElementById('modalTitle').innerText = 'Nouveau bénéficiaire';
+      document.getElementById('modalClientSearch').value = '';
+      document.getElementById('modalClientSearch').disabled = false;
+      document.getElementById('benefNom').value = '';
+      document.getElementById('benefPrenom').value = '';
+      document.getElementById('benefType').value = 'INTERNE';
+      document.getElementById('benefBanque').value = 'Soutra MicroFinance';
+      document.getElementById('benefBanque').disabled = true;
+      document.getElementById('benefCompte').value = '';
+      openModal('beneficiaireModal');
+    }
+
+    async function editBeneficiaire(id, clientId, nom, prenom, compte, banque) {
+      editingBeneficiaireId = id;
+      selectedClientId = clientId;
+      document.getElementById('modalTitle').innerText = 'Modifier le bénéficiaire';
+      
+      document.getElementById('modalClientSearch').value = 'Client ID: ' + clientId;
+      document.getElementById('modalClientSearch').disabled = true;
+      
+      try {
+        let clientRes = await Clients.obtenir(clientId);
+        if (clientRes && clientRes.ok) {
+          let clientData = await clientRes.json();
+          document.getElementById('modalClientSearch').value = clientData.nomComplet + ' (' + clientData.codeClient + ')';
+        }
+      } catch (err) {
+        console.warn("Could not load client details", err);
+      }
+
+      document.getElementById('benefNom').value = nom;
+      document.getElementById('benefPrenom').value = prenom;
+      
+      const isInterne = !banque || banque.toLowerCase() === 'soutra microfinance' || banque.trim() === '';
+      if (isInterne) {
+        document.getElementById('benefType').value = 'INTERNE';
+        document.getElementById('benefBanque').value = 'Soutra MicroFinance';
+        document.getElementById('benefBanque').disabled = true;
+      } else {
+        document.getElementById('benefType').value = 'EXTERNE';
+        document.getElementById('benefBanque').value = banque;
+        document.getElementById('benefBanque').disabled = false;
+      }
+      
+      document.getElementById('benefCompte').value = compte;
+      openModal('beneficiaireModal');
+    }
+
+    async function saveBeneficiaire() {
+      if (!selectedClientId) {
+        showToast("Veuillez sélectionner un client associé", "error");
+        return;
+      }
+      const nom = document.getElementById('benefNom').value.trim();
+      const prenom = document.getElementById('benefPrenom').value.trim();
+      const type = document.getElementById('benefType').value;
+      let banque = document.getElementById('benefBanque').value.trim();
+      const compte = document.getElementById('benefCompte').value.trim();
+
+      if (!nom) {
+        showToast("Le nom est obligatoire", "error");
+        return;
+      }
+      if (!prenom) {
+        showToast("Le prénom est obligatoire", "error");
+        return;
+      }
+      if (!compte) {
+        showToast("Le numéro de compte est obligatoire", "error");
+        return;
+      }
+      if (type === 'INTERNE') {
+        banque = 'Soutra MicroFinance';
+      } else if (!banque) {
+        showToast("Le nom de la banque est obligatoire pour un bénéficiaire externe", "error");
+        return;
+      }
+
+      const bodyData = {
+        nom: nom,
+        prenom: prenom,
+        compteBeneficiaire: compte,
+        banque: banque
+      };
+
+      try {
+        let res;
+        if (editingBeneficiaireId) {
+          res = await Beneficiaires.modifier(editingBeneficiaireId, selectedClientId, bodyData);
+        } else {
+          res = await Beneficiaires.creer(selectedClientId, bodyData);
+        }
+
+        if (res && res.ok) {
+          showToast(editingBeneficiaireId ? "Bénéficiaire modifié avec succès." : "Bénéficiaire créé avec succès.", "success");
+          closeModal('beneficiaireModal');
+          chargerBeneficiaires();
+        } else {
+          let errData = await res.json().catch(() => ({}));
+          showToast(errData.message || "Erreur lors de l'enregistrement", "error");
+        }
+      } catch (e) {
+        showToast(e.message, "error");
+      }
+    }
+
+    async function deleteBeneficiaire(id, clientId) {
+      if (!confirm("Êtes-vous sûr de vouloir supprimer ce bénéficiaire ?")) {
+        return;
+      }
+      try {
+        let res = await Beneficiaires.supprimer(id, clientId);
+        if (res && (res.status === 204 || res.ok)) {
+          showToast("Bénéficiaire supprimé avec succès.", "success");
+          chargerBeneficiaires();
+        } else {
+          let errData = await res.json().catch(() => ({}));
+          showToast(errData.message || "Erreur lors de la suppression", "error");
+        }
+      } catch (e) {
+        showToast(e.message, "error");
+      }
+    }
+  </script>
 </body>
 </html>

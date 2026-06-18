@@ -176,6 +176,12 @@ public class ClientServiceImpl implements ClientService {
         return clientRepository.findAll(pageable);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Client> rechercherClients(String query, Pageable pageable) {
+        return clientRepository.findByNomContainingIgnoreCaseOrPrenomContainingIgnoreCase(query, query, pageable);
+    }
+
     private String genererCodeClientUnique() {
         String prefixeDate = LocalDate.now().toString().replace("-", "");
         for (int tentative = 0; tentative < 20; tentative++) {

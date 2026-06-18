@@ -4,6 +4,7 @@ import com.soutra.microfinance.audit.AuditLog;
 import com.soutra.microfinance.dto.request.client.CreationClientRequestDTO;
 import com.soutra.microfinance.dto.request.client.DecisionKycClientRequestDTO;
 import com.soutra.microfinance.dto.request.client.MiseAJourKycClientRequestDTO;
+import com.soutra.microfinance.dto.response.client.ClientConfidentielResponseDTO;
 import com.soutra.microfinance.dto.response.client.ClientResponseDTO;
 import com.soutra.microfinance.dto.response.client.DocumentClientResponseDTO;
 import com.soutra.microfinance.entity.Client;
@@ -74,9 +75,17 @@ public class ClientController {
     })
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
-    public ResponseEntity<Page<ClientResponseDTO>> listerClients(@ParameterObject Pageable pageable) {
-        Page<ClientResponseDTO> pageClients = clientService.listerClients(pageable)
-                .map(clientMapper::toResponseDTO);
+    public ResponseEntity<Page<ClientResponseDTO>> listerClients(
+            @RequestParam(required = false) String recherche,
+            @ParameterObject Pageable pageable
+    ) {
+        Page<Client> clients;
+        if (recherche != null && !recherche.isBlank()) {
+            clients = clientService.rechercherClients(recherche, pageable);
+        } else {
+            clients = clientService.listerClients(pageable);
+        }
+        Page<ClientResponseDTO> pageClients = clients.map(clientMapper::toResponseDTO);
         return ResponseEntity.ok(pageClients);
     }
 
@@ -93,6 +102,24 @@ public class ClientController {
     public ResponseEntity<ClientResponseDTO> obtenirDetailsClient(@PathVariable Long idClient) {
         Client client = clientService.obtenirDetailsClient(idClient);
         return ResponseEntity.ok(clientMapper.toResponseDTO(client));
+    }
+
+    @Operation(
+            summary = "[ADMIN] Donnees confidentielles d'un client",
+            description = "Retourne les donnees sensibles en clair (numero de piece d'identite non masque, etc.). " +
+                    "Acces reserve aux administrateurs. Chaque acces est trace dans le journal d'audit."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Donnees confidentielles du client"),
+            @ApiResponse(responseCode = "403", description = "Acces refuse - role ADMIN requis"),
+            @ApiResponse(responseCode = "404", description = "Client introuvable")
+    })
+    @GetMapping("/{idClient}/confidentiel")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @AuditLog(action = "CLIENT_CONFIDENTIEL_ACCESS", resource = "CLIENT")
+    public ResponseEntity<ClientConfidentielResponseDTO> obtenirDonneesConfidentielles(@PathVariable Long idClient) {
+        Client client = clientService.obtenirDetailsClient(idClient);
+        return ResponseEntity.ok(clientMapper.toConfidentielDTO(client));
     }
 
     @Operation(

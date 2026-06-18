@@ -13,7 +13,10 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class CarteVisaResponseDTO {
 
+    private Long idCarte;
     private String numeroCarteMasque;
     private LocalDate dateExpiration;
     private String statut;
+    private String numCompte;
+    private String titulaire;
 }

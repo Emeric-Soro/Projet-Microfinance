@@ -1,9 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fiche Client - MicroFinance</title>
+  <title>Fiche Client — Soutra Finance Backoffice</title>
+  <meta name="description" content="Détail d'un client : coordonnées, comptes, profil de risque, historique des opérations.">
   <link rel="stylesheet" href="../assets/css/backoffice.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -16,92 +17,109 @@
         <div class="topbar-left">
           <div>
             <div class="topbar-title">Fiche Client</div>
-            <div class="topbar-breadcrumb">Clients / Kouamé Aya</div>
+            <div class="topbar-breadcrumb" id="breadcrumb">Clients / …</div>
           </div>
         </div>
         <div class="topbar-right">
           <a href="clients.html" class="btn btn-ghost btn-sm">← Retour</a>
-          <button class="btn btn-outline btn-sm">
+          <button class="btn btn-outline btn-sm" id="btnModifierStatut" style="display:none;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            Modifier
+            Statut
           </button>
         </div>
       </header>
 
-      <div class="content-area">
+      <!-- SKELETON DE CHARGEMENT -->
+      <div class="content-area" id="loadingState">
+        <div style="display:flex; justify-content:center; align-items:center; height:300px; flex-direction:column; gap:16px; color:#4A7A8A;">
+          <div class="login-spinner" style="width:40px;height:40px;"></div>
+          <div>Chargement de la fiche client…</div>
+        </div>
+      </div>
+
+      <!-- CONTENU PRINCIPAL (masqué jusqu'au chargement) -->
+      <div class="content-area" id="mainContent" style="display:none;">
         <div style="display: grid; grid-template-columns: 280px 1fr 280px; gap: 20px;">
-          <!-- LEFT: Profile -->
+
+          <!-- ══ COLONNE GAUCHE : Profil ══════════════════ -->
           <div>
             <div class="card profile-card">
-              <div class="profile-avatar">KA</div>
-              <div class="profile-name">Kouamé Aya</div>
-              <div class="profile-meta">Née le 15/03/1990</div>
-              <div style="margin-top: 12px;">
-                <span class="badge badge-active">Actif</span>
-                <span class="badge badge-info" style="margin-left: 4px;">VIP</span>
+              <div class="profile-avatar" id="profileAvatar">—</div>
+              <div class="profile-name" id="profileName">—</div>
+              <div class="profile-meta" id="profileMeta">—</div>
+              <div style="margin-top: 12px;" id="profileBadges">
+                <span class="badge badge-info" id="badgeStatut">—</span>
+                <span class="badge badge-pending" id="badgeKyc" style="margin-left: 4px;">—</span>
               </div>
             </div>
-            
+
             <div class="card" style="margin-top: 16px;">
               <div class="card-title" style="margin-bottom: 12px;">Coordonnées</div>
               <div class="info-row">
                 <span class="info-label">Téléphone</span>
-                <span class="info-value">+225 07 08 09 10 11</span>
+                <span class="info-value" id="infoTel">—</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Email</span>
-                <span class="info-value">aya.k@email.com</span>
+                <span class="info-value" id="infoEmail">—</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Adresse</span>
-                <span class="info-value">Cocody, Abidjan</span>
+                <span class="info-value" id="infoAdresse">—</span>
               </div>
               <div class="info-row">
-                <span class="info-label">Pièce d'identité</span>
-                <span class="info-value">CI-AB-2024-001234</span>
+                <span class="info-label">Nationalité</span>
+                <span class="info-value" id="infoPays">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Code client</span>
+                <span class="info-value" id="infoCode" style="font-family:monospace;font-size:12px;">—</span>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top: 16px;" id="carteIdentiteCard">
+              <div class="card-title" style="margin-bottom: 12px;">Pièce d'identité</div>
+              <div class="info-row">
+                <span class="info-label">Type</span>
+                <span class="info-value" id="infoTypePiece">—</span>
+              </div>
+              <div class="info-row" style="align-items: center;">
+                <span class="info-label">Numéro</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="info-value" id="infoNumPiece" style="font-family:monospace;font-size:12px; margin: 0;">—</span>
+                  <button id="btnRevealPiece" class="btn btn-ghost" style="display: none; padding: 2px; width: 22px; height: 22px; min-height: auto; align-items: center; justify-content: center; border-radius: 4px;" title="Afficher le numéro complet">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;display:block;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Expiration</span>
+                <span class="info-value" id="infoExpPiece">—</span>
               </div>
             </div>
           </div>
 
-          <!-- CENTER: Financial -->
+          <!-- ══ COLONNE CENTRE : Financier ══════════════ -->
           <div>
             <div class="card" style="margin-bottom: 20px;">
               <div class="card-header">
-                <div class="card-title">Solde cumulé total</div>
+                <div class="card-title">Profession</div>
               </div>
-              <div style="font-size: 36px; font-weight: 800; color: #084355; text-align: center; padding: 16px 0;">
-                4 750 000 <span style="font-size: 16px; font-weight: 600; color: #4A7A8A;">FCFA</span>
-              </div>
+              <div style="padding: 12px 0; font-size:15px; color:#084355; font-weight:600;" id="infoProfession">—</div>
             </div>
 
             <div class="card" style="margin-bottom: 20px;">
               <div class="card-header">
                 <div class="card-title">Comptes rattachés</div>
-                <button class="btn btn-primary btn-sm">
+                <button class="btn btn-primary btn-sm" onclick="window.location.href='comptes.html'">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   Ouvrir un compte
                 </button>
               </div>
-              <div class="account-mini-card">
-                <div>
-                  <div class="account-mini-type">Compte Courant</div>
-                  <div class="account-mini-number">MFN-2024-001234-A</div>
+              <div id="comptesRattaches">
+                <div style="padding:20px 0; text-align:center; color:#4A7A8A; font-size:13px;">
+                  Aucun compte rattaché (fonctionnalité à venir)
                 </div>
-                <div class="account-mini-balance">2 100 000 FCFA</div>
-              </div>
-              <div class="account-mini-card">
-                <div>
-                  <div class="account-mini-type">Épargne</div>
-                  <div class="account-mini-number">MFN-2024-001234-B</div>
-                </div>
-                <div class="account-mini-balance">1 800 000 FCFA</div>
-              </div>
-              <div class="account-mini-card">
-                <div>
-                  <div class="account-mini-type">DAT</div>
-                  <div class="account-mini-number">MFN-2024-001234-C</div>
-                </div>
-                <div class="account-mini-balance">850 000 FCFA</div>
               </div>
             </div>
 
@@ -115,24 +133,28 @@
             </div>
           </div>
 
-          <!-- RIGHT: LAB & History -->
+          <!-- ══ COLONNE DROITE : KYC & Historique ═══════ -->
           <div>
             <div class="card" style="margin-bottom: 16px;">
-              <div class="card-title" style="margin-bottom: 16px;">Profil de risque LAB</div>
+              <div class="card-title" style="margin-bottom: 16px;">Profil de risque KYC</div>
               <div style="text-align: center; padding: 16px 0;">
-                <div style="width: 100px; height: 100px; border-radius: 50%; border: 8px solid #2E7D32; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
-                  <span style="font-size: 24px; font-weight: 800; color: #084355;">A</span>
+                <div id="riskCircle" style="width: 100px; height: 100px; border-radius: 50%; border: 8px solid #4A7A8A; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+                  <span id="riskLetter" style="font-size: 24px; font-weight: 800; color: #084355;">—</span>
                 </div>
-                <div style="font-size: 14px; font-weight: 700; color: #2E7D32;">Risque Faible</div>
-                <div style="font-size: 11px; color: #4A7A8A; margin-top: 4px;">Dernière évaluation: 12/05/2026</div>
+                <div id="riskLabel" style="font-size: 14px; font-weight: 700; color: #4A7A8A;">Inconnu</div>
+                <div style="font-size: 11px; color: #4A7A8A; margin-top: 4px;" id="riskDate">—</div>
               </div>
               <div class="info-row">
-                <span class="info-label">Score KYC</span>
-                <span class="info-value" style="color: #2E7D32;">92/100</span>
+                <span class="info-label">Statut KYC</span>
+                <span class="info-value" id="infoStatutKyc">—</span>
               </div>
               <div class="info-row">
-                <span class="info-label">Alertes actives</span>
-                <span class="info-value" style="color: #2E7D32;">0</span>
+                <span class="info-label">KYC complet</span>
+                <span class="info-value" id="infoKycComplet">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">PEP</span>
+                <span class="info-value" id="infoPep">—</span>
               </div>
             </div>
 
@@ -140,93 +162,366 @@
               <div class="card-header">
                 <div class="card-title">Dernières opérations</div>
               </div>
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Montant</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><span class="badge badge-info">V</span></td>
-                    <td><strong>+250 000</strong></td>
-                    <td style="font-size:11px;">15/05</td>
-                  </tr>
-                  <tr>
-                    <td><span class="badge badge-pending">R</span></td>
-                    <td><strong>-100 000</strong></td>
-                    <td style="font-size:11px;">12/05</td>
-                  </tr>
-                  <tr>
-                    <td><span class="badge badge-info">V</span></td>
-                    <td><strong>+500 000</strong></td>
-                    <td style="font-size:11px;">08/05</td>
-                  </tr>
-                  <tr>
-                    <td><span class="badge badge-info">V</span></td>
-                    <td><strong>+75 000</strong></td>
-                    <td style="font-size:11px;">03/05</td>
-                  </tr>
-                  <tr>
-                    <td><span class="badge badge-pending">R</span></td>
-                    <td><strong>-200 000</strong></td>
-                    <td style="font-size:11px;">28/04</td>
-                  </tr>
-                </tbody>
-              </table>
+              <div style="padding:20px 0; text-align:center; color:#4A7A8A; font-size:13px;" id="opsPlaceholder">
+                Historique disponible dans la section Comptes
+              </div>
             </div>
           </div>
+
         </div>
       </div>
+
+      <!-- ÉTAT D'ERREUR -->
+      <div class="content-area" id="errorState" style="display:none;">
+        <div style="display:flex; justify-content:center; align-items:center; height:300px; flex-direction:column; gap:16px; color:#D93025;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:48px;height:48px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <div id="errorMessage">Client introuvable.</div>
+          <a href="clients.html" class="btn btn-primary">Retour à la liste</a>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
+
+  <!-- Modal changement de statut -->
+  <div class="modal-overlay" id="modalStatut">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header">
+        <div class="modal-title">Modifier le statut</div>
+        <button class="modal-close" onclick="closeModal('modalStatut')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom:16px;font-size:14px;color:#4A7A8A;">
+          Client : <strong id="modalStatutNom"></strong>
+        </p>
+        <div class="form-group">
+          <label class="form-label">Nouveau statut *</label>
+          <select class="form-control" id="selectNouveauStatut">
+            <option value="ACTIF">Actif</option>
+            <option value="SUSPENDU">Suspendu</option>
+            <option value="BLOQUE">Bloqué</option>
+            <option value="CLOTURE">Clôturé</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalStatut')">Annuler</button>
+        <button class="btn btn-primary" id="btnConfirmerStatut">Confirmer</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const ctx = document.getElementById('balanceChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai'],
-        datasets: [{
-          label: 'Solde',
-          data: [3200000, 3500000, 3800000, 4200000, 4750000],
-          borderColor: '#084355',
-          backgroundColor: 'rgba(8, 67, 85, 0.08)',
-          tension: 0.4,
-          fill: true,
-          pointRadius: 5,
-          pointBackgroundColor: '#084355'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false }
+    /* ── Helpers ──────────────────────────────────────────── */
+    function formatDateFR(dateStr) {
+      if (!dateStr) return '—';
+      const [y, m, d] = String(dateStr).split('-');
+      return `${d || '??'}/${m || '??'}/${y || '????'}`;
+    }
+
+    function escHtml(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function initiales(nomComplet) {
+      if (!nomComplet) return '??';
+      const parts = nomComplet.trim().replace(/\*+/g, '').trim().split(' ');
+      return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '??';
+    }
+
+    /* ── Normalisation champs masqués BDD ──────────────── */
+    function normaliserStatut(raw) {
+      if (!raw) return '';
+      const s = raw.replace(/\*/g, '').toUpperCase();
+      if (s.includes('CTIF'))    return 'ACTIF';
+      if (s.includes('OQUE'))    return 'BLOQUE';
+      if (s.includes('PENDU'))   return 'SUSPENDU';
+      if (s.includes('OTURE'))   return 'CLOTURE';
+      if (s.includes('ATTENTE')) return 'EN_ATTENTE';
+      if (s.includes('VEAU'))    return 'NOUVEAU';
+      return s.trim() || raw;
+    }
+
+    function afficherChamp(val) {
+      if (val === null || val === undefined || val === '') return '—';
+      return String(val);
+    }
+
+    /* ── Badges ──────────────────────────────────────────── */
+    const STATUT_MAP = {
+      ACTIF:      { cls: 'badge-active',  label: 'Actif' },
+      SUSPENDU:   { cls: 'badge-pending', label: 'Suspendu' },
+      BLOQUE:     { cls: 'badge-blocked', label: 'Bloqué' },
+      CLOTURE:    { cls: 'badge-blocked', label: 'Clôturé' },
+      EN_ATTENTE: { cls: 'badge-pending', label: 'En attente' }
+    };
+
+    const KYC_MAP = {
+      VALIDE:         { cls: 'badge-active',  label: 'Validé' },
+      EN_ATTENTE:     { cls: 'badge-pending', label: 'En attente' },
+      REVISION:       { cls: 'badge-pending', label: 'En révision' },
+      REJETE:         { cls: 'badge-blocked', label: 'Rejeté' },
+      NON_INITIALISE: { cls: 'badge-info',    label: 'Non initialisé' }
+    };
+
+    const RISK_MAP = {
+      FAIBLE:  { color: '#2E7D32', label: 'Risque Faible',  letter: 'A' },
+      MOYEN:   { color: '#F57C00', label: 'Risque Moyen',   letter: 'B' },
+      ELEVE:   { color: '#D93025', label: 'Risque Élevé',   letter: 'C' },
+      CRITIQUE:{ color: '#7B1FA2', label: 'Risque Critique', letter: 'D' }
+    };
+
+    /* ── Peuplement de la fiche ──────────────────────── */
+    function peupler(client) {
+      const ini = initiales(client.nomComplet);
+
+      // Avatar & nom
+      document.getElementById('profileAvatar').textContent = ini;
+      document.getElementById('profileName').textContent   = client.nomComplet || '—';
+      document.getElementById('profileMeta').textContent   = client.dateNaissance
+        ? 'Né(e) le ' + formatDateFR(client.dateNaissance) : '—';
+
+      // Breadcrumb
+      document.getElementById('breadcrumb').textContent = 'Clients / ' + (client.nomComplet || '—');
+      document.title = (client.nomComplet || 'Fiche Client') + ' — Soutra Finance Backoffice';
+
+      // Badge statut — normalisation des valeurs masquées de la BDD
+      const statutNorm = normaliserStatut(client.statut);
+      const sMap = STATUT_MAP[statutNorm] || { cls: 'badge-info', label: statutNorm || client.statut || '—' };
+      const badgeS = document.getElementById('badgeStatut');
+      badgeS.className = 'badge ' + sMap.cls;
+      badgeS.textContent = sMap.label;
+
+      // Badge KYC
+      const kMap = KYC_MAP[client.statutKyc] || { cls: 'badge-info', label: (client.statutKyc || '—').replace(/_/g,' ') };
+      const badgeK = document.getElementById('badgeKyc');
+      badgeK.className = 'badge ' + kMap.cls;
+      badgeK.textContent = kMap.label;
+
+      // Coordonnées — nettoyage des * de la BDD de démo
+      document.getElementById('infoTel').textContent     = afficherChamp(client.telephone);
+      document.getElementById('infoEmail').textContent   = afficherChamp(client.email);
+      document.getElementById('infoAdresse').textContent = afficherChamp(client.adresse);
+      document.getElementById('infoPays').textContent    = [
+        afficherChamp(client.paysNationalite),
+        afficherChamp(client.paysResidence)
+      ].filter(v => v && v !== '—').join(' / ') || '—';
+      document.getElementById('infoCode').textContent    = afficherChamp(client.codeClient);
+
+      // Pièce d'identité
+      document.getElementById('infoTypePiece').textContent = (client.typePieceIdentite || '—').replace(/_/g,' ');
+      _clientMasqueNum = client.numeroPieceIdentiteMasque || '—';
+      document.getElementById('infoNumPiece').textContent  = _clientMasqueNum;
+      document.getElementById('infoExpPiece').textContent  = formatDateFR(client.dateExpirationPieceIdentite);
+
+      // Afficher le bouton de révélation si l'utilisateur est ADMIN
+      const user = window.SF ? window.SF.getUser() : null;
+      const isAdmin = user && Array.isArray(user.roles) && user.roles.includes('ADMIN');
+      const btnReveal = document.getElementById('btnRevealPiece');
+      if (btnReveal) {
+        btnReveal.style.display = isAdmin ? 'inline-flex' : 'none';
+      }
+
+      // Profession
+      document.getElementById('infoProfession').textContent = afficherChamp(client.profession);
+
+      // KYC
+      document.getElementById('infoStatutKyc').textContent  = kMap.label;
+      document.getElementById('infoKycComplet').textContent  = client.kycComplet ? '✅ Oui' : '❌ Non';
+      document.getElementById('infoPep').textContent         = client.pep ? '⚠️ Oui (PEP)' : 'Non';
+
+      // Profil de risque
+      const rMap = RISK_MAP[client.niveauRisque] || { color: '#4A7A8A', label: 'Inconnu', letter: '?' };
+      const circle = document.getElementById('riskCircle');
+      circle.style.borderColor = rMap.color;
+      document.getElementById('riskLetter').textContent = rMap.letter;
+      document.getElementById('riskLabel').textContent  = rMap.label;
+      document.getElementById('riskLabel').style.color  = rMap.color;
+      document.getElementById('riskDate').textContent   = 'Dernière évaluation: ' + formatDateFR(new Date().toISOString().split('T')[0]);
+
+      // Bouton statut — utilise le statut normalisé
+      const btnStatut = document.getElementById('btnModifierStatut');
+      btnStatut.style.display = '';
+      btnStatut.onclick = function () {
+        document.getElementById('modalStatutNom').textContent = client.nomComplet;
+        document.getElementById('selectNouveauStatut').value  = statutNorm || 'ACTIF';
+        openModal('modalStatut');
+      };
+
+      // Afficher le contenu
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('mainContent').style.display  = '';
+    }
+
+    /* ── Graphique placeholder ─────────────────────── */
+    function initChart() {
+      const ctx = document.getElementById('balanceChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'],
+          datasets: [{
+            label: 'Solde',
+            data: [0, 0, 0, 0, 0, 0],
+            borderColor: '#084355',
+            backgroundColor: 'rgba(8, 67, 85, 0.08)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 5,
+            pointBackgroundColor: '#084355'
+          }]
         },
-        scales: {
-          y: {
-            beginAtZero: false,
-            grid: { color: 'rgba(0,0,0,0.05)' },
-            ticks: {
-              font: { size: 11 },
-              callback: v => (v/1000000).toFixed(1) + 'M'
-            }
-          },
-          x: {
-            grid: { display: false },
-            ticks: { font: { size: 11 } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: { font: { size: 11 }, callback: v => (v/1000000).toFixed(1) + 'M' }
+            },
+            x: { grid: { display: false }, ticks: { font: { size: 11 } } }
           }
         }
+      });
+    }
+
+    /* ── Variables d'état Client ───────────────────── */
+    let _clientId = null;
+    let _clientMasqueNum = null;
+    let _clientConfidentiel = null;
+
+    /* ── Changement de statut ──────────────────────── */
+    document.getElementById('btnConfirmerStatut').addEventListener('click', async function () {
+      const nouveauStatut = document.getElementById('selectNouveauStatut').value;
+      if (!_clientId || !nouveauStatut) return;
+      this.disabled = true;
+      try {
+        const res = await Clients.modifierStatut(_clientId, nouveauStatut);
+        if (!res) return;
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          showToast('Statut mis à jour avec succès.', 'success');
+          closeModal('modalStatut');
+          chargerClient(_clientId); // recharger la fiche
+        } else {
+          showToast(data.message || 'Erreur lors de la mise à jour du statut.', 'error');
+        }
+      } catch (_) {
+        showToast('Impossible de joindre le serveur.', 'error');
+      } finally {
+        this.disabled = false;
+      }
+    });
+
+    /* ── Chargement du client ──────────────────────── */
+    async function chargerClient(id) {
+      _clientMasqueNum = null;
+      _clientConfidentiel = null;
+      const btnReveal = document.getElementById('btnRevealPiece');
+      if (btnReveal) {
+        btnReveal.classList.remove('revealed');
+        btnReveal.title = 'Afficher le numéro complet';
+        const icon = btnReveal.querySelector('svg');
+        if (icon) {
+          icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+        }
+      }
+
+      document.getElementById('loadingState').style.display  = '';
+      document.getElementById('mainContent').style.display   = 'none';
+      document.getElementById('errorState').style.display    = 'none';
+
+      try {
+        const res = await Clients.obtenir(id);
+        if (!res) return; // 401 → redirigé
+
+        const data = await res.json().catch(() => null);
+
+        if (res.ok && data) {
+          peupler(data);
+          initChart();
+        } else if (res.status === 404) {
+          document.getElementById('errorMessage').textContent = 'Client introuvable (ID : ' + id + ').';
+          document.getElementById('loadingState').style.display = 'none';
+          document.getElementById('errorState').style.display   = '';
+          showToast('Client introuvable.', 'error');
+        } else {
+          document.getElementById('errorMessage').textContent = data?.message || 'Erreur lors du chargement.';
+          document.getElementById('loadingState').style.display = 'none';
+          document.getElementById('errorState').style.display   = '';
+          showToast('Erreur lors du chargement du client.', 'error');
+        }
+
+      } catch (err) {
+        document.getElementById('errorMessage').textContent = 'Impossible de joindre le serveur.';
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display   = '';
+        showToast('Impossible de joindre le serveur. Vérifiez que le backend est démarré.', 'error');
+      }
+    }
+
+    /* ── Initialisation ────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function () {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+
+      if (!id || isNaN(Number(id))) {
+        // Pas d'ID : rediriger vers la liste
+        const hasHtml = window.location.pathname.includes('.html');
+        window.location.href = hasHtml ? 'clients.html' : 'clients';
+        return;
+      }
+
+      _clientId = Number(id);
+      chargerClient(_clientId);
+
+      // Gestion de la révélation du numéro de pièce
+      const btnReveal = document.getElementById('btnRevealPiece');
+      if (btnReveal) {
+        btnReveal.addEventListener('click', async function () {
+          const infoNum = document.getElementById('infoNumPiece');
+          const icon = btnReveal.querySelector('svg');
+          
+          if (btnReveal.classList.contains('revealed')) {
+            infoNum.textContent = _clientMasqueNum || '—';
+            btnReveal.classList.remove('revealed');
+            btnReveal.title = 'Afficher le numéro complet';
+            icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+            return;
+          }
+
+          if (!_clientConfidentiel) {
+            btnReveal.disabled = true;
+            try {
+              const res = await Clients.obtenirConfidentiel(_clientId);
+              if (res && res.ok) {
+                _clientConfidentiel = await res.json();
+              } else {
+                showToast('Accès refusé ou erreur lors du chargement des données confidentielles.', 'error');
+                return;
+              }
+            } catch (err) {
+              showToast('Impossible de joindre le serveur.', 'error');
+              return;
+            } finally {
+              btnReveal.disabled = false;
+            }
+          }
+
+          if (_clientConfidentiel && _clientConfidentiel.numeroPieceIdentite) {
+            infoNum.textContent = _clientConfidentiel.numeroPieceIdentite;
+            btnReveal.classList.add('revealed');
+            btnReveal.title = 'Masquer le numéro';
+            icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+          }
+        });
       }
     });
   </script>
 </body>
 </html>
-
-
-

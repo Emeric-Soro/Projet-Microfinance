@@ -21,6 +21,8 @@ public interface CompteMapper {
     // On dit à MapStruct d'utiliser notre méthode personnalisée (ci-dessous) pour le numéro
     @Mapping(target = "numeroCarteMasque", expression = "java(masquerNumeroCarte(carte))")
     @Mapping(target = "statut", expression = "java(carte.getStatut() ? \"ACTIF\" : \"INACTIF\")")
+    @Mapping(source = "compte.numCompte", target = "numCompte")
+    @Mapping(target = "titulaire", expression = "java(carte.getCompte() != null && carte.getCompte().getClient() != null ? carte.getCompte().getClient().getNom() + \" \" + carte.getCompte().getClient().getPrenom() : null)")
     CarteVisaResponseDTO toCarteVisaResponseDTO(CarteVisa carte);
 
     // Méthode personnalisée intégrée au Mapper

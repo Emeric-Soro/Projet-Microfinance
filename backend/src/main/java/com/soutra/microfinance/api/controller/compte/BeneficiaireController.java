@@ -1,5 +1,6 @@
 package com.soutra.microfinance.api.controller.compte;
 
+import com.soutra.microfinance.entity.Beneficiaire;
 import com.soutra.microfinance.dto.request.compte.BeneficiaireRequestDTO;
 import com.soutra.microfinance.dto.response.compte.BeneficiaireResponseDTO;
 import com.soutra.microfinance.audit.AuditLog;
@@ -34,15 +35,21 @@ public class BeneficiaireController {
 
     private final BeneficiaireService beneficiaireService;
 
-    @Operation(summary = "Lister les beneficiaires d'un client")
+    @Operation(summary = "Lister les beneficiaires")
     @ApiResponse(responseCode = "200", description = "Liste des beneficiaires")
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERVISEUR', 'AGENT')")
     @AuditLog(action = "BENEFICIARY_LIST", resource = "BENEFICIARY")
     public List<BeneficiaireResponseDTO> lister(
-            @RequestParam("clientId") @NotNull Long clientId
+            @RequestParam(value = "clientId", required = false) Long clientId
     ) {
-        return beneficiaireService.listerParClient(clientId).stream()
+        List<Beneficiaire> list;
+        if (clientId != null) {
+            list = beneficiaireService.listerParClient(clientId);
+        } else {
+            list = beneficiaireService.listerTous();
+        }
+        return list.stream()
                 .map(BeneficiaireResponseDTO::fromEntity)
                 .toList();
     }

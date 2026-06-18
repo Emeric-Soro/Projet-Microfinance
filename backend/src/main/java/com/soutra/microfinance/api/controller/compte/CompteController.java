@@ -18,6 +18,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -89,6 +92,39 @@ public class CompteController {
 		// Lit le solde courant sans modifier l'etat du compte.
 		BigDecimal solde = compteService.consulterSolde(numCompte);
 		return ResponseEntity.ok(solde);
+	}
+
+	@Operation(
+			summary = "Obtenir les details d'un compte",
+			description = "Retourne les details complets d'un compte"
+	)
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Details retournes avec succes"),
+			@ApiResponse(responseCode = "404", description = "Compte introuvable")
+	})
+	@GetMapping("/{numCompte}")
+	@PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
+	public ResponseEntity<CompteResponseDTO> obtenirDetailsCompte(@PathVariable String numCompte) {
+		Compte compte = compteService.obtenirCompteParNumero(numCompte);
+		return ResponseEntity.ok(toCompteResponse(compte));
+	}
+
+	@Operation(
+			summary = "Lister les comptes d'un client",
+			description = "Retourne tous les comptes d'un client"
+	)
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Comptes retournes avec succes"),
+			@ApiResponse(responseCode = "404", description = "Client introuvable")
+	})
+	@GetMapping("/client/{idClient}")
+	@PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
+	public ResponseEntity<Page<CompteResponseDTO>> listerComptesClient(
+			@PathVariable Long idClient,
+			@ParameterObject Pageable pageable
+	) {
+		Page<Compte> comptes = compteService.listerComptesClient(idClient, pageable);
+		return ResponseEntity.ok(comptes.map(this::toCompteResponse));
 	}
 
 	@Operation(
