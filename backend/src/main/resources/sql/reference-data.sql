@@ -136,6 +136,18 @@ ON (ru.code_role_utilisateur = src.code_role_utilisateur)
 WHEN NOT MATCHED THEN INSERT (code_role_utilisateur, intitule_role, created_at, updated_at)
 VALUES ('COMPTABLE', 'Comptable', SYSTIMESTAMP, SYSTIMESTAMP);
 
+MERGE INTO soutra_role_utilisateur ru
+USING (SELECT 'SUPERVISEUR' AS code_role_utilisateur FROM dual) src
+ON (ru.code_role_utilisateur = src.code_role_utilisateur)
+WHEN NOT MATCHED THEN INSERT (code_role_utilisateur, intitule_role, created_at, updated_at)
+VALUES ('SUPERVISEUR', 'Superviseur Agence', SYSTIMESTAMP, SYSTIMESTAMP);
+
+MERGE INTO soutra_role_utilisateur ru
+USING (SELECT 'AGENT_COMMERCIAL' AS code_role_utilisateur FROM dual) src
+ON (ru.code_role_utilisateur = src.code_role_utilisateur)
+WHEN NOT MATCHED THEN INSERT (code_role_utilisateur, intitule_role, created_at, updated_at)
+VALUES ('AGENT_COMMERCIAL', 'Agent Commercial / Charge Clientele', SYSTIMESTAMP, SYSTIMESTAMP);
+
 -- ============================================================
 -- 5. STATUTS DE CREDIT (NOUVEAU - Module Credits)
 -- ============================================================

@@ -64,11 +64,11 @@
       return null;
     }
 
-    var headers = Object.assign(
-      { 'Content-Type': 'application/json' },
-      { 'Authorization': 'Bearer ' + token },
-      options.headers || {}
-    );
+    var defaultHeaders = { 'Authorization': 'Bearer ' + token };
+    if (!(options.body instanceof FormData)) {
+      defaultHeaders['Content-Type'] = 'application/json';
+    }
+    var headers = Object.assign(defaultHeaders, options.headers || {});
     var res;
     try {
       res = await fetch(API_BASE + path, Object.assign({}, options, { headers: headers }));
@@ -177,6 +177,20 @@
     /** PUT /api/v1/clients/{id}/kyc/decision */
     traiterKyc: async function (idClient, data) {
       return await apiFetch('/api/v1/clients/' + idClient + '/kyc/decision', { method: 'PUT', body: JSON.stringify(data) });
+    },
+    /** PUT /api/v1/clients/{id}/kyc */
+    mettreAJourKyc: async function (idClient, data) {
+      return await apiFetch('/api/v1/clients/' + idClient + '/kyc', { method: 'PUT', body: JSON.stringify(data) });
+    },
+    /** POST /api/v1/clients/{id}/documents */
+    uploadDocument: async function (idClient, file, categorie) {
+      var formData = new FormData();
+      formData.append('fichier', file);
+      if (categorie) formData.append('categorie', categorie);
+      return await apiFetch('/api/v1/clients/' + idClient + '/documents', {
+        method: 'POST',
+        body: formData
+      });
     }
   };
 
@@ -220,8 +234,46 @@
   };
 
   var Transactions = {
+    /** POST /api/v1/transactions/depot */
+    depot: async function (numCompte, montant, idGuichetier) {
+      return await apiFetch('/api/v1/transactions/depot', {
+        method: 'POST',
+        body: JSON.stringify({ numCompte: numCompte, montant: montant, idGuichetier: idGuichetier })
+      });
+    },
+    /** POST /api/v1/transactions/retrait */
+    retrait: async function (numCompte, montant, idGuichetier, numeroCarte) {
+      var body = { numCompte: numCompte, montant: montant, idGuichetier: idGuichetier };
+      if (numeroCarte) body.numeroCarte = numeroCarte;
+      return await apiFetch('/api/v1/transactions/retrait', {
+        method: 'POST',
+        body: JSON.stringify(body)
+      });
+    },
+    /** POST /api/v1/comptes/{numCompte}/depot-initial — sans caisse requise */
+    depotInitial: async function (numCompte, montant, idInitiateur) {
+      return await apiFetch('/api/v1/comptes/' + encodeURIComponent(numCompte) + '/depot-initial', {
+        method: 'POST',
+        body: JSON.stringify({ montant: montant, idInitiateur: idInitiateur })
+      });
+    },
+    /** POST /api/v1/transactions/paiement-carte */
     payerCarte: async function (numeroCarte, montant, idGuichetier) {
-      return await apiFetch('/api/v1/transactions/paiement-carte', { method: 'POST', body: JSON.stringify({ numeroCarte, montant, idGuichetier }) });
+      return await apiFetch('/api/v1/transactions/paiement-carte', {
+        method: 'POST',
+        body: JSON.stringify({ numeroCarte: numeroCarte, montant: montant, idGuichetier: idGuichetier })
+      });
+    },
+    /** GET /api/v1/transactions/comptes/{numCompte}/historique */
+    historiqueCompte: async function (numCompte, page, size) {
+      return await apiFetch(
+        '/api/v1/transactions/comptes/' + encodeURIComponent(numCompte)
+        + '/historique?page=' + (page || 0) + '&size=' + (size || 20)
+      );
+    },
+    /** GET /api/v1/transactions/{ref}/recu */
+    recu: async function (referenceUnique) {
+      return await apiFetch('/api/v1/transactions/' + encodeURIComponent(referenceUnique) + '/recu');
     }
   };
 
@@ -284,6 +336,7 @@
         { href: 'caisse.html', label: 'Caisse', icon: icons.cash, match: ['caisse.html'] },
         { href: 'guichet.html', label: 'Guichet', icon: icons.cash, match: ['guichet.html'] },
         { href: 'versement.html', label: 'Versement', icon: icons.transfer, match: ['versement.html'] },
+        { href: 'retrait.html', label: 'Retrait', icon: icons.transfer, match: ['retrait.html'] },
         { href: 'virement.html', label: 'Virement', icon: icons.transfer, match: ['virement.html'] },
         { href: 'mobile-money.html', label: 'Mobile Money', icon: icons.cash, match: ['mobile-money.html'] },
         { href: 'validation.html', label: 'Validation 4-eyes', icon: icons.audit, badge: '12', match: ['validation.html'] },

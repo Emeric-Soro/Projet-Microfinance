@@ -13,7 +13,10 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class CompteResponseDTO {
 
+    /** Numero masque pour l'affichage (ex: CPT-****9-04) */
     private String numCompte;
+    /** Numero complet necessaire pour les operations (depot, retrait, etc.) */
+    private String numCompteComplet;
     private String typeCompte;
     private BigDecimal solde;
     private String devise;

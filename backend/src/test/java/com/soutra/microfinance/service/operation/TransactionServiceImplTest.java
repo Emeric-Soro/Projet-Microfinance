@@ -12,8 +12,12 @@ import com.soutra.microfinance.repository.compte.CompteRepository;
 import com.soutra.microfinance.repository.operation.LigneEcritureRepository;
 import com.soutra.microfinance.repository.operation.TransactionRepository;
 import com.soutra.microfinance.repository.operation.TypeTransactionRepository;
+import com.soutra.microfinance.repository.compte.CarteVisaRepository;
+import com.soutra.microfinance.repository.operation.CaisseRepository;
+import com.soutra.microfinance.service.comptabilite.ComptabiliteOperationnelleService;
 import com.soutra.microfinance.service.communication.event.VirementEffectueEvent;
 import com.soutra.microfinance.service.operation.fees.TransactionFeeCalculator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
@@ -27,8 +31,12 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
 
+import com.soutra.microfinance.constant.AppConstants;
+import com.soutra.microfinance.api.exception.TransactionWorkflowException;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -61,8 +69,34 @@ class TransactionServiceImplTest {
     @Mock
     private TransactionWorkflowProperties transactionWorkflowProperties;
 
+    @Mock
+    private CarteVisaRepository carteVisaRepository;
+
+    @Mock
+    private CaisseRepository caisseRepository;
+
+    @Mock
+    private ComptabiliteOperationnelleService comptabiliteOperationnelleService;
+
     @InjectMocks
     private TransactionServiceImpl transactionService;
+
+    @BeforeEach
+    void setUp() {
+        org.mockito.Mockito.lenient().doAnswer(invocation -> {
+            Compte compte = invocation.getArgument(0);
+            BigDecimal amount = invocation.getArgument(1);
+            compte.setSolde(compte.getSolde().add(amount));
+            return null;
+        }).when(comptabiliteOperationnelleService).crediterCompte(any(Compte.class), any(BigDecimal.class));
+
+        org.mockito.Mockito.lenient().doAnswer(invocation -> {
+            Compte compte = invocation.getArgument(0);
+            BigDecimal amount = invocation.getArgument(1);
+            compte.setSolde(compte.getSolde().subtract(amount));
+            return null;
+        }).when(comptabiliteOperationnelleService).debiterCompte(any(Compte.class), any(BigDecimal.class));
+    }
 
     @Test
     void shouldKeepSensitiveTransferPendingUntilSupervisorApproval() {
@@ -112,7 +146,6 @@ class TransactionServiceImplTest {
         when(utilisateurRepository.findById(20L)).thenReturn(Optional.of(superviseur));
         when(compteRepository.findById(1L)).thenReturn(Optional.of(sourceStocke));
         when(compteRepository.findById(2L)).thenReturn(Optional.of(destinationStocke));
-        when(compteRepository.save(any(Compte.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Transaction resultat = transactionService.approuverTransaction("TX-REF-001", 20L);
@@ -123,8 +156,45 @@ class TransactionServiceImplTest {
         assertThat(resultat.getDateExecution()).isNotNull();
         assertThat(sourceStocke.getSolde()).isEqualByComparingTo("400000.00");
         assertThat(destinationStocke.getSolde()).isEqualByComparingTo("610000.00");
-        verify(ligneEcritureRepository, times(2)).save(ArgumentMatchers.any());
+        verify(comptabiliteOperationnelleService, times(2)).creerLigne(any(), any(), any(), any());
         verify(eventPublisher).publishEvent(ArgumentMatchers.any(VirementEffectueEvent.class));
+    }
+
+    @Test
+    void shouldPerformInitialDepositSuccessfully() {
+        Compte compte = buildCompte(1L, "CPT-DEP-INIT", BigDecimal.ZERO);
+        Utilisateur agent = buildUtilisateur(10L, "AGENT_COMMERCIAL");
+        TypeTransaction typeDepot = buildType("DEPOT");
+
+        when(compteRepository.findByNumCompte("CPT-DEP-INIT")).thenReturn(Optional.of(compte));
+        when(compteRepository.findById(1L)).thenReturn(Optional.of(compte));
+        when(utilisateurRepository.findById(10L)).thenReturn(Optional.of(agent));
+        when(typeTransactionRepository.findByCodeTypeTransaction(AppConstants.TX_DEPOT)).thenReturn(Optional.of(typeDepot));
+        when(transactionFeeCalculator.calculerFrais("DEPOT", new BigDecimal("10000.00"))).thenReturn(BigDecimal.ZERO);
+        when(transactionWorkflowProperties.getApprovalThreshold()).thenReturn(new BigDecimal("50000.00"));
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Transaction result = transactionService.faireDepotInitial("CPT-DEP-INIT", new BigDecimal("10000.00"), 10L);
+
+        assertThat(result.getStatutOperation()).isEqualTo(StatutOperation.EXECUTEE);
+        assertThat(result.getValidationSuperviseurRequise()).isFalse();
+        assertThat(compte.getSolde()).isEqualByComparingTo("10000.00");
+        verify(comptabiliteOperationnelleService, times(1)).crediterCompte(eq(compte), eq(new BigDecimal("10000.00")));
+    }
+
+    @Test
+    void shouldFailInitialDepositWhenAccountAlreadyHasBalance() {
+        Compte compte = buildCompte(1L, "CPT-DEP-INIT", new BigDecimal("5000.00"));
+        Utilisateur agent = buildUtilisateur(10L, "AGENT_COMMERCIAL");
+
+        when(compteRepository.findByNumCompte("CPT-DEP-INIT")).thenReturn(Optional.of(compte));
+
+        assertThatThrownBy(() -> transactionService.faireDepotInitial("CPT-DEP-INIT", new BigDecimal("10000.00"), 10L))
+                .isInstanceOf(TransactionWorkflowException.class)
+                .hasMessageContaining("Le depot initial n'est autorise que sur un compte dont le solde est nul.");
+
+        verify(transactionRepository, never()).save(any());
+        verify(compteRepository, never()).save(any());
     }
 
     private Compte buildCompte(Long idCompte, String numCompte, BigDecimal solde) {

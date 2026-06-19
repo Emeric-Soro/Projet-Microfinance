@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Comptes - MicroFinance</title>
   <link rel="stylesheet" href="../assets/css/backoffice.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../assets/js/chart.min.js"></script>
 </head>
 <body>
   <div class="app-layout">
@@ -885,36 +885,102 @@
         return;
       }
 
+      // ── Étape 1 : Ouvrir le compte (solde = 0 en base) ──
+      let compte;
       try {
         let res = await Comptes.ouvrir(selectedClientId, type, deposit);
-        if (res && res.ok) {
-          let compte = await res.json();
-          document.getElementById('contractModalAccNum').textContent = compte.numCompte;
-          document.getElementById('contractModalAccType').textContent = 'Compte ' + type;
-          
-          document.getElementById('contractModalDownloadBtn').onclick = function() {
-            window.open(SF.API_BASE + '/api/v1/comptes/' + compte.numCompte + '/releve?format=PDF&du=2026-01-01&au=2026-12-31', '_blank');
-          };
-          
-          openModal('contractModal');
-          showToast("Compte créé avec succès !", "success");
-          
-          // Reset fields
-          selectedClientId = null;
-          selectedClient = null;
-          clientSearch.value = '';
-          updateSelectedClientHint(null);
-          document.getElementById('initialDeposit').value = '';
-          document.querySelectorAll('.gabarit-option').forEach(o => { o.style.borderColor = '#C9DFE8'; o.style.background = 'transparent'; });
-          let checkedOpt = document.querySelector('input[name="gabarit"]:checked');
-          if (checkedOpt) checkedOpt.checked = false;
-        } else {
+        if (!res || !res.ok) {
           let err = res ? await res.json().catch(() => ({})) : {};
           showToast(err.message || "Erreur lors de la création du compte", "error");
+          return;
         }
+        compte = await res.json();
       } catch (e) {
-        showToast("Erreur lors de la création du compte", "error");
+        showToast("Erreur lors de la création du compte : " + e.message, "error");
+        return;
       }
+
+      // ── Étape 2 : Dépôt initial → génère la Transaction comptable ──
+      let user = SF.getUser ? SF.getUser() : null;
+      let depotEnAttente = false;
+      let depotRef = null;
+      // Utilise numCompteComplet (non masqué) pour l'API, numCompte (masqué) pour l'affichage
+      let numCompteOperations = compte.numCompteComplet || compte.numCompte;
+      if (user && user.idUser && numCompteOperations) {
+        try {
+          let depotRes = await Transactions.depotInitial(numCompteOperations, deposit, user.idUser);
+          if (depotRes) {
+            if (depotRes.ok || depotRes.status === 202) {
+              depotEnAttente = depotRes.status === 202;
+              let recu = await depotRes.json().catch(() => ({}));
+              depotRef = recu.referenceUnique || null;
+            } else {
+              let err = await depotRes.json().catch(() => ({}));
+              showToast("Compte créé, mais le dépôt initial a échoué : " + (err.message || "Erreur inconnue"), "warning");
+            }
+          }
+        } catch (_) {
+          // Le compte est créé, le dépôt a échoué — on continue et on avertit
+          showToast("Compte créé, mais le dépôt initial n'a pas pu être enregistré. Effectuez-le manuellement.", "warning");
+        }
+      }
+
+      // ── Étape 3 : Affichage modal contrat ──
+      document.getElementById('contractModalAccNum').textContent = compte.numCompte;
+      document.getElementById('contractModalAccType').textContent = 'Compte ' + type;
+
+      document.getElementById('contractModalDownloadBtn').onclick = async function() {
+        // window.open() ne transmet pas le header Authorization → 401.
+        // On utilise fetch() authentifié puis on crée un blob URL pour ouvrir le PDF.
+        let numCompteUrl = compte.numCompteComplet || compte.numCompte;
+        let today = new Date();
+        let todayStr = today.toISOString().split('T')[0];
+        let depuis = new Date(today); depuis.setDate(depuis.getDate() - 30);
+        let depuisStr = depuis.toISOString().split('T')[0];
+        let url = '/api/v1/comptes/' + encodeURIComponent(numCompteUrl) + '/releve?format=PDF&du=' + depuisStr + '&au=' + todayStr;
+        this.disabled = true;
+        this.textContent = 'Chargement…';
+        try {
+          let res = await SF.apiFetch(url);
+          if (res && res.ok) {
+            let blob = await res.blob();
+            let blobUrl = URL.createObjectURL(blob);
+            let a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = 'releve_' + numCompteUrl + '_' + today + '.pdf';
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+          } else if (res) {
+            let err = await res.json().catch(() => ({}));
+            showToast('Impossible de générer le relevé : ' + (err.message || 'Erreur inconnue'), 'warning');
+          }
+        } catch (e) {
+          showToast('Erreur lors du téléchargement du relevé.', 'error');
+        } finally {
+          this.disabled = false;
+          this.textContent = 'Télécharger le contrat';
+        }
+      };
+
+      openModal('contractModal');
+
+      if (depotEnAttente) {
+        showToast("Compte créé. Dépôt initial en attente de validation superviseur (réf. : " + (depotRef || '—') + ").", "warning");
+      } else if (depotRef) {
+        showToast("Compte créé et dépôt initial de " + deposit.toLocaleString('fr-FR') + " FCFA enregistré (réf. : " + depotRef + ").", "success");
+      } else {
+        showToast("Compte créé avec succès !", "success");
+      }
+
+      // Reset fields
+      selectedClientId = null;
+      selectedClient = null;
+      clientSearch.value = '';
+      updateSelectedClientHint(null);
+      document.getElementById('initialDeposit').value = '';
+      document.querySelectorAll('.gabarit-option').forEach(o => { o.style.borderColor = '#C9DFE8'; o.style.background = 'transparent'; });
+      let checkedOpt = document.querySelector('input[name="gabarit"]:checked');
+      if (checkedOpt) checkedOpt.checked = false;
     }
 
     // --- Tab 2: Consulter ---

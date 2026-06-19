@@ -13,6 +13,7 @@ public interface CompteMapper {
     // On extrait le texte du TypeCompte
     @Mapping(source = "typeCompte.libelle", target = "typeCompte")
     @Mapping(target = "numCompte", expression = "java(masquerNumeroCompte(compte))")
+    @Mapping(source = "numCompte", target = "numCompteComplet")
     // Le statut actuel est un peu complexe à récupérer via MapStruct car c'est un historique (StatutCompte).
     // On l'ignore ici, le Controller s'en chargera si besoin !
     @Mapping(target = "statut", ignore = true)

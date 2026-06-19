@@ -56,6 +56,7 @@ public class CompteServiceImpl implements CompteService {
         if (codeTypeCompte == null || codeTypeCompte.isBlank()) {
             throw new IllegalArgumentException("Le type de compte est obligatoire");
         }
+        // Validation du montant : doit être positif pour que faireDepotInitial puisse l'exécuter
         if (depotInitial == null || depotInitial.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Le depot initial doit etre strictement positif");
         }
@@ -74,7 +75,9 @@ public class CompteServiceImpl implements CompteService {
         compte.setClient(client);
         compte.setTypeCompte(typeCompte);
         compte.setDateOuverture(LocalDate.now());
-        compte.setSolde(depotInitial);
+        // Le solde est initialisé à zéro : il sera crédité par faireDepotInitial
+        // via une vraie Transaction comptable (LigneEcriture tracée).
+        compte.setSolde(BigDecimal.ZERO);
         compte.setDevise(defaultCurrency);
         compte.setTauxInteret(BigDecimal.ZERO);
         compte.setDecouvertAutorise(BigDecimal.ZERO);

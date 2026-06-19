@@ -619,4 +619,42 @@ public class TransactionServiceImpl implements TransactionService {
         caisse.setSoldeCourant(caisse.getSoldeCourant().add(variation));
         caisseRepository.save(caisse);
     }
+
+    // ========== DEPOT INITIAL (ouverture de compte) ==========
+
+    @Override
+    @Transactional
+    public Transaction faireDepotInitial(String numCompte, BigDecimal montant, Long idUser) {
+        validerMontantPositif(montant);
+
+        Compte compte = chargerCompte(numCompte);
+        if (compte.getSolde() != null && compte.getSolde().compareTo(BigDecimal.ZERO) != 0) {
+            throw new TransactionWorkflowException("Le depot initial n'est autorise que sur un compte dont le solde est nul.");
+        }
+        Utilisateur utilisateur = chargerUtilisateur(idUser);
+        TypeTransaction typeDepot = chargerTypeStrict(AppConstants.TX_DEPOT);
+
+        BigDecimal frais = transactionFeeCalculator.calculerFrais(typeDepot.getCodeTypeTransaction(), montant);
+        BigDecimal montantNet = montant.subtract(frais);
+        if (montantNet.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalStateException("Le montant net apres frais doit rester strictement positif");
+        }
+
+        // Le depot initial n'exige pas de caisse ouverte (agent commercial).
+        Transaction transaction = creerTransaction(
+                utilisateur,
+                typeDepot,
+                montant,
+                frais,
+                null,
+                compte,
+                necessiteValidationSuperviseur(montant)
+        );
+
+        if (Boolean.TRUE.equals(transaction.getValidationSuperviseurRequise())) {
+            return transaction;
+        }
+
+        return executerTransaction(transaction);
+    }
 }
