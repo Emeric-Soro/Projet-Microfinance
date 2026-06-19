@@ -23,4 +23,6 @@ public interface CompteService {
     Compte bloquerCompte(String numCompte, String motif);
 
     Compte debloquerCompte(String numCompte, String motif);
+
+    Compte obtenirCompteParNumero(String numCompte);
 }

@@ -1,4 +1,4 @@
-﻿/* ============================================
+/* ============================================
    API CLIENT — Soutra Finance Backoffice
    Couche centralisée : token, fetch, session
    ============================================ */
@@ -53,22 +53,46 @@
   async function apiFetch(path, options) {
     options = options || {};
     var token = getToken();
+
+    // Si pas de token → rediriger vers login sans tenter le fetch
+    if (!token) {
+      var currentPage = (window.location.pathname.split('/').pop() || '')
+        .replace(/\.html$/i, '');
+      if (!['login', 'otp'].includes(currentPage)) {
+        window.location.href = 'login.html';
+      }
+      return null;
+    }
+
     var headers = Object.assign(
       { 'Content-Type': 'application/json' },
-      token ? { 'Authorization': 'Bearer ' + token } : {},
+      { 'Authorization': 'Bearer ' + token },
       options.headers || {}
     );
     var res;
     try {
       res = await fetch(API_BASE + path, Object.assign({}, options, { headers: headers }));
-    } catch (_) {
-      throw new Error('Impossible de joindre le serveur. Vérifiez que le backend est démarré.');
+    } catch (fetchErr) {
+      var msg = 'Impossible de joindre le serveur (localhost:8080). Vérifiez que le backend est démarré.';
+      if (fetchErr && fetchErr.message && fetchErr.message.toLowerCase().includes('cors')) {
+        msg = 'Erreur CORS : le backend refuse les requêtes depuis cette origine.';
+      }
+      throw new Error(msg);
     }
+    // 401 → session expirée
     if (res.status === 401) {
       clearSession();
       var pg = (window.location.pathname.split('/').pop() || '').replace(/\.html$/i, '');
-      if (pg !== 'login') { window.location.href = 'login.html'; }
+      if (!['login', 'otp'].includes(pg)) {
+        if (typeof window.showToast === 'function') window.showToast('Session expirée. Redirection vers la connexion…', 'warning');
+        setTimeout(function () { window.location.href = 'login.html'; }, 1200);
+      }
       return null;
+    }
+    // 403 → accès refusé
+    if (res.status === 403) {
+      if (typeof window.showToast === 'function') window.showToast('Accès refusé : droits insuffisants.', 'error');
+      return res;
     }
     return res;
   }
@@ -124,10 +148,92 @@
 
   guardSession(); // s'exécute immédiatement, avant DOMContentLoaded
 
-  /* ── Exposition globale ─────────────────────────────── */
+  /* ── Endpoints Clients ───────────────────────────── */
+
+  var Clients = {
+    /** GET /api/v1/clients?page=&size=&sort=idClient,desc */
+    lister: async function (page, size, query) {
+      page = page || 0; size = size || 20;
+      var path = '/api/v1/clients?page=' + page + '&size=' + size + '&sort=idClient,desc';
+      if (query) path += '&recherche=' + encodeURIComponent(query);
+      return await apiFetch(path);
+    },
+    /** GET /api/v1/clients/{id} */
+    obtenir: async function (idClient) {
+      return await apiFetch('/api/v1/clients/' + idClient);
+    },
+    /** GET /api/v1/clients/{id}/confidentiel (réservé admin) */
+    obtenirConfidentiel: async function (idClient) {
+      return await apiFetch('/api/v1/clients/' + idClient + '/confidentiel');
+    },
+    /** POST /api/v1/clients */
+    creer: async function (data) {
+      return await apiFetch('/api/v1/clients', { method: 'POST', body: JSON.stringify(data) });
+    },
+    /** PUT /api/v1/clients/{id}/statut?nouveauStatut= */
+    modifierStatut: async function (idClient, nouveauStatut) {
+      return await apiFetch('/api/v1/clients/' + idClient + '/statut?nouveauStatut=' + encodeURIComponent(nouveauStatut), { method: 'PUT' });
+    },
+    /** PUT /api/v1/clients/{id}/kyc/decision */
+    traiterKyc: async function (idClient, data) {
+      return await apiFetch('/api/v1/clients/' + idClient + '/kyc/decision', { method: 'PUT', body: JSON.stringify(data) });
+    }
+  };
+
+  var Comptes = {
+    obtenir: async function (numCompte) { return await apiFetch('/api/v1/comptes/' + numCompte); },
+    ouvrir: async function (idClient, type, depot) { return await apiFetch('/api/v1/comptes', { method: 'POST', body: JSON.stringify({ idClient: idClient, codeTypeCompte: type, depotInitial: depot }) }); },
+    bloquer: async function (numCompte, motif) { return await apiFetch('/api/v1/comptes/' + numCompte + '/blocage', { method: 'PUT', body: JSON.stringify({ motif: motif }) }); },
+    debloquer: async function (numCompte, motif) { return await apiFetch('/api/v1/comptes/' + numCompte + '/deblocage', { method: 'PUT', body: JSON.stringify({ motif: motif }) }); },
+    cloturer: async function (numCompte, motif) { return await apiFetch('/api/v1/comptes/' + numCompte + '/cloture', { method: 'PUT', body: JSON.stringify({ motif: motif }) }); },
+    modifierDecouvert: async function (numCompte, nouveauPlafond) { return await apiFetch('/api/v1/comptes/decouvert', { method: 'PUT', body: JSON.stringify({ numCompte: numCompte, nouveauPlafond: nouveauPlafond }) }); },
+    listerClientComptes: async function (idClient, page, size) { return await apiFetch('/api/v1/comptes/client/' + idClient + '?page=' + (page || 0) + '&size=' + (size || 20)); }
+  };
+
+  var Cartes = {
+    lister: async function (numCompte, page, size) { 
+      let path = '/api/v1/cartes-visa?page=' + (page || 0) + '&size=' + (size || 20);
+      if (numCompte) path += '&numCompte=' + encodeURIComponent(numCompte);
+      return await apiFetch(path); 
+    },
+    commander: async function (numCompte) { return await apiFetch('/api/v1/cartes-visa?numCompte=' + encodeURIComponent(numCompte), { method: 'POST' }); },
+    opposer: async function (numCarte) { return await apiFetch('/api/v1/cartes-visa/' + numCarte + '/opposition', { method: 'PUT' }); },
+    obtenir: async function (numeroCarte) { return await apiFetch('/api/v1/cartes-visa/' + numeroCarte); },
+    opposerParId: async function (idCarte) { return await apiFetch('/api/v1/cartes-visa/id/' + idCarte + '/opposition', { method: 'PUT' }); }
+  };
+
+  var Beneficiaires = {
+    lister: async function (clientId) { 
+      let path = '/api/v1/beneficiaires';
+      if (clientId) path += '?clientId=' + clientId;
+      return await apiFetch(path); 
+    },
+    creer: async function (clientId, data) { 
+      return await apiFetch('/api/v1/beneficiaires?clientId=' + clientId, { method: 'POST', body: JSON.stringify(data) }); 
+    },
+    modifier: async function (id, clientId, data) {
+      return await apiFetch('/api/v1/beneficiaires/' + id + '?clientId=' + clientId, { method: 'PUT', body: JSON.stringify(data) });
+    },
+    supprimer: async function (id, clientId) { 
+      return await apiFetch('/api/v1/beneficiaires/' + id + '?clientId=' + clientId, { method: 'DELETE' }); 
+    }
+  };
+
+  var Transactions = {
+    payerCarte: async function (numeroCarte, montant, idGuichetier) {
+      return await apiFetch('/api/v1/transactions/paiement-carte', { method: 'POST', body: JSON.stringify({ numeroCarte, montant, idGuichetier }) });
+    }
+  };
+
+  /* ── Exposition globale ─────────────────────────── */
 
   window.SF   = { API_BASE, getToken, setSession, clearSession, getUser, getChallengeId, apiFetch };
   window.Auth = Auth;
+  window.Clients = Clients;
+  window.Comptes = Comptes;
+  window.Cartes  = Cartes;
+  window.Beneficiaires = Beneficiaires;
+  window.Transactions = Transactions;
 
 }());
 
@@ -158,9 +264,9 @@
     {
       title: 'Clients',
       items: [
-        { href: 'clients.html', label: 'Liste clients', icon: icons.users, badge: '248', match: ['clients.html'] },
+        { href: 'clients.html', label: 'Liste clients', icon: icons.users, badge: '248', match: ['clients.html', 'client-detail.html'] },
         { href: 'client-create.html', label: 'Nouveau client', icon: icons.users, match: ['client-create.html'] },
-        { href: 'client-detail.html', label: 'Fiche client', icon: icons.users, match: ['client-detail.html'] }
+        { href: 'kyc-validation.html', label: 'Validation KYC', icon: icons.audit, match: ['kyc-validation.html'] }
       ]
     },
     {
@@ -221,7 +327,8 @@
   ];
 
   function isActive(item) {
-    return item.match.includes(pageName);
+    const cleanPage = pageName.replace(/\.html$/, '');
+    return item.match.some(m => m.replace(/\.html$/, '') === cleanPage);
   }
 
   function createToastContainer() {

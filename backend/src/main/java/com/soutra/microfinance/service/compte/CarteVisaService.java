@@ -16,4 +16,8 @@ public interface CarteVisaService {
     CarteVisa obtenirCarte(String numeroCarte);
 
     CarteVisa modifierPartiellement(String numeroCarte, CarteVisaPatchRequestDTO patch);
+
+    Page<CarteVisa> listerToutesLesCartes(Pageable pageable);
+
+    CarteVisa faireOppositionParId(Long idCarte);
 }

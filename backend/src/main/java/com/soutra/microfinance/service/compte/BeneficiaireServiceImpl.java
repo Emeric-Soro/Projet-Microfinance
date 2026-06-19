@@ -25,6 +25,12 @@ public class BeneficiaireServiceImpl implements BeneficiaireService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<Beneficiaire> listerTous() {
+        return beneficiaireRepository.findAll();
+    }
+
+    @Override
     @Transactional
     public Beneficiaire ajouter(Long idClient, String nom, String prenom, String compteBeneficiaire, String banque) {
         validerChamps(nom, prenom, compteBeneficiaire);

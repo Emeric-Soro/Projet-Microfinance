@@ -1,9 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Clients - MicroFinance</title>
+  <title>Clients — Soutra Finance Backoffice</title>
+  <meta name="description" content="Liste paginée des clients enregistrés dans le système Soutra Finance.">
   <link rel="stylesheet" href="../assets/css/backoffice.css">
 </head>
 <body>
@@ -23,7 +24,7 @@
         <div class="topbar-right">
           <div class="topbar-search">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" placeholder="Rechercher un client...">
+            <input type="text" id="topbarSearch" placeholder="Rechercher un client...">
           </div>
           <button class="topbar-icon-btn">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -37,7 +38,7 @@
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
           <div>
             <h1 style="font-size: 24px; font-weight: 800; color: #084355;">Clients</h1>
-            <p style="font-size: 13px; color: #4A7A8A;">248 clients enregistrés</p>
+            <p id="clientsCount" style="font-size: 13px; color: #4A7A8A;">Chargement…</p>
           </div>
           <div style="display: flex; gap: 12px; align-items: center;">
             <div class="export-buttons">
@@ -60,168 +61,55 @@
         <!-- SEARCH BAR -->
         <div class="card" style="margin-bottom: 20px; padding: 16px 20px;">
           <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-            <input type="text" class="form-control" placeholder="N° de compte" style="width: 180px;">
-            <input type="text" class="form-control" placeholder="Téléphone" style="width: 180px;">
-            <input type="text" class="form-control" placeholder="Pièce d'identité" style="width: 200px;">
-            <button class="btn btn-secondary btn-sm">
+            <input type="text" id="searchNom" class="form-control" placeholder="Nom / Prénom" style="width: 180px;">
+            <input type="text" id="searchTel" class="form-control" placeholder="Téléphone" style="width: 180px;">
+            <input type="text" id="searchPiece" class="form-control" placeholder="Pièce d'identité" style="width: 200px;">
+            <button id="searchBtn" class="btn btn-secondary btn-sm">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               Rechercher
             </button>
+            <button id="resetBtn" class="btn btn-ghost btn-sm">Réinitialiser</button>
           </div>
         </div>
 
         <!-- FILTER TABS -->
-        <div class="filter-tabs">
-          <span class="filter-tab active">Tous (248)</span>
-          <span class="filter-tab">Actifs (210)</span>
-          <span class="filter-tab">Suspendus (28)</span>
-          <span class="filter-tab">Archivés (10)</span>
+        <div class="filter-tabs" id="filterTabs">
+          <span class="filter-tab active" data-statut="">Tous</span>
+          <span class="filter-tab" data-statut="ACTIF">Actifs</span>
+          <span class="filter-tab" data-statut="SUSPENDU">Suspendus</span>
+          <span class="filter-tab" data-statut="CLOTURE">Archivés</span>
         </div>
 
         <!-- CLIENTS TABLE -->
         <div class="card">
-          <table class="data-table">
+          <table class="data-table" id="clientsTable">
             <thead>
               <tr>
                 <th>Nom / Prénom</th>
+                <th>Code Client</th>
                 <th>Contact</th>
-                <th>Immatriculation</th>
-                <th>Comptes</th>
+                <th>Profession</th>
+                <th>Risque</th>
+                <th>Statut KYC</th>
+                <th>Inscription</th>
                 <th>Statut</th>
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td>
-                  <div style="display:flex;align-items:center;gap:10px;">
-                    <div style="width:32px;height:32px;border-radius:50%;background:#8cd5fa;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#084355;">KA</div>
-                    <div>
-                      <div style="font-weight:600;">Kouamé Aya</div>
-                      <div style="font-size:11px;color:#4A7A8A;">Née le 15/03/1990</div>
-                    </div>
-                  </div>
-                </td>
-                <td>+225 07 08 09 10 11</td>
-                <td>CI-AB-2024-001234</td>
-                <td><span class="badge badge-info">3 comptes</span></td>
-                <td><span class="badge badge-active">Actif</span></td>
-                <td>
-                  <div class="action-icons">
-                    <button class="action-icon" title="Voir" onclick="window.location.href='client-detail.html'">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    </button>
-                    <button class="action-icon" title="Modifier">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </button>
-                    <button class="action-icon" title="Historique">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <div style="display:flex;align-items:center;gap:10px;">
-                    <div style="width:32px;height:32px;border-radius:50%;background:#fab482;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#084355;">DM</div>
-                    <div>
-                      <div style="font-weight:600;">Diallo Moussa</div>
-                      <div style="font-size:11px;color:#4A7A8A;">Né le 22/07/1985</div>
-                    </div>
-                  </div>
-                </td>
-                <td>+225 05 06 07 08 09</td>
-                <td>CI-AB-2023-005678</td>
-                <td><span class="badge badge-info">2 comptes</span></td>
-                <td><span class="badge badge-active">Actif</span></td>
-                <td>
-                  <div class="action-icons">
-                    <button class="action-icon" title="Voir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                    <button class="action-icon" title="Modifier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                    <button class="action-icon" title="Historique"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <div style="display:flex;align-items:center;gap:10px;">
-                    <div style="width:32px;height:32px;border-radius:50%;background:#8cd5fa;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#084355;">TS</div>
-                    <div>
-                      <div style="font-weight:600;">Traoré Sékou</div>
-                      <div style="font-size:11px;color:#4A7A8A;">Né le 08/11/1992</div>
-                    </div>
-                  </div>
-                </td>
-                <td>+225 01 02 03 04 05</td>
-                <td>CI-AB-2024-009012</td>
-                <td><span class="badge badge-info">1 compte</span></td>
-                <td><span class="badge badge-pending">En attente</span></td>
-                <td>
-                  <div class="action-icons">
-                    <button class="action-icon" title="Voir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                    <button class="action-icon" title="Modifier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                    <button class="action-icon" title="Historique"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <div style="display:flex;align-items:center;gap:10px;">
-                    <div style="width:32px;height:32px;border-radius:50%;background:#D93025;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;">BK</div>
-                    <div>
-                      <div style="font-weight:600;">Bamba Konan</div>
-                      <div style="font-size:11px;color:#4A7A8A;">Né le 30/01/1988</div>
-                    </div>
-                  </div>
-                </td>
-                <td>+225 07 11 22 33 44</td>
-                <td>CI-AB-2022-003456</td>
-                <td><span class="badge badge-info">4 comptes</span></td>
-                <td><span class="badge badge-blocked">Bloqué</span></td>
-                <td>
-                  <div class="action-icons">
-                    <button class="action-icon" title="Voir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                    <button class="action-icon" title="Modifier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                    <button class="action-icon" title="Historique"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <div style="display:flex;align-items:center;gap:10px;">
-                    <div style="width:32px;height:32px;border-radius:50%;background:#8cd5fa;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#084355;">YP</div>
-                    <div>
-                      <div style="font-weight:600;">Yao Patricia</div>
-                      <div style="font-size:11px;color:#4A7A8A;">Née le 14/06/1995</div>
-                    </div>
-                  </div>
-                </td>
-                <td>+225 05 44 55 66 77</td>
-                <td>CI-AB-2024-007890</td>
-                <td><span class="badge badge-info">2 comptes</span></td>
-                <td><span class="badge badge-active">Actif</span></td>
-                <td>
-                  <div class="action-icons">
-                    <button class="action-icon" title="Voir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                    <button class="action-icon" title="Modifier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                    <button class="action-icon" title="Historique"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
-                  </div>
+            <tbody id="clientsBody">
+              <!-- Skeleton de chargement -->
+              <tr id="loadingRow">
+                <td colspan="9" style="text-align:center; padding: 40px 0; color: #4A7A8A;">
+                  <div class="login-spinner" style="display:inline-block; width:32px; height:32px; margin-bottom:12px;"></div>
+                  <div>Chargement des clients…</div>
                 </td>
               </tr>
             </tbody>
           </table>
-          
-          <div class="pagination">
-            <div class="pagination-info">Affichage 1-5 sur 248 clients</div>
-            <div class="pagination-buttons">
-              <button class="page-btn">‹</button>
-              <button class="page-btn active">1</button>
-              <button class="page-btn">2</button>
-              <button class="page-btn">3</button>
-              <button class="page-btn">...</button>
-              <button class="page-btn">50</button>
-              <button class="page-btn">›</button>
-            </div>
+
+          <div class="pagination" id="paginationArea" style="display:none;">
+            <div class="pagination-info" id="paginationInfo"></div>
+            <div class="pagination-buttons" id="paginationButtons"></div>
           </div>
         </div>
       </div>
@@ -230,8 +118,350 @@
 
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
+  <script>
+    /* ── État global de la page ───────────────────────── */
+    const state = {
+      page: 0,
+      size: 20,
+      totalPages: 0,
+      totalElements: 0,
+      filtreStatut: '',
+      clients: []     // données brutes pour filtrage local
+    };
+
+    /* ── Normalisation des champs masqués de la BDD ───────── */
+    // Certaines données de démo sont stockées avec des * dans Oracle.
+    // On tente de déduire la valeur réelle depuis les caractères visibles.
+    function normaliserStatut(raw) {
+      if (!raw) return '';
+      const s = raw.replace(/\*/g, '').toUpperCase();
+      if (s.includes('CTIF'))   return 'ACTIF';
+      if (s.includes('OQUE'))   return 'BLOQUE';
+      if (s.includes('PENDU'))  return 'SUSPENDU';
+      if (s.includes('OTURE'))  return 'CLOTURE';
+      if (s.includes('ATTENTE'))return 'EN_ATTENTE';
+      if (s.includes('VEAU'))   return 'NOUVEAU';
+      return raw.replace(/\*/g, '').trim() || raw;
+    }
+
+    function afficherChamp(val) {
+      if (val === null || val === undefined || val === '') return '—';
+      return String(val);
+    }
+
+    /* ── Helpers badge ────────────────────────────────── */
+    function badgeStatut(rawStatut) {
+      const statut = normaliserStatut(rawStatut);
+      const map = {
+        ACTIF:     'badge-active',
+        SUSPENDU:  'badge-pending',
+        BLOQUE:    'badge-blocked',
+        CLOTURE:   'badge-blocked',
+        EN_ATTENTE:'badge-pending',
+        NOUVEAU:   'badge-info'
+      };
+      return `<span class="badge ${map[statut] || 'badge-info'}">${statut || rawStatut || '—'}</span>`;
+    }
+
+    function badgeKyc(statut) {
+      const map = {
+        VALIDE:          'badge-active',
+        EN_ATTENTE:      'badge-pending',
+        REVISION:        'badge-pending',
+        REJETE:          'badge-blocked',
+        NON_INITIALISE:  'badge-info'
+      };
+      const label = (statut || 'N/A').replace(/_/g, ' ');
+      return `<span class="badge ${map[statut] || 'badge-info'}">${label}</span>`;
+    }
+
+    function initiales(nomComplet) {
+      if (!nomComplet) return '??';
+      const parts = nomComplet.trim().split(' ');
+      return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase();
+    }
+
+    const avatarColors = ['#8cd5fa','#fab482','#a8e6cf','#ffd3b6','#d4a5d5','#84d4d4'];
+    function avatarColor(id) {
+      return avatarColors[(id || 0) % avatarColors.length];
+    }
+
+    function badgeRisque(niveau) {
+      if (!niveau) return '—';
+      const map = {
+        FAIBLE:   { cls: 'badge-active', label: 'Faible' },
+        MOYEN:    { cls: 'badge-pending', label: 'Moyen' },
+        ELEVE:    { cls: 'badge-blocked', label: 'Élevé' },
+        CRITIQUE: { cls: 'badge-blocked', label: 'Critique' }
+      };
+      const item = map[niveau] || { cls: 'badge-info', label: niveau };
+      return `<span class="badge ${item.cls}">${item.label}</span>`;
+    }
+
+    /* ── Rendu d'une ligne ────────────────────────────── */
+    function renderRow(c) {
+      const ini  = initiales(c.nomComplet);
+      const col  = avatarColor(c.idClient);
+      const dark = ['#D93025','#084355'].includes(col) ? '#fff' : '#084355';
+      // Affichage propre des champs potentiellement masqués
+      const nomAffiche = escHtml(c.nomComplet || '—');
+      const telAffiche = escHtml(afficherChamp(c.telephone));
+      const codeAffiche = escHtml(afficherChamp(c.codeClient));
+      return `
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:32px;height:32px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${dark};">${ini}</div>
+              <div>
+                <div style="font-weight:600;">${nomAffiche}</div>
+                <div style="font-size:11px;color:#4A7A8A;">${c.dateNaissance ? 'Né(e) le ' + formatDateFR(c.dateNaissance) : ''}</div>
+              </div>
+            </div>
+          </td>
+          <td style="font-family:monospace;font-size:12px;" title="${codeAffiche}">${codeAffiche}</td>
+          <td>
+            <div style="font-weight:500;">${telAffiche}</div>
+            <div style="font-size:11px;color:#4A7A8A;">${escHtml(c.email || '—')}</div>
+          </td>
+          <td>${escHtml(c.profession || '—')}</td>
+          <td>${badgeRisque(c.niveauRisque)}</td>
+          <td>${badgeKyc(c.statutKyc)}</td>
+          <td>${formatDateFR(c.dateInscription)}</td>
+          <td>${badgeStatut(c.statut)}</td>
+          <td>
+            <div class="action-icons">
+              <a class="action-icon" title="Voir la fiche" href="${window.location.pathname.includes('.html') ? 'client-detail.html' : 'client-detail'}?id=${c.idClient}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </a>
+              <button class="action-icon" title="Modifier le statut" onclick="ouvrirModalStatut(${c.idClient}, '${escHtml(c.nomComplet)}', '${normaliserStatut(c.statut)}')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <a class="action-icon" title="Historique" href="historique.html">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </a>
+            </div>
+          </td>
+        </tr>`;
+    }
+
+    /* ── Rendu du tableau ─────────────────────────────── */
+    function renderTable(clients) {
+      const tbody = document.getElementById('clientsBody');
+      if (!clients || clients.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" style="text-align:center; padding: 40px 0; color: #4A7A8A;">
+              Aucun client trouvé.
+            </td>
+          </tr>`;
+        return;
+      }
+      tbody.innerHTML = clients.map(renderRow).join('');
+    }
+
+    /* ── Pagination ───────────────────────────────────── */
+    function renderPagination(data) {
+      const area    = document.getElementById('paginationArea');
+      const info    = document.getElementById('paginationInfo');
+      const buttons = document.getElementById('paginationButtons');
+
+      const from = data.number * data.size + 1;
+      const to   = Math.min(from + data.numberOfElements - 1, data.totalElements);
+      info.textContent = `Affichage ${from}-${to} sur ${data.totalElements} clients`;
+      area.style.display = 'flex';
+
+      let html = `<button class="page-btn" ${data.first ? 'disabled' : ''} onclick="chargerPage(${data.number - 1})">‹</button>`;
+      const total = data.totalPages;
+      const cur   = data.number;
+      let pages   = [];
+      if (total <= 7) {
+        pages = Array.from({length: total}, (_, i) => i);
+      } else {
+        pages = [0];
+        if (cur > 2) pages.push('…');
+        for (let i = Math.max(1, cur - 1); i <= Math.min(total - 2, cur + 1); i++) pages.push(i);
+        if (cur < total - 3) pages.push('…');
+        pages.push(total - 1);
+      }
+      pages.forEach(p => {
+        if (p === '…') {
+          html += `<button class="page-btn" disabled>…</button>`;
+        } else {
+          html += `<button class="page-btn ${p === cur ? 'active' : ''}" onclick="chargerPage(${p})">${p + 1}</button>`;
+        }
+      });
+      html += `<button class="page-btn" ${data.last ? 'disabled' : ''} onclick="chargerPage(${data.number + 1})">›</button>`;
+      buttons.innerHTML = html;
+    }
+
+    /* ── Chargement depuis l'API ──────────────────────── */
+    async function chargerPage(page) {
+      state.page = page;
+      document.getElementById('clientsBody').innerHTML = `
+        <tr id="loadingRow">
+          <td colspan="6" style="text-align:center; padding:40px 0; color:#4A7A8A;">
+            <div class="login-spinner" style="display:inline-block;width:32px;height:32px;margin-bottom:12px;"></div>
+            <div>Chargement…</div>
+          </td>
+        </tr>`;
+      document.getElementById('paginationArea').style.display = 'none';
+
+      try {
+        const res = await Clients.lister(state.page, state.size);
+        if (!res) return; // redirigé vers login (401)
+        const data = await res.json().catch(() => null);
+
+        if (!res.ok) {
+          showToast(data?.message || 'Erreur lors du chargement des clients.', 'error');
+          document.getElementById('clientsBody').innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px 0;color:#4A7A8A;">Erreur de chargement.</td></tr>`;
+          return;
+        }
+
+        state.clients       = data.content || [];
+        state.totalPages    = data.totalPages;
+        state.totalElements = data.totalElements;
+
+        // Mettre à jour le compteur header
+        document.getElementById('clientsCount').textContent = `${data.totalElements} client${data.totalElements > 1 ? 's' : ''} enregistré${data.totalElements > 1 ? 's' : ''}`;
+
+        // Appliquer filtre de statut local si actif
+        const filtered = filtrerClients(state.clients);
+        renderTable(filtered);
+        renderPagination(data);
+
+      } catch (err) {
+        showToast('Impossible de joindre le serveur. Vérifiez que le backend est démarré.', 'error');
+        document.getElementById('clientsBody').innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px 0;color:#4A7A8A;">Serveur indisponible.</td></tr>`;
+      }
+    }
+
+    /* ── Filtrage local ───────────────────────────────── */
+    function filtrerClients(clients) {
+      const nom   = document.getElementById('searchNom').value.trim().toLowerCase();
+      const tel   = document.getElementById('searchTel').value.trim().toLowerCase();
+      const piece = document.getElementById('searchPiece').value.trim().toLowerCase();
+
+      return clients.filter(c => {
+        const matchNom   = !nom   || (c.nomComplet  || '').toLowerCase().includes(nom);
+        const matchTel   = !tel   || (c.telephone   || '').toLowerCase().includes(tel);
+        const matchPiece = !piece || (c.numeroPieceIdentiteMasque || '').toLowerCase().includes(piece);
+        const matchStatut = !state.filtreStatut || c.statut === state.filtreStatut;
+        return matchNom && matchTel && matchPiece && matchStatut;
+      });
+    }
+
+    /* ── Modal changement de statut ──────────────────── */
+    let _modalClientId = null;
+    function ouvrirModalStatut(idClient, nom, statutActuel) {
+      _modalClientId = idClient;
+      document.getElementById('modalStatutNom').textContent = nom;
+      document.getElementById('selectNouveauStatut').value = statutActuel || 'ACTIF';
+      openModal('modalStatut');
+    }
+
+    /* ── Helpers ──────────────────────────────────────── */
+    function escHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function formatDateFR(dateStr) {
+      if (!dateStr) return '';
+      const [y, m, d] = String(dateStr).split('-');
+      return `${d || '??'}/${m || '??'}/${y || '????'}`;
+    }
+
+    /* ── DOMContentLoaded ─────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function () {
+
+      // Chargement initial
+      chargerPage(0);
+
+      // Filtres tabs
+      document.getElementById('filterTabs').addEventListener('click', function (e) {
+        const tab = e.target.closest('.filter-tab');
+        if (!tab) return;
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        state.filtreStatut = tab.dataset.statut;
+        renderTable(filtrerClients(state.clients));
+      });
+
+      // Bouton recherche
+      document.getElementById('searchBtn').addEventListener('click', function () {
+        renderTable(filtrerClients(state.clients));
+      });
+
+      // Reset recherche
+      document.getElementById('resetBtn').addEventListener('click', function () {
+        document.getElementById('searchNom').value  = '';
+        document.getElementById('searchTel').value  = '';
+        document.getElementById('searchPiece').value = '';
+        renderTable(state.clients);
+      });
+
+      // Recherche topbar (filtre nom en temps réel)
+      document.getElementById('topbarSearch').addEventListener('input', function () {
+        const q = this.value.trim().toLowerCase();
+        if (!q) { renderTable(filtrerClients(state.clients)); return; }
+        const filtered = state.clients.filter(c =>
+          (c.nomComplet || '').toLowerCase().includes(q) ||
+          (c.telephone  || '').toLowerCase().includes(q) ||
+          (c.codeClient || '').toLowerCase().includes(q)
+        );
+        renderTable(filtered);
+      });
+
+      // Validation modal statut
+      document.getElementById('btnConfirmerStatut').addEventListener('click', async function () {
+        const nouveauStatut = document.getElementById('selectNouveauStatut').value;
+        if (!_modalClientId || !nouveauStatut) return;
+        this.disabled = true;
+        try {
+          const res = await Clients.modifierStatut(_modalClientId, nouveauStatut);
+          if (!res) return;
+          const data = await res.json().catch(() => ({}));
+          if (res.ok) {
+            showToast('Statut mis à jour avec succès.', 'success');
+            closeModal('modalStatut');
+            chargerPage(state.page); // recharger la liste
+          } else {
+            showToast(data.message || 'Erreur lors de la mise à jour du statut.', 'error');
+          }
+        } catch (_) {
+          showToast('Impossible de joindre le serveur.', 'error');
+        } finally {
+          this.disabled = false;
+        }
+      });
+    });
+  </script>
+
+  <!-- Modal changement de statut -->
+  <div class="modal-overlay" id="modalStatut">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header">
+        <div class="modal-title">Modifier le statut</div>
+        <button class="modal-close" onclick="closeModal('modalStatut')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom:16px;font-size:14px;color:#4A7A8A;">
+          Client : <strong id="modalStatutNom"></strong>
+        </p>
+        <div class="form-group">
+          <label class="form-label">Nouveau statut *</label>
+          <select class="form-control" id="selectNouveauStatut">
+            <option value="ACTIF">Actif</option>
+            <option value="SUSPENDU">Suspendu</option>
+            <option value="BLOQUE">Bloqué</option>
+            <option value="CLOTURE">Clôturé</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalStatut')">Annuler</button>
+        <button class="btn btn-primary" id="btnConfirmerStatut">Confirmer</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
-
-
-

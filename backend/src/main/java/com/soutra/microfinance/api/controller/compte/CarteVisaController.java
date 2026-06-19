@@ -74,6 +74,22 @@ public class CarteVisaController {
 	}
 
     @Operation(
+            summary = "Faire opposition par ID",
+            description = "Desactive une carte a partir de son identifiant technique"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Opposition appliquee avec succes"),
+            @ApiResponse(responseCode = "404", description = "Carte introuvable")
+    })
+    @PutMapping("/id/{idCarte}/opposition")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @AuditLog(action = "CARD_BLOCK", resource = "CARTE_VISA")
+    public ResponseEntity<CarteVisaResponseDTO> faireOppositionParId(@PathVariable Long idCarte) {
+        CarteVisa carte = carteVisaService.faireOppositionParId(idCarte);
+        return ResponseEntity.ok(compteMapper.toCarteVisaResponseDTO(carte));
+    }
+
+    @Operation(
             summary = "Lister les cartes d'un compte",
             description = "Retourne la liste paginee des cartes rattachees a un compte"
     )
@@ -85,10 +101,15 @@ public class CarteVisaController {
     @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
     @AuditLog(action = "CARD_LIST", resource = "CARTE_VISA")
     public ResponseEntity<Page<CarteVisaResponseDTO>> listerCartes(
-            @RequestParam String numCompte,
+            @RequestParam(required = false) String numCompte,
             Pageable pageable
     ) {
-        Page<CarteVisa> cartes = carteVisaService.listerCartesParCompte(numCompte, pageable);
+        Page<CarteVisa> cartes;
+        if (numCompte != null && !numCompte.isBlank()) {
+            cartes = carteVisaService.listerCartesParCompte(numCompte, pageable);
+        } else {
+            cartes = carteVisaService.listerToutesLesCartes(pageable);
+        }
         return ResponseEntity.ok(cartes.map(compteMapper::toCarteVisaResponseDTO));
     }
 

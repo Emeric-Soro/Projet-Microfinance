@@ -100,6 +100,21 @@ public class CarteVisaServiceImpl implements CarteVisaService {
         return carteVisaRepository.save(carte);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CarteVisa> listerToutesLesCartes(Pageable pageable) {
+        return carteVisaRepository.findAll(pageable);
+    }
+
+    @Override
+    @Transactional
+    public CarteVisa faireOppositionParId(Long idCarte) {
+        CarteVisa carteVisa = carteVisaRepository.findById(idCarte)
+                .orElseThrow(() -> new EntityNotFoundException("Carte introuvable: " + idCarte));
+        carteVisa.setStatut(Boolean.FALSE);
+        return carteVisaRepository.save(carteVisa);
+    }
+
     // --- MÉTHODES UTILITAIRES PRIVÉES ---
 
     private String genererNumeroCarteUnique() {

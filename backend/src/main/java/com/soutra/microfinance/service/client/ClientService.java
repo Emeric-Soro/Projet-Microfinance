@@ -25,4 +25,6 @@ public interface ClientService {
     Client enregistrerDocumentKycMobile(Long idClient, String typeDocument, String nomFichier);
 
     Page<Client> listerClients(Pageable pageable);
+
+    Page<Client> rechercherClients(String query, Pageable pageable);
 }
