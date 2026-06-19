@@ -173,6 +173,10 @@
     /** PUT /api/v1/clients/{id}/statut?nouveauStatut= */
     modifierStatut: async function (idClient, nouveauStatut) {
       return await apiFetch('/api/v1/clients/' + idClient + '/statut?nouveauStatut=' + encodeURIComponent(nouveauStatut), { method: 'PUT' });
+    },
+    /** PUT /api/v1/clients/{id}/kyc/decision */
+    traiterKyc: async function (idClient, data) {
+      return await apiFetch('/api/v1/clients/' + idClient + '/kyc/decision', { method: 'PUT', body: JSON.stringify(data) });
     }
   };
 
@@ -261,7 +265,8 @@
       title: 'Clients',
       items: [
         { href: 'clients.html', label: 'Liste clients', icon: icons.users, badge: '248', match: ['clients.html', 'client-detail.html'] },
-        { href: 'client-create.html', label: 'Nouveau client', icon: icons.users, match: ['client-create.html'] }
+        { href: 'client-create.html', label: 'Nouveau client', icon: icons.users, match: ['client-create.html'] },
+        { href: 'kyc-validation.html', label: 'Validation KYC', icon: icons.audit, match: ['kyc-validation.html'] }
       ]
     },
     {

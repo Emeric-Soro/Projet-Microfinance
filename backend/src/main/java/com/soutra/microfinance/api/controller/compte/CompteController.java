@@ -64,7 +64,7 @@ public class CompteController {
 			@ApiResponse(responseCode = "409", description = "Conflit metier")
     })
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
     @AuditLog(action = "ACCOUNT_OPEN", resource = "COMPTE")
 	public ResponseEntity<CompteResponseDTO> ouvrirCompte(
 			@Valid @RequestBody OuvertureCompteRequestDTO requestDTO

@@ -74,7 +74,7 @@ public class ClientController {
             @ApiResponse(responseCode = "400", description = "Parametres de pagination invalides")
     })
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
     public ResponseEntity<Page<ClientResponseDTO>> listerClients(
             @RequestParam(required = false) String recherche,
             @ParameterObject Pageable pageable
@@ -98,7 +98,7 @@ public class ClientController {
             @ApiResponse(responseCode = "404", description = "Client introuvable")
     })
     @GetMapping("/{idClient}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
     public ResponseEntity<ClientResponseDTO> obtenirDetailsClient(@PathVariable Long idClient) {
         Client client = clientService.obtenirDetailsClient(idClient);
         return ResponseEntity.ok(clientMapper.toResponseDTO(client));

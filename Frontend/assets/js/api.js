@@ -229,6 +229,18 @@
       return await apiFetch('/api/v1/clients/' + idClient + '/statut?nouveauStatut=' + encodeURIComponent(nouveauStatut), {
         method: 'PUT'
       });
+    },
+
+    /**
+     * Traiter un dossier KYC
+     * PUT /api/v1/clients/{idClient}/kyc/decision
+     * @returns {Response|null}
+     */
+    traiterKyc: async function (idClient, data) {
+      return await apiFetch('/api/v1/clients/' + idClient + '/kyc/decision', {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
     }
   };
 

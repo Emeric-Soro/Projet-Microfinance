@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Validation KYC - Soutra Finance Backoffice</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Validation KYC</div>
+            <div class="topbar-breadcrumb">Accueil / Clients / Validation KYC</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="topbarSearch" placeholder="Rechercher un dossier...">
+          </div>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Validation KYC</h1>
+            <p class="page-subtitle">Traiter les dossiers clients soumis avant ouverture de compte et opérations sensibles.</p>
+          </div>
+          <button class="btn btn-outline" id="refreshBtn">Actualiser</button>
+        </div>
+
+        <section class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">A traiter</div>
+              <div class="kpi-value" id="countPending">0</div>
+              <div class="kpi-trend down">Dossiers en attente</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">A revoir</div>
+              <div class="kpi-value" id="countReview">0</div>
+              <div class="kpi-trend down">Compléments demandés</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Validés</div>
+              <div class="kpi-value" id="countValid">0</div>
+              <div class="kpi-trend up">KYC acceptés</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Rejetés</div>
+              <div class="kpi-value" id="countRejected">0</div>
+              <div class="kpi-trend down">Dossiers refusés</div>
+            </div>
+          </div>
+        </section>
+
+        <div class="filter-tabs" id="kycTabs">
+          <span class="filter-tab active" data-status="EN_ATTENTE">A traiter</span>
+          <span class="filter-tab" data-status="A_REVOIR">A revoir</span>
+          <span class="filter-tab" data-status="VALIDE">Validés</span>
+          <span class="filter-tab" data-status="REJETE">Rejetés</span>
+          <span class="filter-tab" data-status="">Tous</span>
+        </div>
+
+        <section class="grid-3">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">File de dossiers KYC</div>
+                <div class="card-subtitle" id="queueSubtitle">Chargement...</div>
+              </div>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Client</th>
+                  <th>Pièce</th>
+                  <th>Risque</th>
+                  <th>KYC</th>
+                  <th>Soumission</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="kycRows">
+                <tr>
+                  <td colspan="6" style="text-align:center; padding:40px 0; color:#4A7A8A;">
+                    <div class="login-spinner" style="display:inline-block;width:32px;height:32px;margin-bottom:12px;"></div>
+                    <div>Chargement des dossiers...</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <aside class="card" id="detailPanel">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Dossier sélectionné</div>
+                <div class="card-subtitle">Décision superviseur ou admin</div>
+              </div>
+            </div>
+            <div id="emptyDetail" class="empty-state" style="min-height:240px;">
+              <div class="empty-state-icon">KYC</div>
+              <div>Sélectionnez un dossier dans la file.</div>
+            </div>
+            <div id="clientDetail" style="display:none;">
+              <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+                <div id="clientAvatar" style="width:48px;height:48px;border-radius:50%;background:#8cd5fa;display:flex;align-items:center;justify-content:center;font-weight:800;color:#084355;">--</div>
+                <div>
+                  <div id="clientName" style="font-weight:800;color:#084355;">--</div>
+                  <div id="clientCode" style="font-size:12px;color:#4A7A8A;font-family:monospace;">--</div>
+                </div>
+              </div>
+
+              <div class="info-row"><span class="info-label">Téléphone</span><span class="info-value" id="detailPhone">--</span></div>
+              <div class="info-row"><span class="info-label">Email</span><span class="info-value" id="detailEmail">--</span></div>
+              <div class="info-row"><span class="info-label">Profession</span><span class="info-value" id="detailJob">--</span></div>
+              <div class="info-row"><span class="info-label">PEP</span><span class="info-value" id="detailPep">--</span></div>
+              <div class="info-row"><span class="info-label">Statut KYC</span><span class="info-value" id="detailKyc">--</span></div>
+              <div class="info-row"><span class="info-label">Risque actuel</span><span class="info-value" id="detailRisk">--</span></div>
+
+              <hr style="border:0;border-top:1px solid #C9DFE8;margin:18px 0;">
+              <div style="font-size:12px;font-weight:800;text-transform:uppercase;color:#084355;margin-bottom:10px;">Pièces KYC</div>
+              <div id="documentChecklist"></div>
+
+              <div style="display:grid; gap:10px; margin-top:18px;">
+                <button class="btn btn-primary btn-block" id="approveBtn">Valider le KYC</button>
+                <button class="btn btn-outline btn-block" id="reviewBtn">Demander complément</button>
+                <button class="btn btn-outline btn-block" id="rejectBtn" style="color:#D93025;border-color:#D93025;">Rejeter</button>
+                <a class="btn btn-ghost btn-block" id="openClientLink" href="clients.html">Voir la fiche client</a>
+              </div>
+            </div>
+          </aside>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="decisionModal">
+    <div class="modal" style="max-width:520px;">
+      <div class="modal-header">
+        <div class="modal-title" id="decisionTitle">Décision KYC</div>
+        <button class="modal-close" onclick="closeModal('decisionModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:14px;color:#4A7A8A;margin-bottom:16px;">
+          Client : <strong id="decisionClientName">--</strong>
+        </p>
+        <div class="form-group">
+          <label class="form-label" for="riskSelect">Niveau de risque *</label>
+          <select class="form-control" id="riskSelect">
+            <option value="FAIBLE">Faible</option>
+            <option value="MODERE">Modéré</option>
+            <option value="ELEVE">Elevé</option>
+            <option value="CRITIQUE">Critique</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="decisionComment">Commentaire</label>
+          <textarea class="form-control" id="decisionComment" rows="4" maxlength="500" placeholder="Justification de la décision, pièces manquantes ou consignes..."></textarea>
+          <div class="field-error" id="commentError">Un commentaire est requis pour un rejet ou une demande de complément.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('decisionModal')">Annuler</button>
+        <button class="btn btn-primary" id="confirmDecisionBtn">Confirmer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    const state = {
+      clients: [],
+      visibleStatus: 'EN_ATTENTE',
+      selectedClient: null,
+      decisionStatus: null
+    };
+
+    function normalizeStatus(value) {
+      return String(value || '').replace(/\*/g, '').trim().toUpperCase();
+    }
+
+    function safe(value) {
+      if (value === null || value === undefined || value === '') return '--';
+      return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function formatDateFR(dateStr) {
+      if (!dateStr) return '--';
+      const parts = String(dateStr).split('-');
+      if (parts.length !== 3) return safe(dateStr);
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    function initials(name) {
+      const parts = String(name || '').trim().split(/\s+/);
+      return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '--';
+    }
+
+    function badgeKyc(status) {
+      const normalized = normalizeStatus(status);
+      const map = {
+        BROUILLON: 'badge-info',
+        EN_ATTENTE: 'badge-pending',
+        A_REVOIR: 'badge-warning',
+        VALIDE: 'badge-active',
+        REJETE: 'badge-blocked'
+      };
+      return `<span class="badge ${map[normalized] || 'badge-info'}">${safe(normalized.replace(/_/g, ' ') || 'N/A')}</span>`;
+    }
+
+    function badgeRisk(risk) {
+      const normalized = normalizeStatus(risk);
+      const map = {
+        FAIBLE: 'badge-active',
+        MODERE: 'badge-warning',
+        MOYEN: 'badge-warning',
+        ELEVE: 'badge-danger',
+        CRITIQUE: 'badge-blocked'
+      };
+      return normalized ? `<span class="badge ${map[normalized] || 'badge-info'}">${safe(normalized)}</span>` : '--';
+    }
+
+    function hasDocuments(client) {
+      return Boolean(client.photoIdentiteUrl && client.justificatifDomicileUrl && client.justificatifRevenusUrl);
+    }
+
+    function updateCounters() {
+      const counts = state.clients.reduce((acc, client) => {
+        const status = normalizeStatus(client.statutKyc || 'BROUILLON');
+        acc[status] = (acc[status] || 0) + 1;
+        return acc;
+      }, {});
+      document.getElementById('countPending').textContent = counts.EN_ATTENTE || 0;
+      document.getElementById('countReview').textContent = counts.A_REVOIR || 0;
+      document.getElementById('countValid').textContent = counts.VALIDE || 0;
+      document.getElementById('countRejected').textContent = counts.REJETE || 0;
+    }
+
+    function filteredClients() {
+      const q = document.getElementById('topbarSearch').value.trim().toLowerCase();
+      return state.clients.filter(client => {
+        const status = normalizeStatus(client.statutKyc);
+        const statusOk = !state.visibleStatus || status === state.visibleStatus;
+        const queryOk = !q ||
+          String(client.nomComplet || '').toLowerCase().includes(q) ||
+          String(client.codeClient || '').toLowerCase().includes(q) ||
+          String(client.telephone || '').toLowerCase().includes(q);
+        return statusOk && queryOk;
+      });
+    }
+
+    function renderRows() {
+      const rows = filteredClients();
+      const tbody = document.getElementById('kycRows');
+      document.getElementById('queueSubtitle').textContent = `${rows.length} dossier${rows.length > 1 ? 's' : ''} affiché${rows.length > 1 ? 's' : ''}`;
+
+      if (!rows.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align:center;padding:40px 0;color:#4A7A8A;">
+              Aucun dossier KYC dans ce filtre.
+            </td>
+          </tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map(client => `
+        <tr>
+          <td>
+            <div style="font-weight:700;color:#084355;">${safe(client.nomComplet)}</div>
+            <div style="font-size:11px;color:#4A7A8A;font-family:monospace;">${safe(client.codeClient)}</div>
+          </td>
+          <td>
+            <div>${safe(client.typePieceIdentite)}</div>
+            <div style="font-size:11px;color:#4A7A8A;">Exp. ${formatDateFR(client.dateExpirationPieceIdentite)}</div>
+          </td>
+          <td>${badgeRisk(client.niveauRisque)}</td>
+          <td>${badgeKyc(client.statutKyc)}</td>
+          <td>${formatDateFR(client.dateInscription)}</td>
+          <td>
+            <button class="btn btn-outline btn-sm" onclick="selectClient(${client.idClient})">Examiner</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderChecklist(client) {
+      const items = [
+        ['Photo identité', client.photoIdentiteUrl],
+        ['Justificatif domicile', client.justificatifDomicileUrl],
+        ['Justificatif revenus', client.justificatifRevenusUrl],
+        ['Pièce identité', client.numeroPieceIdentiteMasque || client.typePieceIdentite],
+        ['Adresse', client.adresse],
+        ['Profession', client.profession]
+      ];
+      document.getElementById('documentChecklist').innerHTML = items.map(([label, value]) => `
+        <div class="info-row">
+          <span class="info-label">${label}</span>
+          <span class="info-value">${value ? '<span class="badge badge-active">OK</span>' : '<span class="badge badge-pending">Manquant</span>'}</span>
+        </div>
+      `).join('');
+    }
+
+    function selectClient(idClient) {
+      const client = state.clients.find(item => Number(item.idClient) === Number(idClient));
+      if (!client) return;
+      state.selectedClient = client;
+      document.getElementById('emptyDetail').style.display = 'none';
+      document.getElementById('clientDetail').style.display = 'block';
+      document.getElementById('clientAvatar').textContent = initials(client.nomComplet);
+      document.getElementById('clientName').textContent = client.nomComplet || '--';
+      document.getElementById('clientCode').textContent = client.codeClient || '--';
+      document.getElementById('detailPhone').textContent = client.telephone || '--';
+      document.getElementById('detailEmail').textContent = client.email || '--';
+      document.getElementById('detailJob').textContent = client.profession || '--';
+      document.getElementById('detailPep').innerHTML = client.pep ? '<span class="badge badge-warning">Oui</span>' : '<span class="badge badge-active">Non</span>';
+      document.getElementById('detailKyc').innerHTML = badgeKyc(client.statutKyc);
+      document.getElementById('detailRisk').innerHTML = badgeRisk(client.niveauRisque);
+      document.getElementById('openClientLink').href = `client-detail.html?id=${client.idClient}`;
+      renderChecklist(client);
+    }
+
+    function openDecision(status) {
+      if (!state.selectedClient) {
+        showToast('Sélectionnez un dossier à traiter.', 'warning');
+        return;
+      }
+      state.decisionStatus = status;
+      const titles = {
+        VALIDE: 'Valider le KYC',
+        A_REVOIR: 'Demander un complément',
+        REJETE: 'Rejeter le KYC'
+      };
+      document.getElementById('decisionTitle').textContent = titles[status] || 'Décision KYC';
+      document.getElementById('decisionClientName').textContent = state.selectedClient.nomComplet || '--';
+      document.getElementById('decisionComment').value = '';
+      document.getElementById('commentError').classList.remove('is-visible');
+      document.getElementById('riskSelect').value = status === 'REJETE' ? 'ELEVE' : (state.selectedClient.niveauRisque || 'FAIBLE');
+      openModal('decisionModal');
+    }
+
+    async function confirmDecision() {
+      const client = state.selectedClient;
+      const status = state.decisionStatus;
+      const comment = document.getElementById('decisionComment').value.trim();
+      const needsComment = status === 'A_REVOIR' || status === 'REJETE';
+      if (!client || !status) return;
+      if (needsComment && comment.length < 10) {
+        document.getElementById('commentError').classList.add('is-visible');
+        showToast('Ajoutez un commentaire clair pour cette décision.', 'warning');
+        return;
+      }
+
+      const user = (window.SF && window.SF.getUser()) || {};
+      const payload = {
+        statutKyc: status,
+        niveauRisque: document.getElementById('riskSelect').value,
+        commentaire: comment,
+        validateurKyc: user.login || 'validateur-backoffice'
+      };
+
+      const button = document.getElementById('confirmDecisionBtn');
+      button.disabled = true;
+      try {
+        const res = await Clients.traiterKyc(client.idClient, payload);
+        if (!res) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          showToast(data.message || 'Impossible d’enregistrer la décision KYC.', 'error');
+          return;
+        }
+        showToast('Décision KYC enregistrée.', 'success');
+        closeModal('decisionModal');
+        const index = state.clients.findIndex(item => Number(item.idClient) === Number(client.idClient));
+        if (index >= 0) state.clients[index] = data;
+        state.selectedClient = data;
+        updateCounters();
+        renderRows();
+        selectClient(data.idClient);
+      } catch (error) {
+        showToast('Serveur indisponible pendant la décision KYC.', 'error');
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function loadKycQueue() {
+      document.getElementById('queueSubtitle').textContent = 'Chargement...';
+      document.getElementById('kycRows').innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center;padding:40px 0;color:#4A7A8A;">
+            <div class="login-spinner" style="display:inline-block;width:32px;height:32px;margin-bottom:12px;"></div>
+            <div>Chargement des dossiers...</div>
+          </td>
+        </tr>`;
+      try {
+        const res = await Clients.lister(0, 200);
+        if (!res) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          showToast(data.message || 'Erreur lors du chargement des dossiers KYC.', 'error');
+          document.getElementById('kycRows').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px 0;color:#4A7A8A;">Accès refusé ou serveur indisponible.</td></tr>';
+          return;
+        }
+        state.clients = data.content || [];
+        updateCounters();
+        renderRows();
+        const first = filteredClients()[0];
+        if (first) selectClient(first.idClient);
+      } catch (error) {
+        showToast('Impossible de joindre le serveur.', 'error');
+        document.getElementById('kycRows').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px 0;color:#4A7A8A;">Serveur indisponible.</td></tr>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      loadKycQueue();
+      document.getElementById('refreshBtn').addEventListener('click', loadKycQueue);
+      document.getElementById('topbarSearch').addEventListener('input', renderRows);
+      document.getElementById('approveBtn').addEventListener('click', () => openDecision('VALIDE'));
+      document.getElementById('reviewBtn').addEventListener('click', () => openDecision('A_REVOIR'));
+      document.getElementById('rejectBtn').addEventListener('click', () => openDecision('REJETE'));
+      document.getElementById('confirmDecisionBtn').addEventListener('click', confirmDecision);
+      document.getElementById('kycTabs').addEventListener('click', function (event) {
+        const tab = event.target.closest('.filter-tab');
+        if (!tab) return;
+        document.querySelectorAll('#kycTabs .filter-tab').forEach(item => item.classList.remove('active'));
+        tab.classList.add('active');
+        state.visibleStatus = tab.dataset.status || '';
+        renderRows();
+        const first = filteredClients()[0];
+        if (first) selectClient(first.idClient);
+      });
+    });
+  </script>
+</body>
+</html>

@@ -47,13 +47,14 @@
             <div class="form-group">
               <label class="form-label">Sélectionner le client *</label>
               <div class="search-predictive">
-                <input type="text" class="form-control" placeholder="Rechercher par nom ou N° compte..." id="clientSearch">
+                <input type="text" class="form-control" placeholder="Rechercher par nom, téléphone ou code client..." id="clientSearch">
                 <div class="search-results" id="clientResults">
                   <div class="search-result-item"><strong>Kouamé Aya</strong> - MFN-2024-001234</div>
                   <div class="search-result-item"><strong>Diallo Moussa</strong> - MFN-2023-005678</div>
                   <div class="search-result-item"><strong>Traoré Sékou</strong> - MFN-2024-009012</div>
                 </div>
               </div>
+              <div id="selectedClientHint" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;background:#F0F6FA;color:#084355;font-size:12px;"></div>
             </div>
             <div class="form-group">
               <label class="form-label">Type de compte (Gabarit) *</label>
@@ -707,7 +708,9 @@
 
     // --- Global selections ---
     let selectedClientId = null;
+    let selectedClient = null;
     let selectedCardClientId = null;
+    let openAccountClientCache = {};
     let blockCompte = null;
     let unblockCompte = null;
     let closeCompte = null;
@@ -715,6 +718,48 @@
     let opposeCard = null;
     let typedCardNumber = '';
     let currentChartInstance = null;
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function normalizeKycStatus(value) {
+      return String(value || '').replace(/\*/g, '').trim().toUpperCase();
+    }
+
+    function isKycValidated(client) {
+      return normalizeKycStatus(client && client.statutKyc) === 'VALIDE';
+    }
+
+    function kycBadge(statutKyc) {
+      const status = normalizeKycStatus(statutKyc);
+      const cls = status === 'VALIDE' ? 'badge-active'
+        : status === 'REJETE' ? 'badge-blocked'
+        : status === 'A_REVOIR' ? 'badge-warning'
+        : 'badge-pending';
+      return `<span class="badge ${cls}">${escapeHtml((status || 'NON RENSEIGNE').replace(/_/g, ' '))}</span>`;
+    }
+
+    function updateSelectedClientHint(client) {
+      const hint = document.getElementById('selectedClientHint');
+      if (!hint) return;
+      if (!client) {
+        hint.style.display = 'none';
+        hint.innerHTML = '';
+        return;
+      }
+      const kycOk = isKycValidated(client);
+      hint.style.display = 'block';
+      hint.style.background = kycOk ? '#F0F6FA' : '#FFF7ED';
+      hint.style.color = kycOk ? '#084355' : '#E65100';
+      hint.innerHTML = `
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;">
+          <span><strong>${escapeHtml(client.nomComplet || 'Client')}</strong> - ${escapeHtml(client.codeClient || '')}</span>
+          ${kycBadge(client.statutKyc)}
+        </div>
+        <div style="margin-top:4px;">${kycOk ? 'Client éligible à l’ouverture de compte.' : 'KYC non validé : ouverture de compte bloquée.'}</div>
+      `;
+    }
 
     // --- Tab Options ---
     document.querySelectorAll('.gabarit-option').forEach(option => {
@@ -752,6 +797,9 @@
         let query = this.value.trim();
         if (query.length < 2) {
           clientResults.classList.remove('show');
+          selectedClientId = null;
+          selectedClient = null;
+          updateSelectedClientHint(null);
           return;
         }
         try {
@@ -759,10 +807,23 @@
           if (res && res.ok) {
             let page = await res.json();
             let clients = page.content || [];
-            let html = '';
-            clients.forEach(c => {
-              html += `<div class="search-result-item" onclick="selectClient('${c.idClient}', '${c.nomComplet}', '${c.codeClient}')"><strong>${c.nomComplet}</strong> - ${c.codeClient}</div>`;
-            });
+            openAccountClientCache = {};
+            let html = clients.map(c => {
+              openAccountClientCache[c.idClient] = c;
+              const kycOk = isKycValidated(c);
+              return `
+                <div class="search-result-item" onclick="selectClient('${c.idClient}')">
+                  <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;">
+                    <span><strong>${escapeHtml(c.nomComplet)}</strong> - ${escapeHtml(c.codeClient)}</span>
+                    ${kycBadge(c.statutKyc)}
+                  </div>
+                  <div style="font-size:11px;color:${kycOk ? '#4A7A8A' : '#E65100'};margin-top:3px;">
+                    ${kycOk ? 'Eligible à l’ouverture' : 'KYC à finaliser avant ouverture'}
+                  </div>
+                </div>
+              `;
+            }).join('');
+            if (!html) html = '<div class="search-result-item">Aucun client trouvé</div>';
             clientResults.innerHTML = html;
             clientResults.classList.add('show');
           }
@@ -778,16 +839,25 @@
       });
     }
 
-    function selectClient(id, name, code) {
+    function selectClient(id) {
+      const client = openAccountClientCache[id];
+      if (!client) return;
       selectedClientId = id;
-      clientSearch.value = name + ' (' + code + ')';
+      selectedClient = client;
+      clientSearch.value = (client.nomComplet || 'Client') + ' (' + (client.codeClient || id) + ')';
       clientResults.classList.remove('show');
+      updateSelectedClientHint(client);
     }
 
     // --- Tab 1: Account Opening ---
     async function generateContract() {
       if (!selectedClientId) {
         showToast("Veuillez sélectionner un client", "error");
+        return;
+      }
+      if (!isKycValidated(selectedClient)) {
+        showToast("Le KYC du client doit être validé avant l'ouverture d'un compte.", "warning");
+        updateSelectedClientHint(selectedClient);
         return;
       }
       let checkedGabarit = document.querySelector('input[name="gabarit"]:checked');
@@ -831,13 +901,15 @@
           
           // Reset fields
           selectedClientId = null;
+          selectedClient = null;
           clientSearch.value = '';
+          updateSelectedClientHint(null);
           document.getElementById('initialDeposit').value = '';
           document.querySelectorAll('.gabarit-option').forEach(o => { o.style.borderColor = '#C9DFE8'; o.style.background = 'transparent'; });
           let checkedOpt = document.querySelector('input[name="gabarit"]:checked');
           if (checkedOpt) checkedOpt.checked = false;
         } else {
-          let err = await res.json();
+          let err = res ? await res.json().catch(() => ({})) : {};
           showToast(err.message || "Erreur lors de la création du compte", "error");
         }
       } catch (e) {
