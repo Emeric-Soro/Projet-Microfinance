@@ -1,18 +1,26 @@
 package com.soutra.microfinance.api.controller.compte;
 
+import com.soutra.microfinance.api.helper.SoutraSecurityHelper;
 import com.soutra.microfinance.audit.AuditLog;
 import com.soutra.microfinance.dto.request.client.ReleveRequestDTO;
 import com.soutra.microfinance.dto.request.compte.ChangementDecouvertRequestDTO;
 import com.soutra.microfinance.dto.request.compte.ChangementStatutCompteRequestDTO;
 import com.soutra.microfinance.dto.request.compte.ClotureCompteRequestDTO;
 import com.soutra.microfinance.dto.request.compte.OuvertureCompteRequestDTO;
+import com.soutra.microfinance.dto.request.operation.DepotInitialRequestDTO;
 import com.soutra.microfinance.dto.response.compte.CompteResponseDTO;
+import com.soutra.microfinance.dto.response.operation.RecuTransactionResponseDTO;
 import com.soutra.microfinance.entity.Compte;
 import com.soutra.microfinance.entity.ReleveFormat;
 import com.soutra.microfinance.entity.StatutCompte;
+import com.soutra.microfinance.entity.StatutOperation;
+import com.soutra.microfinance.entity.Transaction;
+import com.soutra.microfinance.entity.Utilisateur;
 import com.soutra.microfinance.mapper.CompteMapper;
+import com.soutra.microfinance.mapper.OperationMapper;
 import com.soutra.microfinance.service.compte.CompteService;
 import com.soutra.microfinance.service.compte.ReleveService;
+import com.soutra.microfinance.service.operation.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -46,11 +54,16 @@ public class CompteController {
 	private final CompteService compteService;
 	private final CompteMapper compteMapper;
 	private final ReleveService releveService;
+	private final TransactionService transactionService;
+	private final OperationMapper operationMapper;
 
-	public CompteController(CompteService compteService, CompteMapper compteMapper, ReleveService releveService) {
+	public CompteController(CompteService compteService, CompteMapper compteMapper, ReleveService releveService,
+			TransactionService transactionService, OperationMapper operationMapper) {
 		this.compteService = compteService;
 		this.compteMapper = compteMapper;
 		this.releveService = releveService;
+		this.transactionService = transactionService;
+		this.operationMapper = operationMapper;
 	}
 
 	@Operation(
@@ -252,6 +265,37 @@ public class CompteController {
                 .contentType(mediaType)
                 .body(content);
     }
+
+	@Operation(
+			summary = "Depot initial sur un compte",
+			description = "Effectue le premier depot sur un compte nouvellement ouvert. "
+					+ "Ne necessite pas de caisse ouverte : accessible a l'agent commercial et au guichetier."
+	)
+	@ApiResponses({
+			@ApiResponse(responseCode = "201", description = "Depot initial execute avec succes"),
+			@ApiResponse(responseCode = "202", description = "Depot en attente de validation superviseur"),
+			@ApiResponse(responseCode = "400", description = "Donnees invalides"),
+			@ApiResponse(responseCode = "404", description = "Compte ou utilisateur introuvable"),
+			@ApiResponse(responseCode = "409", description = "Conflit metier")
+	})
+	@PostMapping("/{numCompte}/depot-initial")
+	@PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR','AGENT_COMMERCIAL')")
+	@AuditLog(action = "ACCOUNT_INITIAL_DEPOSIT", resource = "COMPTE")
+	public ResponseEntity<RecuTransactionResponseDTO> depotInitial(
+			@PathVariable String numCompte,
+			@Valid @RequestBody DepotInitialRequestDTO requestDTO
+	) {
+		Utilisateur utilisateur = SoutraSecurityHelper.extraireUtilisateurAuthentifie();
+		Transaction transaction = transactionService.faireDepotInitial(
+				numCompte,
+				requestDTO.getMontant(),
+				utilisateur.getIdUser()
+		);
+		org.springframework.http.HttpStatus status = transaction.getStatutOperation() == StatutOperation.EN_ATTENTE
+				? org.springframework.http.HttpStatus.ACCEPTED
+				: org.springframework.http.HttpStatus.CREATED;
+		return ResponseEntity.status(status).body(operationMapper.toRecuResponseDTO(transaction));
+	}
 
 	private CompteResponseDTO toCompteResponse(Compte compte) {
 		CompteResponseDTO responseDTO = compteMapper.toCompteResponseDTO(compte);

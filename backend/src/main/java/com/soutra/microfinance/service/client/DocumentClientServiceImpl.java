@@ -59,7 +59,7 @@ public class DocumentClientServiceImpl implements DocumentClientService {
 
             DocumentClient doc = new DocumentClient();
             doc.setIdClient(idClient);
-            doc.setNomFichier(fichier.getOriginalFilename());
+            doc.setNomFichier(nomUnique);
             doc.setTypeMime(typeMime.toLowerCase());
             doc.setTailleOctets(fichier.getSize());
             doc.setCheminStockage(cheminFichier.toString());

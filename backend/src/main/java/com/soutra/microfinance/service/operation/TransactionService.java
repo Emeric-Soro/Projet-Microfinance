@@ -12,6 +12,13 @@ public interface TransactionService {
 
     Transaction faireDepot(String numCompte, BigDecimal montant, Long idUser);
 
+    /**
+     * Depot initial realise a l'ouverture d'un compte.
+     * Ne necessite pas de caisse ouverte : l'agent commercial ou le guichetier
+     * peut declencher ce premier mouvement juste apres la creation du compte.
+     */
+    Transaction faireDepotInitial(String numCompte, BigDecimal montant, Long idUser);
+
     Transaction faireRetrait(String numCompte, BigDecimal montant, Long idUser, String numeroCarte);
 
     Transaction faireVirement(String compteSource, String compteDest, BigDecimal montant, Long idUser);

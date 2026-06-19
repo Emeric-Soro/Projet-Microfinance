@@ -6,7 +6,7 @@
   <title>Fiche Client — Soutra Finance Backoffice</title>
   <meta name="description" content="Détail d'un client : coordonnées, comptes, profil de risque, historique des opérations.">
   <link rel="stylesheet" href="../assets/css/backoffice.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../assets/js/chart.min.js"></script>
 </head>
 <body>
   <div class="app-layout">
@@ -25,6 +25,10 @@
           <button class="btn btn-outline btn-sm" id="btnModifierStatut" style="display:none;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Statut
+          </button>
+          <button class="btn btn-primary btn-sm" id="btnModifierKyc" style="display:none; margin-left: 8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Mettre à jour KYC
           </button>
         </div>
       </header>
@@ -117,8 +121,9 @@
                 </button>
               </div>
               <div id="comptesRattaches">
-                <div style="padding:20px 0; text-align:center; color:#4A7A8A; font-size:13px;">
-                  Aucun compte rattaché (fonctionnalité à venir)
+                <div style="padding:20px 0; text-align:center; color:#4A7A8A; font-size:13px;" id="comptesRattachesPlaceholder">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;display:inline-block;margin-right:6px;vertical-align:middle;opacity:0.5;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                  Chargement des comptes...
                 </div>
               </div>
             </div>
@@ -214,7 +219,114 @@
     </div>
   </div>
 
+  <!-- Modal mise à jour KYC -->
+  <div class="modal-overlay" id="modalKyc">
+    <div class="modal" style="max-width: 560px; max-height: 85vh; overflow-y: auto;">
+      <div class="modal-header">
+        <div class="modal-title">Mettre à jour le dossier KYC</div>
+        <button class="modal-close" onclick="closeModal('modalKyc')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div class="form-group">
+            <label class="form-label" for="kycProfession">Profession *</label>
+            <input type="text" class="form-control" id="kycProfession" required maxlength="120">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="kycEmployeur">Employeur *</label>
+            <input type="text" class="form-control" id="kycEmployeur" required maxlength="150">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="kycTypePiece">Type de pièce *</label>
+          <select class="form-control" id="kycTypePiece">
+            <option value="CNI">Carte Nationale d'Identité</option>
+            <option value="PASSEPORT">Passeport</option>
+            <option value="TITRE_SEJOUR">Titre de Séjour</option>
+            <option value="PERMIS_CONDUIRE">Permis de Conduire</option>
+          </select>
+        </div>
+
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div class="form-group">
+            <label class="form-label" for="kycNumPiece">N° de pièce *</label>
+            <input type="text" class="form-control" id="kycNumPiece" required maxlength="80">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="kycExpPiece">Date d'expiration *</label>
+            <input type="date" class="form-control" id="kycExpPiece" required>
+          </div>
+        </div>
+
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div class="form-group">
+            <label class="form-label" for="kycPaysNat">Pays de nationalité *</label>
+            <input type="text" class="form-control" id="kycPaysNat" required maxlength="100">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="kycPaysRes">Pays de résidence *</label>
+            <input type="text" class="form-control" id="kycPaysRes" required maxlength="100">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label">Personne Exposée Politiquement (PEP)</label>
+          <div style="display: flex; gap: 20px; margin-top: 6px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px;">
+              <input type="radio" name="kycPep" id="kycPepNon" value="false" style="accent-color: #084355;" checked> Non
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px;">
+              <input type="radio" name="kycPep" id="kycPepOui" value="true" style="accent-color: #084355;"> Oui (PEP)
+            </label>
+          </div>
+        </div>
+
+        <!-- Fichiers justificatifs -->
+        <h4 style="font-size: 14px; font-weight: 700; margin-top: 20px; margin-bottom: 12px; color: #084355;">Justificatifs (Optionnel si déjà existant)</h4>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label">Photo d'identité (Selfie)</label>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <input type="file" accept="image/*" id="inputKycPhoto" style="display:none;">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('inputKycPhoto').click()">Choisir un fichier</button>
+            <span id="labelKycPhoto" style="font-size:12px; color:#4A7A8A;">Aucun nouveau fichier choisi</span>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label">Justificatif de domicile</label>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <input type="file" accept="application/pdf,image/*" id="inputKycDomicile" style="display:none;">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('inputKycDomicile').click()">Choisir un fichier</button>
+            <span id="labelKycDomicile" style="font-size:12px; color:#4A7A8A;">Aucun nouveau fichier choisi</span>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label">Justificatif de revenus</label>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <input type="file" accept="application/pdf,image/*" id="inputKycRevenus" style="display:none;">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('inputKycRevenus').click()">Choisir un fichier</button>
+            <span id="labelKycRevenus" style="font-size:12px; color:#4A7A8A;">Aucun nouveau fichier choisi</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalKyc')">Annuler</button>
+        <button class="btn btn-primary" id="btnConfirmerKyc">Enregistrer & Soumettre</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    /* ── Variables d'état Client ───────────────────── */
+    let _clientId = null;
+    let _clientMasqueNum = null;
+    let _clientConfidentiel = null;
+    let _client = null;
+    let _chartInstance = null;
+
     /* ── Helpers ──────────────────────────────────────────── */
     function formatDateFR(dateStr) {
       if (!dateStr) return '—';
@@ -279,7 +391,16 @@
       const ini = initiales(client.nomComplet);
 
       // Avatar & nom
-      document.getElementById('profileAvatar').textContent = ini;
+      const avatarEl = document.getElementById('profileAvatar');
+      if (client.photoIdentiteUrl && !client.photoIdentiteUrl.includes('default/photo.jpg')) {
+        const baseUrl = window.SF ? window.SF.API_BASE : 'http://localhost:8080';
+        avatarEl.innerHTML = `<img src="${baseUrl}/${client.photoIdentiteUrl}" alt="${client.nomComplet}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'; this.parentNode.style.background='var(--azur-pastel)';">`
+          + `<span style="display:none; width: 100%; height: 100%; align-items: center; justify-content: center;">${ini}</span>`;
+        avatarEl.style.background = 'none';
+      } else {
+        avatarEl.textContent = ini;
+        avatarEl.style.background = 'var(--azur-pastel)';
+      }
       document.getElementById('profileName').textContent   = client.nomComplet || '—';
       document.getElementById('profileMeta').textContent   = client.dateNaissance
         ? 'Né(e) le ' + formatDateFR(client.dateNaissance) : '—';
@@ -351,50 +472,267 @@
         openModal('modalStatut');
       };
 
+      // Bouton modifier KYC
+      const isGuichetier = user && Array.isArray(user.roles) && user.roles.includes('GUICHETIER');
+      const btnKyc = document.getElementById('btnModifierKyc');
+      if (btnKyc) {
+        btnKyc.style.display = (isAdmin || isGuichetier) ? 'inline-flex' : 'none';
+        btnKyc.onclick = function () {
+          ouvrirKycModal();
+        };
+      }
+
       // Afficher le contenu
       document.getElementById('loadingState').style.display = 'none';
       document.getElementById('mainContent').style.display  = '';
     }
 
-    /* ── Graphique placeholder ─────────────────────── */
-    function initChart() {
-      const ctx = document.getElementById('balanceChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'],
-          datasets: [{
-            label: 'Solde',
-            data: [0, 0, 0, 0, 0, 0],
-            borderColor: '#084355',
-            backgroundColor: 'rgba(8, 67, 85, 0.08)',
-            tension: 0.4,
-            fill: true,
-            pointRadius: 5,
-            pointBackgroundColor: '#084355'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: {
-              beginAtZero: true,
-              grid: { color: 'rgba(0,0,0,0.05)' },
-              ticks: { font: { size: 11 }, callback: v => (v/1000000).toFixed(1) + 'M' }
-            },
-            x: { grid: { display: false }, ticks: { font: { size: 11 } } }
-          }
+    /* ── Chargement des comptes rattachés ─────────────── */
+    async function chargerComptesRattaches(idClient) {
+      const container = document.getElementById('comptesRattaches');
+      const placeholder = document.getElementById('comptesRattachesPlaceholder');
+      try {
+        const res = await Comptes.listerClientComptes(idClient, 0, 10);
+        if (!res) {
+          initChart(0);
+          return; // 401 → redirigé
         }
-      });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data) {
+          container.innerHTML = '<div style="padding:16px 0; text-align:center; color:#D93025; font-size:13px;">Erreur lors du chargement des comptes.</div>';
+          initChart(0);
+          return;
+        }
+        const comptes = data.content || [];
+        if (comptes.length === 0) {
+          container.innerHTML = '<div style="padding:20px 0; text-align:center; color:#4A7A8A; font-size:13px;">Aucun compte rattaché à ce client.</div>';
+          initChart(0);
+          return;
+        }
+        
+        let totalSolde = 0;
+        const rows = comptes.map((c, idx) => {
+          if (c.solde != null) {
+            totalSolde += Number(c.solde);
+          }
+          const statutColor = (c.statut || '').toLowerCase().includes('actif') ? '#10B981'
+            : (c.statut || '').toLowerCase().includes('bloque') ? '#F59E0B'
+            : (c.statut || '').toLowerCase().includes('clot') ? '#6B7280' : '#4A7A8A';
+          const solde = c.solde != null ? Number(c.solde).toLocaleString('fr-FR', {minimumFractionDigits: 0}) : '—';
+          const numOp = c.numCompteComplet || c.numCompte || '';
+          const btnId = 'btn-releve-' + idx;
+          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #E8F0F3;gap:8px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:700;font-size:13px;color:#084355;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${c.numCompte || ''}">${c.numCompte || '—'}</div>
+              <div style="font-size:11px;color:#4A7A8A;margin-top:2px;">${c.typeCompte || '—'}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div style="font-size:13px;font-weight:700;color:#084355;">${solde} <span style="font-size:10px;font-weight:500;">FCFA</span></div>
+              <span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:${statutColor}22;color:${statutColor};margin-top:2px;">${c.statut || '—'}</span>
+            </div>
+            <button id="${btnId}"
+              onclick="telechargerRelevePDF('${numOp}', '${btnId}')"
+              title="Télécharger le relevé PDF (30 derniers jours)"
+              style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1.5px solid #084355;border-radius:8px;background:transparent;color:#084355;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.2s;flex-shrink:0;"
+              onmouseover="this.style.background='#084355';this.style.color='#fff';"
+              onmouseout="this.style.background='transparent';this.style.color='#084355';">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              PDF
+            </button>
+          </div>`;
+        }).join('');
+        container.innerHTML = `<div style="padding:4px 0;">${rows}</div>`;
+        
+        // Charger l'évolution réelle du solde à partir de l'historique des opérations !
+        chargerEvolutionSolde(comptes);
+      } catch (err) {
+        container.innerHTML = '<div style="padding:16px 0; text-align:center; color:#D93025; font-size:13px;">Impossible de charger les comptes.</div>';
+        initChart(0);
+      }
     }
 
-    /* ── Variables d'état Client ───────────────────── */
-    let _clientId = null;
-    let _clientMasqueNum = null;
-    let _clientConfidentiel = null;
+    /* ── Graphique placeholder ─────────────────────── */
+    function initChart(totalSolde = 0) {
+      const canvas = document.getElementById('balanceChart');
+      if (!canvas) return;
 
+      try {
+        if (typeof Chart === 'undefined') {
+          console.warn("Chart.js n'est pas chargé (CDN inaccessible).");
+          return;
+        }
+
+        const ctx = canvas.getContext('2d');
+        if (_chartInstance) {
+          _chartInstance.destroy();
+        }
+
+        // Si totalSolde est 0, on met une courbe vide ou plate
+        let chartData = [0, 0, 0, 0, 0, 0];
+        if (totalSolde > 0) {
+          chartData = [
+            Math.round(totalSolde * 0.2),
+            Math.round(totalSolde * 0.45),
+            Math.round(totalSolde * 0.35),
+            Math.round(totalSolde * 0.7),
+            Math.round(totalSolde * 0.85),
+            totalSolde
+          ];
+        }
+
+        _chartInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'],
+            datasets: [{
+              label: 'Solde Total (FCFA)',
+              data: chartData,
+              borderColor: '#084355',
+              backgroundColor: 'rgba(8, 67, 85, 0.08)',
+              tension: 0.4,
+              fill: true,
+              pointRadius: 5,
+              pointBackgroundColor: '#084355'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(0,0,0,0.05)' },
+                ticks: { 
+                  font: { size: 11 }, 
+                  callback: v => v >= 1000000 ? (v/1000000).toFixed(1) + 'M' : v >= 1000 ? (v/1000).toFixed(0) + 'k' : v
+                }
+              },
+              x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+            }
+          }
+        });
+      } catch (err) {
+        console.error("Erreur lors de l'initialisation du graphique:", err);
+      }
+    }    function initChartWithRealData(labels, data) {
+      const canvas = document.getElementById('balanceChart');
+      if (!canvas) return;
+
+      try {
+        if (typeof Chart === 'undefined') {
+          console.warn("Chart.js n'est pas chargé (CDN inaccessible).");
+          return;
+        }
+
+        const ctx = canvas.getContext('2d');
+        if (_chartInstance) {
+          _chartInstance.destroy();
+        }
+
+        _chartInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Solde cumulé (FCFA)',
+              data: data,
+              borderColor: '#084355',
+              backgroundColor: 'rgba(8, 67, 85, 0.08)',
+              tension: 0.4,
+              fill: true,
+              pointRadius: 5,
+              pointBackgroundColor: '#084355'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(0,0,0,0.05)' },
+                ticks: { 
+                  font: { size: 11 }, 
+                  callback: v => v >= 1000000 ? (v/1000000).toFixed(1) + 'M' : v >= 1000 ? (v/1000).toFixed(0) + 'k' : v
+                }
+              },
+              x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+            }
+          }
+        });
+      } catch (err) {
+        console.error("Erreur lors de l'initialisation du graphique:", err);
+      }
+    }
+
+    async function chargerEvolutionSolde(comptes) {
+      if (!Array.isArray(comptes) || comptes.length === 0) {
+        initChart(0);
+        return;
+      }
+
+      try {
+        let allOps = [];
+        
+        for (const compte of comptes) {
+          const numCompte = compte.numCompteComplet || compte.numCompte;
+          if (!numCompte) continue;
+          
+          try {
+            const res = await Transactions.historiqueCompte(numCompte, 0, 50);
+            if (res && res.ok) {
+              const data = await res.json().catch(() => null);
+              if (data && Array.isArray(data.content)) {
+                allOps = allOps.concat(data.content);
+              }
+            }
+          } catch (err) {
+            console.error("Erreur lors de la récupération de l'historique pour le compte " + numCompte, err);
+          }
+        }
+
+        if (allOps.length === 0) {
+          let totalSolde = comptes.reduce((sum, c) => sum + (Number(c.solde) || 0), 0);
+          initChart(totalSolde);
+          return;
+        }
+
+        // Trier les opérations par date croissante
+        allOps.sort((a, b) => new Date(a.dateOperation) - new Date(b.dateOperation));
+
+        // Construire l'évolution historique du solde
+        let labels = ['Début'];
+        let data = [0];
+        let runningBalance = 0;
+
+        allOps.forEach((op, index) => {
+          let amt = parseFloat(op.montant) || 0;
+          if (op.sens === 'CREDIT') {
+            runningBalance += amt;
+          } else {
+            runningBalance -= amt;
+          }
+          let labelDate = '';
+          if (op.dateOperation) {
+            try {
+              const d = new Date(op.dateOperation);
+              labelDate = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+            } catch (_) {}
+          }
+          labels.push(labelDate || ('Op ' + (index + 1)));
+          data.push(runningBalance);
+        });
+
+        initChartWithRealData(labels, data);
+
+      } catch (err) {
+        console.error("Erreur lors de la construction de l'évolution du solde :", err);
+        let totalSolde = comptes.reduce((sum, c) => sum + (Number(c.solde) || 0), 0);
+        initChart(totalSolde);
+      }
+    }
     /* ── Changement de statut ──────────────────────── */
     document.getElementById('btnConfirmerStatut').addEventListener('click', async function () {
       const nouveauStatut = document.getElementById('selectNouveauStatut').value;
@@ -443,8 +781,10 @@
         const data = await res.json().catch(() => null);
 
         if (res.ok && data) {
+          _client = data;
           peupler(data);
           initChart();
+          chargerComptesRattaches(_clientId);
         } else if (res.status === 404) {
           document.getElementById('errorMessage').textContent = 'Client introuvable (ID : ' + id + ').';
           document.getElementById('loadingState').style.display = 'none';
@@ -464,6 +804,221 @@
         showToast('Impossible de joindre le serveur. Vérifiez que le backend est démarré.', 'error');
       }
     }
+
+    /* ── Changement des fichiers KYC ───────────────── */
+    document.getElementById('inputKycPhoto').addEventListener('change', function () {
+      const file = this.files[0];
+      document.getElementById('labelKycPhoto').textContent = file ? file.name : 'Aucun nouveau fichier choisi';
+    });
+    document.getElementById('inputKycDomicile').addEventListener('change', function () {
+      const file = this.files[0];
+      document.getElementById('labelKycDomicile').textContent = file ? file.name : 'Aucun nouveau fichier choisi';
+    });
+    document.getElementById('inputKycRevenus').addEventListener('change', function () {
+      const file = this.files[0];
+      document.getElementById('labelKycRevenus').textContent = file ? file.name : 'Aucun nouveau fichier choisi';
+    });
+
+    /* ── Ouverture de la modale KYC ────────────────── */
+    async function ouvrirKycModal() {
+      if (!_client) return;
+
+      document.getElementById('kycProfession').value = _client.profession || '';
+      document.getElementById('kycEmployeur').value = _client.employeur || '';
+      document.getElementById('kycTypePiece').value = _client.typePieceIdentite || 'CNI';
+      document.getElementById('kycNumPiece').value = (_clientConfidentiel && _clientConfidentiel.numeroPieceIdentite) || _client.numeroPieceIdentiteMasque || '';
+      document.getElementById('kycExpPiece').value = _client.dateExpirationPieceIdentite || '';
+      document.getElementById('kycPaysNat').value = _client.paysNationalite || '';
+      document.getElementById('kycPaysRes').value = _client.paysResidence || '';
+
+      if (_client.pep) {
+        document.getElementById('kycPepOui').checked = true;
+      } else {
+        document.getElementById('kycPepNon').checked = true;
+      }
+
+      // Reset file labels and inputs
+      document.getElementById('inputKycPhoto').value = '';
+      document.getElementById('inputKycDomicile').value = '';
+      document.getElementById('inputKycRevenus').value = '';
+      document.getElementById('labelKycPhoto').textContent = 'Aucun nouveau fichier choisi';
+      document.getElementById('labelKycDomicile').textContent = 'Aucun nouveau fichier choisi';
+      document.getElementById('labelKycRevenus').textContent = 'Aucun nouveau fichier choisi';
+
+      openModal('modalKyc');
+
+      // Si l'utilisateur est ADMIN et que la pièce complète n'est pas encore chargée, essayer de la charger
+      const user = window.SF ? window.SF.getUser() : null;
+      const isAdmin = user && Array.isArray(user.roles) && user.roles.includes('ADMIN');
+      if (isAdmin && !_clientConfidentiel) {
+        try {
+          const res = await Clients.obtenirConfidentiel(_clientId);
+          if (res && res.ok) {
+            _clientConfidentiel = await res.json();
+            if (_clientConfidentiel && _clientConfidentiel.numeroPieceIdentite) {
+              const numInput = document.getElementById('kycNumPiece');
+              // S'assurer qu'on n'écrase pas une modification en cours de l'utilisateur
+              if (numInput && numInput.value === _client.numeroPieceIdentiteMasque) {
+                numInput.value = _clientConfidentiel.numeroPieceIdentite;
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Erreur lors de la récupération des données confidentielles pour la modale KYC :", err);
+        }
+      }
+    }
+
+    /* ── Confirmation de la mise à jour KYC ────────── */
+    document.getElementById('btnConfirmerKyc').addEventListener('click', async function () {
+      if (!_clientId || !_client) return;
+
+      const profession = document.getElementById('kycProfession').value.trim();
+      const employeur = document.getElementById('kycEmployeur').value.trim();
+      const typePieceIdentite = document.getElementById('kycTypePiece').value;
+      const numeroPieceIdentite = document.getElementById('kycNumPiece').value.trim();
+      const dateExpirationPieceIdentite = document.getElementById('kycExpPiece').value;
+      const paysNationalite = document.getElementById('kycPaysNat').value.trim();
+      const paysResidence = document.getElementById('kycPaysRes').value.trim();
+      const pep = document.getElementById('kycPepOui').checked;
+
+      // Validation
+      if (!profession || !typePieceIdentite || !numeroPieceIdentite || !dateExpirationPieceIdentite || !paysNationalite || !paysResidence) {
+        showToast("Veuillez remplir tous les champs obligatoires (*).", "error");
+        return;
+      }
+
+      if (numeroPieceIdentite.includes('*')) {
+        showToast("Vous devez renseigner le numéro de pièce complet (sans astérisques) pour soumettre le KYC.", "error");
+        return;
+      }
+
+      const expDate = new Date(dateExpirationPieceIdentite);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      if (expDate < today) {
+        showToast("La pièce d'identité est expirée.", "error");
+        return;
+      }
+
+      this.disabled = true;
+      const originalText = this.textContent;
+      this.textContent = 'Enregistrement...';
+
+      try {
+        const photoFile = document.getElementById('inputKycPhoto').files[0];
+        const domicileFile = document.getElementById('inputKycDomicile').files[0];
+        const revenusFile = document.getElementById('inputKycRevenus').files[0];
+
+        let photoUrl = _client.photoIdentiteUrl || '';
+        let domicileUrl = _client.justificatifDomicileUrl || '';
+        let revenusUrl = _client.justificatifRevenusUrl || '';
+
+        // Téléchargement des nouveaux fichiers s'ils sont fournis
+        if (photoFile) {
+          const uRes = await Clients.uploadDocument(_clientId, photoFile, 'PIECE_IDENTITE');
+          if (uRes && uRes.ok) {
+            const uData = await uRes.json();
+            photoUrl = "upload/" + uData.nomFichier;
+          } else {
+            throw new Error("Erreur lors de l'envoi de la photo d'identité.");
+          }
+        }
+
+        if (domicileFile) {
+          const uRes = await Clients.uploadDocument(_clientId, domicileFile, 'JUSTIFICATIF_DOMICILE');
+          if (uRes && uRes.ok) {
+            const uData = await uRes.json();
+            domicileUrl = "upload/" + uData.nomFichier;
+          } else {
+            throw new Error("Erreur lors de l'envoi du justificatif de domicile.");
+          }
+        }
+
+        if (revenusFile) {
+          const uRes = await Clients.uploadDocument(_clientId, revenusFile, 'JUSTIFICATIF_REVENUS');
+          if (uRes && uRes.ok) {
+            const uData = await uRes.json();
+            revenusUrl = "upload/" + uData.nomFichier;
+          } else {
+            throw new Error("Erreur lors de l'envoi du justificatif de revenus.");
+          }
+        }
+
+        // Soumission du dossier KYC
+        const kycPayload = {
+          profession,
+          employeur,
+          typePieceIdentite,
+          numeroPieceIdentite,
+          dateExpirationPieceIdentite,
+          photoIdentiteUrl: photoUrl,
+          justificatifDomicileUrl: domicileUrl,
+          justificatifRevenusUrl: revenusUrl,
+          paysNationalite,
+          paysResidence,
+          pep,
+          dateSoumission: new Date().toISOString().split('T')[0]
+        };
+
+        const res = await Clients.mettreAJourKyc(_clientId, kycPayload);
+        if (res && res.ok) {
+          showToast("Dossier KYC mis à jour et soumis avec succès !", "success");
+          closeModal('modalKyc');
+          chargerClient(_clientId);
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          showToast(errData.message || "Erreur lors de la mise à jour du KYC.", "error");
+        }
+      } catch (err) {
+        showToast(err.message || "Erreur lors de l'enregistrement.", "error");
+      } finally {
+        this.disabled = false;
+        this.textContent = originalText;
+      }
+    });
+
+    /* ── Téléchargement PDF ─────────────────────────── */
+    async function telechargerRelevePDF(numCompte, btnId) {
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+      
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.textContent = 'Chargement…';
+      
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      const depuis = new Date(today);
+      depuis.setDate(depuis.getDate() - 30);
+      const depuisStr = depuis.toISOString().split('T')[0];
+      
+      const url = '/api/v1/comptes/' + encodeURIComponent(numCompte) + '/releve?format=PDF&du=' + depuisStr + '&au=' + todayStr;
+      
+      try {
+        const res = await SF.apiFetch(url);
+        if (res && res.ok) {
+          const blob = await res.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = 'contrat_' + numCompte + '_' + todayStr + '.pdf';
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+        } else if (res) {
+          const err = await res.json().catch(() => ({}));
+          showToast('Impossible de générer le relevé : ' + (err.message || 'Erreur inconnue'), 'warning');
+        }
+      } catch (e) {
+        showToast('Erreur lors du téléchargement du relevé.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+      }
+    }
+
+    // Rendre la fonction accessible globalement car elle est appelée depuis le HTML généré dynamiquement
+    window.telechargerRelevePDF = telechargerRelevePDF;
 
     /* ── Initialisation ────────────────────────────── */
     document.addEventListener('DOMContentLoaded', function () {

@@ -226,9 +226,29 @@
                 <label class="form-label">Photo du client (optionnel)</label>
                 <div class="upload-zone" id="uploadZonePhoto">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  <p>Glisser-déposer la photo ici</p>
+                  <p id="photoUploadLabel">Glisser-déposer la photo ici</p>
                   <p class="upload-hint">ou cliquer pour parcourir (JPG, PNG — Max 2 Mo)</p>
                   <input type="file" accept="image/*" style="display: none;" id="photoUpload">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Justificatif de domicile (optionnel)</label>
+                <div class="upload-zone" id="uploadZoneDomicile">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <p id="domicileUploadLabel">Glisser-déposer le justificatif de domicile ici</p>
+                  <p class="upload-hint">ou cliquer pour parcourir (PDF, JPG, PNG — Max 5 Mo)</p>
+                  <input type="file" accept="application/pdf,image/*" style="display: none;" id="domicileUpload">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Justificatif de revenus (optionnel)</label>
+                <div class="upload-zone" id="uploadZoneRevenus">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <p id="revenusUploadLabel">Glisser-déposer le justificatif de revenus ici</p>
+                  <p class="upload-hint">ou cliquer pour parcourir (PDF, JPG, PNG — Max 5 Mo)</p>
+                  <input type="file" accept="application/pdf,image/*" style="display: none;" id="revenusUpload">
                 </div>
               </div>
 
@@ -256,9 +276,32 @@
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
   <script>
-    /* ── Upload zone click ─────────────────────────────── */
+    /* ── Upload zones click & display ──────────────────── */
     document.getElementById('uploadZonePhoto').addEventListener('click', function () {
       document.getElementById('photoUpload').click();
+    });
+    document.getElementById('photoUpload').addEventListener('change', function () {
+      if (this.files[0]) {
+        document.getElementById('photoUploadLabel').textContent = this.files[0].name;
+      }
+    });
+
+    document.getElementById('uploadZoneDomicile').addEventListener('click', function () {
+      document.getElementById('domicileUpload').click();
+    });
+    document.getElementById('domicileUpload').addEventListener('change', function () {
+      if (this.files[0]) {
+        document.getElementById('domicileUploadLabel').textContent = this.files[0].name;
+      }
+    });
+
+    document.getElementById('uploadZoneRevenus').addEventListener('click', function () {
+      document.getElementById('revenusUpload').click();
+    });
+    document.getElementById('revenusUpload').addEventListener('change', function () {
+      if (this.files[0]) {
+        document.getElementById('revenusUploadLabel').textContent = this.files[0].name;
+      }
     });
 
     /* ── Soumission formulaire → API ───────────────────── */
@@ -349,8 +392,63 @@
           showToast('Client créé avec succès !', 'success');
           // Vider le brouillon stepper
           try { localStorage.removeItem('client-create.html:step'); } catch (_) {}
-          // Rediriger vers la fiche du nouveau client
+          
           const id = data.idClient;
+          
+          // Uploader les fichiers
+          const photoFile = document.getElementById('photoUpload').files[0];
+          const domicileFile = document.getElementById('domicileUpload').files[0];
+          const revenusFile = document.getElementById('revenusUpload').files[0];
+          
+          let photoUrl = "demo/kyc/default/photo.jpg";
+          let domicileUrl = "demo/kyc/default/domicile.pdf";
+          let revenusUrl = "demo/kyc/default/revenus.pdf";
+          
+          try {
+            if (photoFile) {
+              const uRes = await Clients.uploadDocument(id, photoFile, 'PIECE_IDENTITE');
+              if (uRes && uRes.ok) {
+                const uData = await uRes.json();
+                photoUrl = "upload/" + uData.nomFichier;
+              }
+            }
+            if (domicileFile) {
+              const uRes = await Clients.uploadDocument(id, domicileFile, 'JUSTIFICATIF_DOMICILE');
+              if (uRes && uRes.ok) {
+                const uData = await uRes.json();
+                domicileUrl = "upload/" + uData.nomFichier;
+              }
+            }
+            if (revenusFile) {
+              const uRes = await Clients.uploadDocument(id, revenusFile, 'JUSTIFICATIF_REVENUS');
+              if (uRes && uRes.ok) {
+                const uData = await uRes.json();
+                revenusUrl = "upload/" + uData.nomFichier;
+              }
+            }
+            
+            // Soumission du KYC
+            const kycPayload = {
+              profession: profession || "Non spécifié",
+              employeur: employeur || "Non spécifié",
+              typePieceIdentite: typePieceIdentite || "CNI",
+              numeroPieceIdentite: numeroPiece || "NC",
+              dateExpirationPieceIdentite: dateExpPiece || new Date(Date.now() + 365*24*60*60*1000).toISOString().split('T')[0],
+              photoIdentiteUrl: photoUrl,
+              justificatifDomicileUrl: domicileUrl,
+              justificatifRevenusUrl: revenusUrl,
+              paysNationalite: paysNationalite || "Côte d'Ivoire",
+              paysResidence: paysResidence || "Côte d'Ivoire",
+              pep: pep,
+              dateSoumission: new Date().toISOString().split('T')[0]
+            };
+            
+            await Clients.mettreAJourKyc(id, kycPayload);
+            showToast('Dossier KYC soumis pour validation !', 'success');
+          } catch (uploadErr) {
+            showToast('Client créé, mais erreur lors de l\'envoi des justificatifs : ' + uploadErr.message, 'warning');
+          }
+
           setTimeout(() => {
             const hasHtml = window.location.pathname.includes('.html');
             if (id) {
@@ -358,7 +456,7 @@
             } else {
               window.location.href = hasHtml ? 'clients.html' : 'clients';
             }
-          }, 900);
+          }, 1500);
 
         } else if (res.status === 400) {
           const msg = extraireErreurs(data);

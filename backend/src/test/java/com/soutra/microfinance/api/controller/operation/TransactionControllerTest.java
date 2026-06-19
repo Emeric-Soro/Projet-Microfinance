@@ -96,6 +96,20 @@ class TransactionControllerTest {
     @BeforeEach
     void setUp() {
         SecurityContextHolder.getContext().setAuthentication(getTestAuthentication());
+        when(operationMapper.toRecuResponseDTO(any(Transaction.class))).thenAnswer(invocation -> {
+            Transaction tx = invocation.getArgument(0);
+            if (tx == null) return null;
+            RecuTransactionResponseDTO dto = new RecuTransactionResponseDTO();
+            dto.setReferenceUnique(tx.getReferenceUnique());
+            dto.setMontant(tx.getMontantGlobal());
+            dto.setFrais(tx.getFrais());
+            dto.setStatutOperation(tx.getStatutOperation() != null ? tx.getStatutOperation().name() : null);
+            dto.setValidationSuperviseurRequise(tx.getValidationSuperviseurRequise());
+            dto.setTypeOperation(tx.getTypeTransaction() != null ? tx.getTypeTransaction().getCodeTypeTransaction() : null);
+            dto.setDateHeure(tx.getDateHeureTransaction());
+            dto.setDateExecution(tx.getDateExecution());
+            return dto;
+        });
     }
 
     @Test
@@ -154,7 +168,7 @@ class TransactionControllerTest {
 
     @Test
     void shouldApproveTransaction() throws Exception {
-        ValidationTransactionRequestDTO request = new ValidationTransactionRequestDTO(2L, null);
+        ValidationTransactionRequestDTO request = new ValidationTransactionRequestDTO(1L, null);
         Transaction transaction = buildTransaction("TX-001", StatutOperation.EXECUTEE);
         RecuTransactionResponseDTO responseDTO = new RecuTransactionResponseDTO();
         responseDTO.setReferenceUnique("TX-001");
@@ -187,7 +201,7 @@ class TransactionControllerTest {
         mockMvc.perform(put("/api/v1/transactions/TX-001/rejet")
                         .with(authentication(getTestAuthentication()))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"idSuperviseur\": 2, \"motif\": \"Suspicion de fraude\"}"))
+                        .content("{\"idSuperviseur\": 1, \"motif\": \"Suspicion de fraude\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statutOperation").value("REJETEE"));
     }

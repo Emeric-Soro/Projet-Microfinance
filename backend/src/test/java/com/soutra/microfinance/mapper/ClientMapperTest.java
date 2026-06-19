@@ -79,6 +79,10 @@ class ClientMapperTest {
         client.setEmail("amadou.diallo@test.com");
         client.setTypePieceIdentite(TypePieceIdentite.CNI);
         client.setNumeroPieceIdentite("123456789");
+        client.setDateExpirationPieceIdentite(LocalDate.now().plusYears(2));
+        client.setPhotoIdentiteUrl("upload/photo.jpg");
+        client.setJustificatifDomicileUrl("upload/domicile.pdf");
+        client.setJustificatifRevenusUrl("upload/revenus.pdf");
         client.setProfession("Commercant");
         client.setPaysNationalite("Senegal");
         client.setPaysResidence("Senegal");

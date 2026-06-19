@@ -43,6 +43,9 @@ public class SecurityConfig {
     @Value("${spring.profiles.active:dev}")
     private String activeProfile;
 
+    @Value("${app.cors.allowed-origins:http://localhost:5173}")
+    private String corsAllowedOrigins;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -74,6 +77,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/health/cache").permitAll()
                         // 1.e Autorise l'inscription d'un nouveau client sans JWT.
                         .requestMatchers(HttpMethod.POST, "/api/v1/clients").permitAll()
+                        // 1.f Dossiers uploadés (photos, justificatifs)
+                        .requestMatchers("/upload/**").permitAll()
                         // 2. Actuator public limite aux sondes non sensibles.
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll();
 
@@ -130,11 +135,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:3000",
-                "http://localhost:4200",
-                "http://localhost:5173"
-        ));
+        // Lit les origines depuis app.cors.allowed-origins (variable d'env APP_CORS_ALLOWED_ORIGINS)
+        List<String> origins = Arrays.stream(corsAllowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .collect(java.util.stream.Collectors.toList());
+        configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
         configuration.setExposedHeaders(List.of("Authorization"));
