@@ -1159,7 +1159,7 @@
         motif += " - " + commentArea.value;
       }
       try {
-        let res = await Comptes.bloquer(blockCompte.numCompte, motif);
+        let res = await Comptes.bloquer(blockCompte.numCompteComplet || blockCompte.numCompte, motif);
         if (res && res.ok) {
           showToast("Compte bloqué avec succès !", "success");
           document.getElementById('blockAccountNumber').value = '';
@@ -1230,7 +1230,7 @@
         motif += " - " + commentArea.value;
       }
       try {
-        let res = await Comptes.debloquer(unblockCompte.numCompte, motif);
+        let res = await Comptes.debloquer(unblockCompte.numCompteComplet || unblockCompte.numCompte, motif);
         if (res && res.ok) {
           showToast("Compte débloqué avec succès !", "success");
           document.getElementById('unblockAccountNumber').value = '';
@@ -1311,7 +1311,7 @@
         motif += " - " + commentArea.value;
       }
       try {
-        let res = await Comptes.cloturer(closeCompte.numCompte, motif);
+        let res = await Comptes.cloturer(closeCompte.numCompteComplet || closeCompte.numCompte, motif);
         if (res && res.ok) {
           showToast("Compte clôturé avec succès !", "success");
           document.getElementById('closeAccountNumber').value = '';
@@ -1376,7 +1376,7 @@
         return;
       }
       try {
-        let res = await Comptes.modifierDecouvert(overdraftCompte.numCompte, amount);
+        let res = await Comptes.modifierDecouvert(overdraftCompte.numCompteComplet || overdraftCompte.numCompte, amount);
         if (res && res.ok) {
           showToast("Découvert autorisé modifié avec succès !", "success");
           document.getElementById('overdraftAccountNumber').value = '';

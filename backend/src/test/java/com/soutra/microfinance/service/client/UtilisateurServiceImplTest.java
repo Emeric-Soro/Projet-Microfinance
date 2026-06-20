@@ -3,6 +3,7 @@ package com.soutra.microfinance.service.client;
 import com.soutra.microfinance.config.AuthSecurityProperties;
 import com.soutra.microfinance.config.PasswordResetProperties;
 import com.soutra.microfinance.entity.Client;
+import com.soutra.microfinance.entity.RoleUtilisateur;
 import com.soutra.microfinance.entity.StatutClient;
 import com.soutra.microfinance.entity.Utilisateur;
 import com.soutra.microfinance.repository.client.ClientRepository;
@@ -82,6 +83,7 @@ class UtilisateurServiceImplTest {
     void shouldCreateUserAccountWhenActivationDataMatchesClient() {
         Client client = buildClient();
         when(clientRepository.findByCodeClient("CLI-20260427-1234")).thenReturn(Optional.of(client));
+        when(roleUtilisateurRepository.findByCodeRoleUtilisateur("CLIENT")).thenReturn(Optional.of(new RoleUtilisateur()));
         when(utilisateurRepository.existsByClient_IdClient(7L)).thenReturn(false);
         when(utilisateurRepository.existsByLogin("client@example.com")).thenReturn(false);
         when(passwordEncoder.encode("MotDePasse1!")).thenReturn("hash");
@@ -140,7 +142,7 @@ class UtilisateurServiceImplTest {
         assertThat(resultat.challengeId()).isNotBlank();
         assertThat(utilisateur.getOtpHash()).isEqualTo("otp-hash");
         assertThat(utilisateur.getOtpTentativesRestantes()).isEqualTo(3);
-        verify(notificationService).envoyerCodeAuthentification(eq(7L), any(String.class));
+        verify(emailService).envoyerOtp(eq(utilisateur), any(String.class));
     }
 
     @Test

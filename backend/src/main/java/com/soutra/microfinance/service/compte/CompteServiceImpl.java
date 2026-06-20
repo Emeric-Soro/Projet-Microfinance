@@ -8,6 +8,7 @@ import com.soutra.microfinance.entity.StatutCompte;
 import com.soutra.microfinance.entity.StatutKycClient;
 import com.soutra.microfinance.entity.TypeCompte;
 import com.soutra.microfinance.repository.client.ClientRepository;
+import com.soutra.microfinance.repository.client.UtilisateurRepository;
 import com.soutra.microfinance.repository.compte.CompteRepository;
 import com.soutra.microfinance.repository.compte.StatutCompteRepository;
 import com.soutra.microfinance.repository.compte.TypeCompteRepository;
@@ -34,17 +35,20 @@ public class CompteServiceImpl implements CompteService {
     private final ClientRepository clientRepository;
     private final TypeCompteRepository typeCompteRepository;
     private final StatutCompteRepository statutCompteRepository;
+    private final UtilisateurRepository utilisateurRepository;
 
     public CompteServiceImpl(
             CompteRepository compteRepository,
             ClientRepository clientRepository,
             TypeCompteRepository typeCompteRepository,
-            StatutCompteRepository statutCompteRepository
+            StatutCompteRepository statutCompteRepository,
+            UtilisateurRepository utilisateurRepository
     ) {
         this.compteRepository = compteRepository;
         this.clientRepository = clientRepository;
         this.typeCompteRepository = typeCompteRepository;
         this.statutCompteRepository = statutCompteRepository;
+        this.utilisateurRepository = utilisateurRepository;
     }
 
     @Override
@@ -81,6 +85,20 @@ public class CompteServiceImpl implements CompteService {
         compte.setDevise(defaultCurrency);
         compte.setTauxInteret(BigDecimal.ZERO);
         compte.setDecouvertAutorise(BigDecimal.ZERO);
+
+        // Resolve agence from client, or fallback to connected user
+        compte.setAgence(client.getAgence());
+        if (compte.getAgence() == null) {
+            org.springframework.security.core.Authentication auth =
+                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getName() != null) {
+                utilisateurRepository.findByLogin(auth.getName()).ifPresent(u -> {
+                    if (u.getAgence() != null) {
+                        compte.setAgence(u.getAgence());
+                    }
+                });
+            }
+        }
 
         Compte compteSauvegarde = compteRepository.save(compte);
 

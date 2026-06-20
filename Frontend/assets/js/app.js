@@ -274,6 +274,87 @@
     /** GET /api/v1/transactions/{ref}/recu */
     recu: async function (referenceUnique) {
       return await apiFetch('/api/v1/transactions/' + encodeURIComponent(referenceUnique) + '/recu');
+    },
+    /** POST /api/v1/transactions/virement */
+    virement: async function (compteSource, compteDestination, montant, idGuichetier) {
+      return await apiFetch('/api/v1/transactions/virement?idGuichetier=' + encodeURIComponent(idGuichetier), {
+        method: 'POST',
+        body: JSON.stringify({ compteSource: compteSource, compteDestination: compteDestination, montant: montant })
+      });
+    },
+    /** GET /api/v1/transactions/en-attente */
+    listerEnAttente: async function (page, size) {
+      return await apiFetch('/api/v1/transactions/en-attente?page=' + (page || 0) + '&size=' + (size || 20));
+    },
+    /** PUT /api/v1/transactions/{ref}/approbation */
+    approuver: async function (referenceUnique, idSuperviseur) {
+      return await apiFetch('/api/v1/transactions/' + encodeURIComponent(referenceUnique) + '/approbation', {
+        method: 'PUT',
+        body: JSON.stringify({ idSuperviseur: idSuperviseur })
+      });
+    },
+    /** PUT /api/v1/transactions/{ref}/rejet */
+    rejeter: async function (referenceUnique, idSuperviseur, motif) {
+      return await apiFetch('/api/v1/transactions/' + encodeURIComponent(referenceUnique) + '/rejet', {
+        method: 'PUT',
+        body: JSON.stringify({ idSuperviseur: idSuperviseur, motif: motif })
+      });
+    },
+    /** GET /api/v1/transactions */
+    listerToutes: async function (page, size) {
+      return await apiFetch('/api/v1/transactions?page=' + (page || 0) + '&size=' + (size || 20));
+    }
+  };
+
+  var Caisses = {
+    ouvrir: async function (soldeInitial) {
+      return await apiFetch('/api/v1/caisses/ouverture', {
+        method: 'POST',
+        body: JSON.stringify({ soldeInitial: soldeInitial })
+      });
+    },
+    fermer: async function (soldePhysiqueConstate) {
+      return await apiFetch('/api/v1/caisses/fermeture', {
+        method: 'POST',
+        body: JSON.stringify({ soldePhysiqueConstate: soldePhysiqueConstate })
+      });
+    },
+    etat: async function () {
+      return await apiFetch('/api/v1/caisses/etat');
+    }
+  };
+
+  var Dashboards = {
+    /** GET /api/v1/dashboards/agence */
+    agence: async function (agenceId, periode) {
+      var url = '/api/v1/dashboards/agence?periode=' + (periode || 'JOUR');
+      if (agenceId) url += '&agenceId=' + agenceId;
+      return await apiFetch(url);
+    },
+    /** GET /api/v1/dashboards/direction */
+    direction: async function () {
+      return await apiFetch('/api/v1/dashboards/direction');
+    },
+    /** GET /api/v1/dashboards/indicateurs */
+    indicateurs: async function () {
+      return await apiFetch('/api/v1/dashboards/indicateurs');
+    },
+    /** GET /api/v1/dashboards/graphiques */
+    graphiques: async function (agenceId) {
+      var url = '/api/v1/dashboards/graphiques';
+      if (agenceId) url += '?agenceId=' + agenceId;
+      return await apiFetch(url);
+    }
+  };
+
+  const Conformite = {
+    /** GET /api/v1/conformite/alertes-lcbft */
+    alertesLcbFt: async function (page = 0, size = 10) {
+      return await apiFetch('/api/v1/conformite/alertes-lcbft?page=' + page + '&size=' + size);
+    },
+    /** GET /api/v1/conformite/kyc/expires */
+    kycExpires: async function (page = 0, size = 10) {
+      return await apiFetch('/api/v1/conformite/kyc/expires?page=' + page + '&size=' + size);
     }
   };
 
@@ -286,6 +367,9 @@
   window.Cartes  = Cartes;
   window.Beneficiaires = Beneficiaires;
   window.Transactions = Transactions;
+  window.Caisses = Caisses;
+  window.Dashboards = Dashboards;
+  window.Conformite = Conformite;
 
 }());
 
@@ -335,10 +419,8 @@
       items: [
         { href: 'caisse.html', label: 'Caisse', icon: icons.cash, match: ['caisse.html'] },
         { href: 'guichet.html', label: 'Guichet', icon: icons.cash, match: ['guichet.html'] },
-        { href: 'versement.html', label: 'Versement', icon: icons.transfer, match: ['versement.html'] },
-        { href: 'retrait.html', label: 'Retrait', icon: icons.transfer, match: ['retrait.html'] },
         { href: 'virement.html', label: 'Virement', icon: icons.transfer, match: ['virement.html'] },
-        { href: 'mobile-money.html', label: 'Mobile Money', icon: icons.cash, match: ['mobile-money.html'] },
+        // { href: 'mobile-money.html', label: 'Mobile Money', icon: icons.cash, match: ['mobile-money.html'] },
         { href: 'validation.html', label: 'Validation 4-eyes', icon: icons.audit, badge: '12', match: ['validation.html'] },
         { href: 'historique.html', label: 'Historique', icon: icons.audit, match: ['historique.html'] }
       ]

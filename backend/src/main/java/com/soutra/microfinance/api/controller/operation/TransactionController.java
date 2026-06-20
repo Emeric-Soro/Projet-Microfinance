@@ -243,6 +243,15 @@ public class TransactionController {
 
     // ========== ENDPOINTS AVANCES (PRD-02) ==========
 
+    @Operation(summary = "Lister toutes les transactions", description = "Retourne la liste paginée de toutes les transactions")
+    @ApiResponses({ @ApiResponse(responseCode = "200", description = "Liste des transactions") })
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','CHEF_AGENCE','GUICHETIER')")
+    public ResponseEntity<Page<TransactionDetailResponseDTO>> listerToutesLesTransactions(@ParameterObject Pageable pageable) {
+        Page<Transaction> transactions = transactionService.listerToutes(pageable);
+        return ResponseEntity.ok(transactions.map(operationMapper::toDetailResponseDTO));
+    }
+
     @Operation(summary = "Lister les transactions en attente 4-yeux")
     @ApiResponses({ @ApiResponse(responseCode = "200", description = "Liste des transactions en attente") })
     @GetMapping("/en-attente")

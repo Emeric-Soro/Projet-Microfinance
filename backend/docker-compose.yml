@@ -55,8 +55,11 @@ services:
       - SPRING_FLYWAY_OUT_OF_ORDER=true
       - MANAGEMENT_HEALTH_REDIS_ENABLED=false
       - MANAGEMENT_HEALTH_MAIL_ENABLED=false
+      - APP_FILE_STORAGE_PATH=/app/uploads/documents
     ports:
       - "${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - uploads_data:/app/uploads/documents
     restart: unless-stopped
 
   cloudbeaver:
@@ -81,3 +84,4 @@ services:
 volumes:
   oracle_data:
   cloudbeaver_workspace:
+  uploads_data:

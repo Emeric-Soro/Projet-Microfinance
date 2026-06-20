@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -75,80 +75,19 @@
                 <th>Compte</th>
                 <th>Client</th>
                 <th>Montant</th>
-                <th>Solde avant</th>
-                <th>Solde après</th>
                 <th>Caissier</th>
+                <th>Statut</th>
               </tr>
             </thead>
-            <tbody>
-              <tr style="cursor: pointer;" onclick="openModal('operationModal')">
-                <td style="font-family: monospace; font-size: 12px; color: #084355;">OPS-2026-004521</td>
-                <td style="font-size: 12px;">18/05/2026 14:32</td>
-                <td><span class="badge badge-info">Versement</span></td>
-                <td style="font-family: monospace; font-size: 12px;">MFN-...1234-A</td>
-                <td>Kouamé Aya</td>
-                <td style="color: #2E7D32; font-weight: 700;">+250 000</td>
-                <td style="font-size: 12px;">1 850 000</td>
-                <td style="font-size: 12px;">2 100 000</td>
-                <td style="font-size: 12px;">AGT-001</td>
-              </tr>
-              <tr style="cursor: pointer;" onclick="openModal('operationModal')">
-                <td style="font-family: monospace; font-size: 12px; color: #084355;">OPS-2026-004520</td>
-                <td style="font-size: 12px;">18/05/2026 14:18</td>
-                <td><span class="badge badge-pending">Retrait</span></td>
-                <td style="font-family: monospace; font-size: 12px;">MFN-...5678-A</td>
-                <td>Diallo Moussa</td>
-                <td style="color: #D93025; font-weight: 700;">-100 000</td>
-                <td style="font-size: 12px;">850 000</td>
-                <td style="font-size: 12px;">750 000</td>
-                <td style="font-size: 12px;">AGT-003</td>
-              </tr>
-              <tr style="cursor: pointer;" onclick="openModal('operationModal')">
-                <td style="font-family: monospace; font-size: 12px; color: #084355;">OPS-2026-004519</td>
-                <td style="font-size: 12px;">18/05/2026 13:55</td>
-                <td><span class="badge badge-info">Virement</span></td>
-                <td style="font-family: monospace; font-size: 12px;">MFN-...9012-A</td>
-                <td>Traoré Sékou</td>
-                <td style="color: #D93025; font-weight: 700;">-500 000</td>
-                <td style="font-size: 12px;">1 200 000</td>
-                <td style="font-size: 12px;">700 000</td>
-                <td style="font-size: 12px;">AGT-001</td>
-              </tr>
-              <tr style="cursor: pointer;" onclick="openModal('operationModal')">
-                <td style="font-family: monospace; font-size: 12px; color: #084355;">OPS-2026-004518</td>
-                <td style="font-size: 12px;">18/05/2026 13:42</td>
-                <td><span class="badge badge-info">Versement</span></td>
-                <td style="font-family: monospace; font-size: 12px;">MFN-...3456-A</td>
-                <td>Bamba Konan</td>
-                <td style="color: #2E7D32; font-weight: 700;">+75 000</td>
-                <td style="font-size: 12px;">320 000</td>
-                <td style="font-size: 12px;">395 000</td>
-                <td style="font-size: 12px;">AGT-002</td>
-              </tr>
-              <tr style="cursor: pointer;" onclick="openModal('operationModal')">
-                <td style="font-family: monospace; font-size: 12px; color: #084355;">OPS-2026-004517</td>
-                <td style="font-size: 12px;">18/05/2026 13:20</td>
-                <td><span class="badge badge-pending">Retrait</span></td>
-                <td style="font-family: monospace; font-size: 12px;">MFN-...7890-A</td>
-                <td>Yao Patricia</td>
-                <td style="color: #D93025; font-weight: 700;">-1 200 000</td>
-                <td style="font-size: 12px;">2 500 000</td>
-                <td style="font-size: 12px;">1 300 000</td>
-                <td style="font-size: 12px;">AGT-001</td>
-              </tr>
+            <tbody id="historyTableBody">
+              <!-- Rempli dynamiquement -->
             </tbody>
           </table>
 
           <div class="pagination">
-            <div class="pagination-info">Affichage 1-5 sur 4 521 opérations</div>
-            <div class="pagination-buttons">
-              <button class="page-btn">‹</button>
-              <button class="page-btn active">1</button>
-              <button class="page-btn">2</button>
-              <button class="page-btn">3</button>
-              <button class="page-btn">...</button>
-              <button class="page-btn">905</button>
-              <button class="page-btn">›</button>
+            <div class="pagination-info" id="paginationInfo">Affichage 0-0 sur 0 opérations</div>
+            <div class="pagination-buttons" id="paginationButtons">
+              <!-- Boutons de pagination dynamiques -->
             </div>
           </div>
         </div>
@@ -165,49 +104,45 @@
       </div>
       <div class="modal-body">
         <div style="text-align: center; margin-bottom: 20px;">
-          <div style="font-family: monospace; font-size: 14px; color: #084355; font-weight: 700;">OPS-2026-004521</div>
-          <div style="font-size: 12px; color: #4A7A8A;">18/05/2026 à 14:32:15</div>
+          <div style="font-family: monospace; font-size: 14px; color: #084355; font-weight: 700;" id="modalRef">—</div>
+          <div style="font-size: 12px; color: #4A7A8A;" id="modalDate">—</div>
         </div>
         <div class="info-row">
           <span class="info-label">Type</span>
-          <span class="info-value"><span class="badge badge-info">Versement</span></span>
+          <span class="info-value" id="modalType">—</span>
         </div>
         <div class="info-row">
           <span class="info-label">Compte</span>
-          <span class="info-value">MFN-2024-001234-A</span>
+          <span class="info-value" id="modalAccount">—</span>
         </div>
         <div class="info-row">
           <span class="info-label">Client</span>
-          <span class="info-value">Kouamé Aya</span>
+          <span class="info-value" id="modalClient">—</span>
         </div>
         <div class="info-row">
           <span class="info-label">Montant</span>
-          <span class="info-value" style="color: #2E7D32; font-size: 16px;">+250 000 FCFA</span>
+          <span class="info-value" style="color: #2E7D32; font-size: 16px; font-weight: 700;" id="modalAmount">—</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Solde avant</span>
-          <span class="info-value">1 850 000 FCFA</span>
+          <span class="info-label">Frais</span>
+          <span class="info-value" id="modalFrais">—</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Solde après</span>
-          <span class="info-value">2 100 000 FCFA</span>
+          <span class="info-label">Statut</span>
+          <span class="info-value" id="modalStatus">—</span>
         </div>
         <div class="info-row">
           <span class="info-label">Caissier</span>
-          <span class="info-value">AGT-001 (Admin Principal)</span>
+          <span class="info-value" id="modalCaissier">—</span>
         </div>
         <div class="info-row">
           <span class="info-label">Libellé</span>
-          <span class="info-value">Dépôt espèces</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">IP</span>
-          <span class="info-value" style="font-family: monospace;">192.168.1.45</span>
+          <span class="info-value" id="modalLibelle">—</span>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline" onclick="closeModal('operationModal')">Fermer</button>
-        <button class="btn btn-secondary">
+        <button class="btn btn-secondary" onclick="printSelectedReceipt()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Imprimer le reçu
         </button>
@@ -217,6 +152,161 @@
 
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
+  <script>
+    let _page = 0;
+    let _size = 10;
+    let _totalPages = 0;
+    let _totalElements = 0;
+    let _selectedTxn = null;
+    let _txns = [];
+
+    function fmt(n) {
+      return Number(n || 0).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    async function loadHistory(page = 0) {
+      _page = page;
+      const bodyEl = document.getElementById('historyTableBody');
+      bodyEl.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#4A7A8A;">Chargement de l\'historique…</td></tr>';
+
+      try {
+        const res = await Transactions.listerToutes(page, _size);
+        if (res && res.ok) {
+          const data = await res.json();
+          _txns = data.content || [];
+          _totalPages = data.totalPages || 0;
+          _totalElements = data.totalElements || 0;
+          renderHistory(_txns);
+          renderPagination();
+        } else {
+          bodyEl.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#c62828;">Erreur lors du chargement de l\'historique.</td></tr>';
+        }
+      } catch (e) {
+        bodyEl.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#c62828;">Erreur réseau : ' + e.message + '</td></tr>';
+      }
+    }
+
+    function renderHistory(list) {
+      const bodyEl = document.getElementById('historyTableBody');
+      if (!list.length) {
+        bodyEl.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:#4A7A8A;">Aucune opération trouvée.</td></tr>';
+        return;
+      }
+
+      bodyEl.innerHTML = list.map(tx => {
+        const typeStr = (tx.typeOperation || 'Opération').toUpperCase();
+        let typeBadge = 'badge-info';
+        let montantColor = '#084355';
+        let montantSign = '';
+
+        if (typeStr === 'DEPOT' || typeStr === 'VERSEMENT') {
+          typeBadge = 'badge-success';
+          montantColor = '#2E7D32';
+          montantSign = '+';
+        } else if (typeStr === 'RETRAIT') {
+          typeBadge = 'badge-danger';
+          montantColor = '#D93025';
+          montantSign = '-';
+        } else if (typeStr === 'VIREMENT') {
+          typeBadge = 'badge-info';
+          montantColor = '#7B1FA2';
+          montantSign = '';
+        }
+
+        let accountDisplay = tx.numCompteSource || '—';
+        if (tx.numCompteSource && tx.numCompteDestination && typeStr === 'VIREMENT') {
+          accountDisplay = tx.numCompteSource + ' ➔ ' + tx.numCompteDestination;
+        } else if (!tx.numCompteSource && tx.numCompteDestination) {
+          accountDisplay = tx.numCompteDestination;
+        }
+
+        const dateStr = tx.dateHeure ? new Date(tx.dateHeure).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+        const client = tx.clientNom || '—';
+        const caissier = tx.agentNom || '—';
+        const ref = tx.referenceUnique;
+        
+        const statusStr = tx.statutOperation || 'EXECUTEE';
+        let statusBadge = 'badge-success';
+        if (statusStr === 'EN_ATTENTE') statusBadge = 'badge-warning';
+        else if (statusStr === 'REJETEE') statusBadge = 'badge-danger';
+
+        return `<tr style="cursor: pointer;" onclick="showDetail('${ref}')">
+          <td style="font-family:monospace;font-size:12px;color:#084355;">${ref}</td>
+          <td style="font-size:12px;">${dateStr}</td>
+          <td><span class="badge ${typeBadge}">${typeStr}</span></td>
+          <td style="font-family:monospace;font-size:11px;">${accountDisplay}</td>
+          <td>${client}</td>
+          <td style="color:${montantColor};font-weight:700;">${montantSign}${fmt(tx.montant)}</td>
+          <td style="font-size:12px;">${caissier}</td>
+          <td><span class="badge ${statusBadge}">${statusStr}</span></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function renderPagination() {
+      const start = _totalElements === 0 ? 0 : _page * _size + 1;
+      const end = Math.min((_page + 1) * _size, _totalElements);
+      document.getElementById('paginationInfo').textContent = `Affichage ${start}-${end} sur ${_totalElements} opérations`;
+
+      const buttonsEl = document.getElementById('paginationButtons');
+      let html = '';
+
+      // Précédent
+      html += `<button class="page-btn" ${_page === 0 ? 'disabled' : ''} onclick="loadHistory(${_page - 1})">‹</button>`;
+
+      // Pages
+      for (let i = 0; i < _totalPages; i++) {
+        if (i === 0 || i === _totalPages - 1 || Math.abs(i - _page) <= 1) {
+          html += `<button class="page-btn ${i === _page ? 'active' : ''}" onclick="loadHistory(${i})">${i + 1}</button>`;
+        } else if (i === 1 || i === _totalPages - 2) {
+          html += `<span style="padding: 0 4px; color: #4A7A8A;">...</span>`;
+        }
+      }
+
+      // Suivant
+      html += `<button class="page-btn" ${_page >= _totalPages - 1 ? 'disabled' : ''} onclick="loadHistory(${_page + 1})">›</button>`;
+      buttonsEl.innerHTML = html;
+    }
+
+    async function showDetail(ref) {
+      try {
+        const res = await Transactions.recu(ref);
+        if (res && res.ok) {
+          const detail = await res.json();
+          _selectedTxn = detail;
+          peuplerModal(detail);
+          openModal('operationModal');
+        } else {
+          showToast('Impossible de charger le détail.', 'error');
+        }
+      } catch (e) {
+        showToast('Erreur : ' + e.message, 'error');
+      }
+    }
+
+    function peuplerModal(tx) {
+      document.getElementById('modalRef').textContent = tx.referenceUnique || '—';
+      document.getElementById('modalDate').textContent = tx.dateHeure ? new Date(tx.dateHeure).toLocaleString('fr-FR') : '—';
+      document.getElementById('modalType').textContent = (tx.typeOperation || 'Opération').toUpperCase();
+      
+      const acct = tx.numCompteSource || tx.numCompteDestination || '—';
+      document.getElementById('modalAccount').textContent = acct;
+      document.getElementById('modalClient').textContent = tx.clientNom || '—';
+      document.getElementById('modalAmount').textContent = fmt(tx.montant);
+      document.getElementById('modalFrais').textContent = fmt(tx.frais);
+      document.getElementById('modalCaissier').textContent = tx.agentNom || '—';
+      document.getElementById('modalStatus').textContent = tx.statutOperation || 'EXECUTEE';
+      document.getElementById('modalLibelle').textContent = tx.libelleTypeTransaction || '—';
+    }
+
+    function printSelectedReceipt() {
+      if (_selectedTxn) {
+        window.print();
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => loadHistory(0));
+  </script>
 </body>
 </html>
 

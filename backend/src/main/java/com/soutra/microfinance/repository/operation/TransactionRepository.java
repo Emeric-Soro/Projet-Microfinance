@@ -71,11 +71,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                                                          @Param("statut") StatutOperation statut);
 
     @Query("SELECT COALESCE(SUM(t.montantGlobal), 0) FROM Transaction t " +
+           "LEFT JOIN t.compteSource cs " +
+           "LEFT JOIN t.compteDestination cd " +
            "WHERE t.typeTransaction.codeTypeTransaction = :codeType " +
            "AND t.dateHeureTransaction BETWEEN :dateDebut AND :dateFin " +
            "AND t.statutOperation = :statut " +
-           "AND (:agenceId IS NULL OR t.compteSource.agence.idAgence = :agenceId " +
-           "OR t.compteDestination.agence.idAgence = :agenceId)")
+           "AND (:agenceId IS NULL OR cs.agence.idAgence = :agenceId " +
+           "OR cd.agence.idAgence = :agenceId)")
     BigDecimal sumMontantByTypeCodeDateBetweenAndStatutAndAgence(@Param("codeType") String codeType,
                                                                   @Param("dateDebut") LocalDateTime dateDebut,
                                                                   @Param("dateFin") LocalDateTime dateFin,
@@ -90,10 +92,12 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                                                @Param("statut") StatutOperation statut);
 
     @Query("SELECT COALESCE(SUM(t.frais), 0) FROM Transaction t " +
+           "LEFT JOIN t.compteSource cs " +
+           "LEFT JOIN t.compteDestination cd " +
            "WHERE t.dateHeureTransaction BETWEEN :dateDebut AND :dateFin " +
            "AND t.statutOperation = :statut " +
-           "AND (:agenceId IS NULL OR t.compteSource.agence.idAgence = :agenceId " +
-           "OR t.compteDestination.agence.idAgence = :agenceId)")
+           "AND (:agenceId IS NULL OR cs.agence.idAgence = :agenceId " +
+           "OR cd.agence.idAgence = :agenceId)")
     BigDecimal sumFraisByDateBetweenAndStatutAndAgence(@Param("dateDebut") LocalDateTime dateDebut,
                                                         @Param("dateFin") LocalDateTime dateFin,
                                                         @Param("statut") StatutOperation statut,
@@ -107,10 +111,12 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                                                        @Param("statut") StatutOperation statut);
 
     @Query("SELECT COALESCE(SUM(t.montantGlobal), 0) FROM Transaction t " +
+           "LEFT JOIN t.compteSource cs " +
+           "LEFT JOIN t.compteDestination cd " +
            "WHERE t.dateHeureTransaction BETWEEN :dateDebut AND :dateFin " +
            "AND t.statutOperation = :statut " +
-           "AND (:agenceId IS NULL OR t.compteSource.agence.idAgence = :agenceId " +
-           "OR t.compteDestination.agence.idAgence = :agenceId)")
+           "AND (:agenceId IS NULL OR cs.agence.idAgence = :agenceId " +
+           "OR cd.agence.idAgence = :agenceId)")
     BigDecimal sumMontantGlobalByDateBetweenAndStatutAndAgence(@Param("dateDebut") LocalDateTime dateDebut,
                                                                 @Param("dateFin") LocalDateTime dateFin,
                                                                 @Param("statut") StatutOperation statut,

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Réclamations — Soutra Finance E-Banking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/portal.css">
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="portal-layout">
+    <!-- Sidebar -->
+    <aside class="portal-sidebar">
+      <div class="portal-brand">
+        <div class="brand-icon">S</div>
+        <span class="brand-name">Soutra Finance</span>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="dashboard">📊 Tableau de bord</a></li>
+        <li class="nav-item"><a href="comptes">💳 Mes Comptes</a></li>
+        <li class="nav-item"><a href="virement">💸 Virements</a></li>
+        <li class="nav-item"><a href="credits">📈 Crédits</a></li>
+        <li class="nav-item active"><a href="reclamations">✉️ Réclamations</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+          <span class="user-name" id="portalUserName">Chargement...</span>
+          <span class="user-role">Client E-Banking</span>
+        </div>
+        <a href="#" class="logout-btn" id="portalLogoutBtn">🚪</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="header-title">
+          <h2>Vigie Client & Réclamations</h2>
+          <p>Signalez un problème ou déposez une réclamation pour traitement par notre service conformité.</p>
+        </div>
+      </header>
+
+      <div class="reclam-grid">
+        <!-- Left Column: Form to create ticket -->
+        <div class="card">
+          <h3 class="card-section-title">✉️ Déposer une réclamation</h3>
+          <form id="reclamationForm">
+            <div class="form-group">
+              <label for="typeReclamation">Type de réclamation *</label>
+              <select id="typeReclamation" class="input-control" required>
+                <option value="">-- Choisir un motif --</option>
+                <option value="ERREUR_OPERATION">Erreur sur une opération bancaire</option>
+                <option value="PROBLEME_CARTE">Problème de carte bancaire</option>
+                <option value="DYSFONCTIONNEMENT_PORTAIL">Dysfonctionnement du portail web</option>
+                <option value="FRAIS_ABUSIFS">Frais bancaires incorrects</option>
+                <option value="AUTRE">Autre motif de réclamation</option>
+              </select>
+            </div>
+            
+            <div class="form-group mt-20">
+              <label for="description">Description détaillée *</label>
+              <textarea id="description" class="input-control h-150 resize-y" required placeholder="Décrivez le problème avec précision (date, montants, numéros de comptes concernés)..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-15 w-100">
+              <span>Envoyer ma réclamation</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Right Column: Tickets List -->
+        <div class="card">
+          <h3 class="card-section-title mb-20">📋 Suivi de mes tickets</h3>
+          
+          <div class="list-container" id="ticketsList">
+            <div class="no-data-lg">
+              Chargement de vos tickets...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ticket Detail Modal (Dynamic Overlay) -->
+      <div id="ticketModal" class="card ticket-modal">
+        <div class="card-header">
+          <span class="card-title" id="modalTitle">Détail du Ticket</span>
+          <button class="btn btn-danger btn-sm modal-close-btn" onclick="closeTicketModal()">Fermer</button>
+        </div>
+        <div class="ticket-modal-body">
+          <div class="ticket-modal-field">
+            <span class="ticket-modal-label">Référence du ticket</span>
+            <div id="modalRef" class="ticket-modal-value-ref">REF-00000</div>
+          </div>
+          <div class="form-row">
+            <div class="ticket-modal-field">
+              <span class="ticket-modal-label">Statut</span>
+              <div><span id="modalStatut" class="badge">OUVERT</span></div>
+            </div>
+            <div class="ticket-modal-field">
+              <span class="ticket-modal-label">Priorité</span>
+              <div><span id="modalPriorite" class="badge">MOYENNE</span></div>
+            </div>
+          </div>
+          <div class="ticket-modal-field">
+            <span class="ticket-modal-label">Date de dépôt</span>
+            <div id="modalDate" class="ticket-modal-value-text">01/01/2026 à 00:00</div>
+          </div>
+          <div class="ticket-modal-field">
+            <span class="ticket-modal-label">Description du problème</span>
+            <div id="modalDesc" class="ticket-modal-desc-box"></div>
+          </div>
+          <div id="modalResolutionContainer" class="ticket-modal-field" style="display: none;">
+            <span class="ticket-modal-label">Retour du service conformité</span>
+            <div id="modalResolution" class="ticket-modal-resolution-box"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Background overlay for modal -->
+      <div id="modalOverlay" class="modal-overlay" onclick="closeTicketModal()"></div>
+
+    </main>
+  </div>
+
+  <script src="../assets/js/portal-app.js?v=1.0.1"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      loadTickets();
+
+      // Submit new reclamation form
+      document.getElementById('reclamationForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        var type = document.getElementById('typeReclamation').value;
+        var desc = document.getElementById('description').value.trim();
+
+        if (!type || !desc) {
+          showToast('Veuillez remplir tous les champs requis', 'warning');
+          return;
+        }
+
+        var submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.querySelector('span').textContent = 'Transmission...';
+
+        try {
+          var res = await window.ClientReclamations.creer(type, desc);
+          if (res.status === 201) {
+            showToast('Votre réclamation a été enregistrée. Elle sera traitée sous 48h.', 'success');
+            document.getElementById('reclamationForm').reset();
+            loadTickets();
+          } else {
+            showToast('Impossible de soumettre la réclamation.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Erreur technique.', 'error');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.querySelector('span').textContent = 'Envoyer ma réclamation';
+        }
+      });
+    });
+
+    async function loadTickets() {
+      try {
+        var res = await window.ClientReclamations.lister();
+        if (res.ok) {
+          var list = await res.json();
+          var listDiv = document.getElementById('ticketsList');
+          listDiv.innerHTML = '';
+
+          if (list.length === 0) {
+            listDiv.innerHTML = `
+              <div class="no-data-lg">
+                Vous n'avez soumis aucun ticket pour le moment.
+              </div>`;
+            return;
+          }
+
+          list.forEach(function (t) {
+            // Badges
+            var statusBadge = 'badge-warning';
+            var s = t.statut;
+            if (s === 'RESOLUE' || s === 'RESOLU' || s === 'CLOTURE') statusBadge = 'badge-success';
+            else if (s === 'REJETEE') statusBadge = 'badge-danger';
+            
+            var card = document.createElement('div');
+            card.className = 'ticket-card';
+            card.setAttribute('onclick', `viewTicketDetail(${t.id})`);
+            
+            card.innerHTML = `
+              <div class="ticket-header">
+                <span class="ticket-ref">Réf : ${t.reference}</span>
+                <span class="badge ${statusBadge}">${s}</span>
+              </div>
+              <div class="ticket-title">${formatType(t.typeReclamation)}</div>
+              <p class="ticket-desc">${t.description}</p>
+              <span class="ticket-date">Soumis le ${formatDate(t.dateCreation)}</span>
+            `;
+            listDiv.appendChild(card);
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function viewTicketDetail(idReclam) {
+      try {
+        var res = await window.ClientReclamations.detail(idReclam);
+        if (res.ok) {
+          var t = await res.json();
+          
+          document.getElementById('modalRef').textContent = 'Réf : ' + t.reference;
+          document.getElementById('modalDesc').textContent = t.description;
+          document.getElementById('modalDate').textContent = formatDate(t.dateCreation) + ' à ' + formatTime(t.dateCreation);
+          
+          var statusBadge = document.getElementById('modalStatut');
+          statusBadge.textContent = t.statut;
+          statusBadge.className = 'badge ' + ((t.statut === 'RESOLUE' || t.statut === 'CLOTURE') ? 'badge-success' : 'badge-warning');
+
+          var priorityBadge = document.getElementById('modalPriorite');
+          priorityBadge.textContent = t.priorite || 'MOYENNE';
+          priorityBadge.className = 'badge ' + (t.priorite === 'HAUTE' ? 'badge-danger' : 'badge-info');
+
+          var resContainer = document.getElementById('modalResolutionContainer');
+          if (t.motifCloture) {
+            document.getElementById('modalResolution').textContent = t.motifCloture;
+            resContainer.style.display = 'block';
+          } else {
+            resContainer.style.display = 'none';
+          }
+
+          document.getElementById('ticketModal').style.display = 'block';
+          document.getElementById('modalOverlay').style.display = 'block';
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Impossible de charger le détail du ticket.', 'error');
+      }
+    }
+
+    function closeTicketModal() {
+      document.getElementById('ticketModal').style.display = 'none';
+      document.getElementById('modalOverlay').style.display = 'none';
+    }
+
+    function formatType(typeStr) {
+      switch (typeStr) {
+        case 'ERREUR_OPERATION': return 'Erreur opération bancaire';
+        case 'PROBLEME_CARTE': return 'Problème carte VISA';
+        case 'DYSFONCTIONNEMENT_PORTAIL': return 'Dysfonctionnement portail';
+        case 'FRAIS_ABUSIFS': return 'Frais bancaires excessifs';
+        default: return 'Autre réclamation';
+      }
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      var d = new Date(dateStr);
+      return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    function formatTime(dateStr) {
+      if (!dateStr) return '';
+      var d = new Date(dateStr);
+      return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+  </script>
+</body>
+</html>

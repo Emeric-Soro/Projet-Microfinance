@@ -1432,6 +1432,42 @@ textarea.form-control {
   color: var(--gris-texte);
 }
 
+/* Avatar cliquable pour upload photo */
+.profile-avatar-wrap {
+  display: block;
+  position: relative;
+  width: 80px;
+  margin: 0 auto 12px;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.profile-avatar-wrap .profile-avatar {
+  margin: 0;
+  transition: filter 0.2s;
+}
+
+.avatar-upload-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(30, 60, 90, 0.52);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.profile-avatar-wrap:hover .avatar-upload-overlay {
+  opacity: 1;
+}
+
+.profile-avatar-wrap:hover .profile-avatar {
+  filter: brightness(0.75);
+}
+
 /* ============================================
    ACCOUNT CARDS (mini)
    ============================================ */

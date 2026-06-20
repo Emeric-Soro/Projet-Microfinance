@@ -121,6 +121,10 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         utilisateur.setOtpExpireLe(null);
         utilisateur.setOtpTentativesRestantes(0);
 
+        RoleUtilisateur roleClient = roleUtilisateurRepository.findByCodeRoleUtilisateur("CLIENT")
+                .orElseThrow(() -> new IllegalStateException("Le rôle 'CLIENT' n'est pas configuré en base de données"));
+        utilisateur.getRoles().add(roleClient);
+
         return utilisateurRepository.save(utilisateur);
     }
 
@@ -161,7 +165,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         utilisateur.setOtpExpireLe(LocalDateTime.now().plus(authSecurityProperties.getOtpValidity()));
         utilisateur.setOtpTentativesRestantes(authSecurityProperties.getMaxOtpAttempts());
         utilisateurRepository.save(utilisateur);
-        notificationService.envoyerCodeAuthentification(utilisateur.getClient().getIdClient(), codeOtp);
+        emailService.envoyerOtp(utilisateur, codeOtp);
 
         return new AuthenticationWorkflowResult(
                 null,

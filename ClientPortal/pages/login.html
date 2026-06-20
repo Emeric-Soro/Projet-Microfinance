@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion — Soutra Finance E-Banking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/portal.css">
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="auth-container">
+    <div class="auth-logo">
+      <div class="logo-symbol">S</div>
+      <h2>Soutra Finance</h2>
+    </div>
+
+    <div class="auth-card">
+      <h2 class="text-gradient">Connexion Client</h2>
+      <p class="subtitle">Entrez vos identifiants pour accéder à votre espace sécurisé.</p>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="username">Identifiant (Email / Login)</label>
+          <input type="text" id="username" class="input-control" placeholder="ex: client@email.com" required autocomplete="username">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 25px;">
+          <label for="password">Mot de passe</label>
+          <input type="password" id="password" class="input-control" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+          <span>Se connecter</span>
+          <span class="btn-spinner" style="display: none;">⌛</span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <p>Pas encore de compte ? <a href="register">S'inscrire en ligne</a></p>
+        <p style="margin-top: 10px;"><a href="../index">Retour à l'accueil</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/portal-app.js?v=1.0.1"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var form = document.getElementById('loginForm');
+      var submitBtn = document.getElementById('submitBtn');
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        
+        var username = document.getElementById('username').value.trim();
+        var password = document.getElementById('password').value;
+
+        if (!username || !password) {
+          showToast('Veuillez remplir tous les champs', 'warning');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.querySelector('span').textContent = 'Connexion en cours...';
+
+        try {
+          var res = await window.ClientAuth.login(username, password);
+          
+          if (res.ok) {
+            var data = await res.json();
+            
+            if (data.statutAuthentification === 'OTP_REQUIS') {
+              // Stocker temporairement pour la validation OTP
+              sessionStorage.setItem('sf_otp_login', username);
+              sessionStorage.setItem('sf_otp_challenge', data.challengeId);
+              
+              showToast('Code de sécurité OTP envoyé par e-mail.', 'info');
+              setTimeout(function () {
+                window.location.href = 'otp';
+              }, 1500);
+            } else if (data.statutAuthentification === 'AUTHENTIFIE') {
+              window.SF_Client.setSession(data);
+              showToast('Connexion réussie ! Bienvenue.', 'success');
+              setTimeout(function () {
+                window.location.href = 'dashboard';
+              }, 1500);
+            } else {
+              showToast('Statut d\'authentification inconnu.', 'error');
+              submitBtn.disabled = false;
+              submitBtn.querySelector('span').textContent = 'Se connecter';
+            }
+          } else {
+            var errorMsg = 'Identifiants incorrects ou compte inactif';
+            try {
+              var errData = await res.json();
+              if (errData && errData.message) errorMsg = errData.message;
+            } catch (ex) {}
+            
+            showToast(errorMsg, 'error');
+            submitBtn.disabled = false;
+            submitBtn.querySelector('span').textContent = 'Se connecter';
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Impossible de joindre le serveur de sécurité.', 'error');
+          submitBtn.disabled = false;
+          submitBtn.querySelector('span').textContent = 'Se connecter';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

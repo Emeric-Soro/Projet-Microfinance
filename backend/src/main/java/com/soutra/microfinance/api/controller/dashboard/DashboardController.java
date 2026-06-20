@@ -4,6 +4,7 @@ import com.soutra.microfinance.audit.AuditLog;
 import com.soutra.microfinance.dto.response.statistique.DashboardAgenceResponseDTO;
 import com.soutra.microfinance.dto.response.statistique.DashboardDirectionResponseDTO;
 import com.soutra.microfinance.dto.response.statistique.IndicateurTempsReelResponseDTO;
+import com.soutra.microfinance.dto.response.statistique.DashboardChartsResponseDTO;
 import com.soutra.microfinance.service.dashboard.DashboardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -71,5 +72,20 @@ public class DashboardController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<IndicateurTempsReelResponseDTO> getIndicateursTempsReel() {
         return ResponseEntity.ok(dashboardService.getIndicateursTempsReel());
+    }
+
+    @Operation(
+            summary = "Donnees des graphiques",
+            description = "Retourne la repartition des comptes et l'evolution de l'activite sur 7 jours"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Donnees des graphiques recuperees avec succes")
+    })
+    @GetMapping("/graphiques")
+    @PreAuthorize("hasAnyAuthority('ADMIN','CHEF_AGENCE','GUICHETIER')")
+    public ResponseEntity<DashboardChartsResponseDTO> getGraphiques(
+            @RequestParam(required = false) Long agenceId
+    ) {
+        return ResponseEntity.ok(dashboardService.getGraphiques(agenceId));
     }
 }

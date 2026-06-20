@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de bord — Soutra Finance E-Banking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/portal.css">
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="portal-layout">
+    <!-- Sidebar -->
+    <aside class="portal-sidebar">
+      <div class="portal-brand">
+        <div class="brand-icon">S</div>
+        <span class="brand-name">Soutra Finance</span>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item active"><a href="dashboard">📊 Tableau de bord</a></li>
+        <li class="nav-item"><a href="comptes">💳 Mes Comptes</a></li>
+        <li class="nav-item"><a href="virement">💸 Virements</a></li>
+        <li class="nav-item"><a href="credits">📈 Crédits</a></li>
+        <li class="nav-item"><a href="reclamations">✉️ Réclamations</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+          <span class="user-name" id="portalUserName">Chargement...</span>
+          <span class="user-role">Client E-Banking</span>
+        </div>
+        <a href="#" class="logout-btn" id="portalLogoutBtn" title="Se déconnecter">🚪</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="header-title">
+          <h2>Mon Tableau de bord</h2>
+          <p>Consulter vos soldes et suivre vos opérations récentes.</p>
+        </div>
+      </header>
+
+      <!-- KYC Alert Banner (dynamic) -->
+      <div class="kyc-alert-banner" id="kycBanner" style="display: none;">
+        <div>
+          <div class="kyc-alert-title">⚠️ Dossier KYC incomplet ou en cours d'étude</div>
+          <p style="font-size: 13px; color: var(--color-text-muted)">Certaines opérations comme les virements ou crédits peuvent être restreintes tant que votre compte n'est pas validé.</p>
+        </div>
+        <div id="kycBannerAction">
+          <a href="register#step-3" class="btn btn-accent btn-sm" style="padding: 8px 16px; font-size: 13px;">Transmettre les pièces</a>
+        </div>
+      </div>
+
+      <!-- Quick Stats / Metrics -->
+      <div class="grid-3">
+        <div class="card metric-card">
+          <span class="metric-icon">💰</span>
+          <div class="metric-label">Avoir total consolidé</div>
+          <div class="metric-value" id="soldeTotal">0 FCFA</div>
+          <span style="font-size: 11px; color: var(--color-success)">● Actif en temps réel</span>
+        </div>
+
+        <div class="card metric-card">
+          <span class="metric-icon">💳</span>
+          <div class="metric-label">Comptes ouverts</div>
+          <div class="metric-value" id="nbComptes">0</div>
+          <span style="font-size: 11px; color: var(--color-text-muted)">Courants, épargnes et DAT</span>
+        </div>
+
+        <div class="card metric-card">
+          <span class="metric-icon">✉️</span>
+          <div class="metric-label">Alertes actives</div>
+          <div class="metric-value" id="nbAlertes">0</div>
+          <span style="font-size: 11px; color: var(--color-text-muted)" id="alertesSub">Aucun incident de paiement</span>
+        </div>
+      </div>
+
+      <!-- Accounts & History Grid -->
+      <div class="grid-2">
+        <!-- Accounts List -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">💳 Mes comptes bancaires</span>
+            <a href="comptes" style="font-size: 13px;">Gérer mes comptes ➔</a>
+          </div>
+          <div class="list-container" id="accountsList">
+            <div style="text-align: center; padding: 20px; color: var(--color-text-muted);">
+              Chargement de vos comptes...
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Operations -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🔄 Dernières opérations</span>
+            <a href="comptes" style="font-size: 13px;">Voir tout l'historique</a>
+          </div>
+          <div class="list-container" id="operationsList">
+            <div style="text-align: center; padding: 20px; color: var(--color-text-muted);">
+              Aucune opération récente
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- System alerts log panel (if any) -->
+      <div class="card" id="alertsPanel" style="display: none;">
+        <div class="card-header" style="border-bottom: none; margin-bottom: 0;">
+          <span class="card-title" style="color: var(--color-danger)">⚠️ Vigilance & Découverts</span>
+        </div>
+        <div class="list-container" id="alertsList" style="margin-top: 15px;">
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../assets/js/portal-app.js?v=1.0.1"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      loadDashboardData();
+    });
+
+    async function loadDashboardData() {
+      try {
+        // Fetch dashboard overview
+        var overviewRes = await window.ClientDashboard.getOverview();
+        var overview = null;
+        if (overviewRes.ok) {
+          overview = await overviewRes.json();
+          
+          document.getElementById('soldeTotal').textContent = formatCurrency(overview.soldeTotal);
+          document.getElementById('nbComptes').textContent = overview.nbComptes;
+          document.getElementById('nbAlertes').textContent = overview.alertes.length;
+          
+          if (overview.alertes.length > 0) {
+            document.getElementById('alertesSub').textContent = 'Attention requise sur ' + overview.alertes.length + ' compte(s)';
+            document.getElementById('alertesSub').style.color = 'var(--color-danger)';
+            
+            // Populate alerts panel
+            var alertsPanel = document.getElementById('alertsPanel');
+            var alertsList = document.getElementById('alertsList');
+            alertsList.innerHTML = '';
+            overview.alertes.forEach(function (alert) {
+              var item = document.createElement('div');
+              item.className = 'list-item';
+              item.style.borderColor = 'rgba(255, 90, 95, 0.2)';
+              item.innerHTML = '<span style="color: var(--color-danger)">⚠️ ' + alert + '</span>';
+              alertsList.appendChild(item);
+            });
+            alertsPanel.style.display = 'block';
+          }
+
+          // Populate recent operations (from string summary)
+          var opList = document.getElementById('operationsList');
+          if (overview.dernieresOperations && overview.dernieresOperations.length > 0) {
+            opList.innerHTML = '';
+            overview.dernieresOperations.forEach(function (opString) {
+              var isDebit = opString.includes('-') || opString.toLowerCase().includes('retrait') || opString.toLowerCase().includes('frais');
+              
+              var item = document.createElement('div');
+              item.className = 'operation-item';
+              item.innerHTML = `
+                <div class="operation-icon">${isDebit ? '💸' : '💰'}</div>
+                <div class="operation-details">
+                  <div class="operation-text">${opString.split(' - ')[0]}</div>
+                  <div class="operation-date">Opération récente</div>
+                </div>
+                <div class="operation-amount" style="font-weight: 700; color: ${isDebit ? 'var(--color-danger)' : 'var(--color-success)'}">
+                  ${opString.split(' - ')[1] || ''}
+                </div>
+              `;
+              opList.appendChild(item);
+            });
+          }
+        }
+
+        // Fetch accounts details
+        var accountsRes = await window.ClientComptes.lister();
+        if (accountsRes.ok) {
+          var accounts = await accountsRes.json();
+          var accountsList = document.getElementById('accountsList');
+          accountsList.innerHTML = '';
+
+          if (accounts.length === 0) {
+            accountsList.innerHTML = `
+              <div style="text-align: center; padding: 20px; color: var(--color-text-muted);">
+                Aucun compte bancaire actif ou visible.
+              </div>`;
+          } else {
+            accounts.forEach(function (compte) {
+              var item = document.createElement('div');
+              item.className = 'list-item';
+              
+              var isBlocked = compte.statut !== 'ACTIF';
+              
+              item.innerHTML = `
+                <div>
+                  <div style="font-weight: 700; font-size: 15px; color: var(--color-primary);">
+                    ${compte.libelleType} 
+                    <span style="font-weight: 400; font-size: 11px; margin-left: 5px;" class="badge ${isBlocked ? 'badge-danger' : 'badge-success'}">
+                      ${compte.statut}
+                    </span>
+                  </div>
+                  <div style="font-size: 12px; color: var(--color-text-muted); margin-top: 3px;">
+                    N° ${compte.numCompte}
+                  </div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-weight: 800; font-size: 16px; color: var(--color-primary);">
+                    ${formatCurrency(compte.solde)}
+                  </div>
+                  <a href="comptes?id=${compte.idCompte}" style="font-size: 12px; margin-top: 4px; display: inline-block;">Relevé / RIB</a>
+                </div>
+              `;
+              accountsList.appendChild(item);
+            });
+          }
+        }
+
+        // Fetch KYC details to check verification status
+        var kycRes = await window.ClientProfil.consulterKyc();
+        if (kycRes.ok) {
+          var kyc = await kycRes.json();
+          
+          if (kyc.statutKyc !== 'VALIDE') {
+            var banner = document.getElementById('kycBanner');
+            var actionDiv = document.getElementById('kycBannerAction');
+            var titleEl = banner.querySelector('.kyc-alert-title');
+            
+            if (kyc.statutKyc === 'A_VERIFIER') {
+              titleEl.textContent = '⏳ Dossier KYC transmis en attente de vérification';
+              actionDiv.innerHTML = '<span class="badge badge-info">Étude en cours</span>';
+            } else if (kyc.statutKyc === 'REJETE') {
+              titleEl.textContent = '❌ Dossier KYC rejeté par le service de conformité';
+              actionDiv.innerHTML = '<a href="register#step-3" class="btn btn-danger btn-sm">Ré-envoyer mes documents</a>';
+            } else {
+              titleEl.textContent = '⚠️ Veuillez finaliser l\'envoi de vos pièces KYC';
+              actionDiv.innerHTML = '<a href="register#step-3" class="btn btn-accent btn-sm">Transmettre mes pièces</a>';
+            }
+            banner.style.display = 'flex';
+          }
+        }
+
+      } catch (err) {
+        console.error(err);
+        showToast('Impossible de recharger les informations du tableau de bord.', 'error');
+      }
+    }
+
+    function formatCurrency(amount) {
+      if (amount === undefined || amount === null) return '0 FCFA';
+      return Number(amount).toLocaleString('fr-FR') + ' FCFA';
+    }
+  </script>
+</body>
+</html>

@@ -310,6 +310,12 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<Transaction> listerToutes(Pageable pageable) {
+        return transactionRepository.findAll(pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Transaction getDetailTransaction(String referenceUnique) {
         return chargerTransaction(referenceUnique);
     }

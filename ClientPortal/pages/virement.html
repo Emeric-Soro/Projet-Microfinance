@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Virements — Soutra Finance E-Banking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/portal.css">
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="portal-layout">
+    <!-- Sidebar -->
+    <aside class="portal-sidebar">
+      <div class="portal-brand">
+        <div class="brand-icon">S</div>
+        <span class="brand-name">Soutra Finance</span>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="dashboard">📊 Tableau de bord</a></li>
+        <li class="nav-item"><a href="comptes">💳 Mes Comptes</a></li>
+        <li class="nav-item active"><a href="virement">💸 Virements</a></li>
+        <li class="nav-item"><a href="credits">📈 Crédits</a></li>
+        <li class="nav-item"><a href="reclamations">✉️ Réclamations</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+          <span class="user-name" id="portalUserName">Chargement...</span>
+          <span class="user-role">Client E-Banking</span>
+        </div>
+        <a href="#" class="logout-btn" id="portalLogoutBtn">🚪</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="header-title">
+          <h2>Transférer des Fonds</h2>
+          <p>Réalisez des virements internes instantanés ou enregistrez vos bénéficiaires récurrents.</p>
+        </div>
+      </header>
+
+      <!-- Tabs Navigation -->
+      <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchTab('initiate')">💸 Nouveau Virement</button>
+        <button class="tab-btn" onclick="switchTab('beneficiaries')">👥 Mes Bénéficiaires</button>
+      </div>
+
+      <!-- Tab 1: Initiate Transfer -->
+      <div class="tab-content active" id="tabContent-initiate">
+        <div class="card">
+          <form id="virementForm">
+            <div class="form-group" style="max-width: 500px;">
+              <label for="compteSource">Compte à débiter *</label>
+              <select id="compteSource" class="input-control" required>
+                <option value="">Chargement de vos comptes...</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-top: 25px;">
+              <label>Compte de destination *</label>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input type="radio" name="destType" value="manual" checked onchange="toggleDestInput('manual')">
+                  Saisir un numéro de compte
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="destType" value="beneficiary" onchange="toggleDestInput('beneficiary')">
+                  Choisir un bénéficiaire enregistré
+                </label>
+              </div>
+
+              <!-- Manual Input -->
+              <div id="destManualContainer" style="max-width: 500px;">
+                <input type="text" id="compteDestination" class="input-control" placeholder="Numéro de compte (ex: 00213000...)">
+              </div>
+
+              <!-- Beneficiary Select -->
+              <div id="destBenefContainer" style="max-width: 500px; display: none;">
+                <select id="beneficiarySelector" class="input-control">
+                  <option value="">-- Sélectionner un bénéficiaire --</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row" style="max-width: 500px; margin-top: 20px;">
+              <div class="form-group">
+                <label for="montant">Montant (FCFA) *</label>
+                <input type="number" id="montant" class="input-control" required placeholder="Montant en FCFA" min="100">
+              </div>
+            </div>
+
+            <div class="form-group" style="max-width: 500px;">
+              <label for="motif">Motif / Libellé de l'opération</label>
+              <input type="text" id="motif" class="input-control" placeholder="ex: Virement d'épargne ou Cadeau">
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="btnSubmitVirement" style="margin-top: 15px;">
+              <span>🚀 Initier le virement</span>
+            </button>
+          </form>
+
+          <!-- OTP Validation Sub-Card -->
+          <div class="otp-validation-card" id="virementOtpCard" style="display: none;">
+            <h3 style="color: var(--color-accent); font-size: 16px; margin-bottom: 8px;">🔒 Confirmation Double Facteur OTP</h3>
+            <p style="font-size: 13px; color: var(--color-text-muted); margin-bottom: 15px;">
+              Ce virement est soumis à validation. Saisissez le code OTP reçu par e-mail pour confirmer l'opération.
+            </p>
+
+            <form id="otpConfirmForm">
+              <div class="form-row" style="max-width: 350px; align-items: flex-end;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="virementOtp">Code de validation OTP</label>
+                  <input type="text" id="virementOtp" class="input-control" required placeholder="000000" maxlength="6" style="text-align: center; letter-spacing: 2px; font-weight: 700;">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                  <button type="submit" class="btn btn-primary" id="btnConfirmOtp">Confirmer</button>
+                  <button type="button" class="btn btn-danger" onclick="cancelPendingVirement()">Annuler</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Manage Beneficiaries -->
+      <div class="tab-content" id="tabContent-beneficiaries">
+        <!-- Add Beneficiary Card -->
+        <div class="card" style="margin-bottom: 30px;">
+          <div class="card-header">
+            <span class="card-title">➕ Enregistrer un nouveau bénéficiaire</span>
+          </div>
+          <form id="addBeneficiaryForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="benefNom">Nom *</label>
+                <input type="text" id="benefNom" class="input-control" required placeholder="ex: SORO">
+              </div>
+              <div class="form-group">
+                <label for="benefPrenom">Prénom *</label>
+                <input type="text" id="benefPrenom" class="input-control" required placeholder="ex: Emeric">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="benefCompte">Numéro de compte *</label>
+                <input type="text" id="benefCompte" class="input-control" required placeholder="N° de compte destinataire">
+              </div>
+              <div class="form-group">
+                <label for="benefBanque">Nom de la banque</label>
+                <input type="text" id="benefBanque" class="input-control" placeholder="ex: Soutra Finance" value="Soutra Finance">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Enregistrer le bénéficiaire</button>
+          </form>
+        </div>
+
+        <!-- Beneficiaries List -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">👤 Liste des bénéficiaires</span>
+          </div>
+          <div class="benef-grid" id="beneficiariesGrid">
+            <div style="text-align: center; padding: 30px; color: var(--color-text-muted); width: 100%; grid-column: 1 / -1;">
+              Aucun bénéficiaire enregistré pour l'instant.
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../assets/js/portal-app.js?v=1.0.1"></script>
+  <script>
+    var accountsList = [];
+    var benefList = [];
+    var pendingVirementRef = null;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      loadVirementFlowData();
+
+      // Initiate Virement Submission
+      document.getElementById('virementForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        var compteSource = document.getElementById('compteSource').value;
+        var destType = document.querySelector('input[name="destType"]:checked').value;
+        var compteDestination = '';
+
+        if (destType === 'manual') {
+          compteDestination = document.getElementById('compteDestination').value.trim();
+        } else {
+          compteDestination = document.getElementById('beneficiarySelector').value;
+        }
+
+        var montant = parseFloat(document.getElementById('montant').value);
+
+        if (!compteSource || !compteDestination || isNaN(montant) || montant <= 0) {
+          showToast('Veuillez remplir correctement tous les champs requis', 'warning');
+          return;
+        }
+
+        var submitBtn = document.getElementById('btnSubmitVirement');
+        submitBtn.disabled = true;
+        submitBtn.querySelector('span').textContent = 'Initiation...';
+
+        try {
+          var res = await window.ClientVirements.initier(compteSource, compteDestination, montant);
+          
+          if (res.status === 201) {
+            showToast('Virement exécuté avec succès !', 'success');
+            resetVirementForm();
+          } else if (res.status === 202) {
+            // 2FA OTP Requis
+            var data = await res.json();
+            pendingVirementRef = data.referenceUnique;
+            showToast('OTP requis pour valider cette opération.', 'info');
+            document.getElementById('virementOtpCard').style.display = 'block';
+            document.getElementById('virementOtp').focus();
+          } else {
+            var errorMsg = 'Transaction refusée';
+            try {
+              var errData = await res.json();
+              if (errData && errData.message) errorMsg = errData.message;
+            } catch(ex) {}
+            showToast(errorMsg, 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Erreur lors du traitement de la transaction', 'error');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.querySelector('span').textContent = '🚀 Initier le virement';
+        }
+      });
+
+      // Confirm Virement OTP Submission
+      document.getElementById('otpConfirmForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        
+        var otp = document.getElementById('virementOtp').value.trim();
+        if (otp.length !== 6) {
+          showToast('Veuillez entrer le code à 6 chiffres', 'warning');
+          return;
+        }
+
+        var btnConfirm = document.getElementById('btnConfirmOtp');
+        btnConfirm.disabled = true;
+        btnConfirm.textContent = 'Validation...';
+
+        try {
+          var res = await window.ClientVirements.confirmerOtp(pendingVirementRef, otp);
+          if (res.ok) {
+            showToast('Virement validé et exécuté !', 'success');
+            resetVirementForm();
+          } else {
+            showToast('Code OTP invalide. Veuillez réessayer.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Erreur technique lors de la validation.', 'error');
+        } finally {
+          btnConfirm.disabled = false;
+          btnConfirm.textContent = 'Confirmer';
+        }
+      });
+
+      // Add Beneficiary Form Submission
+      document.getElementById('addBeneficiaryForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        var nom = document.getElementById('benefNom').value.trim();
+        var prenom = document.getElementById('benefPrenom').value.trim();
+        var compte = document.getElementById('benefCompte').value.trim();
+        var banque = document.getElementById('benefBanque').value.trim();
+
+        try {
+          var res = await window.ClientVirements.ajouterBeneficiaire(nom, prenom, compte, banque);
+          if (res.ok) {
+            showToast('Bénéficiaire ajouté avec succès', 'success');
+            document.getElementById('addBeneficiaryForm').reset();
+            document.getElementById('benefBanque').value = 'Soutra Finance';
+            loadBeneficiaries();
+          } else {
+            showToast('Erreur lors de l\'enregistrement du bénéficiaire.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Erreur technique de connexion.', 'error');
+        }
+      });
+    });
+
+    async function loadVirementFlowData() {
+      try {
+        // Load Client accounts
+        var accountsRes = await window.ClientComptes.lister();
+        if (accountsRes.ok) {
+          accountsList = await accountsRes.json();
+          var sourceSelector = document.getElementById('compteSource');
+          sourceSelector.innerHTML = '<option value="">-- Choisir un compte source --</option>';
+          
+          accountsList.forEach(function (acc) {
+            if (acc.statut === 'ACTIF') {
+              var opt = document.createElement('option');
+              opt.value = acc.numCompte;
+              opt.textContent = `${acc.libelleType} (Solde : ${Number(acc.solde).toLocaleString('fr-FR')} FCFA) — N° ${acc.numCompte}`;
+              sourceSelector.appendChild(opt);
+            }
+          });
+        }
+
+        // Load Beneficiaries
+        loadBeneficiaries();
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadBeneficiaries() {
+      try {
+        var res = await window.ClientVirements.listerBeneficiaires();
+        if (res.ok) {
+          benefList = await res.json();
+          
+          // Populate Selector in Tab 1
+          var benefSelector = document.getElementById('beneficiarySelector');
+          benefSelector.innerHTML = '<option value="">-- Sélectionner un bénéficiaire --</option>';
+          
+          // Populate Grid in Tab 2
+          var grid = document.getElementById('beneficiariesGrid');
+          grid.innerHTML = '';
+
+          if (benefList.length === 0) {
+            grid.innerHTML = `
+              <div style="text-align: center; padding: 30px; color: var(--color-text-muted); width: 100%; grid-column: 1 / -1;">
+                Aucun bénéficiaire enregistré pour l'instant.
+              </div>`;
+            return;
+          }
+
+          benefList.forEach(function (b) {
+            // Select dropdown option
+            var opt = document.createElement('option');
+            opt.value = b.compteBeneficiaire;
+            opt.textContent = `${b.prenom} ${b.nom} (N° ${b.compteBeneficiaire})`;
+            benefSelector.appendChild(opt);
+
+            // Card grid item
+            var card = document.createElement('div');
+            card.className = 'benef-card';
+            card.innerHTML = `
+              <div>
+                <div class="benef-name">${b.prenom} ${b.nom}</div>
+                <div class="benef-meta">Banque : ${b.banque || 'Soutra Finance'}</div>
+                <div class="benef-meta" style="font-family: monospace; font-size: 13px; margin-top: 8px;">N° ${b.compteBeneficiaire}</div>
+              </div>
+              <div class="benef-actions">
+                <button class="btn btn-secondary btn-sm" onclick="quickTransfer('${b.compteBeneficiaire}')" style="padding: 6px 12px; font-size: 12px;">💸 Envoyer</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteBeneficiary(${b.id})" style="padding: 6px 12px; font-size: 12px; border:none; background: rgba(255,90,95,0.1); color: var(--color-danger)">Supprimer</button>
+              </div>
+            `;
+            grid.appendChild(card);
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function deleteBeneficiary(idBenef) {
+      if (!confirm('Voulez-vous vraiment supprimer ce bénéficiaire ?')) return;
+
+      try {
+        var token = window.SF_Client.getToken();
+        var res = await window.SF_Client.apiFetch('/api/v1/mobile/beneficiaires/' + idBenef, {
+          method: 'DELETE'
+        });
+        
+        if (res.ok) {
+          showToast('Bénéficiaire supprimé', 'success');
+          loadBeneficiaries();
+        } else {
+          showToast('Impossible de supprimer le bénéficiaire.', 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Erreur technique.', 'error');
+      }
+    }
+
+    function quickTransfer(compteNum) {
+      switchTab('initiate');
+      document.querySelector('input[name="destType"][value="beneficiary"]').checked = true;
+      toggleDestInput('beneficiary');
+      document.getElementById('beneficiarySelector').value = compteNum;
+    }
+
+    async function cancelPendingVirement() {
+      if (!pendingVirementRef) return;
+      
+      try {
+        var res = await window.ClientVirements.annuler(pendingVirementRef);
+        if (res.ok) {
+          showToast('Virement annulé.', 'info');
+        }
+      } catch(ex) {}
+      
+      resetVirementForm();
+    }
+
+    function resetVirementForm() {
+      document.getElementById('virementForm').reset();
+      document.getElementById('virementOtpCard').style.display = 'none';
+      document.getElementById('virementOtp').value = '';
+      pendingVirementRef = null;
+      loadVirementFlowData();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+      // Find the button clicking
+      var btn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+      if (btn) btn.classList.add('active');
+
+      document.getElementById('tabContent-' + tabId).classList.add('active');
+    }
+
+    function toggleDestInput(type) {
+      if (type === 'manual') {
+        document.getElementById('destManualContainer').style.display = 'block';
+        document.getElementById('destBenefContainer').style.display = 'none';
+      } else {
+        document.getElementById('destManualContainer').style.display = 'none';
+        document.getElementById('destBenefContainer').style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>

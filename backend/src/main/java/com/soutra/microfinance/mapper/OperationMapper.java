@@ -28,7 +28,7 @@ public interface OperationMapper {
     @Mapping(source = "compteSource.numCompte", target = "numCompteSource")
     @Mapping(source = "compteDestination.numCompte", target = "numCompteDestination")
     @Mapping(target = "statutOperation", expression = "java(transaction.getStatutOperation() == null ? null : transaction.getStatutOperation().name())")
-    @Mapping(target = "clientNom", expression = "java(transaction.getUtilisateur() != null && transaction.getUtilisateur().getClient() != null ? transaction.getUtilisateur().getClient().getPrenom() + \" \" + transaction.getUtilisateur().getClient().getNom() : null)")
+    @Mapping(target = "clientNom", expression = "java(transaction.getCompteSource() != null && transaction.getCompteSource().getClient() != null ? transaction.getCompteSource().getClient().getPrenom() + \" \" + transaction.getCompteSource().getClient().getNom() : (transaction.getCompteDestination() != null && transaction.getCompteDestination().getClient() != null ? transaction.getCompteDestination().getClient().getPrenom() + \" \" + transaction.getCompteDestination().getClient().getNom() : null))")
     @Mapping(target = "agentNom", expression = "java(transaction.getUtilisateur() != null ? transaction.getUtilisateur().getLogin() : null)")
     @Mapping(target = "validateurNom", expression = "java(transaction.getUtilisateurValidation() != null ? transaction.getUtilisateurValidation().getLogin() : null)")
     @Mapping(target = "montantNet", expression = "java(transaction.getMontantGlobal().subtract(transaction.getFrais() != null ? transaction.getFrais() : java.math.BigDecimal.ZERO))")
@@ -41,7 +41,7 @@ public interface OperationMapper {
     @Mapping(source = "compteSource.numCompte", target = "compteSource")
     @Mapping(source = "compteDestination.numCompte", target = "compteDestination")
     @Mapping(target = "statut", expression = "java(transaction.getStatutOperation() == null ? null : transaction.getStatutOperation().name())")
-    @Mapping(target = "clientNom", expression = "java(transaction.getUtilisateur() != null && transaction.getUtilisateur().getClient() != null ? transaction.getUtilisateur().getClient().getPrenom() + \" \" + transaction.getUtilisateur().getClient().getNom() : null)")
+    @Mapping(target = "clientNom", expression = "java(transaction.getCompteSource() != null && transaction.getCompteSource().getClient() != null ? transaction.getCompteSource().getClient().getPrenom() + \" \" + transaction.getCompteSource().getClient().getNom() : (transaction.getCompteDestination() != null && transaction.getCompteDestination().getClient() != null ? transaction.getCompteDestination().getClient().getPrenom() + \" \" + transaction.getCompteDestination().getClient().getNom() : null))")
     @Mapping(target = "demandeurNom", expression = "java(transaction.getUtilisateur() != null ? transaction.getUtilisateur().getLogin() : null)")
     TransactionEnAttenteResponseDTO toEnAttenteResponseDTO(Transaction transaction);
 }

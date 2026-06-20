@@ -48,7 +48,14 @@
           <!-- ══ COLONNE GAUCHE : Profil ══════════════════ -->
           <div>
             <div class="card profile-card">
-              <div class="profile-avatar" id="profileAvatar">—</div>
+              <!-- Avatar cliquable pour upload photo -->
+              <label for="photoUploadInput" class="profile-avatar-wrap" title="Changer la photo de profil">
+                <div class="profile-avatar" id="profileAvatar">—</div>
+                <div class="avatar-upload-overlay" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                </div>
+              </label>
+              <input type="file" id="photoUploadInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="uploadPhotoClient(this)">
               <div class="profile-name" id="profileName">—</div>
               <div class="profile-meta" id="profileMeta">—</div>
               <div style="margin-top: 12px;" id="profileBadges">
@@ -392,10 +399,28 @@
 
       // Avatar & nom
       const avatarEl = document.getElementById('profileAvatar');
-      if (client.photoIdentiteUrl && !client.photoIdentiteUrl.includes('default/photo.jpg')) {
+      avatarEl.style.background = '';
+      avatarEl.innerHTML = '';
+      avatarEl.textContent = '';
+      
+      const photoUrl = client.photoIdentiteUrl;
+      if (photoUrl && !photoUrl.includes('default/') && photoUrl.trim() !== '') {
         const baseUrl = window.SF ? window.SF.API_BASE : 'http://localhost:8080';
-        avatarEl.innerHTML = `<img src="${baseUrl}/${client.photoIdentiteUrl}" alt="${client.nomComplet}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'; this.parentNode.style.background='var(--azur-pastel)';">`
-          + `<span style="display:none; width: 100%; height: 100%; align-items: center; justify-content: center;">${ini}</span>`;
+        // Encoder chaque segment du chemin pour gérer les espaces et caractères spéciaux
+        const urlEncodee = photoUrl.split('/').map(s => encodeURIComponent(s)).join('/');
+        const imgSrc = baseUrl + '/' + urlEncodee;
+        
+        const img = document.createElement('img');
+        img.src = imgSrc;
+        img.alt = client.nomComplet || '';
+        img.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;';
+        img.onerror = function() {
+          // Fichier absent sur le serveur → fallback initiales
+          avatarEl.innerHTML = '';
+          avatarEl.textContent = ini;
+          avatarEl.style.background = 'var(--azur-pastel)';
+        };
+        avatarEl.appendChild(img);
         avatarEl.style.background = 'none';
       } else {
         avatarEl.textContent = ini;
@@ -1019,6 +1044,66 @@
 
     // Rendre la fonction accessible globalement car elle est appelée depuis le HTML généré dynamiquement
     window.telechargerRelevePDF = telechargerRelevePDF;
+
+    /* ── Upload photo de profil ─────────────────────── */
+    async function uploadPhotoClient(input) {
+      if (!input.files || !input.files[0]) return;
+      const fichier = input.files[0];
+      input.value = ''; // Réinitialiser pour permettre un re-upload du même fichier
+
+      // Validation côté client
+      const MAX_SIZE = 5 * 1024 * 1024; // 5 Mo
+      const TYPES_OK = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!TYPES_OK.includes(fichier.type)) {
+        showToast('Format non supporté. Utilisez JPEG, PNG ou WebP.', 'warning');
+        return;
+      }
+      if (fichier.size > MAX_SIZE) {
+        showToast('Fichier trop volumineux (max 5 Mo).', 'warning');
+        return;
+      }
+
+      const avatarEl = document.getElementById('profileAvatar');
+      const overlay  = document.querySelector('.avatar-upload-overlay');
+      if (overlay) overlay.innerHTML = '<div class="login-spinner" style="width:20px;height:20px;border-width:2px;border-top-color:white;"></div>';
+
+      try {
+        const baseUrl = window.SF ? window.SF.API_BASE : 'http://localhost:8080';
+
+        // Utiliser Clients.uploadDocument (défini dans app.js)
+        const resp = await Clients.uploadDocument(_clientId, fichier, 'PIECE_IDENTITE');
+        if (!resp || !resp.ok) {
+          const errText = resp ? await resp.text().catch(() => '') : '';
+          throw new Error(errText || `Erreur HTTP ${resp ? resp.status : 'réseau'}`);
+        }
+
+        const doc = await resp.json();
+        // Mettre à jour l'avatar immédiatement avec la nouvelle photo
+        const urlEncodee = ('upload/' + doc.nomFichier).split('/').map(s => encodeURIComponent(s)).join('/');
+        const img = document.createElement('img');
+        img.src = `${baseUrl}/${urlEncodee}`;
+        img.alt = document.getElementById('profileName').textContent || '';
+        img.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;';
+        img.onerror = function() {
+          avatarEl.innerHTML = '';
+          avatarEl.textContent = initiales(document.getElementById('profileName').textContent);
+          avatarEl.style.background = 'var(--azur-pastel)';
+        };
+        avatarEl.innerHTML = '';
+        avatarEl.appendChild(img);
+        avatarEl.style.background = 'none';
+
+        showToast('Photo mise à jour avec succès !', 'success');
+      } catch (err) {
+        showToast('Erreur lors de l\'upload : ' + (err.message || 'Erreur inconnue'), 'error');
+      } finally {
+        // Restaurer l'icône caméra dans l'overlay
+        if (overlay) {
+          overlay.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
+        }
+      }
+    }
+    window.uploadPhotoClient = uploadPhotoClient;
 
     /* ── Initialisation ────────────────────────────── */
     document.addEventListener('DOMContentLoaded', function () {
