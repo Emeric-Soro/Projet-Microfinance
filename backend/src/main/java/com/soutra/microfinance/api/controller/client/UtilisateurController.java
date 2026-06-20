@@ -3,7 +3,6 @@ package com.soutra.microfinance.api.controller.client;
 import com.soutra.microfinance.audit.AuditLog;
 import com.soutra.microfinance.config.JwtService;
 import com.soutra.microfinance.config.JwtTokenBlacklistService;
-import com.soutra.microfinance.dto.request.client.ActivationUtilisateurRequestDTO;
 import com.soutra.microfinance.dto.request.client.CreationUtilisateurRequestDTO;
 import com.soutra.microfinance.dto.request.client.LoginRequestDTO;
 import com.soutra.microfinance.dto.request.client.VerificationOtpRequestDTO;
@@ -23,17 +22,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/utilisateurs")
+@RequestMapping("/api/v1/utilisateurs")
 @Tag(name = "Utilisateurs", description = "API de gestion des acces numeriques")
 public class UtilisateurController {
 
@@ -126,45 +122,6 @@ public class UtilisateurController {
     }
 
     @Operation(
-            summary = "Assigner un role",
-            description = "Attribue un role metier a un utilisateur"
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Role assigne avec succes"),
-            @ApiResponse(responseCode = "400", description = "Code role invalide"),
-            @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
-    })
-    @PreAuthorize("hasAuthority('ADMIN')")
-    @PutMapping("/{idUser}/roles")
-    @AuditLog(action = "USER_ASSIGN_ROLE", resource = "UTILISATEUR")
-    public ResponseEntity<UtilisateurResponseDTO> assignerRole(
-            @PathVariable Long idUser,
-            @RequestParam String codeRole
-    ) {
-        Utilisateur utilisateur = utilisateurService.assignerRole(idUser, codeRole);
-        return ResponseEntity.ok(utilisateurMapper.toResponseDTO(utilisateur));
-    }
-
-    @Operation(
-            summary = "Activer ou desactiver un utilisateur",
-            description = "Active ou desactive explicitement l'acces numerique d'un utilisateur"
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Statut d'activation mis a jour"),
-            @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
-    })
-    @PreAuthorize("hasAuthority('ADMIN')")
-    @PutMapping("/{idUser}/activation")
-    @AuditLog(action = "USER_ACTIVATION_UPDATE", resource = "UTILISATEUR")
-    public ResponseEntity<UtilisateurResponseDTO> changerActivation(
-            @PathVariable Long idUser,
-            @Valid @RequestBody ActivationUtilisateurRequestDTO requestDTO
-    ) {
-        Utilisateur utilisateur = utilisateurService.changerActivation(idUser, requestDTO.getActif());
-        return ResponseEntity.ok(utilisateurMapper.toResponseDTO(utilisateur));
-    }
-
-    @Operation(
             summary = "Deconnecter un utilisateur",
             description = "Revoque le JWT courant en le mettant en liste noire jusqu'a expiration"
     )
@@ -197,6 +154,7 @@ public class UtilisateurController {
         UserDetails userDetails = utilisateur;
         AuthenticationResponseDTO responseDTO = new AuthenticationResponseDTO();
         responseDTO.setToken(jwtService.generateToken(userDetails));
+        responseDTO.setRefreshToken(jwtService.generateRefreshToken(userDetails));
         responseDTO.setUtilisateur(utilisateurMapper.toResponseDTO(utilisateur));
         responseDTO.setStatutAuthentification(AuthenticationStepStatus.AUTHENTIFIE);
         responseDTO.setOtpRequis(Boolean.FALSE);

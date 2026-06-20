@@ -26,7 +26,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile.fast
+      dockerfile: Dockerfile
     container_name: core_banking_backend
     depends_on:
       oracledb:
@@ -50,8 +50,16 @@ services:
       - APP_RATE_LIMIT_LOGIN_MAX_REQUESTS=${APP_RATE_LIMIT_LOGIN_MAX_REQUESTS:-10}
       - APP_RATE_LIMIT_LOGIN_WINDOW=${APP_RATE_LIMIT_LOGIN_WINDOW:-1m}
       - SPRING_DOCKER_COMPOSE_ENABLED=false
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+      - SPRING_FLYWAY_VALIDATE_ON_MIGRATE=false
+      - SPRING_FLYWAY_OUT_OF_ORDER=true
+      - MANAGEMENT_HEALTH_REDIS_ENABLED=false
+      - MANAGEMENT_HEALTH_MAIL_ENABLED=false
+      - APP_FILE_STORAGE_PATH=/app/uploads/documents
     ports:
       - "${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - uploads_data:/app/uploads/documents
     restart: unless-stopped
 
   cloudbeaver:
@@ -76,3 +84,4 @@ services:
 volumes:
   oracle_data:
   cloudbeaver_workspace:
+  uploads_data:

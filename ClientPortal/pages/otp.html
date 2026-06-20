@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Validation OTP — Soutra Finance E-Banking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/portal.css">
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="auth-container">
+    <div class="auth-logo">
+      <div class="logo-symbol">S</div>
+      <h2>Soutra Finance</h2>
+    </div>
+
+    <div class="auth-card">
+      <h2 class="text-gradient">Validation OTP</h2>
+      <p class="subtitle">Un code de sécurité à 6 chiffres a été envoyé à votre adresse e-mail. Veuillez le saisir ci-dessous.</p>
+
+      <form id="otpForm">
+        <div class="otp-input-group">
+          <input type="text" maxlength="1" pattern="[0-9]" class="otp-field" required autofocus>
+          <input type="text" maxlength="1" pattern="[0-9]" class="otp-field" required>
+          <input type="text" maxlength="1" pattern="[0-9]" class="otp-field" required>
+          <input type="text" maxlength="1" pattern="[0-9]" class="otp-field" required>
+          <input type="text" maxlength="1" pattern="[0-9]" class="otp-field" required>
+          <input type="text" maxlength="1" pattern="[0-9]" class="otp-field" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+          <span>Valider le code</span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <p>Retourner à la <a href="login">page de connexion</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/portal-app.js?v=1.0.1"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var form = document.getElementById('otpForm');
+      var submitBtn = document.getElementById('submitBtn');
+      var fields = document.querySelectorAll('.otp-field');
+
+      var login = sessionStorage.getItem('sf_otp_login');
+      var challengeId = sessionStorage.getItem('sf_otp_challenge');
+
+      if (!login || !challengeId) {
+        showToast('Session de validation expirée. Veuillez vous reconnecter.', 'error');
+        setTimeout(function () {
+          window.location.href = 'login';
+        }, 1500);
+        return;
+      }
+
+      // Handle focus navigation between OTP inputs
+      fields.forEach(function (field, idx) {
+        field.addEventListener('input', function (e) {
+          if (field.value.length === 1 && idx < fields.length - 1) {
+            fields[idx + 1].focus();
+          }
+        });
+
+        field.addEventListener('keydown', function (e) {
+          if (e.key === 'Backspace' && field.value.length === 0 && idx > 0) {
+            fields[idx - 1].focus();
+          }
+        });
+      });
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        var codeOtp = Array.from(fields).map(f => f.value).join('');
+
+        if (codeOtp.length !== 6) {
+          showToast('Veuillez saisir le code à 6 chiffres', 'warning');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.querySelector('span').textContent = 'Validation...';
+
+        try {
+          var res = await window.ClientAuth.loginOtp(login, challengeId, codeOtp);
+          
+          if (res.ok) {
+            var data = await res.json();
+            
+            window.SF_Client.setSession(data);
+            
+            // Nettoyer sessionStorage
+            sessionStorage.removeItem('sf_otp_login');
+            sessionStorage.removeItem('sf_otp_challenge');
+
+            showToast('Code validé ! Connexion sécurisée ouverte.', 'success');
+            setTimeout(function () {
+              window.location.href = 'dashboard';
+            }, 1500);
+          } else {
+            var errorMsg = 'Code de sécurité invalide ou expiré';
+            try {
+              var errData = await res.json();
+              if (errData && errData.message) errorMsg = errData.message;
+            } catch (ex) {}
+            
+            showToast(errorMsg, 'error');
+            submitBtn.disabled = false;
+            submitBtn.querySelector('span').textContent = 'Valider le code';
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Impossible de contacter le serveur.', 'error');
+          submitBtn.disabled = false;
+          submitBtn.querySelector('span').textContent = 'Valider le code';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -32,6 +32,9 @@ public final class AppConstants {
     public static final String CREDIT_APPROUVE = "APPROUVE";
     public static final String CREDIT_DECAISSE = "DECAISSE";
     public static final String CREDIT_EN_COURS = "EN_COURS";
+    public static final String CREDIT_EN_ETUDE = "EN_ETUDE";
     public static final String CREDIT_EN_RETARD = "EN_RETARD";
     public static final String CREDIT_SOLDE = "SOLDE";
+    public static final String CREDIT_RESTRUCTURE = "RESTRUCTURE";
+    public static final String CREDIT_SOUFFRANCE = "SOUFFRANCE";
 }

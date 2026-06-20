@@ -1,6 +1,5 @@
 package com.soutra.microfinance.dto.request.compte;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,7 +12,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ChangementStatutCompteRequestDTO {
 
-    private String numCompte;
-
+    @Size(max = 500, message = "Le motif ne doit pas depasser 500 caracteres")
     private String motif;
 }

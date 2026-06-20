@@ -1,11 +1,14 @@
 package com.soutra.microfinance.service.compte;
 
+import com.soutra.microfinance.dto.request.compte.CarteVisaPatchRequestDTO;
 import com.soutra.microfinance.entity.CarteVisa;
 import com.soutra.microfinance.entity.Compte;
 import com.soutra.microfinance.repository.compte.CarteVisaRepository;
 import com.soutra.microfinance.repository.compte.CompteRepository;
 import org.springframework.beans.factory.annotation.Value;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,6 +63,54 @@ public class CarteVisaServiceImpl implements CarteVisaService {
                 .orElseThrow(() -> new EntityNotFoundException("Carte introuvable: " + numeroCarte));
 
         // Règle métier : On désactive la carte de manière irréversible
+        carteVisa.setStatut(Boolean.FALSE);
+        return carteVisaRepository.save(carteVisa);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CarteVisa> listerCartesParCompte(String numCompte, Pageable pageable) {
+        Compte compte = compteRepository.findByNumCompte(numCompte)
+                .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
+        return carteVisaRepository.findByCompte_IdCompte(compte.getIdCompte(), pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CarteVisa obtenirCarte(String numeroCarte) {
+        return carteVisaRepository.findByNumeroCarte(numeroCarte)
+                .orElseThrow(() -> new EntityNotFoundException("Carte introuvable: " + numeroCarte));
+    }
+
+    @Override
+    @Transactional
+    public CarteVisa modifierPartiellement(String numeroCarte, CarteVisaPatchRequestDTO patch) {
+        CarteVisa carte = carteVisaRepository.findByNumeroCarte(numeroCarte)
+                .orElseThrow(() -> new EntityNotFoundException("Carte introuvable: " + numeroCarte));
+
+        if (patch.getPlafondJournalier() != null) {
+            carte.setPlafondJournalier(patch.getPlafondJournalier());
+        }
+        if (patch.getStatut() != null) {
+            carte.setStatut(patch.getStatut());
+        }
+        if (patch.getDateExpiration() != null) {
+            carte.setDateExpiration(patch.getDateExpiration());
+        }
+        return carteVisaRepository.save(carte);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CarteVisa> listerToutesLesCartes(Pageable pageable) {
+        return carteVisaRepository.findAll(pageable);
+    }
+
+    @Override
+    @Transactional
+    public CarteVisa faireOppositionParId(Long idCarte) {
+        CarteVisa carteVisa = carteVisaRepository.findById(idCarte)
+                .orElseThrow(() -> new EntityNotFoundException("Carte introuvable: " + idCarte));
         carteVisa.setStatut(Boolean.FALSE);
         return carteVisaRepository.save(carteVisa);
     }

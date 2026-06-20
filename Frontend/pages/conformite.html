@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conformité - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Conformité</div>
+            <div class="topbar-breadcrumb">Accueil / Pilotage & Audit / Conformité</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Centre conformité</h1>
+            <p class="page-subtitle">SAR, alertes LCB/FT, PEP, KYC expirés, RGPD et réclamations.</p>
+          </div>
+          <div class="export-buttons">
+            <button class="export-btn">CSV</button>
+            <button class="export-btn">PDF</button>
+          </div>
+        </div>
+
+        <section class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Alertes LCB/FT ouvertes</div>
+              <div class="kpi-value">18</div>
+              <div class="kpi-trend down">5 critiques</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">KYC expirés</div>
+              <div class="kpi-value">42</div>
+              <div class="kpi-trend down">À traiter cette semaine</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Rapports SAR</div>
+              <div class="kpi-value">7</div>
+              <div class="kpi-trend up">2 transmis CENTIF</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Réclamations ouvertes</div>
+              <div class="kpi-value">13</div>
+              <div class="kpi-trend down">3 hors SLA</div>
+            </div>
+          </div>
+        </section>
+
+        <div class="filter-tabs">
+          <span class="filter-tab active">Alertes LCB/FT</span>
+          <span class="filter-tab">Rapports SAR</span>
+          <span class="filter-tab">KYC expirés</span>
+          <span class="filter-tab">PEP</span>
+          <span class="filter-tab">Réclamations</span>
+          <span class="filter-tab">RGPD</span>
+        </div>
+
+        <section class="grid-3">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Dossiers conformité prioritaires</div>
+                <div class="card-subtitle">Endpoints : /api/v1/conformite/alertes-lcbft, /sar, /kyc/expires</div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="showToast('Nouvelle alerte préparée.', 'info')">Nouvelle alerte</button>
+            </div>
+            <div class="filter-bar">
+              <select class="form-control">
+                <option>Statut : Tous</option>
+                <option>Ouvert</option>
+                <option>En analyse</option>
+                <option>Traité</option>
+              </select>
+              <select class="form-control">
+                <option>Risque : Tous</option>
+                <option>Faible</option>
+                <option>Moyen</option>
+                <option>Élevé</option>
+              </select>
+              <input class="form-control" type="date">
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Référence</th>
+                  <th>Client</th>
+                  <th>Type</th>
+                  <th>Risque</th>
+                  <th>Statut</th>
+                  <th>Échéance</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>LCB-2026-018</td>
+                  <td>Kouamé Aya</td>
+                  <td>Transaction inhabituelle</td>
+                  <td><span class="badge badge-danger">Élevé</span></td>
+                  <td><span class="badge badge-pending">En analyse</span></td>
+                  <td>04/06/2026</td>
+                  <td><button class="btn btn-outline btn-sm">Traiter</button></td>
+                </tr>
+                <tr>
+                  <td>KYC-EXP-042</td>
+                  <td>Diallo Moussa</td>
+                  <td>KYC expiré</td>
+                  <td><span class="badge badge-warning">Moyen</span></td>
+                  <td><span class="badge badge-pending">À relancer</span></td>
+                  <td>07/06/2026</td>
+                  <td><button class="btn btn-outline btn-sm">Relancer</button></td>
+                </tr>
+                <tr>
+                  <td>SAR-2026-007</td>
+                  <td>Bamba Konan</td>
+                  <td>Déclaration SAR</td>
+                  <td><span class="badge badge-danger">Critique</span></td>
+                  <td><span class="badge badge-info">Brouillon</span></td>
+                  <td>05/06/2026</td>
+                  <td><button class="btn btn-outline btn-sm">Ouvrir</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <aside class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Action rapide</div>
+                <div class="card-subtitle">Vérification PEP</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Client ou pièce</label>
+              <input class="form-control" placeholder="Nom, ID client ou numéro de pièce">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pays de résidence</label>
+              <select class="form-control">
+                <option>Côte d'Ivoire</option>
+                <option>Sénégal</option>
+                <option>Mali</option>
+              </select>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="showToast('Vérification PEP simulée.', 'success')">Vérifier PEP</button>
+            <hr style="border:0;border-top:1px solid #C9DFE8;margin:20px 0;">
+            <div class="info-row"><span class="info-label">RGPD export</span><span class="info-value">/rgpd/export</span></div>
+            <div class="info-row"><span class="info-label">Suppression données</span><span class="info-value">/rgpd/donnees</span></div>
+            <div class="info-row"><span class="info-label">Consentement</span><span class="info-value">/rgpd/consentement</span></div>
+          </aside>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 package com.soutra.microfinance.api.controller.operation;
 
+import com.soutra.microfinance.api.helper.SoutraSecurityHelper;
 import com.soutra.microfinance.audit.AuditLog;
 import com.soutra.microfinance.dto.request.operation.PaiementCarteRequestDTO;
 import com.soutra.microfinance.dto.request.operation.TransactionSimpleRequestDTO;
@@ -7,6 +8,9 @@ import com.soutra.microfinance.dto.request.operation.ValidationTransactionReques
 import com.soutra.microfinance.dto.request.operation.VirementRequestDTO;
 import com.soutra.microfinance.dto.response.operation.LigneReleveResponseDTO;
 import com.soutra.microfinance.dto.response.operation.RecuTransactionResponseDTO;
+import com.soutra.microfinance.dto.response.operation.TransactionDetailResponseDTO;
+import com.soutra.microfinance.dto.response.operation.TransactionEnAttenteResponseDTO;
+import com.soutra.microfinance.dto.request.operation.MobileMoneyRequestDTO;
 import com.soutra.microfinance.entity.LigneEcriture;
 import com.soutra.microfinance.entity.StatutOperation;
 import com.soutra.microfinance.entity.Transaction;
@@ -21,7 +25,9 @@ import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -34,8 +40,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/transactions")
+@RequestMapping("/api/v1/transactions")
 @Tag(name = "Transactions", description = "API des operations bancaires")
 public class TransactionController {
 
@@ -65,8 +74,8 @@ public class TransactionController {
             @Valid @RequestBody TransactionSimpleRequestDTO requestDTO,
             Authentication authentication
     ) {
-        Utilisateur utilisateurAuthentifie = extraireUtilisateurAuthentifie(authentication);
-        verifierCorrespondanceUtilisateur(requestDTO.getIdGuichetier(), utilisateurAuthentifie.getIdUser(), "guichetier");
+        Utilisateur utilisateurAuthentifie = SoutraSecurityHelper.extraireUtilisateurAuthentifie();
+        SoutraSecurityHelper.verifierCorrespondanceUtilisateur(requestDTO.getIdGuichetier(), utilisateurAuthentifie.getIdUser(), "guichetier");
         Transaction transaction = transactionService.faireDepot(
                 requestDTO.getNumCompte(),
                 requestDTO.getMontant(),
@@ -93,8 +102,8 @@ public class TransactionController {
             @Valid @RequestBody TransactionSimpleRequestDTO requestDTO,
             Authentication authentication
     ) {
-        Utilisateur utilisateurAuthentifie = extraireUtilisateurAuthentifie(authentication);
-        verifierCorrespondanceUtilisateur(requestDTO.getIdGuichetier(), utilisateurAuthentifie.getIdUser(), "guichetier");
+        Utilisateur utilisateurAuthentifie = SoutraSecurityHelper.extraireUtilisateurAuthentifie();
+        SoutraSecurityHelper.verifierCorrespondanceUtilisateur(requestDTO.getIdGuichetier(), utilisateurAuthentifie.getIdUser(), "guichetier");
         Transaction transaction = transactionService.faireRetrait(
                 requestDTO.getNumCompte(),
                 requestDTO.getMontant(),
@@ -123,8 +132,8 @@ public class TransactionController {
             @RequestParam Long idGuichetier,
             Authentication authentication
     ) {
-        Utilisateur utilisateurAuthentifie = extraireUtilisateurAuthentifie(authentication);
-        verifierCorrespondanceUtilisateur(idGuichetier, utilisateurAuthentifie.getIdUser(), "guichetier");
+        Utilisateur utilisateurAuthentifie = SoutraSecurityHelper.extraireUtilisateurAuthentifie();
+        SoutraSecurityHelper.verifierCorrespondanceUtilisateur(idGuichetier, utilisateurAuthentifie.getIdUser(), "guichetier");
         Transaction transaction = transactionService.faireVirement(
                 requestDTO.getCompteSource(),
                 requestDTO.getCompteDestination(),
@@ -151,8 +160,8 @@ public class TransactionController {
             @Valid @RequestBody ValidationTransactionRequestDTO requestDTO,
             Authentication authentication
     ) {
-        Utilisateur utilisateurAuthentifie = extraireUtilisateurAuthentifie(authentication);
-        verifierCorrespondanceUtilisateur(requestDTO.getIdSuperviseur(), utilisateurAuthentifie.getIdUser(), "superviseur");
+        Utilisateur utilisateurAuthentifie = SoutraSecurityHelper.extraireUtilisateurAuthentifie();
+        SoutraSecurityHelper.verifierCorrespondanceUtilisateur(requestDTO.getIdSuperviseur(), utilisateurAuthentifie.getIdUser(), "superviseur");
         Transaction transaction = transactionService.approuverTransaction(referenceUnique, utilisateurAuthentifie.getIdUser());
         return ResponseEntity.ok(operationMapper.toRecuResponseDTO(transaction));
     }
@@ -174,8 +183,8 @@ public class TransactionController {
             @Valid @RequestBody ValidationTransactionRequestDTO requestDTO,
             Authentication authentication
     ) {
-        Utilisateur utilisateurAuthentifie = extraireUtilisateurAuthentifie(authentication);
-        verifierCorrespondanceUtilisateur(requestDTO.getIdSuperviseur(), utilisateurAuthentifie.getIdUser(), "superviseur");
+        Utilisateur utilisateurAuthentifie = SoutraSecurityHelper.extraireUtilisateurAuthentifie();
+        SoutraSecurityHelper.verifierCorrespondanceUtilisateur(requestDTO.getIdSuperviseur(), utilisateurAuthentifie.getIdUser(), "superviseur");
         Transaction transaction = transactionService.rejeterTransaction(
                 referenceUnique,
                 utilisateurAuthentifie.getIdUser(),
@@ -202,8 +211,8 @@ public class TransactionController {
             @Valid @RequestBody PaiementCarteRequestDTO requestDTO,
             Authentication authentication
     ) {
-        Utilisateur utilisateurAuthentifie = extraireUtilisateurAuthentifie(authentication);
-        verifierCorrespondanceUtilisateur(requestDTO.getIdGuichetier(), utilisateurAuthentifie.getIdUser(), "guichetier");
+        Utilisateur utilisateurAuthentifie = SoutraSecurityHelper.extraireUtilisateurAuthentifie();
+        SoutraSecurityHelper.verifierCorrespondanceUtilisateur(requestDTO.getIdGuichetier(), utilisateurAuthentifie.getIdUser(), "guichetier");
         Transaction transaction = transactionService.fairePaiementCarte(
                 requestDTO.getNumeroCarte(),
                 requestDTO.getMontant(),
@@ -232,23 +241,127 @@ public class TransactionController {
         return ResponseEntity.ok(pageReleve);
     }
 
+    // ========== ENDPOINTS AVANCES (PRD-02) ==========
+
+    @Operation(summary = "Lister toutes les transactions", description = "Retourne la liste paginée de toutes les transactions")
+    @ApiResponses({ @ApiResponse(responseCode = "200", description = "Liste des transactions") })
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','CHEF_AGENCE','GUICHETIER')")
+    public ResponseEntity<Page<TransactionDetailResponseDTO>> listerToutesLesTransactions(@ParameterObject Pageable pageable) {
+        Page<Transaction> transactions = transactionService.listerToutes(pageable);
+        return ResponseEntity.ok(transactions.map(operationMapper::toDetailResponseDTO));
+    }
+
+    @Operation(summary = "Lister les transactions en attente 4-yeux")
+    @ApiResponses({ @ApiResponse(responseCode = "200", description = "Liste des transactions en attente") })
+    @GetMapping("/en-attente")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','CHEF_AGENCE')")
+    public ResponseEntity<Page<TransactionEnAttenteResponseDTO>> listerEnAttente(@ParameterObject Pageable pageable) {
+        Page<Transaction> transactions = transactionService.listerEnAttente(pageable);
+        return ResponseEntity.ok(transactions.map(operationMapper::toEnAttenteResponseDTO));
+    }
+
+    @Operation(summary = "Detail d'une transaction", description = "Retourne les informations completes d'une transaction")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Detail de la transaction"),
+            @ApiResponse(responseCode = "404", description = "Transaction introuvable")
+    })
+    @GetMapping("/{referenceUnique}")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','GUICHETIER')")
+    public ResponseEntity<TransactionDetailResponseDTO> detailTransaction(@PathVariable String referenceUnique) {
+        Transaction transaction = transactionService.getDetailTransaction(referenceUnique);
+        return ResponseEntity.ok(operationMapper.toDetailResponseDTO(transaction));
+    }
+
+    @Operation(summary = "Reverser/annuler une transaction", description = "Inverse les effets comptables d'une transaction")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Transaction reversee"),
+            @ApiResponse(responseCode = "400", description = "Transaction non reversible")
+    })
+    @PostMapping("/{referenceUnique}/reverser")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR')")
+    @AuditLog(action = "TRANSACTION_REVERSE", resource = "TRANSACTION")
+    public ResponseEntity<RecuTransactionResponseDTO> reverserTransaction(
+            @PathVariable String referenceUnique,
+            @RequestParam(required = false) String motif,
+            Authentication authentication
+    ) {
+        Utilisateur utilisateur = SoutraSecurityHelper.extraireUtilisateurAuthentifie();
+        Transaction transaction = transactionService.reverserTransaction(referenceUnique, utilisateur.getIdUser(), motif);
+        return ResponseEntity.ok(operationMapper.toRecuResponseDTO(transaction));
+    }
+
+    @Operation(summary = "Generer le recu d'une transaction", description = "Retourne le recu formatte d'une transaction")
+    @GetMapping("/{referenceUnique}/recu")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','CLIENT')")
+    public ResponseEntity<RecuTransactionResponseDTO> recuTransaction(@PathVariable String referenceUnique) {
+        Transaction transaction = transactionService.getDetailTransaction(referenceUnique);
+        return ResponseEntity.ok(operationMapper.toRecuResponseDTO(transaction));
+    }
+
+    @Operation(summary = "Exporter les transactions", description = "Export CSV/PDF des transactions")
+    @GetMapping("/export")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR')")
+    public ResponseEntity<byte[]> exporterTransactions(
+            @RequestParam(defaultValue = "CSV") String format,
+            @RequestParam(required = false) LocalDateTime dateDebut,
+            @RequestParam(required = false) LocalDateTime dateFin
+    ) {
+        String csv = transactionService.exporterTransactions(format, dateDebut, dateFin);
+        byte[] bytes = csv.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("text/csv; charset=UTF-8"));
+        headers.setContentDispositionFormData("attachment", "transactions.csv");
+        headers.setContentLength(bytes.length);
+
+        return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Depot Mobile Money", description = "Effectue un depot via Mobile Money (Wave, Orange Money, MTN)")
+    @PostMapping("/mobile-money/depot")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @AuditLog(action = "TRANSACTION_MOBILE_MONEY_DEPOSIT", resource = "TRANSACTION")
+    public ResponseEntity<RecuTransactionResponseDTO> depotMobileMoney(
+            @Valid @RequestBody MobileMoneyRequestDTO requestDTO,
+            Authentication authentication
+    ) {
+        Utilisateur utilisateur = SoutraSecurityHelper.extraireUtilisateurAuthentifie();
+        Transaction transaction = transactionService.faireDepotMobileMoney(
+                requestDTO.getNumCompte(), requestDTO.getMontant(),
+                utilisateur.getIdUser(), requestDTO.getOperateur(), requestDTO.getTelephone()
+        );
+        return construireReponseTransaction(transaction);
+    }
+
+    @Operation(summary = "Retrait Mobile Money", description = "Effectue un retrait via Mobile Money")
+    @PostMapping("/mobile-money/retrait")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @AuditLog(action = "TRANSACTION_MOBILE_MONEY_WITHDRAWAL", resource = "TRANSACTION")
+    public ResponseEntity<RecuTransactionResponseDTO> retraitMobileMoney(
+            @Valid @RequestBody MobileMoneyRequestDTO requestDTO,
+            Authentication authentication
+    ) {
+        Utilisateur utilisateur = SoutraSecurityHelper.extraireUtilisateurAuthentifie();
+        Transaction transaction = transactionService.faireRetraitMobileMoney(
+                requestDTO.getNumCompte(), requestDTO.getMontant(),
+                utilisateur.getIdUser(), requestDTO.getOperateur(), requestDTO.getTelephone()
+        );
+        return construireReponseTransaction(transaction);
+    }
+
+    @Operation(summary = "Lister les transactions Mobile Money")
+    @GetMapping("/mobile-money")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR')")
+    public ResponseEntity<Page<RecuTransactionResponseDTO>> listerMobileMoney(@ParameterObject Pageable pageable) {
+        Page<Transaction> transactions = transactionService.listerMobileMoney(pageable);
+        return ResponseEntity.ok(transactions.map(operationMapper::toRecuResponseDTO));
+    }
+
     private ResponseEntity<RecuTransactionResponseDTO> construireReponseTransaction(Transaction transaction) {
         HttpStatus status = transaction.getStatutOperation() == StatutOperation.EN_ATTENTE
                 ? HttpStatus.ACCEPTED
                 : HttpStatus.CREATED;
         return ResponseEntity.status(status).body(operationMapper.toRecuResponseDTO(transaction));
-    }
-
-    private Utilisateur extraireUtilisateurAuthentifie(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof Utilisateur utilisateur)) {
-            throw new IllegalStateException("Utilisateur authentifie introuvable");
-        }
-        return utilisateur;
-    }
-
-    private void verifierCorrespondanceUtilisateur(Long idRequete, Long idAuthentifie, String roleMetier) {
-        if (idRequete == null || idAuthentifie == null || !idRequete.equals(idAuthentifie)) {
-            throw new IllegalArgumentException("L'identifiant " + roleMetier + " doit correspondre a l'utilisateur authentifie");
-        }
     }
 }

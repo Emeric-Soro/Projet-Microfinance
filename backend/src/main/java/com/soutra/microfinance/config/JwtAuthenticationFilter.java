@@ -55,7 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
                 // Verifie la signature + expiration du token avant de creer l'authentification Spring Security.
-                if (jwtService.isTokenValid(jwt, userDetails)) {
+                if (jwtService.isTokenValid(jwt, userDetails) && jwtService.isAccessToken(jwt)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
@@ -70,8 +70,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (JwtException | IllegalArgumentException ex) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token JWT invalide");
-            return;
+            // Propage l'exception pour que AuthenticationEntryPoint la traite avec un JSON propre.
+            throw new org.springframework.security.authentication.BadCredentialsException("Token JWT invalide", ex);
         }
 
         // Continue toujours la chaine de filtres (endpoint suivant / autre filtre).

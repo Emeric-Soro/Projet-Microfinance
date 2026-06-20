@@ -2,11 +2,12 @@ FROM maven:3.9-eclipse-temurin-21 AS build
 
 WORKDIR /workspace
 
+ENV MAVEN_OPTS="-Xmx2g -XX:+UseG1GC"
+
 COPY pom.xml ./
-RUN mvn -B -DskipTests dependency:go-offline
 
 COPY src ./src
-RUN mvn -B -DskipTests package
+RUN mvn -B -Dmaven.test.skip=true package
 
 FROM eclipse-temurin:21-jre
 

@@ -4,6 +4,8 @@ import com.soutra.microfinance.entity.Compte;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -41,4 +43,17 @@ public interface CompteRepository extends JpaRepository<Compte, Long> {
 
 	// Liste paginee des comptes crees entre deux dates.
 	Page<Compte> findByCreatedAtBetween(LocalDateTime dateDebut, LocalDateTime dateFin, Pageable pageable);
+
+	// --- Aggregation queries for reporting ---
+
+	long countByDateOuvertureBetween(LocalDate dateDebut, LocalDate dateFin);
+
+	@Query("SELECT COALESCE(SUM(c.solde), 0) FROM Compte c")
+	BigDecimal sumSolde();
+
+	@Query("SELECT COALESCE(SUM(c.solde), 0) FROM Compte c WHERE c.agence.idAgence = :agenceId")
+	BigDecimal sumSoldeByAgence(@Param("agenceId") Long agenceId);
+
+	@Query("SELECT COUNT(c) FROM Compte c WHERE c.agence.idAgence = :agenceId AND c.typeCompte.libelle = :typeLibelle")
+	long countByAgenceAndTypeLibelle(@Param("agenceId") Long agenceId, @Param("typeLibelle") String typeLibelle);
 }

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 public class TarificationParametreServiceImpl implements TarificationParametreService {
@@ -40,5 +41,21 @@ public class TarificationParametreServiceImpl implements TarificationParametreSe
     @CacheEvict(cacheNames = "tarification-parametres", allEntries = true)
     public void invaliderCache() {
         // Invalidation explicite, utile apres mise a jour des parametres en base.
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TarificationParametre> listerTousParametres() {
+        return tarificationParametreRepository.findAllByOrderByCleParametreAsc();
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(cacheNames = "tarification-parametres", allEntries = true)
+    public TarificationParametre creerParametre(TarificationParametre parametre) {
+        if (tarificationParametreRepository.findByCleParametre(parametre.getCleParametre()).isPresent()) {
+            throw new IllegalArgumentException("Le parametre '" + parametre.getCleParametre() + "' existe deja.");
+        }
+        return tarificationParametreRepository.save(parametre);
     }
 }

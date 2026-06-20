@@ -3,6 +3,8 @@ package com.soutra.microfinance.service.parametrage;
 import com.soutra.microfinance.entity.Agence;
 import com.soutra.microfinance.repository.parametrage.AgenceRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +53,12 @@ public class AgenceServiceImpl implements AgenceService {
 	@Transactional(readOnly = true)
 	public List<Agence> listerAgencesActives() {
 		return agenceRepository.findByEstActiveTrue();
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<Agence> listerAgencesPagine(Pageable pageable) {
+		return agenceRepository.findAllByOrderByNomAsc(pageable);
 	}
 
 	@Override

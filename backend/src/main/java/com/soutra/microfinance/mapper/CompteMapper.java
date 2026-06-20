@@ -13,6 +13,7 @@ public interface CompteMapper {
     // On extrait le texte du TypeCompte
     @Mapping(source = "typeCompte.libelle", target = "typeCompte")
     @Mapping(target = "numCompte", expression = "java(masquerNumeroCompte(compte))")
+    @Mapping(source = "numCompte", target = "numCompteComplet")
     // Le statut actuel est un peu complexe à récupérer via MapStruct car c'est un historique (StatutCompte).
     // On l'ignore ici, le Controller s'en chargera si besoin !
     @Mapping(target = "statut", ignore = true)
@@ -21,6 +22,8 @@ public interface CompteMapper {
     // On dit à MapStruct d'utiliser notre méthode personnalisée (ci-dessous) pour le numéro
     @Mapping(target = "numeroCarteMasque", expression = "java(masquerNumeroCarte(carte))")
     @Mapping(target = "statut", expression = "java(carte.getStatut() ? \"ACTIF\" : \"INACTIF\")")
+    @Mapping(source = "compte.numCompte", target = "numCompte")
+    @Mapping(target = "titulaire", expression = "java(carte.getCompte() != null && carte.getCompte().getClient() != null ? carte.getCompte().getClient().getNom() + \" \" + carte.getCompte().getClient().getPrenom() : null)")
     CarteVisaResponseDTO toCarteVisaResponseDTO(CarteVisa carte);
 
     // Méthode personnalisée intégrée au Mapper

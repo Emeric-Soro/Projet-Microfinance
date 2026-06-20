@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reporting - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Reporting</div>
+            <div class="topbar-breadcrumb">Accueil / Pilotage & Audit / Reporting</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Rapports backoffice</h1>
+            <p class="page-subtitle">Rapports opérationnels, financiers, clients, crédits, caisse et BCEAO.</p>
+          </div>
+          <div class="export-buttons">
+            <button class="export-btn">CSV</button>
+            <button class="export-btn">PDF</button>
+          </div>
+        </div>
+
+        <section class="card" style="margin-bottom:20px;">
+          <div class="filter-bar">
+            <select class="form-control">
+              <option>Rapport opérationnel</option>
+              <option>Rapport financier</option>
+              <option>Rapport clients</option>
+              <option>Rapport crédits</option>
+              <option>Rapport caisse</option>
+              <option>Rapport BCEAO</option>
+            </select>
+            <input class="form-control" type="date">
+            <input class="form-control" type="date">
+            <select class="form-control">
+              <option>Toutes les agences</option>
+              <option>Agence Plateau</option>
+              <option>Agence Cocody</option>
+            </select>
+            <button class="btn btn-primary">Générer</button>
+          </div>
+        </section>
+
+        <section class="grid-3">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Catalogue des rapports</div>
+                <div class="card-subtitle">Endpoints : /api/v1/reporting/*</div>
+              </div>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Rapport</th>
+                  <th>Endpoint</th>
+                  <th>Format</th>
+                  <th>Dernière génération</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Opérationnel</td><td>/operationnel</td><td>PDF, CSV</td><td>03/06/2026 14:20</td><td><button class="btn btn-outline btn-sm">Ouvrir</button></td></tr>
+                <tr><td>Financier</td><td>/financier</td><td>PDF, XLS</td><td>03/06/2026 12:00</td><td><button class="btn btn-outline btn-sm">Ouvrir</button></td></tr>
+                <tr><td>Clients</td><td>/clients</td><td>PDF, CSV</td><td>02/06/2026 18:30</td><td><button class="btn btn-outline btn-sm">Ouvrir</button></td></tr>
+                <tr><td>Crédits</td><td>/credits</td><td>PDF, CSV</td><td>02/06/2026 18:00</td><td><button class="btn btn-outline btn-sm">Ouvrir</button></td></tr>
+                <tr><td>Caisse</td><td>/caisse</td><td>PDF</td><td>03/06/2026 13:45</td><td><button class="btn btn-outline btn-sm">Ouvrir</button></td></tr>
+                <tr><td>BCEAO</td><td>/bceao</td><td>PDF officiel</td><td>31/05/2026 23:59</td><td><button class="btn btn-outline btn-sm">Ouvrir</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <aside class="card">
+            <div class="card-title" style="margin-bottom:16px;">Rapport personnalisé</div>
+            <div class="form-group">
+              <label class="form-label">Nom du rapport</label>
+              <input class="form-control" placeholder="Ex: Suivi hebdo crédits">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Modules inclus</label>
+              <select class="form-control">
+                <option>Clients + Comptes + Crédits</option>
+                <option>Caisse uniquement</option>
+                <option>Conformité + Audit</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Format</label>
+              <select class="form-control">
+                <option>PDF</option>
+                <option>CSV</option>
+                <option>XLS</option>
+              </select>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="showToast('Rapport personnalisé généré.', 'success')">Créer le rapport</button>
+          </aside>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>

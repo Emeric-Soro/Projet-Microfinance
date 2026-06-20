@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crédits — Soutra Finance E-Banking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/portal.css">
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="portal-layout">
+    <!-- Sidebar -->
+    <aside class="portal-sidebar">
+      <div class="portal-brand">
+        <div class="brand-icon">S</div>
+        <span class="brand-name">Soutra Finance</span>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="dashboard">📊 Tableau de bord</a></li>
+        <li class="nav-item"><a href="comptes">💳 Mes Comptes</a></li>
+        <li class="nav-item"><a href="virement">💸 Virements</a></li>
+        <li class="nav-item active"><a href="credits">📈 Crédits</a></li>
+        <li class="nav-item"><a href="reclamations">✉️ Réclamations</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+          <span class="user-name" id="portalUserName">Chargement...</span>
+          <span class="user-role">Client E-Banking</span>
+        </div>
+        <a href="#" class="logout-btn" id="portalLogoutBtn">🚪</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="header-title">
+          <h2>Mes Crédits & Simulations</h2>
+          <p>Simulez vos remboursements mensuels ou soumettez un dossier de crédit en ligne.</p>
+        </div>
+      </header>
+
+      <!-- Tabs Navigation -->
+      <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchTab('simulate')">🧮 Simulateur de Crédit</button>
+        <button class="tab-btn" onclick="switchTab('apply')">📝 Demande de Prêt</button>
+        <button class="tab-btn" onclick="switchTab('list')">📈 Mes Crédits & Suivi</button>
+      </div>
+
+      <!-- Tab 1: Simulator -->
+      <div class="tab-content active" id="tabContent-simulate">
+        <div class="card">
+          <form id="simulationForm" class="mb-30">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="simMontant">Montant souhaité (FCFA) *</label>
+                <input type="number" id="simMontant" class="input-control" required placeholder="ex: 1000000" min="50000" value="1000000">
+              </div>
+              <div class="form-group">
+                <label for="simTaux">Taux d'intérêt annuel (%) *</label>
+                <input type="number" id="simTaux" class="input-control" required placeholder="ex: 12" min="1" step="0.1" value="12">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="simDuree">Durée du remboursement (Mois) *</label>
+                <input type="number" id="simDuree" class="input-control" required placeholder="ex: 12" min="1" value="12">
+              </div>
+              <div class="form-group">
+                <label for="simMethode">Méthode de calcul</label>
+                <select id="simMethode" class="input-control">
+                  <option value="DEGRESSIF">Dégressif (Annuités constantes)</option>
+                  <option value="CONSTANT">Constant (Flat Rate)</option>
+                  <option value="IN_FINE">In Fine (Remboursement final)</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-15">📊 Lancer la simulation</button>
+          </form>
+
+          <!-- Result Area -->
+          <div id="simulationResult" style="display: none;">
+            <h3 class="card-section-title">📋 Synthèse de la simulation</h3>
+            
+            <div class="simulation-summary">
+              <div class="summary-box">
+                <div class="summary-lbl">Mensualité Estimée</div>
+                <div class="summary-val" id="resMensualite">0 FCFA</div>
+              </div>
+              <div class="summary-box">
+                <div class="summary-lbl">Cumul des Intérêts</div>
+                <div class="summary-val" id="resTotalInterets">0 FCFA</div>
+              </div>
+              <div class="summary-box">
+                <div class="summary-lbl">Coût Total du Crédit</div>
+                <div class="summary-val" id="resTotalCredit">0 FCFA</div>
+              </div>
+            </div>
+
+            <h3 class="card-subsection-title">📅 Tableau d'Amortissement Prévisionnel</h3>
+            <div class="overflow-x-auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Échéance N°</th>
+                    <th>Date Prévue</th>
+                    <th class="text-right">Principal (Capital)</th>
+                    <th class="text-right">Intérêts</th>
+                    <th class="text-right">Mensualité Globale</th>
+                  </tr>
+                </thead>
+                <tbody id="simTableBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Apply for Credit -->
+      <div class="tab-content" id="tabContent-apply">
+        <div class="card">
+          <p class="subtitle mb-25">Sélectionnez une formule de crédit adaptée à votre projet et décrivez vos besoins.</p>
+          <form id="applyCreditForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="applyProduit">Formule de crédit *</label>
+                <select id="applyProduit" class="input-control" required onchange="onCreditProductChange()">
+                  <option value="MC-COMMERCE">Micro-crédit Commerce (18% - 3 à 24 mois)</option>
+                  <option value="MC-AGRICULTURE">Micro-crédit Agriculture (15% - 6 à 36 mois)</option>
+                  <option value="PRET-SALARIE">Prêt Salarié (12% - 1 à 48 mois)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="applyMontant">Montant demandé (FCFA) *</label>
+                <input type="number" id="applyMontant" class="input-control" required placeholder="ex: 1000000" min="50000">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="applyDuree">Durée souhaitée (Mois) *</label>
+                <input type="number" id="applyDuree" class="input-control" required placeholder="ex: 12" min="1">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="applyObjet">Objet / Motif détaillé de la demande *</label>
+              <textarea id="applyObjet" class="input-control h-120 resize-y" required placeholder="Décrivez le but de ce prêt et comment les fonds seront utilisés..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-15">📩 Soumettre ma demande</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tab 3: My Credits and Requests List -->
+      <div class="tab-content" id="tabContent-list">
+        <!-- Active Credits -->
+        <div class="card mb-30">
+          <div class="card-header">
+            <span class="card-title">📈 Mes crédits en cours de remboursement</span>
+          </div>
+          <div class="list-container" id="activeCreditsList">
+            <div class="no-data">
+              Aucun crédit en cours.
+            </div>
+          </div>
+        </div>
+
+        <!-- Past Requests -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">📋 Historique de mes demandes</span>
+          </div>
+          <div class="list-container" id="demandsList">
+            <div class="no-data">
+              Aucune demande soumise.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scheduleModal" class="card schedule-modal">
+        <div class="card-header">
+          <span class="card-title" id="modalTitle">Tableau d'Amortissement</span>
+          <button class="btn btn-danger btn-sm modal-close-btn" onclick="closeScheduleModal()">Fermer</button>
+        </div>
+        <div class="overflow-x-auto mt-20">
+          <table>
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Date d'échéance</th>
+                <th class="text-right">Mensualité</th>
+                <th class="text-right">Capital</th>
+                <th class="text-right">Intérêts</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody id="modalTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div id="modalOverlay" class="modal-overlay" onclick="closeScheduleModal()"></div>
+
+    </main>
+  </div>
+
+  <script src="../assets/js/portal-app.js?v=1.0.1"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initCreditsPage();
+
+      // Simulation Form submit
+      document.getElementById('simulationForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        var montant = parseFloat(document.getElementById('simMontant').value);
+        var taux = parseFloat(document.getElementById('simTaux').value);
+        var duree = parseInt(document.getElementById('simDuree').value);
+        var methode = document.getElementById('simMethode').value;
+
+        if (isNaN(montant) || isNaN(taux) || isNaN(duree) || montant <= 0 || taux <= 0 || duree <= 0) {
+          showToast('Veuillez renseigner des paramètres valides', 'warning');
+          return;
+        }
+
+        try {
+          var res = await window.ClientCredits.simuler(montant, taux, duree, methode);
+          if (res.ok) {
+            var echeances = await res.json();
+            displaySimulationResult(echeances, montant);
+          } else {
+            showToast('Erreur lors du calcul de la simulation.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Erreur technique.', 'error');
+        }
+      });
+
+      // Credit application submit
+      document.getElementById('applyCreditForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        var codeProduit = document.getElementById('applyProduit').value;
+        var montant = parseFloat(document.getElementById('applyMontant').value);
+        var duree = parseInt(document.getElementById('applyDuree').value);
+        var objet = document.getElementById('applyObjet').value.trim();
+
+        if (isNaN(montant) || isNaN(duree) || montant <= 0 || duree <= 0 || !objet) {
+          showToast('Veuillez remplir correctement tous les champs.', 'warning');
+          return;
+        }
+
+        try {
+          var res = await window.ClientCredits.soumettreDemande(codeProduit, montant, duree, objet);
+          if (res.status === 201) {
+            showToast('Votre demande de crédit a été soumise avec succès !', 'success');
+            document.getElementById('applyCreditForm').reset();
+            switchTab('list');
+            loadCreditsAndDemands();
+          } else {
+            showToast('Refus ou erreur lors de la soumission de la demande.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Erreur technique.', 'error');
+        }
+      });
+    });
+
+    function initCreditsPage() {
+      onCreditProductChange();
+      loadCreditsAndDemands();
+    }
+
+    function onCreditProductChange() {
+      var prod = document.getElementById('applyProduit').value;
+      var montantInput = document.getElementById('applyMontant');
+      var dureeInput = document.getElementById('applyDuree');
+
+      if (prod === 'MC-COMMERCE') {
+        montantInput.min = 50000;
+        montantInput.max = 5000000;
+        montantInput.value = 1000000;
+        dureeInput.min = 3;
+        dureeInput.max = 24;
+        dureeInput.value = 12;
+      } else if (prod === 'MC-AGRICULTURE') {
+        montantInput.min = 100000;
+        montantInput.max = 10000000;
+        montantInput.value = 2000000;
+        dureeInput.min = 6;
+        dureeInput.max = 36;
+        dureeInput.value = 18;
+      } else if (prod === 'PRET-SALARIE') {
+        montantInput.min = 100000;
+        montantInput.max = 20000000;
+        montantInput.value = 5000000;
+        dureeInput.min = 1;
+        dureeInput.max = 48;
+        dureeInput.value = 24;
+      }
+    }
+
+    function displaySimulationResult(echeances, capitalInitial) {
+      var tbody = document.getElementById('simTableBody');
+      tbody.innerHTML = '';
+
+      var cumulInterets = 0;
+      var cumulTotal = 0;
+      var mensualiteBase = echeances.length > 0 ? echeances[0].montant : 0;
+
+      echeances.forEach(function (ech) {
+        cumulInterets += ech.interets;
+        cumulTotal += ech.montant;
+
+        var row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${ech.numero}</td>
+          <td>${formatDate(ech.dateEcheance)}</td>
+          <td class="text-right">${formatCurrency(ech.principal)}</td>
+          <td class="text-right">${formatCurrency(ech.interets)}</td>
+          <td class="text-right schedule-table-cell-bold">${formatCurrency(ech.montant)}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      document.getElementById('resMensualite').textContent = formatCurrency(mensualiteBase);
+      document.getElementById('resTotalInterets').textContent = formatCurrency(cumulInterets);
+      document.getElementById('resTotalCredit').textContent = formatCurrency(cumulTotal);
+
+      document.getElementById('simulationResult').style.display = 'block';
+    }
+
+    async function loadCreditsAndDemands() {
+      try {
+        // Load active credits
+        var creditsRes = await window.ClientCredits.lister();
+        if (creditsRes.ok) {
+          var credPage = await creditsRes.json();
+          var list = credPage.content || [];
+          var credListDiv = document.getElementById('activeCreditsList');
+          credListDiv.innerHTML = '';
+
+          if (list.length === 0) {
+            credListDiv.innerHTML = `
+              <div class="no-data">
+                Aucun crédit actif en cours de remboursement.
+              </div>`;
+          } else {
+            list.forEach(function (c) {
+              var div = document.createElement('div');
+              div.className = 'credit-card';
+              div.innerHTML = `
+                <div>
+                  <div class="credit-title">Crédit Réf : ${c.reference}</div>
+                  <div class="credit-meta">Montant octroyé : ${formatCurrency(c.montantAccorde)} (${c.dureeMois} mois à ${c.taux}%)</div>
+                  <div class="credit-meta">Décaissement : ${formatDate(c.dateDecaissement)}</div>
+                </div>
+                <div class="credit-header-actions">
+                  <div>
+                    <div class="credit-label-muted">CAPITAL RESTANT DÛ</div>
+                    <div class="credit-value-accent">${formatCurrency(c.montantRestantDu)}</div>
+                  </div>
+                  <button class="btn btn-secondary btn-sm" onclick="viewCreditSchedule(${c.idCredit})">🗓️ Échéancier</button>
+                </div>
+              `;
+              credListDiv.appendChild(div);
+            });
+          }
+        }
+
+        // Load demands list
+        var demandsRes = await window.ClientCredits.listerDemandes();
+        if (demandsRes.ok) {
+          var demPage = await demandsRes.json();
+          var list = demPage.content || [];
+          var demListDiv = document.getElementById('demandsList');
+          demListDiv.innerHTML = '';
+
+          if (list.length === 0) {
+            demListDiv.innerHTML = `
+              <div class="no-data">
+                Aucune demande de prêt soumise.
+              </div>`;
+          } else {
+            list.forEach(function (d) {
+              var badgeColor = 'badge-warning';
+              var statut = d.statut;
+              if (statut === 'APPROUVEE' || statut === 'ACCEPTEE' || statut === 'ACTIVE') badgeColor = 'badge-success';
+              else if (statut === 'REJETEE') badgeColor = 'badge-danger';
+              
+              var div = document.createElement('div');
+              div.className = 'list-item';
+              div.innerHTML = `
+                <div>
+                  <div class="demand-title">Demande Réf : ${d.reference}</div>
+                  <div class="demand-meta">
+                    Montant demandé : ${formatCurrency(d.montantAccorde)} (${d.dureeMois} mois)
+                  </div>
+                </div>
+                <div>
+                  <span class="badge ${badgeColor}">${statut}</span>
+                </div>
+              `;
+              demListDiv.appendChild(div);
+            });
+          }
+        }
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function viewCreditSchedule(idCredit) {
+      try {
+        var res = await window.ClientCredits.echeancier(idCredit);
+        if (res.ok) {
+          var echeances = await res.json();
+          var tbody = document.getElementById('modalTableBody');
+          tbody.innerHTML = '';
+
+          echeances.forEach(function (ech) {
+            var row = document.createElement('tr');
+            var isPaid = ech.statut === 'PAYEE';
+            row.innerHTML = `
+              <td>${ech.numero}</td>
+              <td>${formatDate(ech.dateEcheance)}</td>
+              <td class="text-right schedule-table-cell-bold">${formatCurrency(ech.montant)}</td>
+              <td class="text-right">${formatCurrency(ech.principal)}</td>
+              <td class="text-right">${formatCurrency(ech.interets)}</td>
+              <td><span class="badge ${isPaid ? 'badge-success' : 'badge-warning'}">${ech.statut}</span></td>
+            `;
+            tbody.appendChild(row);
+          });
+
+          document.getElementById('scheduleModal').style.display = 'block';
+          document.getElementById('modalOverlay').style.display = 'block';
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Impossible de récupérer l\'échéancier du crédit', 'error');
+      }
+    }
+
+    function closeScheduleModal() {
+      document.getElementById('scheduleModal').style.display = 'none';
+      document.getElementById('modalOverlay').style.display = 'none';
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+      var btn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+      if (btn) btn.classList.add('active');
+
+      document.getElementById('tabContent-' + tabId).classList.add('active');
+    }
+
+    function formatCurrency(amount) {
+      if (amount === undefined || amount === null) return '0 FCFA';
+      return Number(amount).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      var d = new Date(dateStr);
+      return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+  </script>
+</body>
+</html>

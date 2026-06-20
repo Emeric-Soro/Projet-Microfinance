@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -49,4 +50,12 @@ public class Notification extends BaseAuditEntity {
 	@JoinColumn(name = "id_client", nullable = false)
 	// Client destinataire de la notification.
 	private Client client;
+
+	@Column(nullable = false)
+	// Indicateur de lecture par le client (false tant que le client n'a pas consulte la notification).
+	private Boolean lu = Boolean.FALSE;
+
+	@Column(name = "lue_le")
+	// Horodatage de la premiere lecture par le client (null si jamais lue).
+	private LocalDateTime lueLe;
 }

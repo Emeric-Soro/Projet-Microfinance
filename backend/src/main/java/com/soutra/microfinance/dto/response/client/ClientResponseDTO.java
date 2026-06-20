@@ -34,4 +34,5 @@ public class ClientResponseDTO {
     private String niveauRisque;
     private String statutKyc;
     private Boolean kycComplet;
+    private LocalDate dateInscription;
 }

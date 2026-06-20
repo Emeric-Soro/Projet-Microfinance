@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/statistiques")
+@RequestMapping("/api/v1/statistiques")
 @Tag(name = "Statistiques", description = "Tableau de bord et KPIs direction")
 public class StatistiqueController {
 

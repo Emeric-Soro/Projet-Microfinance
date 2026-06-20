@@ -33,6 +33,12 @@ public class PublicApiRateLimitProperties {
     @Valid
     private Endpoint login = new Endpoint(10, Duration.ofMinutes(1));
 
+    @Valid
+    private Endpoint creditSimulation = new Endpoint(20, Duration.ofMinutes(1));
+
+    @Valid
+    private Endpoint authRecovery = new Endpoint(5, Duration.ofMinutes(1));
+
     @Getter
     @Setter
     public static class Endpoint {

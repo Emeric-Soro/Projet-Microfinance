@@ -16,7 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "transaction_comptable")
+@Table(name = "soutra_transaction_comptable")
 // Ecriture comptable SYSCOHADA : entete d'une operation au grand livre general.
 public class TransactionComptable extends BaseAuditEntity {
 

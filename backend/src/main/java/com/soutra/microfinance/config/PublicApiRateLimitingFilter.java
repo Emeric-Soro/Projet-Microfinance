@@ -78,17 +78,35 @@ public class PublicApiRateLimitingFilter extends OncePerRequestFilter {
 
     private Optional<EndpointDescriptor> resolveEndpoint(String requestUri) {
         return switch (requestUri) {
-            case "/api/clients" -> Optional.of(new EndpointDescriptor(
+            case "/api/v1/clients" -> Optional.of(new EndpointDescriptor(
                     "client-signup",
                     properties.getClientSignup()
             ));
-            case "/api/utilisateurs" -> Optional.of(new EndpointDescriptor(
+            case "/api/v1/utilisateurs" -> Optional.of(new EndpointDescriptor(
                     "user-signup",
                     properties.getUserSignup()
             ));
-            case "/api/utilisateurs/login" -> Optional.of(new EndpointDescriptor(
+            case "/api/v1/utilisateurs/login",
+                 "/api/v1/auth/login",
+                 "/api/v1/mobile/auth/login",
+                 "/api/v1/utilisateurs/login/otp",
+                 "/api/v1/mobile/auth/login/otp" -> Optional.of(new EndpointDescriptor(
                     "login",
                     properties.getLogin()
+            ));
+            case "/api/v1/credits/simulation",
+                 "/api/v1/mobile/credits/simulation" -> Optional.of(new EndpointDescriptor(
+                    "credit-simulation",
+                    properties.getCreditSimulation()
+            ));
+            case "/api/v1/auth/refresh",
+                 "/api/v1/mobile/auth/refresh-token",
+                 "/api/v1/mobile/auth/mot-de-passe/oublie",
+                 "/api/v1/mobile/auth/mot-de-passe/reinitialiser",
+                 "/api/v1/auth/mot-de-passe/oublie",
+                 "/api/v1/auth/mot-de-passe/reinitialiser" -> Optional.of(new EndpointDescriptor(
+                    "auth-recovery",
+                    properties.getAuthRecovery()
             ));
             default -> Optional.empty();
         };

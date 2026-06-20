@@ -3,6 +3,7 @@ package com.soutra.microfinance.api.controller.operation;
 import com.soutra.microfinance.audit.AuditLog;
 import com.soutra.microfinance.dto.request.operation.FermetureCaisseRequestDTO;
 import com.soutra.microfinance.dto.request.operation.OuvertureCaisseRequestDTO;
+import com.soutra.microfinance.dto.response.operation.CaisseResponseDTO;
 import com.soutra.microfinance.entity.Caisse;
 import com.soutra.microfinance.entity.Utilisateur;
 import com.soutra.microfinance.service.operation.CaisseService;
@@ -22,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/caisses")
+@RequestMapping("/api/v1/caisses")
 @Tag(name = "Caisses", description = "Gestion des tiroirs-caisses guichetier")
 public class CaisseController {
 
@@ -41,13 +42,13 @@ public class CaisseController {
     @PostMapping("/ouverture")
     @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
     @AuditLog(action = "CAISSE_OPEN", resource = "CAISSE")
-    public ResponseEntity<Caisse> ouvrirCaisse(
+    public ResponseEntity<CaisseResponseDTO> ouvrirCaisse(
             @Valid @RequestBody OuvertureCaisseRequestDTO dto,
             Authentication authentication
     ) {
         Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
         Caisse caisse = caisseService.ouvrirCaisse(utilisateur.getIdUser(), dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(caisse);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponseDTO(caisse));
     }
 
     @Operation(summary = "Fermer une caisse", description = "Ferme la caisse ouverte et calcule l'ecart entre le solde informatique et le solde physique")
@@ -58,13 +59,13 @@ public class CaisseController {
     @PostMapping("/fermeture")
     @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
     @AuditLog(action = "CAISSE_CLOSE", resource = "CAISSE")
-    public ResponseEntity<Caisse> fermerCaisse(
+    public ResponseEntity<CaisseResponseDTO> fermerCaisse(
             @Valid @RequestBody FermetureCaisseRequestDTO dto,
             Authentication authentication
     ) {
         Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
         Caisse caisse = caisseService.fermerCaisse(utilisateur.getIdUser(), dto);
-        return ResponseEntity.ok(caisse);
+        return ResponseEntity.ok(toResponseDTO(caisse));
     }
 
     @Operation(summary = "Consulter l'etat de la caisse", description = "Retourne le solde actuel de la caisse du guichetier connecte")
@@ -74,9 +75,35 @@ public class CaisseController {
     })
     @GetMapping("/etat")
     @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
-    public ResponseEntity<Caisse> etatCaisse(Authentication authentication) {
+    public ResponseEntity<CaisseResponseDTO> etatCaisse(Authentication authentication) {
         Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
         Caisse caisse = caisseService.consulterCaisseOuverte(utilisateur.getIdUser());
-        return ResponseEntity.ok(caisse);
+        return ResponseEntity.ok(toResponseDTO(caisse));
+    }
+
+    private CaisseResponseDTO toResponseDTO(Caisse caisse) {
+        Utilisateur guichetier = caisse.getUtilisateur();
+        Long agenceId = null;
+        String agenceNom = null;
+        if (guichetier.getAgence() != null) {
+            agenceId = guichetier.getAgence().getIdAgence();
+            agenceNom = guichetier.getAgence().getNom();
+        }
+
+        CaisseResponseDTO dto = new CaisseResponseDTO();
+        dto.setId(caisse.getIdCaisse());
+        dto.setCodeGuichet(guichetier.getLogin());
+        dto.setFondInitial(caisse.getSoldeOuverture());
+        dto.setSoldeActuel(caisse.getSoldeCourant());
+        dto.setEcartFermeture(caisse.getEcartFermeture());
+        dto.setDateOuverture(caisse.getDateOuverture());
+        dto.setDateFermeture(caisse.getDateFermeture());
+        dto.setStatut(caisse.getStatut() != null ? caisse.getStatut().name() : null);
+        dto.setAgenceId(agenceId);
+        dto.setAgenceNom(agenceNom);
+        dto.setGuichetierId(guichetier.getIdUser());
+        dto.setGuichetierNom(guichetier.getLogin());
+        dto.setCreatedAt(caisse.getCreatedAt());
+        return dto;
     }
 }

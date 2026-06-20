@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Versement - MicroFinance Soutra</title>
+  <meta name="description" content="Effectuer un versement sur un compte client via le backoffice Soutra Finance.">
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Effectuer un versement</div>
+            <div class="topbar-breadcrumb">Caisse &amp; Opérations / Versement</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn" title="Notifications">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <!-- ALERTE CAISSE FERMEE -->
+        <div id="caisseClosedAlert" style="display: none; background: #FFEBEE; border: 1px solid #FFCDD2; border-radius: 12px; padding: 16px 20px; color: #c62828; font-size: 14px; font-weight: 600; margin-bottom: 20px; align-items: center; gap: 12px;">
+          <span>🔒</span>
+          <div>
+            <div>Votre caisse est fermée.</div>
+            <div style="font-size: 12px; font-weight: 400; color: #e57373; margin-top: 2px;">Vous devez ouvrir votre caisse depuis le menu <a href="caisse.html" style="color: inherit; text-decoration: underline; font-weight: 600;">Gestion de Caisse</a> avant de pouvoir enregistrer des opérations.</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 360px; gap: 24px; align-items: start;">
+
+          <!-- ═══ FORMULAIRE PRINCIPAL ═══ -->
+          <div class="card">
+            <div class="card-title" style="font-size: 18px; margin-bottom: 24px;">Nouveau versement</div>
+
+            <!-- Recherche compte -->
+            <div class="form-group">
+              <label class="form-label" for="accountNumber">N° de compte *</label>
+              <div style="display: flex; gap: 10px;">
+                <input type="text" class="form-control" placeholder="Ex: CPT-2024-001234" id="accountNumber"
+                       autocomplete="off" oninput="onAccountInput()">
+                <button class="btn btn-outline" id="lookupBtn" onclick="lookupAccount()" style="white-space:nowrap;">
+                  Rechercher
+                </button>
+              </div>
+              <!-- Carte compte trouvé -->
+              <div id="accountInfo" style="margin-top: 10px; display: none;">
+                <div style="background: #F0F6FA; border-radius: 10px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #C9DFE8;">
+                  <div>
+                    <div style="font-weight: 700; font-size: 14px; color: #084355;" id="accountHolder">—</div>
+                    <div style="font-size: 11px; color: #4A7A8A;" id="accountType">—</div>
+                    <div style="font-size: 11px; color: #4A7A8A; margin-top: 2px;" id="accountNum">—</div>
+                  </div>
+                  <div style="text-align: right;">
+                    <div style="font-size: 11px; color: #4A7A8A;">Solde actuel</div>
+                    <div style="font-weight: 700; font-size: 16px; color: #084355;" id="accountBalance">—</div>
+                    <div id="accountStatusBadge" style="margin-top: 4px;"></div>
+                  </div>
+                </div>
+              </div>
+              <!-- Alerte compte non trouvé -->
+              <div id="accountError" style="margin-top: 8px; display: none; color: #c62828; font-size: 12px;">
+                ⚠ Compte introuvable. Vérifiez le numéro et réessayez.
+              </div>
+            </div>
+
+            <!-- Montant -->
+            <div class="form-group">
+              <label class="form-label" for="amountInput">Montant *</label>
+              <input type="number" class="amount-input-large" placeholder="0" id="amountInput"
+                     min="1" oninput="updatePreview()">
+              <div style="font-size: 12px; color: #4A7A8A; margin-top: 8px; text-align: center;">
+                Plafond journalier restant : <strong style="color: #084355;" id="dailyLimit">—</strong>
+              </div>
+            </div>
+
+            <!-- Libellé optionnel -->
+            <div class="form-group">
+              <label class="form-label" for="libelleInput">Libellé (optionnel)</label>
+              <input type="text" class="form-control" placeholder="Ex: Dépôt espèces - marché mensuel"
+                     id="libelleInput" maxlength="120">
+            </div>
+
+            <!-- Prévisualisation nouveau solde -->
+            <div id="soldePreview" style="display: none; background: linear-gradient(135deg, #084355 0%, #0a5c72 100%); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; color: #fff;">
+              <div style="font-size: 12px; opacity: 0.8; margin-bottom: 4px;">Nouveau solde estimé</div>
+              <div style="font-size: 22px; font-weight: 800;" id="soldePreviewVal">—</div>
+            </div>
+
+            <button class="btn btn-primary btn-lg btn-block" id="submitBtn" onclick="validateDeposit()" style="margin-top: 4px;" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              Valider le versement
+            </button>
+          </div>
+
+          <!-- ═══ PANNEAU DROITE ═══ -->
+          <div>
+            <!-- Montants rapides -->
+            <div class="card" style="margin-bottom: 16px;">
+              <div class="card-title" style="margin-bottom: 16px;">Montants rapides</div>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                <button class="btn btn-outline btn-sm" onclick="setAmount(50000)">50 000</button>
+                <button class="btn btn-outline btn-sm" onclick="setAmount(100000)">100 000</button>
+                <button class="btn btn-outline btn-sm" onclick="setAmount(200000)">200 000</button>
+                <button class="btn btn-outline btn-sm" onclick="setAmount(500000)">500 000</button>
+                <button class="btn btn-outline btn-sm" onclick="setAmount(1000000)">1 000 000</button>
+                <button class="btn btn-outline btn-sm" onclick="setAmount(2000000)">2 000 000</button>
+              </div>
+            </div>
+
+            <!-- Dernières opérations sur ce compte -->
+            <div class="card">
+              <div class="card-title" style="margin-bottom: 14px;">Dernières opérations</div>
+              <div id="recentOps" style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="color: #4A7A8A; font-size: 12px; text-align: center; padding: 16px 0;">
+                  Recherchez un compte pour afficher son historique.
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /grid -->
+      </div><!-- /content-area -->
+    </div><!-- /main-content -->
+  </div><!-- /app-layout -->
+
+  <!-- ═══ MODAL : Confirmation ═══ -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Confirmer le versement</div>
+        <button class="modal-close" onclick="closeModal('confirmModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="info-row">
+          <span class="info-label">Compte</span>
+          <span class="info-value" id="confirmAccount">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Titulaire</span>
+          <span class="info-value" id="confirmHolder">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Montant versé</span>
+          <span class="info-value" id="confirmAmount" style="font-size: 18px; color: #084355; font-weight: 800;">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Solde actuel</span>
+          <span class="info-value" id="confirmCurrentBalance">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Nouveau solde estimé</span>
+          <span class="info-value" id="confirmNewBalance">—</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('confirmModal')">Annuler</button>
+        <button class="btn btn-primary" id="confirmBtn" onclick="confirmDeposit()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Confirmer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODAL : Reçu ═══ -->
+  <div class="modal-overlay" id="receiptModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="receiptTitle">Reçu de versement</div>
+        <button class="modal-close" onclick="closeModal('receiptModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="receiptContent" style="text-align: center; padding: 8px 0;">
+          <!-- Rempli dynamiquement -->
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: center;">
+        <button class="btn btn-outline" onclick="closeModal('receiptModal')">Fermer</button>
+        <button class="btn btn-primary" onclick="printReceipt()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Imprimer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ── État local ─────────────────────────────── */
+    var _compte = null; // CompteResponseDTO courant
+
+    /* ── Utilitaires ────────────────────────────── */
+    function fmt(n) {
+      return Number(n || 0).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function currentUser() {
+      return window.SF ? window.SF.getUser() : null;
+    }
+
+    /* ── Recherche compte ───────────────────────── */
+    function onAccountInput() {
+      // Réinitialise l'état si l'utilisateur retape
+      _compte = null;
+      document.getElementById('accountInfo').style.display = 'none';
+      document.getElementById('accountError').style.display = 'none';
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('soldePreview').style.display = 'none';
+      renderRecentOps(null);
+    }
+
+    async function lookupAccount() {
+      var numCompte = document.getElementById('accountNumber').value.trim();
+      if (!numCompte) {
+        showToast('Saisissez un numéro de compte.', 'warning');
+        return;
+      }
+      document.getElementById('accountError').style.display = 'none';
+      document.getElementById('lookupBtn').disabled = true;
+      document.getElementById('lookupBtn').textContent = '…';
+
+      try {
+        var res = await Comptes.obtenir(numCompte);
+        if (!res || !res.ok) {
+          document.getElementById('accountInfo').style.display = 'none';
+          document.getElementById('accountError').style.display = 'block';
+          _compte = null;
+          document.getElementById('submitBtn').disabled = true;
+          return;
+        }
+        var data = await res.json();
+        _compte = data;
+
+        // Affiche la carte compte
+        document.getElementById('accountHolder').textContent =
+          (data.prenomClient || '') + ' ' + (data.nomClient || data.titulaire || '—');
+        document.getElementById('accountType').textContent = data.typeCompte || '—';
+        document.getElementById('accountNum').textContent = data.numCompte || numCompte;
+        document.getElementById('accountBalance').textContent = fmt(data.solde);
+        var badgeEl = document.getElementById('accountStatusBadge');
+        badgeEl.innerHTML = '';
+        if (data.statut) {
+          var span = document.createElement('span');
+          span.className = 'badge' + (data.statut === 'ACTIF' ? ' badge-success' : ' badge-warning');
+          span.textContent = data.statut;
+          badgeEl.appendChild(span);
+        }
+        document.getElementById('accountInfo').style.display = 'block';
+        document.getElementById('accountError').style.display = 'none';
+
+        // Active le bouton valider si un montant est déjà saisi
+        updatePreview();
+        // Charge les dernières opérations
+        loadRecentOps(data.numCompte || numCompte);
+      } catch (e) {
+        showToast('Erreur lors de la recherche du compte : ' + e.message, 'error');
+      } finally {
+        document.getElementById('lookupBtn').disabled = false;
+        document.getElementById('lookupBtn').textContent = 'Rechercher';
+      }
+    }
+
+    /* ── Historique récent ──────────────────────── */
+    async function loadRecentOps(numCompte) {
+      renderRecentOps('loading');
+      try {
+        var res = await Transactions.historiqueCompte(numCompte, 0, 5);
+        if (!res || !res.ok) { renderRecentOps(null); return; }
+        var page = await res.json();
+        renderRecentOps(page.content || []);
+      } catch (_) {
+        renderRecentOps(null);
+      }
+    }
+
+    function renderRecentOps(data) {
+      var el = document.getElementById('recentOps');
+      if (!data) {
+        el.innerHTML = '<div style="color:#4A7A8A;font-size:12px;text-align:center;padding:16px 0;">Recherchez un compte pour afficher son historique.</div>';
+        return;
+      }
+      if (data === 'loading') {
+        el.innerHTML = '<div style="color:#4A7A8A;font-size:12px;text-align:center;padding:16px 0;">Chargement…</div>';
+        return;
+      }
+      if (!data.length) {
+        el.innerHTML = '<div style="color:#4A7A8A;font-size:12px;text-align:center;padding:16px 0;">Aucune opération récente.</div>';
+        return;
+      }
+      el.innerHTML = data.map(function(op) {
+        var isCredit = (op.sensEcriture || op.sens || '').toUpperCase() === 'CREDIT';
+        var color = isCredit ? '#2E7D32' : '#c62828';
+        var sign  = isCredit ? '+' : '-';
+        var label = op.libelleTypeTransaction || op.typeOperation || '—';
+        var date  = op.dateHeure ? new Date(op.dateHeure).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—';
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #C9DFE8;">'
+          + '<div><div style="font-size:13px;font-weight:600;">' + label + '</div>'
+          + '<div style="font-size:11px;color:#4A7A8A;">' + date + '</div></div>'
+          + '<div style="font-weight:700;color:' + color + ';">' + sign + fmt(op.montant) + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    /* ── Montants rapides & prévisualisation ─────── */
+    function setAmount(amount) {
+      document.getElementById('amountInput').value = amount;
+      updatePreview();
+    }
+
+    function updatePreview() {
+      var amount = parseFloat(document.getElementById('amountInput').value) || 0;
+      var canSubmit = !!_compte && amount > 0;
+      document.getElementById('submitBtn').disabled = !canSubmit;
+
+      if (canSubmit) {
+        var newBal = (parseFloat(_compte.solde) || 0) + amount;
+        document.getElementById('soldePreviewVal').textContent = fmt(newBal);
+        document.getElementById('soldePreview').style.display = 'block';
+        // Plafond fictif 3 500 000
+        var remaining = Math.max(0, 3500000 - amount);
+        document.getElementById('dailyLimit').textContent = fmt(remaining);
+      } else {
+        document.getElementById('soldePreview').style.display = 'none';
+        document.getElementById('dailyLimit').textContent = '—';
+      }
+    }
+
+    /* ── Validation → ouvre la modal de confirmation ── */
+    function validateDeposit() {
+      if (!_compte) { showToast('Sélectionnez un compte valide.', 'warning'); return; }
+      var amount = parseFloat(document.getElementById('amountInput').value);
+      if (!amount || amount <= 0) { showToast('Saisissez un montant valide.', 'error'); return; }
+
+      var titulaire = document.getElementById('accountHolder').textContent;
+      var currentBal = parseFloat(_compte.solde) || 0;
+
+      document.getElementById('confirmAccount').textContent = _compte.numCompte;
+      document.getElementById('confirmHolder').textContent = titulaire;
+      document.getElementById('confirmAmount').textContent = fmt(amount);
+      document.getElementById('confirmCurrentBalance').textContent = fmt(currentBal);
+      document.getElementById('confirmNewBalance').textContent = fmt(currentBal + amount);
+      openModal('confirmModal');
+    }
+
+    /* ── Confirmation → appel API ────────────────── */
+    async function confirmDeposit() {
+      var amount = parseFloat(document.getElementById('amountInput').value);
+      var numCompte = _compte.numCompteComplet || _compte.numCompte;
+      var user = currentUser();
+
+      if (!user || !user.idUser) {
+        showToast('Session expirée. Reconnectez-vous.', 'error');
+        return;
+      }
+
+      var btn = document.getElementById('confirmBtn');
+      btn.disabled = true;
+      btn.textContent = 'En cours…';
+
+      try {
+        var res = await Transactions.depot(numCompte, amount, user.idUser);
+        closeModal('confirmModal');
+
+        if (!res) return; // 401 géré par apiFetch
+
+        if (res.status === 201 || res.status === 202) {
+          var recu = await res.json();
+          var enAttente = res.status === 202;
+          showReceipt(recu, enAttente, amount, numCompte);
+          resetForm();
+        } else {
+          var err = await res.json().catch(function() { return {}; });
+          showToast('Erreur : ' + (err.message || err.detail || 'Versement refusé.'), 'error');
+        }
+      } catch (e) {
+        showToast('Erreur réseau : ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Confirmer';
+      }
+    }
+
+    /* ── Affichage du reçu ───────────────────────── */
+    function showReceipt(recu, enAttente, montantSaisi, numCompte) {
+      var titre = enAttente ? 'Versement en attente de validation' : 'Versement effectué ✔';
+      document.getElementById('receiptTitle').textContent = titre;
+
+      var html = '';
+      if (enAttente) {
+        html += '<div style="background:#FFF8E1;border:1px solid #F59E0B;border-radius:10px;padding:14px;margin-bottom:18px;font-size:13px;color:#92400E;">'
+              + '⏳ Ce versement dépasse le seuil de validation superviseur.<br>Il sera exécuté après approbation dans Validation 4-eyes.'
+              + '</div>';
+      }
+
+      html += '<div style="background:linear-gradient(135deg,#084355 0%,#0a5c72 100%);border-radius:14px;padding:24px;margin-bottom:20px;color:#fff;">'
+            + '<div style="font-size:12px;opacity:0.7;margin-bottom:6px;">Montant versé</div>'
+            + '<div style="font-size:32px;font-weight:800;">' + fmt(montantSaisi) + '</div>'
+            + '</div>';
+
+      html += '<div style="text-align:left;display:flex;flex-direction:column;gap:10px;">'
+            + row('Référence', recu.referenceUnique || '—')
+            + row('Compte', numCompte)
+            + row('Statut', enAttente ? '⏳ EN ATTENTE' : '✔ EXÉCUTÉ')
+            + row('Date', recu.dateHeure ? new Date(recu.dateHeure).toLocaleString('fr-FR') : new Date().toLocaleString('fr-FR'))
+            + row('Frais', fmt(recu.frais || 0))
+            + '</div>';
+
+      document.getElementById('receiptContent').innerHTML = html;
+      openModal('receiptModal');
+
+      if (!enAttente) {
+        showToast('Versement de ' + fmt(montantSaisi) + ' enregistré avec succès.', 'success');
+      } else {
+        showToast('Versement soumis — en attente de validation superviseur.', 'warning');
+      }
+    }
+
+    function row(label, value) {
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #C9DFE8;">'
+           + '<span style="font-size:13px;color:#4A7A8A;">' + label + '</span>'
+           + '<span style="font-size:13px;font-weight:700;color:#084355;">' + value + '</span>'
+           + '</div>';
+    }
+
+    /* ── Impression ─────────────────────────────── */
+    function printReceipt() {
+      window.print();
+    }
+
+    /* ── Réinitialiser le formulaire ─────────────── */
+    function resetForm() {
+      _compte = null;
+      document.getElementById('accountNumber').value = '';
+      document.getElementById('amountInput').value = '';
+      document.getElementById('libelleInput').value = '';
+      document.getElementById('accountInfo').style.display = 'none';
+      document.getElementById('accountError').style.display = 'none';
+      document.getElementById('soldePreview').style.display = 'none';
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('dailyLimit').textContent = '—';
+      renderRecentOps(null);
+      checkCaisse();
+    }
+
+    async function checkCaisse() {
+      try {
+        const res = await Caisses.etat();
+        if (res && res.status === 200) {
+          const data = await res.json();
+          if (data && data.statut === 'OUVERTE') {
+            document.getElementById('caisseClosedAlert').style.display = 'none';
+            document.getElementById('accountNumber').disabled = false;
+            document.getElementById('lookupBtn').disabled = false;
+            document.getElementById('amountInput').disabled = false;
+            document.getElementById('libelleInput').disabled = false;
+            return;
+          }
+        }
+      } catch (e) {
+        console.error('Error checking caisse state:', e);
+      }
+      document.getElementById('caisseClosedAlert').style.display = 'flex';
+      document.getElementById('accountNumber').disabled = true;
+      document.getElementById('lookupBtn').disabled = true;
+      document.getElementById('amountInput').disabled = true;
+      document.getElementById('libelleInput').disabled = true;
+      document.getElementById('submitBtn').disabled = true;
+    }
+
+    document.addEventListener('DOMContentLoaded', checkCaisse);
+  </script>
+</body>
+</html>

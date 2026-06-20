@@ -8,11 +8,14 @@ import com.soutra.microfinance.entity.StatutCompte;
 import com.soutra.microfinance.entity.StatutKycClient;
 import com.soutra.microfinance.entity.TypeCompte;
 import com.soutra.microfinance.repository.client.ClientRepository;
+import com.soutra.microfinance.repository.client.UtilisateurRepository;
 import com.soutra.microfinance.repository.compte.CompteRepository;
 import com.soutra.microfinance.repository.compte.StatutCompteRepository;
 import com.soutra.microfinance.repository.compte.TypeCompteRepository;
 import org.springframework.beans.factory.annotation.Value;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,17 +35,20 @@ public class CompteServiceImpl implements CompteService {
     private final ClientRepository clientRepository;
     private final TypeCompteRepository typeCompteRepository;
     private final StatutCompteRepository statutCompteRepository;
+    private final UtilisateurRepository utilisateurRepository;
 
     public CompteServiceImpl(
             CompteRepository compteRepository,
             ClientRepository clientRepository,
             TypeCompteRepository typeCompteRepository,
-            StatutCompteRepository statutCompteRepository
+            StatutCompteRepository statutCompteRepository,
+            UtilisateurRepository utilisateurRepository
     ) {
         this.compteRepository = compteRepository;
         this.clientRepository = clientRepository;
         this.typeCompteRepository = typeCompteRepository;
         this.statutCompteRepository = statutCompteRepository;
+        this.utilisateurRepository = utilisateurRepository;
     }
 
     @Override
@@ -54,6 +60,7 @@ public class CompteServiceImpl implements CompteService {
         if (codeTypeCompte == null || codeTypeCompte.isBlank()) {
             throw new IllegalArgumentException("Le type de compte est obligatoire");
         }
+        // Validation du montant : doit être positif pour que faireDepotInitial puisse l'exécuter
         if (depotInitial == null || depotInitial.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Le depot initial doit etre strictement positif");
         }
@@ -72,10 +79,26 @@ public class CompteServiceImpl implements CompteService {
         compte.setClient(client);
         compte.setTypeCompte(typeCompte);
         compte.setDateOuverture(LocalDate.now());
-        compte.setSolde(depotInitial);
+        // Le solde est initialisé à zéro : il sera crédité par faireDepotInitial
+        // via une vraie Transaction comptable (LigneEcriture tracée).
+        compte.setSolde(BigDecimal.ZERO);
         compte.setDevise(defaultCurrency);
         compte.setTauxInteret(BigDecimal.ZERO);
         compte.setDecouvertAutorise(BigDecimal.ZERO);
+
+        // Resolve agence from client, or fallback to connected user
+        compte.setAgence(client.getAgence());
+        if (compte.getAgence() == null) {
+            org.springframework.security.core.Authentication auth =
+                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getName() != null) {
+                utilisateurRepository.findByLogin(auth.getName()).ifPresent(u -> {
+                    if (u.getAgence() != null) {
+                        compte.setAgence(u.getAgence());
+                    }
+                });
+            }
+        }
 
         Compte compteSauvegarde = compteRepository.save(compte);
 
@@ -95,6 +118,22 @@ public class CompteServiceImpl implements CompteService {
         return compteRepository.findByNumCompte(numCompte)
                 .map(Compte::getSolde)
                 .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Compte consulterCompte(Long idCompte) {
+        return compteRepository.findById(idCompte)
+                .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + idCompte));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Compte> listerComptesClient(Long idClient, Pageable pageable) {
+        if (!clientRepository.existsById(idClient)) {
+            throw new EntityNotFoundException("Client introuvable: " + idClient);
+        }
+        return compteRepository.findByClient_IdClient(idClient, pageable);
     }
 
     @Override
@@ -174,6 +213,13 @@ public class CompteServiceImpl implements CompteService {
         compte.getStatutsCompte().add(statutActifSauvegarde);
 
         return compte;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Compte obtenirCompteParNumero(String numCompte) {
+        return compteRepository.findByNumCompte(numCompte)
+                .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
     }
 
     private String extraireStatutCourant(Compte compte) {

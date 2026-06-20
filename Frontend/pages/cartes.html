@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cartes Visa - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Cartes Visa</div>
+            <div class="topbar-breadcrumb">Accueil / Comptes & Cartes / Cartes Visa</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Gestion des cartes Visa</h1>
+            <p class="page-subtitle">Commande, liste, opposition et modification des paramètres carte.</p>
+          </div>
+          <button class="btn btn-primary" onclick="window.location.href='comptes.html'">Commander une carte</button>
+        </div>
+
+        <section class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Cartes actives</div><div class="kpi-value">684</div><div class="kpi-trend up">+22 ce mois</div></div></div>
+          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Oppositions</div><div class="kpi-value">11</div><div class="kpi-trend down">3 urgentes</div></div></div>
+          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Commandes en cours</div><div class="kpi-value">37</div><div class="kpi-trend up">Délai moyen 4j</div></div></div>
+          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Paiements jour</div><div class="kpi-value">14.8M</div><div class="kpi-trend up">FCFA</div></div></div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div><div class="card-title">Cartes enregistrées</div><div class="card-subtitle">Endpoint : /api/v1/cartes-visa</div></div>
+          </div>
+          <div class="filter-bar">
+            <input class="form-control" placeholder="Rechercher par compte ou titulaire..." id="cardSearchInput" oninput="filterCards()">
+            <select class="form-control" id="cardStatusSelect" onchange="filterCards()"><option value="ALL">Statut : Tous</option><option value="ACTIF">Active</option><option value="INACTIF">Opposée / Inactive</option></select>
+            <select class="form-control" id="cardTypeSelect" onchange="filterCards()"><option value="ALL">Type : Tous</option><option value="CLASSIC">Classic</option><option value="GOLD">Gold</option><option value="PLATINUM">Platinum</option></select>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Carte</th><th>Titulaire</th><th>Compte</th><th>Type</th><th>Expiration</th><th>Statut</th><th>Actions</th></tr></thead>
+            <tbody id="cardsTableBody">
+              <tr><td colspan="7" style="text-align: center; color: #4A7A8A;">Chargement des cartes Visa...</td></tr>
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    let allCards = [];
+
+    async function loadCards() {
+      try {
+        let res = await Cartes.lister(null, 0, 100);
+        if (res && res.ok) {
+          let pageData = await res.json();
+          allCards = pageData.content || [];
+          renderCardsTable(allCards);
+          updateKPIs(allCards);
+        } else {
+          document.getElementById('cardsTableBody').innerHTML = '<tr><td colspan="7" style="text-align: center; color: #D93025;">Erreur de chargement des cartes.</td></tr>';
+        }
+      } catch (e) {
+        console.error(e);
+        document.getElementById('cardsTableBody').innerHTML = '<tr><td colspan="7" style="text-align: center; color: #D93025;">Erreur de chargement des cartes.</td></tr>';
+      }
+    }
+
+    function renderCardsTable(cards) {
+      let tbody = document.getElementById('cardsTableBody');
+      if (cards.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #4A7A8A;">Aucune carte enregistrée.</td></tr>';
+        return;
+      }
+      let html = '';
+      cards.forEach(c => {
+        let isActif = c.statut === 'ACTIF';
+        let statusBadge = isActif 
+          ? '<span class="badge badge-active">Active</span>' 
+          : '<span class="badge badge-danger">Opposée</span>';
+          
+        let type = 'Classic';
+        // Determine type from card number prefix or defaults
+        if (c.plafondJournalier > 2000000) type = 'Platinum';
+        else if (c.plafondJournalier > 500000) type = 'Gold';
+        
+        let dateExp = formatDate(c.dateExpiration) || c.dateExpiration;
+        
+        html += `<tr>
+          <td style="font-family: monospace;">${c.numeroCarteMasque}</td>
+          <td>${c.titulaire || 'N/A'}</td>
+          <td>${c.numCompte || 'N/A'}</td>
+          <td>${type}</td>
+          <td>${dateExp}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <button class="btn btn-outline btn-sm" onclick="executeOpposition(${c.idCarte}, '${c.numeroCarteMasque}', ${isActif})" ${!isActif ? 'disabled' : ''}>Mettre opposition</button>
+          </td>
+        </tr>`;
+      });
+      tbody.innerHTML = html;
+    }
+
+    function updateKPIs(cards) {
+      let active = cards.filter(c => c.statut === 'ACTIF').length;
+      let blocked = cards.filter(c => c.statut !== 'ACTIF').length;
+      
+      let kpiCards = document.querySelectorAll('.kpi-card .kpi-value');
+      if (kpiCards.length >= 3) {
+        kpiCards[0].textContent = active;
+        kpiCards[1].textContent = blocked;
+        kpiCards[2].textContent = cards.length;
+      }
+    }
+
+    async function executeOpposition(idCarte, numMasque, isActif) {
+      if (!isActif) {
+        showToast("Cette carte est déjà inactive", "warning");
+        return;
+      }
+      if (!confirm("Voulez-vous vraiment faire opposition sur la carte " + numMasque + " ? Cette action est irréversible.")) {
+        return;
+      }
+      try {
+        let res = await Cartes.opposerParId(idCarte);
+        if (res && res.ok) {
+          showToast("Opposition enregistrée avec succès !", "success");
+          loadCards();
+        } else {
+          let err = await res.json();
+          showToast(err.message || "Erreur lors de la mise en opposition", "error");
+        }
+      } catch (e) {
+        showToast("Erreur lors de la mise en opposition", "error");
+      }
+    }
+
+    function filterCards() {
+      let q = document.getElementById('cardSearchInput').value.toLowerCase();
+      let status = document.getElementById('cardStatusSelect').value;
+      let type = document.getElementById('cardTypeSelect').value;
+      
+      let filtered = allCards.filter(c => {
+        let matchQuery = !q || 
+          (c.numeroCarteMasque && c.numeroCarteMasque.toLowerCase().includes(q)) ||
+          (c.titulaire && c.titulaire.toLowerCase().includes(q)) ||
+          (c.numCompte && c.numCompte.toLowerCase().includes(q));
+          
+        let matchStatus = status === 'ALL' || c.statut === status;
+        
+        let cType = 'CLASSIC';
+        if (c.plafondJournalier > 2000000) cType = 'PLATINUM';
+        else if (c.plafondJournalier > 500000) cType = 'GOLD';
+        let matchType = type === 'ALL' || cType === type;
+        
+        return matchQuery && matchStatus && matchType;
+      });
+      
+      renderCardsTable(filtered);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadCards();
+    });
+  </script>
+</body>
+</html>

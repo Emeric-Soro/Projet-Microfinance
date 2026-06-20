@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de bord Direction - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <script src="../assets/js/chart.min.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Tableau de bord Direction</div>
+            <div class="topbar-breadcrumb">Pilotage / Vue d'ensemble</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <select class="form-control" style="width: 140px; font-size: 12px;">
+            <option>Année 2026</option>
+            <option>Année 2025</option>
+          </select>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <!-- TOP 4 KPI CARDS -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Liquidité totale</div>
+              <div class="kpi-value">1.37 Md <span style="font-size:13px;font-weight:600;">FCFA</span></div>
+              <div class="kpi-trend up">+12.4% vs N-1</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon orange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Encours de crédit</div>
+              <div class="kpi-value">523 M <span style="font-size:13px;font-weight:600;">FCFA</span></div>
+              <div class="kpi-trend up">+8.7% vs N-1</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Dépôts à vue</div>
+              <div class="kpi-value">847 M <span style="font-size:13px;font-weight:600;">FCFA</span></div>
+              <div class="kpi-trend up">+15.2% vs N-1</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon orange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Créances douteuses</div>
+              <div class="kpi-value">5.8%</div>
+              <div class="kpi-trend down">+0.3% vs N-1</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CENTRAL CHART -->
+        <div class="card" style="margin-bottom: 24px;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Évolution Dépôts vs Crédits</div>
+              <div class="card-subtitle">Sur l'année 2026</div>
+            </div>
+            <div class="filter-tabs">
+              <span class="filter-tab active">Mensuel</span>
+              <span class="filter-tab">Trimestriel</span>
+            </div>
+          </div>
+          <div class="chart-container" style="height: 300px;">
+            <canvas id="directionChart"></canvas>
+          </div>
+        </div>
+
+        <!-- PRUDENTIAL RATIOS -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Indicateurs de performance - Ratios prudentiels</div>
+          </div>
+          <div class="gauge-row" style="padding: 20px 0;">
+            <div class="gauge-item">
+              <div class="gauge-circle" style="--rotation: 270deg; border-color: #2E7D32;">
+                <span class="gauge-percent">85%</span>
+              </div>
+              <div class="gauge-name">Coefficient de liquidité</div>
+              <div style="font-size:10px;color:#2E7D32;font-weight:600;">Seuil: > 60%</div>
+            </div>
+            <div class="gauge-item">
+              <div class="gauge-circle" style="--rotation: 200deg; border-color: #2E7D32;">
+                <span class="gauge-percent">72%</span>
+              </div>
+              <div class="gauge-name">Ratio de solvabilité</div>
+              <div style="font-size:10px;color:#2E7D32;font-weight:600;">Seuil: > 50%</div>
+            </div>
+            <div class="gauge-item">
+              <div class="gauge-circle" style="--rotation: 310deg; border-color: #2E7D32;">
+                <span class="gauge-percent">91%</span>
+              </div>
+              <div class="gauge-name">Ratio de transformation</div>
+              <div style="font-size:10px;color:#2E7D32;font-weight:600;">Seuil: > 80%</div>
+            </div>
+            <div class="gauge-item">
+              <div class="gauge-circle" style="--rotation: 120deg; border-color: #fab482;">
+                <span class="gauge-percent">42%</span>
+              </div>
+              <div class="gauge-name">Ratio de couverture</div>
+              <div style="font-size:10px;color:#E65100;font-weight:600;">Seuil: > 40%</div>
+            </div>
+            <div class="gauge-item">
+              <div class="gauge-circle" style="--rotation: 250deg; border-color: #2E7D32;">
+                <span class="gauge-percent">78%</span>
+              </div>
+              <div class="gauge-name">Taux de recouvrement</div>
+              <div style="font-size:10px;color:#2E7D32;font-weight:600;">Seuil: > 70%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    const ctx = document.getElementById('directionChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
+        datasets: [{
+          label: 'Dépôts',
+          data: [620, 650, 680, 710, 740, 760, 780, 800, 820, 835, 847, 860],
+          borderColor: '#8cd5fa',
+          backgroundColor: 'rgba(140, 213, 250, 0.1)',
+          tension: 0.4,
+          fill: true,
+          pointRadius: 4,
+          pointBackgroundColor: '#8cd5fa'
+        }, {
+          label: 'Crédits',
+          data: [380, 400, 420, 440, 460, 475, 490, 500, 510, 518, 523, 530],
+          borderColor: '#fab482',
+          backgroundColor: 'rgba(250, 180, 130, 0.1)',
+          tension: 0.4,
+          fill: true,
+          pointRadius: 4,
+          pointBackgroundColor: '#fab482'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top', labels: { usePointStyle: true, padding: 20, font: { size: 12 } } }
+        },
+        scales: {
+          y: {
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            ticks: { font: { size: 11 }, callback: v => v + 'M' }
+          },
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
+
+
+

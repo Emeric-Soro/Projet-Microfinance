@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mes Comptes — Soutra Finance E-Banking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/portal.css">
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="portal-layout">
+    <!-- Sidebar -->
+    <aside class="portal-sidebar">
+      <div class="portal-brand">
+        <div class="brand-icon">S</div>
+        <span class="brand-name">Soutra Finance</span>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="dashboard">📊 Tableau de bord</a></li>
+        <li class="nav-item active"><a href="comptes">💳 Mes Comptes</a></li>
+        <li class="nav-item"><a href="virement">💸 Virements</a></li>
+        <li class="nav-item"><a href="credits">📈 Crédits</a></li>
+        <li class="nav-item"><a href="reclamations">✉️ Réclamations</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+          <span class="user-name" id="portalUserName">Chargement...</span>
+          <span class="user-role">Client E-Banking</span>
+        </div>
+        <a href="#" class="logout-btn" id="portalLogoutBtn">🚪</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="header-title">
+          <h2>Mes Comptes Bancaires</h2>
+          <p>Consultez le solde, téléchargez votre relevé ou votre RIB et suivez vos mouvements.</p>
+        </div>
+      </header>
+
+      <!-- Account Selection & Detail Container -->
+      <div class="card" style="margin-bottom: 30px;">
+        <div class="form-group" style="max-width: 400px; margin-bottom: 25px;">
+          <label for="accountSelector">Sélectionnez un compte</label>
+          <select id="accountSelector" class="input-control">
+            <option value="">Chargement des comptes...</option>
+          </select>
+        </div>
+
+        <div id="accountDetailsSection" style="display: none;">
+          <div class="account-details-grid">
+            <div>
+              <h3 id="accountTypeDisplay" style="font-size: 22px; margin-bottom: 5px;">Compte de Dépôt</h3>
+              <p style="font-size: 14px; color: var(--color-text-muted);">
+                Statut : <span id="accountStatusBadge" class="badge">ACTIF</span>
+              </p>
+
+              <div class="rib-box">
+                <div>
+                  <span style="color: var(--color-text-muted); font-size: 11px; display: block; margin-bottom: 2px;">RIB / NUMÉRO DE COMPTE</span>
+                  <span id="accountNumDisplay" style="font-weight: 700;">000000000000000000000</span>
+                </div>
+                <button class="rib-copy-btn" onclick="copyRib()">Copier le RIB</button>
+              </div>
+            </div>
+
+            <div style="text-align: right; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end;">
+              <div>
+                <div style="font-size: 12px; color: var(--color-text-muted); text-transform: uppercase;">Solde disponible</div>
+                <div id="accountSoldeDisplay" style="font-size: 32px; font-weight: 800; color: var(--color-primary); margin-top: 5px;">0 FCFA</div>
+              </div>
+
+              <a href="#" target="_blank" id="btnDownloadReleve" class="btn btn-primary" style="margin-top: 15px;">
+                <span>📥 Télécharger Relevé / RIB</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- History of Operations List -->
+      <div class="card" id="historyCard" style="display: none;">
+        <div class="card-header">
+          <span class="card-title">📖 Historique des mouvements</span>
+        </div>
+        
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Date & Heure</th>
+                <th>Type / Description</th>
+                <th style="text-align: right;">Débit</th>
+                <th style="text-align: right;">Crédit</th>
+              </tr>
+            </thead>
+            <tbody id="operationsTableBody">
+              <tr>
+                <td colspan="4" style="text-align: center; color: var(--color-text-muted); padding: 30px;">
+                  Aucun mouvement enregistré pour ce compte.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination-bar">
+          <button id="btnPrevPage" class="btn btn-secondary btn-sm" disabled>← Précédent</button>
+          <span class="page-indicator" id="pageIndicator">Page 1 sur 1</span>
+          <button id="btnNextPage" class="btn btn-secondary btn-sm" disabled>Suivant ➔</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../assets/js/portal-app.js?v=1.0.1"></script>
+  <script>
+    var accountsList = [];
+    var selectedAccountId = null;
+    var currentPage = 0;
+    var pageSize = 10;
+    var totalPages = 1;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      initComptesPage();
+      
+      document.getElementById('accountSelector').addEventListener('change', function (e) {
+        var id = e.target.value;
+        if (id) {
+          selectedAccountId = id;
+          currentPage = 0;
+          loadAccountDetails(id);
+        } else {
+          hideDetails();
+        }
+      });
+
+      document.getElementById('btnPrevPage').addEventListener('click', function () {
+        if (currentPage > 0) {
+          currentPage--;
+          loadAccountOperations(selectedAccountId);
+        }
+      });
+
+      document.getElementById('btnNextPage').addEventListener('click', function () {
+        if (currentPage < totalPages - 1) {
+          currentPage++;
+          loadAccountOperations(selectedAccountId);
+        }
+      });
+    });
+
+    async function initComptesPage() {
+      try {
+        var res = await window.ClientComptes.lister();
+        if (res.ok) {
+          accountsList = await res.json();
+          var selector = document.getElementById('accountSelector');
+          selector.innerHTML = '<option value="">-- Sélectionner un compte --</option>';
+          
+          if (accountsList.length === 0) {
+            selector.innerHTML = '<option value="">Aucun compte trouvé</option>';
+            return;
+          }
+
+          accountsList.forEach(function (acc) {
+            var opt = document.createElement('option');
+            opt.value = acc.idCompte;
+            opt.textContent = acc.libelleType + ' - ' + acc.numCompte;
+            selector.appendChild(opt);
+          });
+
+          // Check if an ID was passed in query string (e.g. ?id=123)
+          var params = new URLSearchParams(window.location.search);
+          var preSelectedId = params.get('id');
+          
+          if (preSelectedId && accountsList.some(a => a.idCompte.toString() === preSelectedId)) {
+            selector.value = preSelectedId;
+            selectedAccountId = preSelectedId;
+            loadAccountDetails(preSelectedId);
+          } else if (accountsList.length > 0) {
+            // Select first by default
+            selector.value = accountsList[0].idCompte;
+            selectedAccountId = accountsList[0].idCompte;
+            loadAccountDetails(accountsList[0].idCompte);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Erreur lors du chargement des comptes.', 'error');
+      }
+    }
+
+    async function loadAccountDetails(idCompte) {
+      try {
+        var detailsRes = await window.ClientComptes.detail(idCompte);
+        if (detailsRes.ok) {
+          var details = await detailsRes.json();
+          
+          document.getElementById('accountTypeDisplay').textContent = details.libelleType;
+          document.getElementById('accountNumDisplay').textContent = details.numCompte;
+          document.getElementById('accountSoldeDisplay').textContent = formatCurrency(details.solde);
+          
+          var badge = document.getElementById('accountStatusBadge');
+          badge.textContent = details.statut;
+          badge.className = 'badge ' + (details.statut === 'ACTIF' ? 'badge-success' : 'badge-danger');
+
+          // Download link
+          var releveRes = await window.ClientComptes.releve(idCompte);
+          if (releveRes.ok) {
+            var relData = await releveRes.json();
+            var dlBtn = document.getElementById('btnDownloadReleve');
+            dlBtn.href = window.SF_Client.API_BASE + relData.urlReleve;
+          }
+
+          document.getElementById('accountDetailsSection').style.display = 'block';
+          
+          // Load operations
+          loadAccountOperations(idCompte);
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Impossible de recharger les détails du compte.', 'error');
+      }
+    }
+
+    async function loadAccountOperations(idCompte) {
+      try {
+        var opRes = await window.ClientComptes.operations(idCompte, currentPage, pageSize);
+        if (opRes.ok) {
+          var pageData = await opRes.json();
+          var list = pageData.content;
+          
+          totalPages = pageData.totalPages || 1;
+          
+          var tbody = document.getElementById('operationsTableBody');
+          tbody.innerHTML = '';
+
+          if (list.length === 0) {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="4" style="text-align: center; color: var(--color-text-muted); padding: 30px;">
+                  Aucune transaction enregistrée sur ce compte.
+                </td>
+              </tr>`;
+          } else {
+            list.forEach(function (op) {
+              var isDebit = op.sens === 'DEBIT';
+              var row = document.createElement('tr');
+              
+              row.innerHTML = `
+                <td>${formatDate(op.dateOperation)}</td>
+                <td>
+                  <div style="font-weight: 600; color: var(--color-text);">${op.libelle}</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: var(--color-danger)">
+                  ${isDebit ? formatCurrency(op.montant) : '-'}
+                </td>
+                <td style="text-align: right; font-weight: 600; color: var(--color-success)">
+                  ${!isDebit ? formatCurrency(op.montant) : '-'}
+                </td>
+              `;
+              tbody.appendChild(row);
+            });
+          }
+
+          // Pagination update
+          document.getElementById('pageIndicator').textContent = 'Page ' + (currentPage + 1) + ' sur ' + totalPages;
+          document.getElementById('btnPrevPage').disabled = (currentPage === 0);
+          document.getElementById('btnNextPage').disabled = (currentPage >= totalPages - 1);
+
+          document.getElementById('historyCard').style.display = 'block';
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Impossible de récupérer l\'historique des opérations.', 'error');
+      }
+    }
+
+    function hideDetails() {
+      document.getElementById('accountDetailsSection').style.display = 'none';
+      document.getElementById('historyCard').style.display = 'none';
+    }
+
+    function copyRib() {
+      var num = document.getElementById('accountNumDisplay').textContent;
+      navigator.clipboard.writeText(num).then(function () {
+        showToast('Numéro de compte copié dans le presse-papiers !', 'success');
+      }).catch(function () {
+        showToast('Impossible de copier automatiquement.', 'warning');
+      });
+    }
+
+    function formatCurrency(amount) {
+      if (amount === undefined || amount === null) return '0 FCFA';
+      return Number(amount).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      var d = new Date(dateStr);
+      return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' à ' + 
+             d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+  </script>
+</body>
+</html>

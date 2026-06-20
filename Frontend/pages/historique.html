@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Historique - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Historique des opérations</div>
+            <div class="topbar-breadcrumb">Opérations / Historique</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <!-- FILTERS -->
+        <div class="card" style="margin-bottom: 20px; padding: 16px 20px;">
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Date début</label>
+              <input type="date" class="form-control" style="width: 160px;">
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Date fin</label>
+              <input type="date" class="form-control" style="width: 160px;">
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Type</label>
+              <select class="form-control" style="width: 140px;">
+                <option value="">Tous</option>
+                <option value="versement">Versement</option>
+                <option value="retrait">Retrait</option>
+                <option value="virement">Virement</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Montant Min</label>
+              <input type="number" class="form-control" placeholder="0" style="width: 120px;">
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Montant Max</label>
+              <input type="number" class="form-control" placeholder="∞" style="width: 120px;">
+            </div>
+            <div style="align-self: flex-end;">
+              <button class="btn btn-secondary btn-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Filtrer
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABLE -->
+        <div class="card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Référence</th>
+                <th>Date / Heure</th>
+                <th>Type</th>
+                <th>Compte</th>
+                <th>Client</th>
+                <th>Montant</th>
+                <th>Caissier</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <!-- Rempli dynamiquement -->
+            </tbody>
+          </table>
+
+          <div class="pagination">
+            <div class="pagination-info" id="paginationInfo">Affichage 0-0 sur 0 opérations</div>
+            <div class="pagination-buttons" id="paginationButtons">
+              <!-- Boutons de pagination dynamiques -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Détail opération -->
+  <div class="modal-overlay" id="operationModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Détail de l'opération</div>
+        <button class="modal-close" onclick="closeModal('operationModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="font-family: monospace; font-size: 14px; color: #084355; font-weight: 700;" id="modalRef">—</div>
+          <div style="font-size: 12px; color: #4A7A8A;" id="modalDate">—</div>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Type</span>
+          <span class="info-value" id="modalType">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Compte</span>
+          <span class="info-value" id="modalAccount">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Client</span>
+          <span class="info-value" id="modalClient">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Montant</span>
+          <span class="info-value" style="color: #2E7D32; font-size: 16px; font-weight: 700;" id="modalAmount">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Frais</span>
+          <span class="info-value" id="modalFrais">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Statut</span>
+          <span class="info-value" id="modalStatus">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Caissier</span>
+          <span class="info-value" id="modalCaissier">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Libellé</span>
+          <span class="info-value" id="modalLibelle">—</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('operationModal')">Fermer</button>
+        <button class="btn btn-secondary" onclick="printSelectedReceipt()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Imprimer le reçu
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    let _page = 0;
+    let _size = 10;
+    let _totalPages = 0;
+    let _totalElements = 0;
+    let _selectedTxn = null;
+    let _txns = [];
+
+    function fmt(n) {
+      return Number(n || 0).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    async function loadHistory(page = 0) {
+      _page = page;
+      const bodyEl = document.getElementById('historyTableBody');
+      bodyEl.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#4A7A8A;">Chargement de l\'historique…</td></tr>';
+
+      try {
+        const res = await Transactions.listerToutes(page, _size);
+        if (res && res.ok) {
+          const data = await res.json();
+          _txns = data.content || [];
+          _totalPages = data.totalPages || 0;
+          _totalElements = data.totalElements || 0;
+          renderHistory(_txns);
+          renderPagination();
+        } else {
+          bodyEl.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#c62828;">Erreur lors du chargement de l\'historique.</td></tr>';
+        }
+      } catch (e) {
+        bodyEl.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#c62828;">Erreur réseau : ' + e.message + '</td></tr>';
+      }
+    }
+
+    function renderHistory(list) {
+      const bodyEl = document.getElementById('historyTableBody');
+      if (!list.length) {
+        bodyEl.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:#4A7A8A;">Aucune opération trouvée.</td></tr>';
+        return;
+      }
+
+      bodyEl.innerHTML = list.map(tx => {
+        const typeStr = (tx.typeOperation || 'Opération').toUpperCase();
+        let typeBadge = 'badge-info';
+        let montantColor = '#084355';
+        let montantSign = '';
+
+        if (typeStr === 'DEPOT' || typeStr === 'VERSEMENT') {
+          typeBadge = 'badge-success';
+          montantColor = '#2E7D32';
+          montantSign = '+';
+        } else if (typeStr === 'RETRAIT') {
+          typeBadge = 'badge-danger';
+          montantColor = '#D93025';
+          montantSign = '-';
+        } else if (typeStr === 'VIREMENT') {
+          typeBadge = 'badge-info';
+          montantColor = '#7B1FA2';
+          montantSign = '';
+        }
+
+        let accountDisplay = tx.numCompteSource || '—';
+        if (tx.numCompteSource && tx.numCompteDestination && typeStr === 'VIREMENT') {
+          accountDisplay = tx.numCompteSource + ' ➔ ' + tx.numCompteDestination;
+        } else if (!tx.numCompteSource && tx.numCompteDestination) {
+          accountDisplay = tx.numCompteDestination;
+        }
+
+        const dateStr = tx.dateHeure ? new Date(tx.dateHeure).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+        const client = tx.clientNom || '—';
+        const caissier = tx.agentNom || '—';
+        const ref = tx.referenceUnique;
+        
+        const statusStr = tx.statutOperation || 'EXECUTEE';
+        let statusBadge = 'badge-success';
+        if (statusStr === 'EN_ATTENTE') statusBadge = 'badge-warning';
+        else if (statusStr === 'REJETEE') statusBadge = 'badge-danger';
+
+        return `<tr style="cursor: pointer;" onclick="showDetail('${ref}')">
+          <td style="font-family:monospace;font-size:12px;color:#084355;">${ref}</td>
+          <td style="font-size:12px;">${dateStr}</td>
+          <td><span class="badge ${typeBadge}">${typeStr}</span></td>
+          <td style="font-family:monospace;font-size:11px;">${accountDisplay}</td>
+          <td>${client}</td>
+          <td style="color:${montantColor};font-weight:700;">${montantSign}${fmt(tx.montant)}</td>
+          <td style="font-size:12px;">${caissier}</td>
+          <td><span class="badge ${statusBadge}">${statusStr}</span></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function renderPagination() {
+      const start = _totalElements === 0 ? 0 : _page * _size + 1;
+      const end = Math.min((_page + 1) * _size, _totalElements);
+      document.getElementById('paginationInfo').textContent = `Affichage ${start}-${end} sur ${_totalElements} opérations`;
+
+      const buttonsEl = document.getElementById('paginationButtons');
+      let html = '';
+
+      // Précédent
+      html += `<button class="page-btn" ${_page === 0 ? 'disabled' : ''} onclick="loadHistory(${_page - 1})">‹</button>`;
+
+      // Pages
+      for (let i = 0; i < _totalPages; i++) {
+        if (i === 0 || i === _totalPages - 1 || Math.abs(i - _page) <= 1) {
+          html += `<button class="page-btn ${i === _page ? 'active' : ''}" onclick="loadHistory(${i})">${i + 1}</button>`;
+        } else if (i === 1 || i === _totalPages - 2) {
+          html += `<span style="padding: 0 4px; color: #4A7A8A;">...</span>`;
+        }
+      }
+
+      // Suivant
+      html += `<button class="page-btn" ${_page >= _totalPages - 1 ? 'disabled' : ''} onclick="loadHistory(${_page + 1})">›</button>`;
+      buttonsEl.innerHTML = html;
+    }
+
+    async function showDetail(ref) {
+      try {
+        const res = await Transactions.recu(ref);
+        if (res && res.ok) {
+          const detail = await res.json();
+          _selectedTxn = detail;
+          peuplerModal(detail);
+          openModal('operationModal');
+        } else {
+          showToast('Impossible de charger le détail.', 'error');
+        }
+      } catch (e) {
+        showToast('Erreur : ' + e.message, 'error');
+      }
+    }
+
+    function peuplerModal(tx) {
+      document.getElementById('modalRef').textContent = tx.referenceUnique || '—';
+      document.getElementById('modalDate').textContent = tx.dateHeure ? new Date(tx.dateHeure).toLocaleString('fr-FR') : '—';
+      document.getElementById('modalType').textContent = (tx.typeOperation || 'Opération').toUpperCase();
+      
+      const acct = tx.numCompteSource || tx.numCompteDestination || '—';
+      document.getElementById('modalAccount').textContent = acct;
+      document.getElementById('modalClient').textContent = tx.clientNom || '—';
+      document.getElementById('modalAmount').textContent = fmt(tx.montant);
+      document.getElementById('modalFrais').textContent = fmt(tx.frais);
+      document.getElementById('modalCaissier').textContent = tx.agentNom || '—';
+      document.getElementById('modalStatus').textContent = tx.statutOperation || 'EXECUTEE';
+      document.getElementById('modalLibelle').textContent = tx.libelleTypeTransaction || '—';
+    }
+
+    function printSelectedReceipt() {
+      if (_selectedTxn) {
+        window.print();
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => loadHistory(0));
+  </script>
+</body>
+</html>
+
+
+

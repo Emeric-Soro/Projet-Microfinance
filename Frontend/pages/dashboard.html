@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de bord - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <script src="../assets/js/chart.min.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar"></aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Tableau de bord</div>
+            <div class="topbar-breadcrumb">Accueil / Vue d'ensemble</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Rechercher...">
+          </div>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- CONTENT AREA -->
+      <div class="content-area">
+        <!-- KPI CARDS -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Nouveaux clients</div>
+              <div class="kpi-value" id="kpiClientsValue">—</div>
+              <div class="kpi-trend up" id="kpiClientsTrend">ce mois</div>
+            </div>
+          </div>
+          
+          <div class="kpi-card">
+            <div class="kpi-icon orange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Dépôts (aujourd'hui)</div>
+              <div class="kpi-value" id="kpiDepotsValue">—</div>
+              <div class="kpi-trend up" id="kpiDepotsTrend">ce jour</div>
+            </div>
+          </div>
+          
+          <div class="kpi-card">
+            <div class="kpi-icon green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Encours de crédit</div>
+              <div class="kpi-value" id="kpiCreditsValue">—</div>
+              <div class="kpi-trend up" id="kpiCreditsTrend">cumulé</div>
+            </div>
+          </div>
+          
+          <div class="kpi-card">
+            <div class="kpi-icon blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label" id="kpi4Label">Solde caisse (ouvertes)</div>
+              <div class="kpi-value" id="kpi4Value">—</div>
+              <div class="kpi-trend up" id="kpi4Trend">en temps réel</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHARTS ROW -->
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Activité (30 derniers jours)</div>
+                <div class="card-subtitle">Versements vs Retraits</div>
+              </div>
+              <div class="filter-tabs">
+                <span class="filter-tab active">30 jours</span>
+                <span class="filter-tab">90 jours</span>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="activityChart"></canvas>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Répartition des comptes</div>
+                <div class="card-subtitle">Par typologie</div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="accountsChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTTOM ROW -->
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Opérations récentes</div>
+              <a href="historique.html" class="btn btn-ghost btn-sm">Voir tout →</a>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Action</th>
+                  <th>Montant</th>
+                  <th>Client</th>
+                  <th>Heure</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody id="recentOperationsBody">
+                <tr>
+                  <td colspan="5" style="text-align:center;padding:20px;color:#4A7A8A;">Chargement des opérations…</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Alertes & Ratios</div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+              <div style="font-size: 12px; font-weight: 700; color: #084355; margin-bottom: 10px;">Vigie LAB</div>
+              <ul class="alert-list">
+                <li class="alert-item">
+                  <span class="alert-dot"></span>
+                  <span class="alert-text">Compte MFN-2024-0847 immobilisé</span>
+                  <span class="alert-time">Il y a 2h</span>
+                </li>
+                <li class="alert-item">
+                  <span class="alert-dot"></span>
+                  <span class="alert-text">Transaction suspecte > 5M FCFA</span>
+                  <span class="alert-time">Il y a 5h</span>
+                </li>
+                <li class="alert-item">
+                  <span class="alert-dot"></span>
+                  <span class="alert-text">Pièce d'identité expirée - Client #1204</span>
+                  <span class="alert-time">Hier</span>
+                </li>
+              </ul>
+            </div>
+            
+            <div>
+              <div style="font-size: 12px; font-weight: 700; color: #084355; margin-bottom: 16px;">Ratios Prudentiels BCEAO</div>
+              <div class="gauge-row">
+                <div class="gauge-item">
+                  <div class="gauge-circle" style="--rotation: 270deg;">
+                    <span class="gauge-percent">85%</span>
+                  </div>
+                  <div class="gauge-name">Liquidité</div>
+                </div>
+                <div class="gauge-item">
+                  <div class="gauge-circle" style="--rotation: 200deg;">
+                    <span class="gauge-percent">72%</span>
+                  </div>
+                  <div class="gauge-name">Solvabilité</div>
+                </div>
+                <div class="gauge-item">
+                  <div class="gauge-circle" style="--rotation: 310deg;">
+                    <span class="gauge-percent">91%</span>
+                  </div>
+                  <div class="gauge-name">Transformation</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+
+  <script src="../assets/js/app.js"></script>
+  <script>
+    // Utility function for formatting
+    function fmt(n) {
+      return Number(n || 0).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    // Load Dashboard KPIs
+    async function loadDashboardKpis() {
+      try {
+        const res = await Dashboards.agence(null, 'JOUR');
+        if (res && res.ok) {
+          const data = await res.json();
+          if (data) {
+            document.getElementById('kpiClientsValue').textContent = data.totalClientsJour || 0;
+            document.getElementById('kpiDepotsValue').textContent = fmt(data.totalDepotsJour);
+            document.getElementById('kpiCreditsValue').textContent = fmt(data.encoursCredit);
+            document.getElementById('kpi4Value').textContent = fmt(data.soldeCaisse);
+            
+            if (data.nbOperationsEnAttente > 0) {
+              document.getElementById('kpi4Trend').innerHTML = `<span style="color:#d93025; font-weight:700;">${data.nbOperationsEnAttente} en attente</span>`;
+            } else {
+              document.getElementById('kpi4Trend').textContent = 'aucune en attente';
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Erreur chargement KPIs:', e);
+        if (typeof window.showToast === 'function') {
+          window.showToast('Erreur lors du chargement des KPIs du tableau de bord', 'error');
+        }
+      }
+    }
+
+    // Load Recent Operations
+    async function loadRecentOperations() {
+      const bodyEl = document.getElementById('recentOperationsBody');
+      try {
+        const res = await Transactions.listerToutes(0, 5);
+        if (res && res.ok) {
+          const data = await res.json();
+          const list = data.content || [];
+          if (!list.length) {
+            bodyEl.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#4A7A8A;">Aucune opération récente.</td></tr>';
+            return;
+          }
+          
+          bodyEl.innerHTML = list.map(tx => {
+            const typeStr = (tx.typeOperation || 'Opération').toUpperCase();
+            let typeBadge = 'badge-info';
+            if (typeStr === 'DEPOT' || typeStr === 'VERSEMENT') {
+              typeBadge = 'badge-success';
+            } else if (typeStr === 'RETRAIT') {
+              typeBadge = 'badge-danger';
+            } else if (typeStr === 'VIREMENT') {
+              typeBadge = 'badge-info';
+            }
+            
+            const client = tx.clientNom || '—';
+            const dateStr = tx.dateHeure ? new Date(tx.dateHeure).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—';
+            
+            const statusStr = tx.statutOperation || 'EXECUTEE';
+            let statusBadge = 'badge-active';
+            if (statusStr === 'EN_ATTENTE') statusBadge = 'badge-pending';
+            else if (statusStr === 'REJETEE') statusBadge = 'badge-blocked';
+
+            return `<tr>
+              <td><span class="badge ${typeBadge}">${typeStr}</span></td>
+              <td><strong>${fmt(tx.montant)}</strong></td>
+              <td>${client}</td>
+              <td>${dateStr}</td>
+              <td><span class="badge ${statusBadge}">${statusStr === 'EXECUTEE' ? 'Confirmé' : statusStr}</span></td>
+            </tr>`;
+          }).join('');
+        } else {
+          bodyEl.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#c62828;">Erreur lors du chargement des opérations.</td></tr>';
+        }
+      } catch (e) {
+        console.error('Erreur chargement transactions:', e);
+        bodyEl.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#c62828;">Erreur réseau.</td></tr>';
+      }
+    }
+
+    // Initialize Page
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDashboardKpis();
+      loadRecentOperations();
+      initCharts();
+      loadDashboardCharts();
+    });
+
+    // Chart instances
+    let activityChart = null;
+    let accountsChart = null;
+
+    // Helper to format date string to "DD MMM"
+    function formatChartDate(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      const str = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+      const cleanStr = str.replace('.', '');
+      return cleanStr.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    }
+
+    // Initialize charts with empty datasets
+    function initCharts() {
+      // Activity Chart
+      const activityCtx = document.getElementById('activityChart').getContext('2d');
+      activityChart = new Chart(activityCtx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Versements',
+            data: [],
+            borderColor: '#8cd5fa',
+            backgroundColor: 'rgba(140, 213, 250, 0.1)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 4,
+            pointBackgroundColor: '#8cd5fa'
+          }, {
+            label: 'Retraits',
+            data: [],
+            borderColor: '#fab482',
+            backgroundColor: 'rgba(250, 180, 130, 0.1)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 4,
+            pointBackgroundColor: '#fab482'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { usePointStyle: true, padding: 20, font: { size: 12 } }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) label += ': ';
+                  if (context.parsed.y !== null) {
+                    label += new Intl.NumberFormat('fr-FR').format(context.parsed.y) + ' FCFA';
+                  }
+                  return label;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: { font: { size: 11 } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 11 } }
+            }
+          }
+        }
+      });
+
+      // Accounts Distribution Chart
+      const accountsCtx = document.getElementById('accountsChart').getContext('2d');
+      accountsChart = new Chart(accountsCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Compte Courant', 'Épargne', 'DAT'],
+          datasets: [{
+            data: [0, 0, 0],
+            backgroundColor: ['#8cd5fa', '#fab482', '#084355'],
+            borderWidth: 0,
+            hoverOffset: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '65%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { usePointStyle: true, padding: 16, font: { size: 12 } }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let label = context.label || '';
+                  if (label) label += ': ';
+                  if (context.parsed !== null) {
+                    label += context.parsed + ' compte(s)';
+                  }
+                  return label;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Load dynamic chart data
+    async function loadDashboardCharts() {
+      try {
+        const res = await Dashboards.graphiques();
+        if (res && res.ok) {
+          const data = await res.json();
+          if (data) {
+            // Update Accounts Chart
+            const repartition = data.repartitionComptes || {};
+            const courantCount = repartition['COURANT'] || 0;
+            const epargneCount = repartition['EPARGNE'] || 0;
+            const datCount = repartition['DAT'] || 0;
+            
+            accountsChart.data.datasets[0].data = [courantCount, epargneCount, datCount];
+            accountsChart.update();
+
+            // Update Activity Chart
+            const evolution = data.evolutionActivite || [];
+            const labels = evolution.map(item => formatChartDate(item.date));
+            const deposits = evolution.map(item => item.depots || 0);
+            const withdrawals = evolution.map(item => item.retraits || 0);
+
+            activityChart.data.labels = labels;
+            activityChart.data.datasets[0].data = deposits;
+            activityChart.data.datasets[1].data = withdrawals;
+            activityChart.update();
+          }
+        }
+      } catch (e) {
+        console.error('Erreur chargement graphiques:', e);
+      }
+    }
+  </script>
+</body>
+</html>
+
+
+

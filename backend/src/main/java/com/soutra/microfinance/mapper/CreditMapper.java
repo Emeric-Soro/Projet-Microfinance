@@ -3,10 +3,12 @@ package com.soutra.microfinance.mapper;
 import com.soutra.microfinance.dto.response.credit.CreditResponseDTO;
 import com.soutra.microfinance.dto.response.credit.DemandeCreditResponseDTO;
 import com.soutra.microfinance.dto.response.credit.EcheanceResponseDTO;
+import com.soutra.microfinance.dto.response.credit.GarantieResponseDTO;
 import com.soutra.microfinance.dto.response.credit.TableauAmortissementResponseDTO;
 import com.soutra.microfinance.entity.Credit;
 import com.soutra.microfinance.entity.DemandeCredit;
 import com.soutra.microfinance.entity.Echeance;
+import com.soutra.microfinance.entity.Garantie;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -41,6 +43,11 @@ public interface CreditMapper {
 	EcheanceResponseDTO toEcheanceResponseDTO(Echeance echeance);
 
 	List<EcheanceResponseDTO> toEcheanceResponseDTOList(List<Echeance> echeances);
+
+	@Mapping(target = "typeGarantie", expression = "java(garantie.getTypeGarantie().name())")
+	GarantieResponseDTO toGarantieResponseDTO(Garantie garantie);
+
+	List<GarantieResponseDTO> toGarantieResponseDTOList(List<Garantie> garanties);
 
 	// --- Methode par defaut pour construire le tableau d'amortissement complet ---
 
