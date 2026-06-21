@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Détail carte - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <script src="../assets/js/chart.min.js"></script>
+  <style>
+    /* ── Card Visual ─────────────────────────────── */
+    .card-visual-wrap {
+      perspective: 800px;
+    }
+    .card-visual {
+      background: linear-gradient(135deg, #084355 0%, #0A5C72 40%, #0D7A94 100%);
+      color: #fff;
+      border-radius: 16px;
+      padding: 28px;
+      width: 340px;
+      height: 210px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(8,67,85,0.35);
+      transition: transform 0.4s ease, box-shadow 0.4s ease;
+    }
+    .card-visual:hover {
+      transform: rotateY(-4deg) rotateX(2deg) translateY(-4px);
+      box-shadow: 0 18px 50px rgba(8,67,85,0.45);
+    }
+    .card-visual::before {
+      content: '';
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 180px;
+      height: 180px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 50%;
+    }
+    .card-visual::after {
+      content: '';
+      position: absolute;
+      bottom: -50px;
+      left: -20px;
+      width: 200px;
+      height: 200px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 50%;
+    }
+    .cv-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      position: relative;
+      z-index: 1;
+    }
+    .cv-logo {
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .cv-chip {
+      width: 40px;
+      height: 30px;
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      border-radius: 6px;
+      position: relative;
+    }
+    .cv-chip::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 3px;
+    }
+    .cv-num {
+      font-family: 'Courier New', monospace;
+      font-size: 1.2rem;
+      letter-spacing: 3px;
+      position: relative;
+      z-index: 1;
+      margin-top: 12px;
+    }
+    .cv-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      position: relative;
+      z-index: 1;
+    }
+    .cv-name {
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .cv-exp {
+      text-align: right;
+    }
+    .cv-exp-label {
+      font-size: 0.6rem;
+      opacity: 0.6;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .cv-exp-value {
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: monospace;
+    }
+    .cv-type-badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      z-index: 2;
+    }
+    .cv-type-badge.classic { background: rgba(255,255,255,0.15); }
+    .cv-type-badge.gold { background: rgba(255,215,0,0.3); color: #FFD700; }
+    .cv-type-badge.platinum { background: rgba(192,192,192,0.3); color: #E0E0E0; }
+
+    /* ── Card Detail Layout ──────────────────────── */
+    .card-detail-layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 24px;
+    }
+
+    /* ── Hero Status ─────────────────────────────── */
+    .card-hero-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 12px;
+    }
+    .card-hero-status .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .card-hero-status.active { background: rgba(46,125,50,0.18); color: #2E7D32; }
+    .card-hero-status.active .status-dot { animation: livePulse 2s ease-in-out infinite; }
+    .card-hero-status.bloquee { background: rgba(217,48,37,0.15); color: #D93025; }
+    .card-hero-status.oposee { background: rgba(117,117,117,0.15); color: #757575; }
+    .card-hero-status.expiree { background: rgba(230,81,0,0.15); color: #E65100; }
+    .card-hero-status.inactive { background: rgba(158,158,158,0.15); color: #9E9E9E; }
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(46,125,50,0.5); }
+      50% { opacity: 0.6; box-shadow: 0 0 0 4px rgba(46,125,50,0); }
+    }
+
+    /* ── Info Section ────────────────────────────── */
+    .info-section { margin-bottom: 20px; }
+    .info-section .is-title { font-weight: 600; color: #084355; margin-bottom: 8px; font-size: .95rem; }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 20px;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 0;
+      border-bottom: 1px solid #f0f6fa;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-row .ir-label { color: #4A7A8A; font-size: .84rem; }
+    .info-row .ir-value { font-weight: 500; color: #084355; font-size: .88rem; }
+
+    /* ── Gauge ───────────────────────────────────── */
+    .gauge-container { margin: 16px 0; }
+    .gauge-bar { height: 14px; background: #e8eff4; border-radius: 7px; overflow: hidden; }
+    .gauge-fill {
+      height: 100%;
+      border-radius: 7px;
+      transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      position: relative;
+    }
+    .gauge-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+      animation: gaugeShimmer 2s ease-in-out infinite;
+    }
+    @keyframes gaugeShimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    .gauge-fill.green { background: linear-gradient(90deg, #2E7D32, #4CAF50); }
+    .gauge-fill.orange { background: linear-gradient(90deg, #E65100, #FF9800); }
+    .gauge-fill.red { background: linear-gradient(90deg, #C62828, #D93025); }
+    .gauge-text { display: flex; justify-content: space-between; font-size: .84rem; margin-top: 8px; color: #4A7A8A; }
+    .gauge-percent {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    /* ── Stat Mini Cards ─────────────────────────── */
+    .stat-mini-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-mini {
+      background: #fff;
+      border: 1px solid #e8eff4;
+      border-radius: 10px;
+      padding: 14px 16px;
+      text-align: center;
+    }
+    .stat-mini-label {
+      font-size: 10px;
+      color: #4A7A8A;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+    }
+    .stat-mini-value {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-top: 4px;
+      color: #084355;
+    }
+    .stat-mini-value.success { color: #2E7D32; }
+    .stat-mini-value.danger { color: #D93025; }
+
+    /* ── Chart ───────────────────────────────────── */
+    .chart-wrapper {
+      position: relative;
+      margin-top: 16px;
+    }
+
+    /* ── Actions Bar ─────────────────────────────── */
+    .actions-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 10px;
+      border: 1px solid #C9DFE8;
+      background: #fff;
+      color: #084355;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .btn-action:hover {
+      background: #f0f6fa;
+      border-color: #8cd5fa;
+      transform: translateY(-1px);
+    }
+    .btn-action svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+    .btn-action.danger {
+      border-color: rgba(217,48,37,0.3);
+      color: #D93025;
+      background: rgba(217,48,37,0.03);
+    }
+    .btn-action.danger:hover {
+      background: rgba(217,48,37,0.08);
+      border-color: #D93025;
+    }
+    .btn-action.primary {
+      background: #084355;
+      color: #fff;
+      border-color: #084355;
+    }
+    .btn-action.primary:hover {
+      background: #0A5C72;
+    }
+
+    /* ── Skeleton Loading ────────────────────────── */
+    .skeleton {
+      background: linear-gradient(90deg, #e8eff4 25%, #f0f6fa 50%, #e8eff4 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 8px;
+    }
+    .skeleton-line { height: 16px; margin-bottom: 10px; }
+    .skeleton-line.w-60 { width: 60%; }
+    .skeleton-line.w-40 { width: 40%; }
+    .skeleton-line.w-80 { width: 80%; }
+    .skeleton-block { height: 200px; margin-bottom: 16px; border-radius: 16px; }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* ── Empty State ─────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .empty-state-icon {
+      font-size: 40px;
+      opacity: 0.25;
+      margin-bottom: 12px;
+    }
+    .empty-state-text {
+      font-size: 14px;
+      color: #4A7A8A;
+      font-weight: 500;
+    }
+
+    /* ── Modal ───────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .modal-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-box {
+      background: #fff;
+      border-radius: 14px;
+      padding: 28px;
+      width: 420px;
+      max-width: 90vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      transform: translateY(20px);
+      transition: transform 0.2s;
+    }
+    .modal-overlay.visible .modal-box {
+      transform: translateY(0);
+    }
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #084355;
+      margin-bottom: 8px;
+    }
+    .modal-desc {
+      font-size: 0.9rem;
+      color: #4A7A8A;
+      margin-bottom: 16px;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .modal-actions .btn {
+      padding: 9px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+    .modal-actions .btn-cancel {
+      background: #e8eff4;
+      color: #4A7A8A;
+    }
+    .modal-actions .btn-cancel:hover { background: #dde5ed; }
+    .modal-actions .btn-danger {
+      background: #D93025;
+      color: #fff;
+    }
+    .modal-actions .btn-danger:hover { background: #C62828; }
+
+    /* ── Responsive ──────────────────────────────── */
+    @media (max-width: 900px) {
+      .card-detail-layout {
+        grid-template-columns: 1fr;
+      }
+      .card-visual {
+        width: 100%;
+        max-width: 340px;
+      }
+      .stat-mini-cards {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+      .actions-bar {
+        flex-direction: column;
+      }
+      .actions-bar .btn-action {
+        justify-content: center;
+      }
+    }
+    @media (max-width: 480px) {
+      .stat-mini-cards {
+        grid-template-columns: 1fr;
+      }
+      .card-visual {
+        height: 180px;
+        padding: 20px;
+      }
+      .cv-num {
+        font-size: 1rem;
+        letter-spacing: 2px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title" id="topbarTitle">Détail carte</div>
+            <div class="topbar-breadcrumb" id="breadcrumb">Cartes / Détail</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a href="cartes.html" class="btn btn-ghost btn-sm" id="btnRetour">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Retour
+          </a>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <!-- Page Header -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title" id="pageTitle">Chargement...</h1>
+            <p class="page-subtitle" id="pageSubtitle"></p>
+          </div>
+          <div style="display:flex;gap:8px;" id="headerActions" style="display:none;">
+            <button class="btn btn-outline" onclick="window.location.href='cartes.html'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              Retour a la liste
+            </button>
+          </div>
+        </div>
+
+        <!-- Skeleton while loading -->
+        <div id="skeletonLayout">
+          <div class="card-detail-layout">
+            <div>
+              <div class="skeleton skeleton-block" style="height:210px;"></div>
+              <div class="skeleton skeleton-line w-80" style="margin-top:16px;"></div>
+              <div class="skeleton skeleton-line w-60"></div>
+              <div class="skeleton skeleton-line w-40"></div>
+            </div>
+            <div>
+              <div class="skeleton skeleton-block" style="height:280px;"></div>
+              <div class="skeleton skeleton-block" style="height:200px;margin-top:16px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main content (hidden until loaded) -->
+        <div id="mainContent" style="display:none;">
+
+          <div class="card-detail-layout">
+            <!-- ── Left Column ────────────────────── -->
+            <div>
+              <!-- Visual Card -->
+              <div class="card-visual-wrap">
+                <div class="card-visual" id="cardVisual">
+                  <span class="cv-type-badge" id="cvTypeBadge"></span>
+                  <div class="cv-top">
+                    <div class="cv-logo">SOUTRA FINANCE</div>
+                    <div class="cv-chip"></div>
+                  </div>
+                  <div class="cv-num" id="cvNum">**** **** **** ****</div>
+                  <div class="cv-bottom">
+                    <div>
+                      <div class="cv-name" id="cvName">NOM PRENOM</div>
+                    </div>
+                    <div class="cv-exp">
+                      <div class="cv-exp-label">Expire fin</div>
+                      <div class="cv-exp-value" id="cvExp">MM/AA</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Status badge below card -->
+              <div style="text-align:center;margin-top:12px;">
+                <span class="card-hero-status active" id="cardStatus">
+                  <span class="status-dot"></span>
+                  <span id="cardStatusText">ACTIF</span>
+                </span>
+              </div>
+
+              <!-- Card Information -->
+              <section class="card" style="margin-top:16px;">
+                <div class="card-header">
+                  <div class="card-title" style="display:flex;align-items:center;gap:8px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:#084355;"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                    Informations carte
+                  </div>
+                </div>
+                <div style="padding:16px;">
+                  <div class="info-row"><span class="ir-label">Statut</span><span class="ir-value" id="infoStatut"></span></div>
+                  <div class="info-row"><span class="ir-label">Type</span><span class="ir-value" id="infoType"></span></div>
+                  <div class="info-row"><span class="ir-label">N&deg; carte</span><span class="ir-value" id="infoNumCarte" style="font-family:monospace;"></span></div>
+                  <div class="info-row"><span class="ir-label">Date activation</span><span class="ir-value" id="infoActivation"></span></div>
+                  <div class="info-row"><span class="ir-label">Date expiration</span><span class="ir-value" id="infoExpiration"></span></div>
+                </div>
+              </section>
+
+              <!-- Client & Account -->
+              <section class="card" style="margin-top:16px;">
+                <div class="card-header">
+                  <div class="card-title" style="display:flex;align-items:center;gap:8px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:#084355;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Client & Compte
+                  </div>
+                </div>
+                <div style="padding:16px;">
+                  <div class="info-row"><span class="ir-label">Titulaire</span><span class="ir-value" id="infoClient"></span></div>
+                  <div class="info-row"><span class="ir-label">Compte associe</span><span class="ir-value" id="infoCompte" style="font-family:monospace;"></span></div>
+                  <div class="info-row"><span class="ir-label">Solde compte</span><span class="ir-value" id="infoSolde" style="font-weight:700;"></span></div>
+                </div>
+              </section>
+
+              <!-- Actions -->
+              <section class="card" style="margin-top:16px;">
+                <div class="card-header">
+                  <div class="card-title" style="display:flex;align-items:center;gap:8px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:#084355;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    Actions
+                  </div>
+                </div>
+                <div style="padding:16px;">
+                  <div class="actions-bar">
+                    <button class="btn-action" id="btnModifier" onclick="modifierPlafond()" title="Modifier le plafond de la carte">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      Modifier plafond
+                    </button>
+                    <button class="btn-action" id="btnReleve" onclick="genererReleve()" title="Generer un releve PDF de la carte">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                      Releve PDF
+                    </button>
+                    <button class="btn-action" id="btnBloquer" onclick="openBloquerModal()" title="Bloquer temporairement cette carte">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                      Bloquer
+                    </button>
+                    <button class="btn-action danger" id="btnOpposition" onclick="goToOpposition()" title="Faire opposition a cette carte (irreversible)">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      Opposition
+                    </button>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <!-- ── Right Column ───────────────────── -->
+            <div>
+              <!-- Daily Limit Gauge -->
+              <section class="card">
+                <div class="card-header">
+                  <div>
+                    <div class="card-title" style="display:flex;align-items:center;gap:8px;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:#084355;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                      Plafond quotidien
+                    </div>
+                    <div class="card-subtitle">Consommation du jour en temps reel</div>
+                  </div>
+                </div>
+                <div style="padding:20px;">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                    <div>
+                      <span style="font-size:2rem;font-weight:800;color:#084355;" id="plafondConsomme">0</span>
+                      <span style="font-size:.9rem;color:#4A7A8A;font-weight:500;"> FCFA</span>
+                    </div>
+                    <div style="text-align:right;">
+                      <span style="color:#4A7A8A;font-size:.85rem;">Plafond</span><br>
+                      <span style="font-weight:700;color:#084355;" id="plafondTotal">0</span>
+                      <span style="color:#4A7A8A;font-size:.85rem;"> FCFA</span>
+                    </div>
+                  </div>
+
+                  <div class="gauge-container">
+                    <div class="gauge-bar">
+                      <div class="gauge-fill green" id="gaugeFill" style="width:0%"></div>
+                    </div>
+                    <div class="gauge-text">
+                      <span class="gauge-percent" id="gaugePercent">0%</span>
+                      <span id="gaugeRestant">0 FCFA restants</span>
+                    </div>
+                  </div>
+
+                  <!-- Stat mini cards -->
+                  <div class="stat-mini-cards">
+                    <div class="stat-mini">
+                      <div class="stat-mini-label">Nb transactions</div>
+                      <div class="stat-mini-value" id="statNbTx">0</div>
+                    </div>
+                    <div class="stat-mini">
+                      <div class="stat-mini-label">Moy. par tx</div>
+                      <div class="stat-mini-value" id="statMoyTx">0</div>
+                    </div>
+                    <div class="stat-mini">
+                      <div class="stat-mini-label">Plus gros tx</div>
+                      <div class="stat-mini-value danger" id="statMaxTx">0</div>
+                    </div>
+                  </div>
+
+                  <!-- 7-day chart -->
+                  <div class="chart-wrapper">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                      <span style="font-weight:600;color:#084355;font-size:.9rem;">Consommation 7 jours</span>
+                      <span style="font-size:.8rem;color:#4A7A8A;" id="conso7Total">0 FCFA total</span>
+                    </div>
+                    <canvas id="consommationChart" height="140"></canvas>
+                  </div>
+                </div>
+              </section>
+
+              <!-- Recent Transactions -->
+              <section class="card" style="margin-top:16px;">
+                <div class="card-header">
+                  <div>
+                    <div class="card-title" style="display:flex;align-items:center;gap:8px;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:#084355;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                      Transactions recentes
+                    </div>
+                    <div class="card-subtitle">10 dernieres operations par carte</div>
+                  </div>
+                  <span class="page-indicator" id="txCount">-- operations</span>
+                </div>
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Description</th>
+                      <th>Lieu / Marchand</th>
+                      <th style="text-align:right;">Montant</th>
+                    </tr>
+                  </thead>
+                  <tbody id="txBody">
+                    <tr>
+                      <td colspan="4">
+                        <div class="empty-state">
+                          <div class="empty-state-icon">&#128179;</div>
+                          <div class="empty-state-text">Chargement des transactions...</div>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error state -->
+        <div id="errorState" style="display:none;">
+          <div style="display:flex; justify-content:center; align-items:center; height:300px; flex-direction:column; gap:16px; color:#D93025;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:48px;height:48px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <div id="errorMessage">Carte introuvable.</div>
+            <a href="cartes.html" class="btn btn-primary">Retour aux cartes</a>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal: Bloquer -->
+  <div class="modal-overlay" id="modalBloquer">
+    <div class="modal-box">
+      <div class="modal-title">Bloquer la carte</div>
+      <div class="modal-desc">La carte sera temporairement suspendue. Les transactions seront impossibles jusqu'au deblocage.</div>
+      <label style="font-size:0.85rem;font-weight:600;color:#084355;display:block;margin-bottom:6px;">Motif du blocage *</label>
+      <input type="text" class="form-control" id="motifBloquer" placeholder="Saisissez le motif...">
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeModal('modalBloquer')">Annuler</button>
+        <button class="btn btn-danger" onclick="confirmerBlocage()">Bloquer la carte</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Modifier Plafond -->
+  <div class="modal-overlay" id="modalPlafond">
+    <div class="modal-box">
+      <div class="modal-title">Modifier le plafond quotidien</div>
+      <div class="modal-desc">Definissez le nouveau plafond de consommation quotidienne pour cette carte.</div>
+      <label style="font-size:0.85rem;font-weight:600;color:#084355;display:block;margin-bottom:6px;">Nouveau plafond (FCFA) *</label>
+      <input type="number" class="form-control" id="nouveauPlafond" placeholder="Ex: 500000" min="0" step="10000">
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeModal('modalPlafond')">Annuler</button>
+        <button class="btn btn-primary" onclick="confirmerPlafond()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ── State ─────────────────────────────────────── */
+    var carteData = null;
+    var carteId = null;
+    var chartInstance = null;
+
+    /* ── Init ──────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function () {
+      var params = new URLSearchParams(window.location.search);
+      carteId = params.get('id');
+
+      if (carteId) {
+        loadCarte(carteId);
+      } else {
+        document.getElementById('pageTitle').textContent = 'Aucune carte specifiee';
+        document.getElementById('skeletonLayout').style.display = 'none';
+        showError('Aucun identifiant de carte fourni.');
+      }
+
+      // Close modals on overlay click
+      document.querySelectorAll('.modal-overlay').forEach(function (overlay) {
+        overlay.addEventListener('click', function (e) {
+          if (e.target === overlay) overlay.classList.remove('visible');
+        });
+      });
+
+      // Close modals on Escape
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          document.querySelectorAll('.modal-overlay.visible').forEach(function (m) {
+            m.classList.remove('visible');
+          });
+        }
+      });
+
+      // Back button
+      document.getElementById('btnRetour').addEventListener('click', function (e) {
+        e.preventDefault();
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.href = 'cartes.html';
+        }
+      });
+    });
+
+    /* ── Load Carte ────────────────────────────────── */
+    async function loadCarte(id) {
+      try {
+        var res = await Cartes.obtenir(id);
+        if (res && res.ok) {
+          carteData = await res.json();
+          renderDetail(carteData);
+          document.getElementById('skeletonLayout').style.display = 'none';
+          document.getElementById('mainContent').style.display = '';
+        } else if (res && res.status === 404) {
+          showError('Carte introuvable (ID : ' + id + ').');
+        } else {
+          showError('Erreur lors du chargement de la carte.');
+        }
+      } catch (e) {
+        showError('Impossible de joindre le serveur.');
+        showToast(e.message, 'error');
+      }
+    }
+
+    function showError(msg) {
+      document.getElementById('skeletonLayout').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'none';
+      document.getElementById('errorState').style.display = '';
+      document.getElementById('errorMessage').textContent = msg;
+      document.getElementById('pageTitle').textContent = 'Erreur';
+    }
+
+    /* ── Render Detail ─────────────────────────────── */
+    function renderDetail(c) {
+      var masked = c.numeroCarteMasque || '**** **** **** ' + (c.numeroCarte || '').slice(-4);
+      var titulaire = c.titulaire || c.clientNom || 'NOM PRENOM';
+
+      // Topbar + page title
+      document.getElementById('pageTitle').textContent = 'Carte ' + masked;
+      document.getElementById('pageSubtitle').textContent = titulaire;
+      document.getElementById('topbarTitle').textContent = 'Carte ' + masked;
+      document.getElementById('breadcrumb').textContent = 'Cartes / ' + masked;
+      document.title = masked + ' — MicroFinance';
+
+      // Visual card
+      document.getElementById('cvNum').textContent = masked;
+      document.getElementById('cvName').textContent = titulaire.toUpperCase();
+      var exp = c.dateExpiration ? new Date(c.dateExpiration) : null;
+      document.getElementById('cvExp').textContent = exp
+        ? (exp.getMonth() + 1).toString().padStart(2, '0') + '/' + exp.getFullYear().toString().slice(-2)
+        : 'MM/AA';
+
+      // Type badge on visual card
+      var plafond = c.plafondQuotidien || c.plafondJournalier || 0;
+      var type = c.typeCarte || (plafond > 2000000 ? 'PLATINUM' : plafond > 500000 ? 'GOLD' : 'CLASSIQUE');
+      var typeLower = type.toLowerCase();
+      var typeBadge = document.getElementById('cvTypeBadge');
+      typeBadge.textContent = type;
+      typeBadge.className = 'cv-type-badge ' + (typeLower.includes('platinum') ? 'platinum' : typeLower.includes('gold') ? 'gold' : 'classic');
+
+      // Status
+      var statut = (c.statut || 'ACTIF').toUpperCase();
+      var statusEl = document.getElementById('cardStatus');
+      var statusText = document.getElementById('cardStatusText');
+      statusText.textContent = statut;
+      var statusMap = {
+        'ACTIF': 'active',
+        'ACTIVE': 'active',
+        'BLOQUEE': 'bloquee',
+        'BLOQUE': 'bloquee',
+        'OPOSEE': 'oposee',
+        'EXPIREE': 'expiree',
+        'INACTIVE': 'inactive'
+      };
+      statusEl.className = 'card-hero-status ' + (statusMap[statut] || 'active');
+
+      // Info section: carte
+      document.getElementById('infoStatut').innerHTML = '<span class="badge ' + getStatusBadgeClass(statut) + '">' + escapeHtml(statut) + '</span>';
+      document.getElementById('infoType').textContent = type;
+      document.getElementById('infoNumCarte').textContent = masked;
+      document.getElementById('infoActivation').textContent = formatDate(c.dateActivation);
+      document.getElementById('infoExpiration').textContent = formatDate(c.dateExpiration);
+
+      // Info section: client & compte
+      document.getElementById('infoClient').textContent = titulaire;
+      document.getElementById('infoCompte').textContent = c.numCompte || c.numeroCompte || '-';
+      document.getElementById('infoSolde').textContent = formatCurrency(c.soldeCompte || c.solde || 0) + ' FCFA';
+
+      // Gauge
+      var consomme = c.plafondConsomme || c.consommeJour || 0;
+      var restant = plafond - consomme;
+      var pct = plafond > 0 ? Math.round((consomme / plafond) * 100) : 0;
+
+      document.getElementById('plafondConsomme').textContent = formatCurrency(consomme);
+      document.getElementById('plafondTotal').textContent = formatCurrency(plafond);
+      document.getElementById('gaugePercent').textContent = pct + '%';
+      document.getElementById('gaugeRestant').textContent = formatCurrency(Math.max(0, restant)) + ' FCFA restants';
+
+      var fill = document.getElementById('gaugeFill');
+      // Animate the fill after a short delay
+      setTimeout(function () {
+        fill.style.width = Math.min(pct, 100) + '%';
+      }, 100);
+      fill.className = 'gauge-fill ' + (pct < 70 ? 'green' : pct < 95 ? 'orange' : 'red');
+
+      // Stat mini cards
+      var conso7 = c.conso7Jours || [0, 0, 0, 0, 0, 0, 0];
+      var totalConso7 = conso7.reduce(function (a, b) { return a + b; }, 0);
+      var nbTx = c.nbTransactionsJour || c.transactionsJourCount || 0;
+      var moyTx = nbTx > 0 ? Math.round(consomme / nbTx) : 0;
+      var maxTx = c.maxTransactionJour || 0;
+
+      document.getElementById('statNbTx').textContent = nbTx;
+      document.getElementById('statMoyTx').textContent = formatCurrency(moyTx);
+      document.getElementById('statMaxTx').textContent = formatCurrency(maxTx);
+      document.getElementById('conso7Total').textContent = formatCurrency(totalConso7) + ' FCFA total';
+
+      // Actions visibility based on status
+      var isActive = statut === 'ACTIF' || statut === 'ACTIVE';
+      document.getElementById('btnOpposition').style.display = isActive ? '' : 'none';
+      document.getElementById('btnBloquer').style.display = isActive ? '' : 'none';
+      document.getElementById('btnModifier').style.display = isActive ? '' : 'none';
+
+      // Charts & transactions
+      renderConsommationChart(conso7);
+      loadTransactions(c.idCarte || c.id || carteId);
+    }
+
+    /* ── Status Badge Class ────────────────────────── */
+    function getStatusBadgeClass(statut) {
+      var map = {
+        'ACTIF': 'badge-active',
+        'ACTIVE': 'badge-active',
+        'BLOQUEE': 'badge-blocked',
+        'BLOQUE': 'badge-blocked',
+        'OPOSEE': 'badge-blocked',
+        'EXPIREE': 'badge-warning',
+        'INACTIVE': 'badge-info'
+      };
+      return map[statut] || 'badge-info';
+    }
+
+    /* ── 7-day Consumption Chart ───────────────────── */
+    function renderConsommationChart(data) {
+      var ctx = document.getElementById('consommationChart').getContext('2d');
+
+      // Destroy previous chart instance if exists
+      if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+      }
+
+      // Build labels for the last 7 days
+      var jours = [];
+      var dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+      var today = new Date();
+      for (var i = 6; i >= 0; i--) {
+        var d = new Date(today);
+        d.setDate(d.getDate() - i);
+        jours.push(dayNames[d.getDay()] + ' ' + d.getDate());
+      }
+
+      // Determine colors per bar (highlight today)
+      var barColors = data.map(function (val, idx) {
+        if (idx === 6) return '#084355'; // Today - dark
+        return val > 0 ? '#8cd5fa' : '#C9DFE8'; // Active vs zero
+      });
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: jours,
+          datasets: [{
+            label: 'Consommation',
+            data: data,
+            backgroundColor: barColors,
+            borderRadius: 6,
+            borderSkipped: false,
+            maxBarThickness: 36
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#084355',
+              titleFont: { weight: '600' },
+              callbacks: {
+                label: function (context) {
+                  return formatCurrency(context.raw) + ' FCFA';
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: '#f0f6fa' },
+              ticks: {
+                callback: function (v) {
+                  if (v >= 1000000) return (v / 1000000).toFixed(0) + 'M';
+                  if (v >= 1000) return (v / 1000).toFixed(0) + 'k';
+                  return v;
+                },
+                color: '#4A7A8A',
+                font: { size: 11 }
+              }
+            },
+            x: {
+              grid: { display: false },
+              ticks: {
+                color: '#4A7A8A',
+                font: { size: 10 }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    /* ── Load Transactions ─────────────────────────── */
+    async function loadTransactions(id) {
+      var tbody = document.getElementById('txBody');
+      try {
+        var res = await SF.apiFetch('/api/v1/cartes-visa/' + id + '/transactions');
+        if (res && res.ok) {
+          var data = await res.json();
+          var txs = data.content || data || [];
+          var count = txs.length;
+          document.getElementById('txCount').textContent = count + ' operation' + (count !== 1 ? 's' : '');
+
+          if (!txs.length) {
+            tbody.innerHTML = '<tr><td colspan="4">' +
+              '<div class="empty-state">' +
+              '<div class="empty-state-icon">&#128179;</div>' +
+              '<div class="empty-state-text">Aucune transaction recente.</div>' +
+              '</div></td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = txs.slice(0, 10).map(function (t) {
+            var dateStr = formatDate(t.dateTransaction || t.date);
+            var desc = escapeHtml(t.description || t.libelle || '-');
+            var lieu = escapeHtml(t.lieu || t.marchand || '-');
+            var montant = formatCurrency(t.montant || 0);
+
+            return '<tr>' +
+              '<td style="white-space:nowrap;">' + dateStr + '</td>' +
+              '<td>' + desc + '</td>' +
+              '<td style="color:#4A7A8A;">' + lieu + '</td>' +
+              '<td style="text-align:right;font-weight:700;color:#D93025;">-' + montant + '</td>' +
+            '</tr>';
+          }).join('');
+        } else {
+          throw new Error('Reponse invalide');
+        }
+      } catch (e) {
+        document.getElementById('txCount').textContent = 'Erreur';
+        tbody.innerHTML = '<tr><td colspan="4">' +
+          '<div class="empty-state">' +
+          '<div class="empty-state-icon">&#9888;</div>' +
+          '<div class="empty-state-text">Erreur lors du chargement des transactions.</div>' +
+          '</div></td></tr>';
+      }
+    }
+
+    /* ── Actions ───────────────────────────────────── */
+    function goToOpposition() {
+      if (!carteData) return;
+      window.location.href = 'opposition-carte.html?id=' + (carteData.idCarte || carteData.id || carteId);
+    }
+
+    function openBloquerModal() {
+      document.getElementById('motifBloquer').value = '';
+      document.getElementById('modalBloquer').classList.add('visible');
+      setTimeout(function () { document.getElementById('motifBloquer').focus(); }, 100);
+    }
+
+    async function confirmerBlocage() {
+      var motif = document.getElementById('motifBloquer').value.trim();
+      if (!motif) {
+        showToast('Veuillez saisir un motif de blocage.', 'warning');
+        document.getElementById('motifBloquer').focus();
+        return;
+      }
+      closeModal('modalBloquer');
+
+      try {
+        var id = carteData.idCarte || carteData.id || carteId;
+        var res = await SF.apiFetch('/api/v1/cartes-visa/' + id + '/bloquer', {
+          method: 'PUT',
+          body: JSON.stringify({ motif: motif })
+        });
+        if (res && res.ok) {
+          showToast('Carte bloquee avec succes.', 'success');
+          loadCarte(id);
+        } else {
+          showToast('Erreur lors du blocage de la carte.', 'error');
+        }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    function modifierPlafond() {
+      if (!carteData) return;
+      var current = carteData.plafondQuotidien || carteData.plafondJournalier || 0;
+      document.getElementById('nouveauPlafond').value = current;
+      document.getElementById('modalPlafond').classList.add('visible');
+      setTimeout(function () {
+        var input = document.getElementById('nouveauPlafond');
+        input.focus();
+        input.select();
+      }, 100);
+    }
+
+    async function confirmerPlafond() {
+      var valeur = parseInt(document.getElementById('nouveauPlafond').value, 10);
+      if (!valeur || valeur <= 0) {
+        showToast('Veuillez saisir un plafond valide.', 'warning');
+        document.getElementById('nouveauPlafond').focus();
+        return;
+      }
+      closeModal('modalPlafond');
+
+      try {
+        var id = carteData.idCarte || carteData.id || carteId;
+        var res = await SF.apiFetch('/api/v1/cartes-visa/' + id + '/plafond', {
+          method: 'PUT',
+          body: JSON.stringify({ plafondQuotidien: valeur })
+        });
+        if (res && res.ok) {
+          showToast('Plafond mis a jour : ' + formatCurrency(valeur) + ' FCFA.', 'success');
+          loadCarte(id);
+        } else {
+          showToast('Erreur lors de la mise a jour du plafond.', 'error');
+        }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    function genererReleve() {
+      if (!carteData) return;
+      showToast('Generation du releve PDF en cours...', 'info');
+      var id = carteData.idCarte || carteData.id || carteId;
+      window.open(SF.API_BASE + '/api/v1/cartes-visa/' + id + '/releve', '_blank');
+    }
+
+    /* ── Modal Helpers ─────────────────────────────── */
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('visible');
+    }
+
+    /* ── Utility Functions ─────────────────────────── */
+    function formatCurrency(n) {
+      return (n || 0).toLocaleString('fr-FR');
+    }
+
+    function formatDate(d) {
+      if (!d) return '-';
+      try {
+        return new Date(d).toLocaleDateString('fr-FR', {
+          day: '2-digit', month: '2-digit', year: 'numeric'
+        });
+      } catch (e) {
+        return d;
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      var div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

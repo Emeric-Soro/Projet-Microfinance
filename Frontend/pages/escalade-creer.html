@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nouvelle Escalade - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Nouvelle escalade</div>
+            <div class="topbar-breadcrumb">Accueil / Pilotage &amp; Audit / Exceptions / Escalade</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a href="exceptions.html" class="btn btn-ghost btn-sm">&larr; Retour</a>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Cr&eacute;ation d'escalade</h1>
+            <p class="page-subtitle">Signalez un incident n&eacute;cessitant un traitement &agrave; un niveau sup&eacute;rieur.</p>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Formulaire -->
+          <div class="card" style="max-width: 720px;">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Formulaire d'escalade</div>
+                <div class="card-subtitle">Endpoint : POST /api/v1/exceptions/escalades</div>
+              </div>
+            </div>
+            <div style="padding: 0 20px 20px;">
+              <form id="escaladeForm" novalidate>
+
+                <!-- Type d'incident -->
+                <div class="form-group">
+                  <label class="form-label" for="typeEscalade">Type d'incident *</label>
+                  <select class="form-control" id="typeEscalade" name="typeEscalade" required>
+                    <option value="">S&eacute;lectionner un type&hellip;</option>
+                    <option value="FRAUDE">Fraude / Suspicion de fraude</option>
+                    <option value="LCBFT">Alerte LCB/FT (Lutte contre le blanchiment)</option>
+                    <option value="OPERATION_IRREGULIERE">Op&eacute;ration irr&eacute;guli&egrave;re</option>
+                    <option value="DEPASSEMENT_PLAFOND">D&eacute;passement de plafond</option>
+                    <option value="ERREUR_SYSTEME">Erreur syst&egrave;me / technique</option>
+                    <option value="KYC_INCOMPLET">KYC incomplet ou suspect</option>
+                    <option value="CONTENTION_CLIENT">Contention client</option>
+                    <option value="AUTRE">Autre</option>
+                  </select>
+                  <div class="field-error" id="typeEscalade-error">Le type d'incident est obligatoire.</div>
+                </div>
+
+                <!-- Niveau de severite -->
+                <div class="form-group">
+                  <label class="form-label" for="niveau">Niveau de s&eacute;v&eacute;rit&eacute; *</label>
+                  <select class="form-control" id="niveau" name="niveau" required>
+                    <option value="N1" selected>N1 &mdash; Superviseur agence (traitement standard)</option>
+                    <option value="N2">N2 &mdash; Chef d'agence / Compliance (prioritaire 24h)</option>
+                    <option value="N3">N3 &mdash; Direction g&eacute;n&eacute;rale (critique 4h)</option>
+                    <option value="N4">N4 &mdash; Organe de d&eacute;cision / R&eacute;gulateur (imm&eacute;diat)</option>
+                  </select>
+                  <div class="field-error" id="niveau-error">Le niveau de s&eacute;v&eacute;rit&eacute; est obligatoire.</div>
+                </div>
+
+                <!-- Client concerne (recherche) -->
+                <div class="form-group">
+                  <label class="form-label" for="clientSearch">Client concern&eacute;</label>
+                  <div style="display: flex; gap: 8px;">
+                    <input type="text" class="form-control" id="clientSearch" name="clientSearch"
+                           placeholder="Rechercher par nom, pr&eacute;nom ou num&eacute;ro client&hellip;"
+                           maxlength="80" style="flex: 1;">
+                    <button type="button" class="btn btn-outline btn-sm" id="btnSearchClient" title="Rechercher">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      Rechercher
+                    </button>
+                  </div>
+                  <div id="clientSearchResult" style="margin-top: 8px; display: none;"></div>
+                  <div id="clientSelected" style="margin-top: 8px; display: none;"></div>
+                  <input type="hidden" id="idClient" name="idClient">
+                </div>
+
+                <!-- Module concerne -->
+                <div class="form-group">
+                  <label class="form-label" for="moduleConcerne">Module concern&eacute;</label>
+                  <select class="form-control" id="moduleConcerne" name="moduleConcerne">
+                    <option value="">Non sp&eacute;cifi&eacute;</option>
+                    <option value="CAISSE">Caisse / Guichet</option>
+                    <option value="CREDIT">Cr&eacute;dit</option>
+                    <option value="COMPTE">Compte</option>
+                    <option value="CARTE">Carte bancaire</option>
+                    <option value="MOBILE_MONEY">Mobile Money</option>
+                    <option value="VIREMENT">Virement</option>
+                    <option value="KYC">KYC / Conformit&eacute;</option>
+                    <option value="SYSTEME">Syst&egrave;me</option>
+                  </select>
+                </div>
+
+                <!-- Transaction liee -->
+                <div class="form-group">
+                  <label class="form-label" for="idTransaction">Transaction li&eacute;e (ID)</label>
+                  <input type="number" class="form-control" id="idTransaction" name="idTransaction"
+                         placeholder="ID de la transaction concern&eacute;e (optionnel)" min="1">
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                  <label class="form-label" for="description">Description d&eacute;taill&eacute;e *</label>
+                  <textarea class="form-control" id="description" name="description" rows="5"
+                            placeholder="D&eacute;crivez l'incident, le contexte, les personnes impliqu&eacute;es, les montants, la chronologie des faits&hellip;"
+                            required maxlength="500"></textarea>
+                  <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                    <div class="field-error" id="description-error">La description est obligatoire.</div>
+                    <span style="font-size: 12px; color: #4A7A8A;"><span id="descCount">0</span>/500</span>
+                  </div>
+                </div>
+
+                <!-- Regles correspondantes (affichage automatique) -->
+                <div id="reglesSection" style="display: none; margin-bottom: 16px;">
+                  <label class="form-label">R&egrave;gles automatiquement associ&eacute;es</label>
+                  <div id="reglesList" style="background: #F0F7FA; border: 1px solid #C9DFE8; border-radius: 8px; padding: 12px;"></div>
+                </div>
+
+                <!-- Erreur de soumission -->
+                <div id="submitError" style="display:none; background:#FFF3F3; border-left:3px solid #D93025; padding:10px 14px; border-radius:6px; color:#D93025; font-size:13px; margin-bottom:16px;"></div>
+
+                <!-- Boutons -->
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                  <a href="exceptions.html" class="btn btn-outline">Annuler</a>
+                  <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <span class="btn-text">Soumettre l'escalade</span>
+                    <div class="login-spinner" style="display:none; width:18px; height:18px;"></div>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Panneau lateral -->
+          <aside class="card">
+            <div class="card-title" style="margin-bottom: 16px;">Informations</div>
+            <div class="info-row"><span class="info-label">Statut initial</span><span class="info-value"><span class="badge badge-pending">Ouverte</span></span></div>
+            <div class="info-row"><span class="info-label">R&eacute;f&eacute;rence</span><span class="info-value" style="color:#4A7A8A;">Auto (ESC-XXXXXXXX)</span></div>
+            <div class="info-row"><span class="info-label">Progression</span><span class="info-value">N1 &rarr; N2 &rarr; N3 &rarr; N4</span></div>
+            <div class="info-row"><span class="info-label">SLA moyen</span><span class="info-value">3h12</span></div>
+            <hr style="border:0; border-top:1px solid #C9DFE8; margin:20px 0;">
+            <div class="card-title" style="margin-bottom: 12px;">Niveaux de s&eacute;v&eacute;rit&eacute;</div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <span class="badge badge-info" style="width: fit-content;">N1 &mdash; Superviseur agence</span>
+              <span class="badge badge-warning" style="width: fit-content;">N2 &mdash; Chef agence / Compliance</span>
+              <span class="badge badge-danger" style="width: fit-content;">N3 &mdash; Direction g&eacute;n&eacute;rale</span>
+              <span class="badge" style="width: fit-content; background:#7B1A2C; color:#fff;">N4 &mdash; Organe de d&eacute;cision</span>
+            </div>
+            <hr style="border:0; border-top:1px solid #C9DFE8; margin:20px 0;">
+            <div class="card-title" style="margin-bottom: 12px;">Types d'incident</div>
+            <div style="font-size: 13px; color: #4A7A8A; line-height: 1.7;">
+              <p><strong>Fraude</strong> &mdash; Transaction frauduleuse, usage non autoris&eacute;.</p>
+              <p><strong>LCB/FT</strong> &mdash; Blanchiment, financement terrorisme.</p>
+              <p><strong>Op. irr&eacute;guli&egrave;re</strong> &mdash; Proc&eacute;dure non respect&eacute;e.</p>
+              <p><strong>Plafond</strong> &mdash; D&eacute;passement des limites autoris&eacute;es.</p>
+            </div>
+            <hr style="border:0; border-top:1px solid #C9DFE8; margin:20px 0;">
+            <div class="card-title" style="margin-bottom: 12px;">R&egrave;gles automatiques</div>
+            <div id="reglesInfo" style="font-size: 13px; color: #4A7A8A; line-height: 1.7;">
+              Chargement des r&egrave;gles&hellip;
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ── Variables ──────────────────────────────────────── */
+    var reglesData = [];
+
+    /* ── Character counter for description ─────────────── */
+    document.getElementById('description').addEventListener('input', function () {
+      document.getElementById('descCount').textContent = this.value.length;
+      matchRegles();
+    });
+
+    /* ── Client search ─────────────────────────────────── */
+    var clientSearchTimeout;
+    document.getElementById('btnSearchClient').addEventListener('click', searchClient);
+    document.getElementById('clientSearch').addEventListener('input', function () {
+      clearTimeout(clientSearchTimeout);
+      clientSearchTimeout = setTimeout(searchClient, 300);
+    });
+
+    async function searchClient() {
+      var q = document.getElementById('clientSearch').value.trim();
+      var resultBox = document.getElementById('clientSearchResult');
+      if (q.length < 2) { resultBox.style.display = 'none'; return; }
+
+      resultBox.style.display = 'block';
+      resultBox.innerHTML = '<div style="color:#4A7A8A; font-size:13px;">Recherche en cours&hellip;</div>';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/clients?recherche=' + encodeURIComponent(q));
+        if (res && res.ok) {
+          var data = await res.json();
+          var items = Array.isArray(data) ? data : (data.content || []);
+          if (items.length === 0) {
+            resultBox.innerHTML = '<div style="color:#D93025; font-size:13px;">Aucun client trouv&eacute;.</div>';
+          } else {
+            resultBox.innerHTML = items.slice(0, 5).map(function (c) {
+              var label = (c.nom || '') + ' ' + (c.prenom || '');
+              var num = c.numeroClient || c.numero || '';
+              return '<div style="padding:8px 10px; background:#F0F7FA; border-radius:6px; margin-bottom:4px; cursor:pointer; font-size:13px;" ' +
+                'onclick="selectClient(' + c.idClient + ',\'' + label.replace(/'/g, "\\'") + '\',\'' + num + '\')">' +
+                '<strong>' + label.trim() + '</strong>' + (num ? ' &mdash; ' + num : '') +
+                '</div>';
+            }).join('');
+          }
+        } else {
+          resultBox.innerHTML = '<div style="color:#D93025; font-size:13px;">Erreur lors de la recherche.</div>';
+        }
+      } catch (e) {
+        resultBox.innerHTML = '<div style="color:#D93025; font-size:13px;">' + e.message + '</div>';
+      }
+    }
+
+    function selectClient(id, name, num) {
+      document.getElementById('idClient').value = id;
+      document.getElementById('clientSearch').value = name;
+      document.getElementById('clientSearchResult').style.display = 'none';
+      var sel = document.getElementById('clientSelected');
+      sel.style.display = '';
+      sel.innerHTML = '<div style="background:#f0f6fa; border:1px solid #C9DFE8; border-radius:8px; padding:10px 12px; font-size:13px;">' +
+        '<strong>' + name + '</strong>' + (num ? ' &mdash; ' + num : '') +
+        ' <button type="button" class="btn btn-ghost btn-sm" onclick="clearClient()" style="float:right; color:#D93025; padding:2px 6px;">&times;</button>' +
+        '</div>';
+      matchRegles();
+    }
+
+    function clearClient() {
+      document.getElementById('idClient').value = '';
+      document.getElementById('clientSearch').value = '';
+      document.getElementById('clientSelected').style.display = 'none';
+      document.getElementById('clientSelected').innerHTML = '';
+      matchRegles();
+    }
+
+    /* ── Load rules from API ───────────────────────────── */
+    async function loadRegles() {
+      try {
+        var res = await SF.apiFetch('/api/v1/exceptions/regles');
+        if (res && res.ok) {
+          reglesData = await res.json();
+          renderReglesInfo(reglesData);
+        }
+      } catch (e) {
+        document.getElementById('reglesInfo').innerHTML = '<span style="color:#D93025;">Impossible de charger les r&egrave;gles.</span>';
+      }
+    }
+
+    function renderReglesInfo(regles) {
+      var escaladeRegles = regles.filter(function (r) { return r.type === 'ESCALADE'; });
+      var container = document.getElementById('reglesInfo');
+      if (!escaladeRegles.length) {
+        container.innerHTML = 'Aucune r&egrave;gle d\'escalade configur&eacute;e.';
+        return;
+      }
+      container.innerHTML = escaladeRegles.map(function (r) {
+        var niv = r.action ? r.action.replace('ESCALADE_', '') : '?';
+        var seuil = r.seuil ? Number(r.seuil).toLocaleString('fr-FR') + ' FCFA' : '';
+        return '<div style="margin-bottom:6px;"><span class="badge badge-info" style="font-size:11px;">' + niv + '</span> ' +
+          '<span>' + (r.critere || '') + (seuil ? ' &ge; ' + seuil : '') + '</span>' +
+          '<br><span style="font-size:12px; color:#7A8A9A;">Validateur : ' + (r.roleApprobateur || '-') + '</span></div>';
+      }).join('');
+    }
+
+    /* ── Automatic rule matching ───────────────────────── */
+    function matchRegles() {
+      var typeEsc = document.getElementById('typeEscalade').value;
+      var niveau = document.getElementById('niveau').value;
+      var desc = document.getElementById('description').value.toLowerCase();
+      var section = document.getElementById('reglesSection');
+      var list = document.getElementById('reglesList');
+
+      if (!reglesData.length || (!typeEsc && !niveau)) {
+        section.style.display = 'none';
+        return;
+      }
+
+      var matched = reglesData.filter(function (r) {
+        if (r.type !== 'ESCALADE') return false;
+        var niveauFromAction = r.action ? r.action.replace('ESCALADE_', '') : '';
+        if (niveauFromAction === niveau) return true;
+        if (r.critere && desc.indexOf(r.critere.toLowerCase()) !== -1) return true;
+        return false;
+      });
+
+      // Also match by incident type keywords
+      var typeKeywords = {
+        'FRAUDE': ['fraude', 'suspicion'],
+        'LCBFT': ['blanchiment', 'lcb', 'ft', 'terrorisme'],
+        'OPERATION_IRREGULIERE': ['irreguli', 'operation'],
+        'DEPASSEMENT_PLAFOND': ['plafond', 'depassement', 'seuil'],
+        'ERREUR_SYSTEME': ['erreur', 'systeme', 'technique'],
+        'KYC_INCOMPLET': ['kyc'],
+        'CONTENTION_CLIENT': ['contention', 'client']
+      };
+
+      var keywords = typeKeywords[typeEsc] || [];
+      reglesData.forEach(function (r) {
+        if (r.type !== 'ESCALADE') return;
+        if (matched.indexOf(r) !== -1) return;
+        var critereLower = (r.critere || '').toLowerCase();
+        for (var i = 0; i < keywords.length; i++) {
+          if (critereLower.indexOf(keywords[i]) !== -1 || desc.indexOf(keywords[i]) !== -1) {
+            matched.push(r);
+            break;
+          }
+        }
+      });
+
+      if (!matched.length) {
+        section.style.display = 'none';
+        return;
+      }
+
+      section.style.display = '';
+      list.innerHTML = matched.map(function (r) {
+        var niveauLabel = r.action ? r.action.replace('ESCALADE_', '') : '?';
+        var seuil = r.seuil ? ' &mdash; seuil : ' + Number(r.seuil).toLocaleString('fr-FR') + ' FCFA' : '';
+        return '<div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid #C9DFE8;">' +
+          '<div><span class="badge badge-info" style="font-size:11px; margin-right:6px;">' + niveauLabel + '</span>' +
+          '<span style="font-size:13px;">' + (r.critere || r.action || '') + seuil + '</span></div>' +
+          '<span style="font-size:12px; color:#7A8A9A;">' + (r.roleApprobateur || '') + '</span>' +
+          '</div>';
+      }).join('');
+    }
+
+    // Trigger rule matching on type and niveau change
+    document.getElementById('typeEscalade').addEventListener('change', matchRegles);
+    document.getElementById('niveau').addEventListener('change', matchRegles);
+
+    /* ── Form submission ───────────────────────────────── */
+    document.getElementById('escaladeForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      var btn = document.getElementById('submitBtn');
+      var errBox = document.getElementById('submitError');
+      var spinner = btn.querySelector('.login-spinner');
+      var label = btn.querySelector('.btn-text');
+
+      // Read fields
+      var typeEscalade = document.getElementById('typeEscalade').value;
+      var niveau = document.getElementById('niveau').value;
+      var description = document.getElementById('description').value.trim();
+      var idClient = document.getElementById('idClient').value;
+      var idTransaction = document.getElementById('idTransaction').value;
+
+      // Validation
+      var valide = true;
+      var champs = [
+        { id: 'typeEscalade', valeur: typeEscalade, errId: 'typeEscalade-error' },
+        { id: 'niveau', valeur: niveau, errId: 'niveau-error' },
+        { id: 'description', valeur: description, errId: 'description-error' }
+      ];
+
+      champs.forEach(function (ch) {
+        var input = document.getElementById(ch.id);
+        var err = document.getElementById(ch.errId);
+        if (!ch.valeur) {
+          input.classList.add('is-invalid');
+          if (err) err.style.display = 'block';
+          valide = false;
+        } else {
+          input.classList.remove('is-invalid');
+          if (err) err.style.display = 'none';
+        }
+      });
+
+      if (!valide) {
+        showToast('Veuillez compléter tous les champs obligatoires.', 'error');
+        return;
+      }
+
+      // Loading state
+      errBox.style.display = 'none';
+      btn.disabled = true;
+      label.style.display = 'none';
+      spinner.style.display = 'inline-block';
+
+      // Payload matching EscaladeRequestDTO
+      var payload = {
+        typeEscalade: typeEscalade,
+        description: description,
+        niveau: niveau
+      };
+      if (idClient) payload.idClient = parseInt(idClient, 10);
+      if (idTransaction) payload.idTransaction = parseInt(idTransaction, 10);
+
+      try {
+        var res = await SF.apiFetch('/api/v1/exceptions/escalades', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        if (!res) return; // 401 redirected
+
+        var data = await res.json().catch(function () { return {}; });
+
+        if (res.status === 201 || res.status === 200) {
+          showToast('Escalade créée avec succès ! Référence : ' + (data.reference || ''), 'success');
+          setTimeout(function () {
+            window.location.href = 'exceptions.html';
+          }, 1500);
+
+        } else if (res.status === 400) {
+          var msg = data.errors ? data.errors.map(function (e) { return e.defaultMessage || e.message || e; }).join(' · ') : (data.message || 'Données invalides.');
+          errBox.textContent = msg;
+          errBox.style.display = 'block';
+          showToast('Données invalides. Vérifiez le formulaire.', 'error');
+
+        } else {
+          var msg2 = data.message || 'Erreur serveur. Réessayez.';
+          errBox.textContent = msg2;
+          errBox.style.display = 'block';
+          showToast(msg2, 'error');
+        }
+
+      } catch (err) {
+        showToast('Impossible de joindre le serveur. Vérifiez que le backend est démarré.', 'error');
+      } finally {
+        btn.disabled = false;
+        label.style.display = 'inline';
+        spinner.style.display = 'none';
+      }
+    });
+
+    /* ── Init ───────────────────────────────────────────── */
+    loadRegles();
+  </script>
+</body>
+</html>

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frais tenue de compte - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Frais tenue de compte</div>
+            <div class="topbar-breadcrumb">Agios & Frais / Frais tenue</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <span style="font-size: 12px; color: #4A7A8A;">Dernier traitement: <span id="dernierTraitement">--</span></span>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <!-- KPI Summary Row -->
+        <div class="grid-3-equal" id="kpiRow">
+          <div class="card" style="text-align: center;">
+            <div style="width: 56px; height: 56px; border-radius: 12px; background: rgba(140,213,250,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#084355" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            </div>
+            <div class="card-title" style="font-size: 16px; margin-bottom: 8px;">Comptes actifs</div>
+            <div style="font-size: 28px; font-weight: 800; color: #084355;" id="kpiComptesActifs">--</div>
+          </div>
+          <div class="card" style="text-align: center;">
+            <div style="width: 56px; height: 56px; border-radius: 12px; background: rgba(80,200,120,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1B7A3D" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="card-title" style="font-size: 16px; margin-bottom: 8px;">Montant estimé total</div>
+            <div style="font-size: 28px; font-weight: 800; color: #1B7A3D;" id="kpiMontantEstime">--</div>
+          </div>
+          <div class="card" style="text-align: center;">
+            <div style="width: 56px; height: 56px; border-radius: 12px; background: rgba(250,180,130,0.2); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E65100" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div class="card-title" style="font-size: 16px; margin-bottom: 8px;">Dernier prélèvement</div>
+            <div style="font-size: 28px; font-weight: 800; color: #E65100;" id="kpiDernierMontant">--</div>
+          </div>
+        </div>
+
+        <!-- Configuration Grid: Fee per Account Type -->
+        <section class="card" style="margin-top: 24px;">
+          <div class="card-header">
+            <div class="card-title">Configuration des frais par type de compte</div>
+          </div>
+          <div style="padding: 20px;">
+            <table class="data-table" id="configTable">
+              <thead>
+                <tr>
+                  <th>Type de compte</th>
+                  <th style="width: 200px;">Frais unitaire (FCFA)</th>
+                  <th style="width: 150px;">Périodicité</th>
+                  <th style="width: 120px;">Nb comptes</th>
+                  <th style="width: 180px;">Montant estimé</th>
+                </tr>
+              </thead>
+              <tbody id="configBody">
+                <tr>
+                  <td>
+                    <span class="badge badge-info">Courant</span>
+                  </td>
+                  <td>
+                    <div class="input-group">
+                      <input type="number" class="form-control frais-input" data-type="COURANT" value="2500" min="0" step="100">
+                      <span class="input-addon">FCFA</span>
+                    </div>
+                  </td>
+                  <td>
+                    <select class="form-control periodicite-select" data-type="COURANT">
+                      <option value="MENSUELLE" selected>Mensuelle</option>
+                      <option value="TRIMESTRIELLE">Trimestrielle</option>
+                      <option value="ANNUELLE">Annuelle</option>
+                    </select>
+                  </td>
+                  <td class="nb-comptes-cell" data-type="COURANT">--</td>
+                  <td class="montant-estime-cell" data-type="COURANT" style="font-weight: 700;">--</td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="badge badge-active">Épargne</span>
+                  </td>
+                  <td>
+                    <div class="input-group">
+                      <input type="number" class="form-control frais-input" data-type="EPARGNE" value="1500" min="0" step="100">
+                      <span class="input-addon">FCFA</span>
+                    </div>
+                  </td>
+                  <td>
+                    <select class="form-control periodicite-select" data-type="EPARGNE">
+                      <option value="MENSUELLE" selected>Mensuelle</option>
+                      <option value="TRIMESTRIELLE">Trimestrielle</option>
+                      <option value="ANNUELLE">Annuelle</option>
+                    </select>
+                  </td>
+                  <td class="nb-comptes-cell" data-type="EPARGNE">--</td>
+                  <td class="montant-estime-cell" data-type="EPARGNE" style="font-weight: 700;">--</td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="badge badge-pending">Épargne à terme</span>
+                  </td>
+                  <td>
+                    <div class="input-group">
+                      <input type="number" class="form-control frais-input" data-type="EPARGNE_TERME" value="3000" min="0" step="100">
+                      <span class="input-addon">FCFA</span>
+                    </div>
+                  </td>
+                  <td>
+                    <select class="form-control periodicite-select" data-type="EPARGNE_TERME">
+                      <option value="MENSUELLE" selected>Mensuelle</option>
+                      <option value="TRIMESTRIELLE">Trimestrielle</option>
+                      <option value="ANNUELLE">Annuelle</option>
+                    </select>
+                  </td>
+                  <td class="nb-comptes-cell" data-type="EPARGNE_TERME">--</td>
+                  <td class="montant-estime-cell" data-type="EPARGNE_TERME" style="font-weight: 700;">--</td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="badge badge-blocked">Bloqué</span>
+                  </td>
+                  <td>
+                    <div class="input-group">
+                      <input type="number" class="form-control frais-input" data-type="BLOQUE" value="0" min="0" step="100">
+                      <span class="input-addon">FCFA</span>
+                    </div>
+                  </td>
+                  <td>
+                    <select class="form-control periodicite-select" data-type="BLOQUE">
+                      <option value="MENSUELLE" selected>Mensuelle</option>
+                      <option value="TRIMESTRIELLE">Trimestrielle</option>
+                      <option value="ANNUELLE">Annuelle</option>
+                    </select>
+                  </td>
+                  <td class="nb-comptes-cell" data-type="BLOQUE">--</td>
+                  <td class="montant-estime-cell" data-type="BLOQUE" style="font-weight: 700;">--</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr style="background: #F0F6FA; font-weight: 700;">
+                  <td colspan="3" style="text-align: right;">Total estimé</td>
+                  <td id="totalComptes">--</td>
+                  <td id="totalMontant" style="color: #084355; font-size: 16px;">--</td>
+                </tr>
+              </tfoot>
+            </table>
+            <div style="display: flex; gap: 8px; margin-top: 16px;">
+              <button class="btn btn-outline" onclick="simulerFrais()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                Simuler
+              </button>
+              <button class="btn btn-primary" onclick="ouvrirModalExecution()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Exécuter le prélèvement
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Simulation Result -->
+        <section class="card" id="simCard" style="margin-top: 16px; display: none;">
+          <div class="card-header">
+            <div class="card-title">Résultat de la simulation</div>
+            <button class="btn btn-outline" style="font-size: 12px; padding: 4px 12px;" onclick="document.getElementById('simCard').style.display='none'">Fermer</button>
+          </div>
+          <div style="padding: 20px;" id="simResult"></div>
+        </section>
+
+        <!-- Execution History -->
+        <section class="card" style="margin-top: 24px;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Historique des exécutions</div>
+              <div class="card-subtitle">Endpoint : /api/v1/agios/frais-tenue</div>
+            </div>
+            <div class="export-buttons">
+              <button class="export-btn" onclick="exportCSV()">CSV</button>
+            </div>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Nb comptes</th>
+                <th>Montant total</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody id="histBody">
+              <tr><td colspan="4" style="text-align:center;color:#4A7A8A;padding:20px;">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal: Mandatory Approval before Execution -->
+  <div class="modal-overlay" id="modalExecution">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-title">Confirmation d'exécution</div>
+        <button class="modal-close" onclick="closeModal('modalExecution')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <div style="background: #FFF3E0; border-left: 4px solid #E65100; padding: 12px 16px; border-radius: 4px; margin-bottom: 20px;">
+          <div style="font-weight: 700; color: #E65100; margin-bottom: 4px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#E65100" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Action irréversible
+          </div>
+          <p style="font-size: 13px; color: #4A7A8A; margin: 0;">Les frais de tenue de compte seront prélevés sur tous les comptes éligibles. Cette opération ne peut pas être annulée.</p>
+        </div>
+        <div id="modalResume" style="margin-bottom: 20px;"></div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="chkApproval" style="margin-top: 3px;" onchange="syncApprovalBtn()">
+            <span style="font-size: 13px; color: #084355;">Je confirme avoir vérifié la configuration et autorise l'exécution du prélèvement des frais de tenue de compte.</span>
+          </label>
+        </div>
+        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+          <button class="btn btn-outline" onclick="closeModal('modalExecution')">Annuler</button>
+          <button class="btn btn-primary" id="btnConfirmerExecution" disabled onclick="executerFrais()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Confirmer et exécuter
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Progress Bar during Batch Execution -->
+  <div class="modal-overlay" id="modalProgress">
+    <div class="modal" style="max-width: 440px;">
+      <div class="modal-body" style="text-align: center; padding: 40px 24px;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; border: 4px solid #C9DFE8; border-top-color: #fab482; margin: 0 auto 20px; animation: spin 1s linear infinite;"></div>
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Prélèvement en cours...</h3>
+        <p style="color: #4A7A8A; font-size: 13px;" id="progressDesc">Traitement des frais de tenue de compte</p>
+        <div style="margin-top: 20px; background: #F0F6FA; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #4A7A8A; margin-bottom: 8px;">
+            <span>Progression</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <div style="height: 8px; background: #C9DFE8; border-radius: 4px; overflow: hidden;">
+            <div style="height: 100%; background: linear-gradient(90deg, #fab482, #E65100); border-radius: 4px; width: 0%; transition: width 0.3s;" id="progressBar"></div>
+          </div>
+          <div style="font-size: 12px; font-weight: 700; color: #084355; margin-top: 8px;" id="progressComptes">0 / 0 comptes traités</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .frais-input { text-align: right; }
+    .config-total-row { background: #F0F6FA; font-weight: 700; }
+  </style>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* =============================================
+       Frais tenue de compte - M18
+       Configuration grid, simulation, execution
+       ============================================= */
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadHistorique();
+      recalculateEstimates();
+      // Recalculate on any input change
+      document.querySelectorAll('.frais-input').forEach(input => {
+        input.addEventListener('input', recalculateEstimates);
+      });
+    });
+
+    /* ── Gather config from the grid ────────────── */
+
+    function getConfig() {
+      var configs = [];
+      document.querySelectorAll('.frais-input').forEach(function(input) {
+        var type = input.getAttribute('data-type');
+        var periodicite = document.querySelector('.periodicite-select[data-type="' + type + '"]');
+        configs.push({
+          typeCompte: type,
+          montant: parseFloat(input.value) || 0,
+          periodicite: periodicite ? periodicite.value : 'MENSUELLE'
+        });
+      });
+      return configs;
+    }
+
+    /* ── Recalculate estimated totals in grid ───── */
+
+    function recalculateEstimates() {
+      var totalMontant = 0;
+      var totalComptes = 0;
+      document.querySelectorAll('.frais-input').forEach(function(input) {
+        var type = input.getAttribute('data-type');
+        var montant = parseFloat(input.value) || 0;
+        var nbCell = document.querySelector('.nb-comptes-cell[data-type="' + type + '"]');
+        var montantCell = document.querySelector('.montant-estime-cell[data-type="' + type + '"]');
+        // Placeholder counts (will be replaced by simulation data)
+        var nb = nbCell && nbCell.textContent !== '--' ? parseInt(nbCell.textContent.replace(/\s/g, '')) || 0 : 0;
+        var estime = nb * montant;
+        if (montantCell) montantCell.textContent = estime.toLocaleString('fr-FR') + ' FCFA';
+        totalMontant += estime;
+        totalComptes += nb;
+      });
+      document.getElementById('totalComptes').textContent = totalComptes > 0 ? totalComptes.toLocaleString('fr-FR') : '--';
+      document.getElementById('totalMontant').textContent = totalMontant > 0 ? totalMontant.toLocaleString('fr-FR') + ' FCFA' : '--';
+      document.getElementById('kpiMontantEstime').textContent = totalMontant > 0 ? totalMontant.toLocaleString('fr-FR') + ' FCFA' : '--';
+    }
+
+    /* ── Simulation ─────────────────────────────── */
+
+    async function simulerFrais() {
+      try {
+        var res = await SF.apiFetch('/api/v1/agios/frais-tenue/simuler', {
+          method: 'POST',
+          body: JSON.stringify(getConfig())
+        });
+        if (res && res.ok) {
+          var data = await res.json();
+          // Update the grid with real counts from backend
+          if (Array.isArray(data.details)) {
+            data.details.forEach(function(d) {
+              var nbCell = document.querySelector('.nb-comptes-cell[data-type="' + d.typeCompte + '"]');
+              if (nbCell) nbCell.textContent = (d.nbComptes || 0).toLocaleString('fr-FR');
+            });
+          } else if (data.nbParType) {
+            Object.keys(data.nbParType).forEach(function(key) {
+              var nbCell = document.querySelector('.nb-comptes-cell[data-type="' + key + '"]');
+              if (nbCell) nbCell.textContent = (data.nbParType[key] || 0).toLocaleString('fr-FR');
+            });
+          }
+          recalculateEstimates();
+
+          // Show simulation card
+          document.getElementById('simCard').style.display = '';
+          document.getElementById('simResult').innerHTML =
+            '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">' +
+              '<div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Comptes concernés</div><div class="kpi-value">' +
+                (data.nbComptes || data.comptesConcernes || 0).toLocaleString('fr-FR') + '</div></div></div>' +
+              '<div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Montant total estimé</div><div class="kpi-value">' +
+                (data.montantTotal || 0).toLocaleString('fr-FR') + ' FCFA</div></div></div>' +
+              '<div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Types de comptes</div><div class="kpi-value">' +
+                (data.nbTypesActifs || getConfig().filter(function(c){return c.montant > 0;}).length) + '</div></div></div>' +
+            '</div>';
+          showToast('Simulation terminée.', 'success');
+        } else {
+          showToast('Erreur lors de la simulation.', 'error');
+        }
+      } catch(e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    /* ── Open approval modal ────────────────────── */
+
+    function ouvrirModalExecution() {
+      var configs = getConfig().filter(function(c) { return c.montant > 0; });
+      if (configs.length === 0) {
+        showToast('Aucun frais configuré. Veuillez saisir au moins un montant.', 'warning');
+        return;
+      }
+      var totalComptes = 0;
+      document.querySelectorAll('.nb-comptes-cell').forEach(function(cell) {
+        var n = parseInt(cell.textContent.replace(/\s/g, ''));
+        if (!isNaN(n)) totalComptes += n;
+      });
+      var html = '<table class="data-table" style="margin:0;">' +
+        '<thead><tr><th>Type</th><th>Frais unitaire</th><th>Nb comptes</th></tr></thead><tbody>';
+      configs.forEach(function(c) {
+        var nbCell = document.querySelector('.nb-comptes-cell[data-type="' + c.typeCompte + '"]');
+        var nb = nbCell ? nbCell.textContent : '--';
+        html += '<tr><td>' + c.typeCompte + '</td><td>' + c.montant.toLocaleString('fr-FR') + ' FCFA</td><td>' + nb + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById('modalResume').innerHTML = html;
+      document.getElementById('chkApproval').checked = false;
+      document.getElementById('btnConfirmerExecution').disabled = true;
+      openModal('modalExecution');
+    }
+
+    function syncApprovalBtn() {
+      document.getElementById('btnConfirmerExecution').disabled = !document.getElementById('chkApproval').checked;
+    }
+
+    /* ── Execute with progress bar ──────────────── */
+
+    async function executerFrais() {
+      closeModal('modalExecution');
+      openModal('modalProgress');
+
+      var totalComptes = 0;
+      document.querySelectorAll('.nb-comptes-cell').forEach(function(cell) {
+        var n = parseInt(cell.textContent.replace(/\s/g, ''));
+        if (!isNaN(n)) totalComptes += n;
+      });
+      document.getElementById('progressComptes').textContent = '0 / ' + totalComptes.toLocaleString('fr-FR') + ' comptes traités';
+      document.getElementById('progressDesc').textContent = 'Traitement des frais de tenue de compte';
+      document.getElementById('progressBar').style.width = '0%';
+      document.getElementById('progressPercent').textContent = '0%';
+
+      // Simulate progress while request is in flight
+      var progress = 0;
+      var interval = setInterval(function() {
+        progress += Math.random() * 12 + 3;
+        if (progress > 90) progress = 90;
+        document.getElementById('progressBar').style.width = Math.round(progress) + '%';
+        document.getElementById('progressPercent').textContent = Math.round(progress) + '%';
+        var traites = Math.round(totalComptes * progress / 100);
+        document.getElementById('progressComptes').textContent =
+          traites.toLocaleString('fr-FR') + ' / ' + totalComptes.toLocaleString('fr-FR') + ' comptes traités';
+      }, 500);
+
+      try {
+        var res = await SF.apiFetch('/api/v1/agios/frais-tenue/executer', {
+          method: 'POST',
+          body: JSON.stringify(getConfig())
+        });
+        clearInterval(interval);
+
+        // Complete the bar
+        document.getElementById('progressBar').style.width = '100%';
+        document.getElementById('progressPercent').textContent = '100%';
+        document.getElementById('progressComptes').textContent =
+          totalComptes.toLocaleString('fr-FR') + ' / ' + totalComptes.toLocaleString('fr-FR') + ' comptes traités';
+
+        setTimeout(function() {
+          closeModal('modalProgress');
+          if (res && (res.ok || res.status === 200)) {
+            showToast('Exécution terminée avec succès.', 'success');
+            loadHistorique();
+          } else {
+            var err = {};
+            try { err = res ? await res.json() : {}; } catch(_) {}
+            showToast(err.message || 'Erreur lors de l\'exécution.', 'error');
+          }
+        }, 800);
+      } catch(e) {
+        clearInterval(interval);
+        closeModal('modalProgress');
+        showToast(e.message, 'error');
+      }
+    }
+
+    /* ── Load execution history ─────────────────── */
+
+    async function loadHistorique() {
+      try {
+        var res = await SF.apiFetch('/api/v1/agios/frais-tenue?page=0&size=20');
+        if (res && res.ok) {
+          var data = await res.json();
+          var items = data.content || data || [];
+          var tbody = document.getElementById('histBody');
+          if (!items.length) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#4A7A8A;padding:20px;">Aucune exécution enregistrée.</td></tr>';
+            return;
+          }
+          var statutBadge = {
+            'EN_COURS': 'badge-pending',
+            'TERMINE': 'badge-active',
+            'SUCCES': 'badge-active',
+            'ERREUR': 'badge-blocked',
+            'ECHEC': 'badge-blocked'
+          };
+          tbody.innerHTML = items.map(function(h) {
+            return '<tr>' +
+              '<td style="font-size:12px;">' + formatDateFr(h.dateExecution || h.date || h.createdAt) + '</td>' +
+              '<td>' + (h.nbComptes || h.comptesTraites || '-') + '</td>' +
+              '<td style="font-weight:700;">' + (h.montantTotal || 0).toLocaleString('fr-FR') + ' FCFA</td>' +
+              '<td><span class="badge ' + (statutBadge[h.statut] || 'badge-info') + '">' + (h.statut || '-') + '</span></td>' +
+            '</tr>';
+          }).join('');
+
+          // Update KPIs from last execution
+          if (items.length > 0) {
+            var last = items[0];
+            document.getElementById('dernierTraitement').textContent = formatDateFr(last.dateExecution || last.date || last.createdAt);
+            document.getElementById('kpiDernierMontant').textContent = (last.montantTotal || 0).toLocaleString('fr-FR') + ' FCFA';
+          }
+        }
+      } catch(e) {
+        console.error('Erreur chargement historique:', e);
+      }
+    }
+
+    /* ── Helpers ────────────────────────────────── */
+
+    function formatDateFr(d) {
+      if (!d) return '--';
+      try {
+        return new Date(d).toLocaleDateString('fr-FR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      } catch(e) {
+        return d;
+      }
+    }
+
+    function exportCSV() {
+      var table = document.querySelector('.data-table:last-of-type');
+      if (!table) return;
+      var rows = Array.from(table.querySelectorAll('tr')).map(function(row) {
+        return Array.from(row.children).map(function(cell) {
+          return '"' + cell.innerText.replace(/"/g, '""').trim() + '"';
+        }).join(';');
+      });
+      var csv = rows.join('\n');
+      var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'frais-tenue-compte-historique.csv';
+      a.click();
+      showToast('Export CSV généré.', 'success');
+    }
+  </script>
+</body>
+</html>

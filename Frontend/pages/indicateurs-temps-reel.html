@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Indicateurs temps reel - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <script src="../assets/js/chart.min.js"></script>
+  <style>
+    /* ── Header row ──────────────────────────────── */
+    .rtr-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .rtr-live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #084355;
+      background: rgba(8, 67, 85, 0.06);
+      padding: 5px 12px;
+      border-radius: 20px;
+    }
+    .rtr-live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #43a047;
+      animation: rtr-pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes rtr-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.75); }
+    }
+    .rtr-countdown {
+      font-size: 11px;
+      color: #999;
+      font-family: monospace;
+    }
+
+    /* ── Live metrics grid ──────────────────────── */
+    .rtr-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 1200px) { .rtr-metrics-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .rtr-metrics-grid { grid-template-columns: 1fr; } }
+
+    .rtr-metric-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      position: relative;
+      overflow: hidden;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .rtr-metric-card:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+    .rtr-metric-card .rtr-metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+    .rtr-metric-card .rtr-metric-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .rtr-metric-card .rtr-metric-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+    .rtr-metric-icon.blue { background: rgba(8, 67, 85, 0.1); }
+    .rtr-metric-icon.blue svg { color: #084355; }
+    .rtr-metric-icon.green { background: rgba(67, 160, 71, 0.1); }
+    .rtr-metric-icon.green svg { color: #43a047; }
+    .rtr-metric-icon.orange { background: rgba(245, 124, 0, 0.1); }
+    .rtr-metric-icon.orange svg { color: #f57c00; }
+    .rtr-metric-icon.red { background: rgba(211, 47, 47, 0.1); }
+    .rtr-metric-icon.red svg { color: #D32F2F; }
+
+    .rtr-metric-delta {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .rtr-metric-delta.up { color: #43a047; background: rgba(67, 160, 71, 0.1); }
+    .rtr-metric-delta.down { color: #D32F2F; background: rgba(211, 47, 47, 0.1); }
+    .rtr-metric-delta.neutral { color: #999; background: rgba(0,0,0,0.04); }
+
+    .rtr-metric-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #084355;
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+    .rtr-metric-label {
+      font-size: 12px;
+      color: #6B8A95;
+      font-weight: 500;
+    }
+    .rtr-metric-sparkline {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 40px;
+      opacity: 0.15;
+    }
+
+    /* ── Two-column layout ──────────────────────── */
+    .rtr-two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 900px) { .rtr-two-col { grid-template-columns: 1fr; } }
+
+    /* ── Operational flow ───────────────────────── */
+    .rtr-flow-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 340px;
+      overflow-y: auto;
+    }
+    .rtr-flow-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    .rtr-flow-item:last-child { border-bottom: none; }
+    .rtr-flow-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .rtr-flow-dot.active { background: #43a047; }
+    .rtr-flow-dot.pending { background: #f57c00; }
+    .rtr-flow-dot.completed { background: #084355; }
+
+    .rtr-flow-info { flex: 1; min-width: 0; }
+    .rtr-flow-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #084355;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .rtr-flow-meta {
+      font-size: 11px;
+      color: #999;
+      margin-top: 2px;
+    }
+    .rtr-flow-count {
+      font-size: 13px;
+      font-weight: 700;
+      color: #084355;
+      flex-shrink: 0;
+    }
+
+    /* ── System health ──────────────────────────── */
+    .rtr-health-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .rtr-health-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: #fafbfc;
+      border-radius: 10px;
+      transition: background 0.2s;
+    }
+    .rtr-health-item:hover { background: #f0f2f5; }
+    .rtr-health-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .rtr-health-dot::after {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid;
+      opacity: 0.2;
+    }
+    .rtr-health-dot.ok { background: #43a047; }
+    .rtr-health-dot.ok::after { border-color: #43a047; }
+    .rtr-health-dot.err { background: #D32F2F; }
+    .rtr-health-dot.err::after { border-color: #D32F2F; }
+    .rtr-health-dot.warn { background: #f57c00; }
+    .rtr-health-dot.warn::after { border-color: #f57c00; }
+
+    .rtr-health-info { flex: 1; }
+    .rtr-health-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #084355;
+    }
+    .rtr-health-status {
+      font-size: 11px;
+      color: #999;
+      margin-top: 1px;
+    }
+    .rtr-health-latency {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6B8A95;
+      flex-shrink: 0;
+    }
+
+    /* ── Alerts panel ───────────────────────────── */
+    .rtr-alerts-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .rtr-alert-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    .rtr-alert-item:last-child { border-bottom: none; }
+    .rtr-alert-severity {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+    .rtr-alert-severity.critical { background: #D32F2F; }
+    .rtr-alert-severity.warning { background: #f57c00; }
+    .rtr-alert-severity.info { background: #1976D2; }
+    .rtr-alert-body { flex: 1; min-width: 0; }
+    .rtr-alert-message {
+      font-size: 13px;
+      color: #333;
+      line-height: 1.4;
+    }
+    .rtr-alert-time {
+      font-size: 11px;
+      color: #999;
+      margin-top: 2px;
+    }
+    .rtr-alert-empty {
+      text-align: center;
+      padding: 30px 0;
+      color: #999;
+      font-size: 13px;
+    }
+
+    /* ── Mini history chart ─────────────────────── */
+    .rtr-history-chart-wrap {
+      position: relative;
+      height: 220px;
+      width: 100%;
+    }
+
+    /* ── Threshold modal ────────────────────────── */
+    .threshold-grid {
+      display: grid;
+      gap: 16px;
+    }
+    .threshold-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      align-items: end;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    .threshold-row:last-child { border-bottom: none; }
+    .threshold-row .form-group { margin-bottom: 0; }
+    .threshold-row .form-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #6B8A95;
+    }
+
+    /* ── Flash animation for updated values ─────── */
+    @keyframes rtr-flash {
+      0% { background: rgba(8, 67, 85, 0.08); }
+      100% { background: transparent; }
+    }
+    .rtr-flash { animation: rtr-flash 0.6s ease-out; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar"></aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Indicateurs temps reel</div>
+            <div class="topbar-breadcrumb">Accueil / Pilotage & Audit / Indicateurs temps reel</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="rtr-header-actions">
+            <div class="rtr-live-badge">
+              <span class="rtr-live-dot"></span>
+              <span>En direct</span>
+            </div>
+            <span class="rtr-countdown" id="rtrCountdown">Prochain rafraichissement : 15s</span>
+            <button class="btn btn-ghost btn-sm" id="rtrPauseBtn" title="Mettre en pause / reprendre">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+              Pause
+            </button>
+            <button class="btn btn-ghost btn-sm" id="rtrRefreshNow" title="Rafraichir maintenant">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              Actualiser
+            </button>
+            <button class="btn btn-primary btn-sm" id="rtrThresholdBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.31.22.65.22 1H21a2 2 0 0 1 0 4h-1.09c0 .35-.08.69-.22 1z"/></svg>
+              Seuils
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- CONTENT AREA -->
+      <div class="content-area">
+
+        <!-- LIVE METRICS CARDS -->
+        <div class="rtr-metrics-grid" id="rtrMetricsGrid">
+          <div class="rtr-metric-card" id="mcOperations">
+            <div class="rtr-metric-header">
+              <div class="rtr-metric-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </div>
+              <span class="rtr-metric-delta neutral" id="mcOperationsDelta">--</span>
+            </div>
+            <div class="rtr-metric-value" id="mcOperationsValue">--</div>
+            <div class="rtr-metric-label">Operations / min</div>
+          </div>
+
+          <div class="rtr-metric-card" id="mcTransactions">
+            <div class="rtr-metric-header">
+              <div class="rtr-metric-icon green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <span class="rtr-metric-delta neutral" id="mcTransactionsDelta">--</span>
+            </div>
+            <div class="rtr-metric-value" id="mcTransactionsValue">--</div>
+            <div class="rtr-metric-label">Volume transactions (jour)</div>
+          </div>
+
+          <div class="rtr-metric-card" id="mcUtilisateurs">
+            <div class="rtr-metric-header">
+              <div class="rtr-metric-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <span class="rtr-metric-delta neutral" id="mcUtilisateursDelta">--</span>
+            </div>
+            <div class="rtr-metric-value" id="mcUtilisateursValue">--</div>
+            <div class="rtr-metric-label">Utilisateurs connectes</div>
+          </div>
+
+          <div class="rtr-metric-card" id="mcErreurs">
+            <div class="rtr-metric-header">
+              <div class="rtr-metric-icon red">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              </div>
+              <span class="rtr-metric-delta neutral" id="mcErreursDelta">--</span>
+            </div>
+            <div class="rtr-metric-value" id="mcErreursValue">--</div>
+            <div class="rtr-metric-label">Erreurs (derniere heure)</div>
+          </div>
+
+          <div class="rtr-metric-card" id="mcTpsReponse">
+            <div class="rtr-metric-header">
+              <div class="rtr-metric-icon orange">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <span class="rtr-metric-delta neutral" id="mcTpsReponseDelta">--</span>
+            </div>
+            <div class="rtr-metric-value" id="mcTpsReponseValue">--</div>
+            <div class="rtr-metric-label">Temps reponse moyen (ms)</div>
+          </div>
+
+          <div class="rtr-metric-card" id="mcSoldeCaisse">
+            <div class="rtr-metric-header">
+              <div class="rtr-metric-icon green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+              </div>
+              <span class="rtr-metric-delta neutral" id="mcSoldeCaisseDelta">--</span>
+            </div>
+            <div class="rtr-metric-value" id="mcSoldeCaisseValue">--</div>
+            <div class="rtr-metric-label">Solde caisse total</div>
+          </div>
+
+          <div class="rtr-metric-card" id="mcCreditsEncours">
+            <div class="rtr-metric-header">
+              <div class="rtr-metric-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              </div>
+              <span class="rtr-metric-delta neutral" id="mcCreditsEncoursDelta">--</span>
+            </div>
+            <div class="rtr-metric-value" id="mcCreditsEncoursValue">--</div>
+            <div class="rtr-metric-label">Encours credits</div>
+          </div>
+
+          <div class="rtr-metric-card" id="mcAlertesActives">
+            <div class="rtr-metric-header">
+              <div class="rtr-metric-icon orange">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              </div>
+              <span class="rtr-metric-delta neutral" id="mcAlertesActivesDelta">--</span>
+            </div>
+            <div class="rtr-metric-value" id="mcAlertesActivesValue">--</div>
+            <div class="rtr-metric-label">Alertes actives</div>
+          </div>
+        </div>
+
+        <!-- MIDDLE: OPERATIONAL FLOW + SYSTEM HEALTH -->
+        <div class="rtr-two-col">
+          <!-- Operational Flow -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Flux operationnel</div>
+                <div class="card-subtitle">Activite en cours</div>
+              </div>
+              <span class="badge badge-active" id="rtrFlowCount">0 flux</span>
+            </div>
+            <ul class="rtr-flow-list" id="rtrFlowList">
+              <li class="rtr-alert-empty">Chargement des flux...</li>
+            </ul>
+          </div>
+
+          <!-- System Health -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Sante du systeme</div>
+                <div class="card-subtitle">Etat des services</div>
+              </div>
+              <span class="rtr-live-badge" style="font-size:11px;">
+                <span class="rtr-live-dot" id="rtrHealthDot"></span>
+                <span id="rtrHealthSummary">Verification...</span>
+              </span>
+            </div>
+            <div class="rtr-health-grid" id="rtrHealthGrid">
+              <div class="rtr-health-item">
+                <div class="rtr-health-dot warn" id="healthDbDot"></div>
+                <div class="rtr-health-info">
+                  <div class="rtr-health-name">Base de donnees</div>
+                  <div class="rtr-health-status" id="healthDbStatus">Verification...</div>
+                </div>
+                <div class="rtr-health-latency" id="healthDbLatency">--</div>
+              </div>
+              <div class="rtr-health-item">
+                <div class="rtr-health-dot warn" id="healthRedisDot"></div>
+                <div class="rtr-health-info">
+                  <div class="rtr-health-name">Redis Cache</div>
+                  <div class="rtr-health-status" id="healthRedisStatus">Verification...</div>
+                </div>
+                <div class="rtr-health-latency" id="healthRedisLatency">--</div>
+              </div>
+              <div class="rtr-health-item">
+                <div class="rtr-health-dot warn" id="healthSmsDot"></div>
+                <div class="rtr-health-info">
+                  <div class="rtr-health-name">Service SMS</div>
+                  <div class="rtr-health-status" id="healthSmsStatus">Verification...</div>
+                </div>
+                <div class="rtr-health-latency" id="healthSmsLatency">--</div>
+              </div>
+              <div class="rtr-health-item">
+                <div class="rtr-health-dot warn" id="healthEmailDot"></div>
+                <div class="rtr-health-info">
+                  <div class="rtr-health-name">Service Email</div>
+                  <div class="rtr-health-status" id="healthEmailStatus">Verification...</div>
+                </div>
+                <div class="rtr-health-latency" id="healthEmailLatency">--</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTTOM: ALERTS + HISTORY CHART -->
+        <div class="rtr-two-col">
+          <!-- Real-time Alerts -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Alertes en temps reel</div>
+                <div class="card-subtitle">Evenements recents</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" id="rtrClearAlerts">Tout acquitter</button>
+            </div>
+            <ul class="rtr-alerts-list" id="rtrAlertsList">
+              <li class="rtr-alert-empty">Chargement des alertes...</li>
+            </ul>
+          </div>
+
+          <!-- Metrics History Chart -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Historique des metriques</div>
+                <div class="card-subtitle">Derniere heure</div>
+              </div>
+              <select class="form-control" id="rtrChartMetric" style="width:auto;min-width:140px;font-size:12px;">
+                <option value="operations">Operations/min</option>
+                <option value="transactions">Volume transactions</option>
+                <option value="tpsReponse">Temps reponse</option>
+                <option value="erreurs">Erreurs</option>
+              </select>
+            </div>
+            <div class="rtr-history-chart-wrap">
+              <canvas id="rtrHistoryChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /content-area -->
+    </div><!-- /main-content -->
+  </div><!-- /app-layout -->
+
+  <!-- THRESHOLD CONFIGURATION MODAL -->
+  <div class="modal-overlay" id="thresholdModal">
+    <div class="modal" style="max-width: 640px;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Configuration des seuils</div>
+          <div class="modal-subtitle">Definissez les limites pour les alertes automatiques</div>
+        </div>
+        <button class="modal-close" onclick="closeModal('thresholdModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="threshold-grid" id="thresholdForm">
+          <div class="threshold-row">
+            <div class="form-group">
+              <label class="form-label">Operations/min max</label>
+              <input type="number" class="form-control" id="thOperations" value="500" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Temps reponse max (ms)</label>
+              <input type="number" class="form-control" id="thTpsReponse" value="2000" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Erreurs/heure max</label>
+              <input type="number" class="form-control" id="thErreurs" value="50" min="0">
+            </div>
+          </div>
+          <div class="threshold-row">
+            <div class="form-group">
+              <label class="form-label">Volume min alerte (FCFA)</label>
+              <input type="number" class="form-control" id="thVolumeMin" value="1000000" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Utilisateurs simultanes max</label>
+              <input type="number" class="form-control" id="thUtilisateurs" value="100" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Alertes actives max</label>
+              <input type="number" class="form-control" id="thAlertes" value="20" min="0">
+            </div>
+          </div>
+          <div class="threshold-row">
+            <div class="form-group">
+              <label class="form-label">Intervalle rafraichissement (s)</label>
+              <input type="number" class="form-control" id="thInterval" value="15" min="5" max="120">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mode alertes</label>
+              <select class="form-control" id="thAlertMode">
+                <option value="all">Toutes</option>
+                <option value="critical">Critiques uniquement</option>
+                <option value="none">Aucune</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Son des alertes</label>
+              <select class="form-control" id="thSound">
+                <option value="on">Active</option>
+                <option value="off">Desactive</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('thresholdModal')">Annuler</button>
+        <button class="btn btn-primary" id="rtrSaveThresholds">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+
+  <script src="../assets/js/app.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    /* ===================================================
+       CONSTANTS & STATE
+       =================================================== */
+    var API_PATH = '/api/v1/dashboards/indicateurs';
+    var DEFAULT_INTERVAL = 15;
+    var intervalId = null;
+    var countdownId = null;
+    var countdown = DEFAULT_INTERVAL;
+    var isPaused = false;
+    var historyBuffer = [];      // array of { timestamp, operations, transactions, tpsReponse, erreurs }
+    var maxHistoryPoints = 60;   // 60 points = 1 hour at 1/min
+
+    /* ===================================================
+       DOM REFS
+       =================================================== */
+    var $countdown      = document.getElementById('rtrCountdown');
+    var $pauseBtn       = document.getElementById('rtrPauseBtn');
+    var $refreshNow     = document.getElementById('rtrRefreshNow');
+    var $thresholdBtn   = document.getElementById('rtrThresholdBtn');
+    var $clearAlerts    = document.getElementById('rtrClearAlerts');
+    var $chartMetric    = document.getElementById('rtrChartMetric');
+    var $saveThresholds = document.getElementById('rtrSaveThresholds');
+
+    /* ===================================================
+       UTILITY
+       =================================================== */
+    function fmtCurrency(n) {
+      return Number(n || 0).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function fmtNumber(n) {
+      return Number(n || 0).toLocaleString('fr-FR');
+    }
+
+    function timeAgo(date) {
+      var diff = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+      if (diff < 60) return 'Il y a ' + diff + 's';
+      if (diff < 3600) return 'Il y a ' + Math.floor(diff / 60) + ' min';
+      if (diff < 86400) return 'Il y a ' + Math.floor(diff / 3600) + 'h';
+      return 'Il y a ' + Math.floor(diff / 86400) + 'j';
+    }
+
+    function setDelta($el, current, previous) {
+      if (previous == null || previous === 0) {
+        $el.textContent = '--';
+        $el.className = 'rtr-metric-delta neutral';
+        return;
+      }
+      var pct = ((current - previous) / previous * 100).toFixed(1);
+      if (pct > 0) {
+        $el.textContent = '+' + pct + '%';
+        $el.className = 'rtr-metric-delta up';
+      } else if (pct < 0) {
+        $el.textContent = pct + '%';
+        $el.className = 'rtr-metric-delta down';
+      } else {
+        $el.textContent = '0%';
+        $el.className = 'rtr-metric-delta neutral';
+      }
+    }
+
+    function flashCard(id) {
+      var card = document.getElementById(id);
+      if (card) {
+        card.classList.remove('rtr-flash');
+        void card.offsetWidth; // force reflow
+        card.classList.add('rtr-flash');
+      }
+    }
+
+    /* ===================================================
+       THRESHOLD PERSISTENCE (localStorage)
+       =================================================== */
+    var THRESHOLD_KEY = 'sf_rtr_thresholds';
+
+    function loadThresholds() {
+      try {
+        return JSON.parse(localStorage.getItem(THRESHOLD_KEY)) || null;
+      } catch (_) { return null; }
+    }
+
+    function saveThresholdsToStorage(thresholds) {
+      try { localStorage.setItem(THRESHOLD_KEY, JSON.stringify(thresholds)); } catch (_) {}
+    }
+
+    function applyThresholdsToForm(thresholds) {
+      if (!thresholds) return;
+      var map = {
+        thOperations: 'operations',
+        thTpsReponse: 'tpsReponse',
+        thErreurs: 'erreurs',
+        thVolumeMin: 'volumeMin',
+        thUtilisateurs: 'utilisateurs',
+        thAlertes: 'alertes',
+        thInterval: 'interval',
+        thAlertMode: 'alertMode',
+        thSound: 'sound'
+      };
+      Object.keys(map).forEach(function (domId) {
+        var el = document.getElementById(domId);
+        var key = map[domId];
+        if (el && thresholds[key] != null) el.value = thresholds[key];
+      });
+    }
+
+    function readThresholdsFromForm() {
+      return {
+        operations: Number(document.getElementById('thOperations').value) || 500,
+        tpsReponse: Number(document.getElementById('thTpsReponse').value) || 2000,
+        erreurs: Number(document.getElementById('thErreurs').value) || 50,
+        volumeMin: Number(document.getElementById('thVolumeMin').value) || 1000000,
+        utilisateurs: Number(document.getElementById('thUtilisateurs').value) || 100,
+        alertes: Number(document.getElementById('thAlertes').value) || 20,
+        interval: Number(document.getElementById('thInterval').value) || DEFAULT_INTERVAL,
+        alertMode: document.getElementById('thAlertMode').value || 'all',
+        sound: document.getElementById('thSound').value || 'on'
+      };
+    }
+
+    /* ===================================================
+       HISTORY CHART (Chart.js)
+       =================================================== */
+    var historyChart = null;
+
+    function initHistoryChart() {
+      var ctx = document.getElementById('rtrHistoryChart').getContext('2d');
+      historyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Valeur',
+            data: [],
+            borderColor: '#084355',
+            backgroundColor: 'rgba(8, 67, 85, 0.08)',
+            tension: 0.3,
+            fill: true,
+            pointRadius: 3,
+            pointBackgroundColor: '#084355',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { intersect: false, mode: 'index' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#084355',
+              titleFont: { size: 11 },
+              bodyFont: { size: 12 }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(0,0,0,0.04)' },
+              ticks: { font: { size: 11 }, color: '#999' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 10 }, color: '#999', maxRotation: 0, autoSkip: true, maxTicksLimit: 10 }
+            }
+          }
+        }
+      });
+    }
+
+    function updateHistoryChart() {
+      var metric = $chartMetric.value;
+      var labels = historyBuffer.map(function (p) {
+        var d = new Date(p.timestamp);
+        return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+      });
+      var data = historyBuffer.map(function (p) { return p[metric] || 0; });
+
+      var colorMap = {
+        operations: '#084355',
+        transactions: '#43a047',
+        tpsReponse: '#f57c00',
+        erreurs: '#D32F2F'
+      };
+      var labelMap = {
+        operations: 'Operations/min',
+        transactions: 'Volume transactions',
+        tpsReponse: 'Temps reponse (ms)',
+        erreurs: 'Erreurs'
+      };
+
+      historyChart.data.labels = labels;
+      historyChart.data.datasets[0].data = data;
+      historyChart.data.datasets[0].label = labelMap[metric] || metric;
+      historyChart.data.datasets[0].borderColor = colorMap[metric] || '#084355';
+      historyChart.data.datasets[0].backgroundColor = (colorMap[metric] || '#084355') + '14';
+      historyChart.data.datasets[0].pointBackgroundColor = colorMap[metric] || '#084355';
+      historyChart.update();
+    }
+
+    /* ===================================================
+       FETCH & RENDER
+       =================================================== */
+    var previousValues = {};
+
+    async function fetchAndRender() {
+      try {
+        var res = await SF.apiFetch(API_PATH);
+        if (!res || !res.ok) {
+          renderHealthFallback();
+          return;
+        }
+        var data = await res.json();
+        if (!data) return;
+
+        renderMetrics(data);
+        renderFlow(data);
+        renderHealth(data);
+        renderAlerts(data);
+        pushHistory(data);
+        updateHistoryChart();
+      } catch (e) {
+        console.error('[RTR] Erreur rafraichissement:', e);
+        renderHealthFallback();
+      }
+    }
+
+    /* ── Metrics ──────────────────────────────── */
+    function renderMetrics(d) {
+      var metrics = [
+        { id: 'mcOperations',     key: 'operationsParMinute',    fmt: fmtNumber,  card: 'mcOperations' },
+        { id: 'mcTransactions',   key: 'volumeTransactionsJour', fmt: fmtCurrency, card: 'mcTransactions' },
+        { id: 'mcUtilisateurs',   key: 'utilisateursConnectes',  fmt: fmtNumber,  card: 'mcUtilisateurs' },
+        { id: 'mcErreurs',        key: 'erreursDerniereHeure',   fmt: fmtNumber,  card: 'mcErreurs' },
+        { id: 'mcTpsReponse',     key: 'tempsReponseMoyen',      fmt: function(v) { return fmtNumber(v) + ' ms'; }, card: 'mcTpsReponse' },
+        { id: 'mcSoldeCaisse',    key: 'soldeCaisseTotal',       fmt: fmtCurrency, card: 'mcSoldeCaisse' },
+        { id: 'mcCreditsEncours', key: 'encoursCredits',         fmt: fmtCurrency, card: 'mcCreditsEncours' },
+        { id: 'mcAlertesActives', key: 'alertesActives',         fmt: fmtNumber,  card: 'mcAlertesActives' }
+      ];
+
+      metrics.forEach(function (m) {
+        var val = d[m.key];
+        if (val == null) return;
+
+        var $val = document.getElementById(m.id + 'Value');
+        var $delta = document.getElementById(m.id + 'Delta');
+        if ($val) $val.textContent = m.fmt(val);
+
+        var prev = previousValues[m.key];
+        if ($delta) setDelta($delta, val, prev);
+        if (prev != null && val !== prev) flashCard(m.card);
+
+        previousValues[m.key] = val;
+      });
+
+      // Threshold warnings
+      checkThresholds(d);
+    }
+
+    function checkThresholds(d) {
+      var th = loadThresholds();
+      if (!th || th.alertMode === 'none') return;
+
+      var alerts = [];
+      if (d.operationsParMinute > th.operations) {
+        alerts.push('Operations/min (' + d.operationsParMinute + ') depasse le seuil de ' + th.operations);
+      }
+      if (d.tempsReponseMoyen > th.tpsReponse) {
+        alerts.push('Temps de reponse (' + d.tempsReponseMoyen + 'ms) depasse le seuil de ' + th.tpsReponse + 'ms');
+      }
+      if (d.erreursDerniereHeure > th.erreurs) {
+        alerts.push('Erreurs/heure (' + d.erreursDerniereHeure + ') depasse le seuil de ' + th.erreurs);
+      }
+
+      if (alerts.length > 0 && th.alertMode !== 'critical') {
+        alerts.forEach(function (msg) {
+          if (typeof window.showToast === 'function') {
+            window.showToast('Seuil depasse : ' + msg, 'warning');
+          }
+        });
+      }
+    }
+
+    /* ── Operational Flow ─────────────────────── */
+    function renderFlow(d) {
+      var $list = document.getElementById('rtrFlowList');
+      var $count = document.getElementById('rtrFlowCount');
+      var flows = d.fluxOperationnel || d.operationalFlows || [];
+
+      if (!flows.length) {
+        $list.innerHTML = '<li class="rtr-alert-empty">Aucun flux operationnel en cours</li>';
+        $count.textContent = '0 flux';
+        return;
+      }
+
+      $count.textContent = flows.length + ' flux';
+      $list.innerHTML = flows.map(function (f) {
+        var statusClass = f.statut === 'EN_COURS' ? 'active' : (f.statut === 'EN_ATTENTE' ? 'pending' : 'completed');
+        return '<li class="rtr-flow-item">' +
+          '<div class="rtr-flow-dot ' + statusClass + '"></div>' +
+          '<div class="rtr-flow-info">' +
+            '<div class="rtr-flow-title">' + (f.nom || f.description || 'Flux') + '</div>' +
+            '<div class="rtr-flow-meta">' + (f.type || '') + (f.agence ? ' - ' + f.agence : '') + '</div>' +
+          '</div>' +
+          '<div class="rtr-flow-count">' + fmtNumber(f.nombre || f.count || 0) + '</div>' +
+        '</li>';
+      }).join('');
+    }
+
+    /* ── System Health ────────────────────────── */
+    function renderHealth(d) {
+      var services = d.santeSysteme || d.systemHealth || {};
+      var allOk = true;
+
+      var mapping = [
+        { key: 'database',  dotId: 'healthDbDot',    statusId: 'healthDbStatus',    latencyId: 'healthDbLatency' },
+        { key: 'redis',     dotId: 'healthRedisDot',  statusId: 'healthRedisStatus', latencyId: 'healthRedisLatency' },
+        { key: 'sms',       dotId: 'healthSmsDot',    statusId: 'healthSmsStatus',   latencyId: 'healthSmsLatency' },
+        { key: 'email',     dotId: 'healthEmailDot',  statusId: 'healthEmailStatus',  latencyId: 'healthEmailLatency' }
+      ];
+
+      mapping.forEach(function (m) {
+        var svc = services[m.key];
+        var $dot = document.getElementById(m.dotId);
+        var $status = document.getElementById(m.statusId);
+        var $latency = document.getElementById(m.latencyId);
+
+        if (!svc) {
+          // Try alternative key names from API
+          var altKey = m.key.charAt(0).toUpperCase() + m.key.slice(1);
+          svc = services[altKey] || services[m.key + 'Status'] || null;
+        }
+
+        if (svc && typeof svc === 'object') {
+          var up = svc.status === 'UP' || svc.status === 'OK' || svc.actif === true;
+          $dot.className = 'rtr-health-dot ' + (up ? 'ok' : 'err');
+          $status.textContent = up ? 'Operationnel' : (svc.message || 'Indisponible');
+          $latency.textContent = svc.latenceMs != null ? svc.latenceMs + 'ms' : '--';
+          if (!up) allOk = false;
+        } else if (typeof svc === 'string') {
+          var isUp = svc === 'UP' || svc === 'OK';
+          $dot.className = 'rtr-health-dot ' + (isUp ? 'ok' : 'err');
+          $status.textContent = isUp ? 'Operationnel' : 'Indisponible';
+          $latency.textContent = '--';
+          if (!isUp) allOk = false;
+        } else {
+          $dot.className = 'rtr-health-dot warn';
+          $status.textContent = 'Donnee indisponible';
+          $latency.textContent = '--';
+          allOk = false;
+        }
+      });
+
+      var $summary = document.getElementById('rtrHealthSummary');
+      var $dotGlobal = document.getElementById('rtrHealthDot');
+      $summary.textContent = allOk ? 'Tous les services OK' : 'Incident detecte';
+      $dotGlobal.style.background = allOk ? '#43a047' : '#D32F2F';
+    }
+
+    function renderHealthFallback() {
+      var keys = ['Db', 'Redis', 'Sms', 'Email'];
+      keys.forEach(function (k) {
+        document.getElementById('health' + k + 'Dot').className = 'rtr-health-dot warn';
+        document.getElementById('health' + k + 'Status').textContent = 'Echec connexion';
+        document.getElementById('health' + k + 'Latency').textContent = '--';
+      });
+      document.getElementById('rtrHealthSummary').textContent = 'Indisponible';
+      document.getElementById('rtrHealthDot').style.background = '#f57c00';
+    }
+
+    /* ── Alerts ───────────────────────────────── */
+    var localAlerts = [];
+
+    function renderAlerts(d) {
+      var $list = document.getElementById('rtrAlertsList');
+      var alerts = d.alertesTempsReel || d.alertes || d.realTimeAlerts || [];
+
+      // Merge with local alerts, deduplicate by message
+      alerts.forEach(function (a) {
+        var exists = localAlerts.some(function (la) { return la.message === a.message; });
+        if (!exists) localAlerts.unshift(a);
+      });
+
+      // Cap at 50
+      if (localAlerts.length > 50) localAlerts = localAlerts.slice(0, 50);
+
+      if (!localAlerts.length) {
+        $list.innerHTML = '<li class="rtr-alert-empty">Aucune alerte en cours</li>';
+        return;
+      }
+
+      $list.innerHTML = localAlerts.map(function (a) {
+        var severity = (a.severite || a.severity || 'info').toLowerCase();
+        if (severity !== 'critical' && severity !== 'warning') severity = 'info';
+        var time = a.dateHeure || a.timestamp || a.date;
+        return '<li class="rtr-alert-item">' +
+          '<div class="rtr-alert-severity ' + severity + '"></div>' +
+          '<div class="rtr-alert-body">' +
+            '<div class="rtr-alert-message">' + (a.message || a.description || 'Alerte') + '</div>' +
+            '<div class="rtr-alert-time">' + (time ? timeAgo(time) : '') + '</div>' +
+          '</div>' +
+        '</li>';
+      }).join('');
+    }
+
+    /* ── History Buffer ───────────────────────── */
+    function pushHistory(d) {
+      var point = {
+        timestamp: new Date().toISOString(),
+        operations: d.operationsParMinute || 0,
+        transactions: d.volumeTransactionsJour || 0,
+        tpsReponse: d.tempsReponseMoyen || 0,
+        erreurs: d.erreursDerniereHeure || 0
+      };
+      historyBuffer.push(point);
+      if (historyBuffer.length > maxHistoryPoints) historyBuffer.shift();
+    }
+
+    /* ===================================================
+       COUNTDOWN & AUTO-REFRESH
+       =================================================== */
+    function getInterval() {
+      var th = loadThresholds();
+      return (th && th.interval >= 5) ? th.interval : DEFAULT_INTERVAL;
+    }
+
+    function startCountdown() {
+      countdown = getInterval();
+      $countdown.textContent = 'Prochain rafraichissement : ' + countdown + 's';
+      clearInterval(countdownId);
+      countdownId = setInterval(function () {
+        if (isPaused) return;
+        countdown--;
+        if (countdown <= 0) {
+          countdown = getInterval();
+          fetchAndRender();
+        }
+        $countdown.textContent = isPaused ? 'En pause' : 'Prochain rafraichissement : ' + countdown + 's';
+      }, 1000);
+    }
+
+    function resetAutoRefresh() {
+      clearInterval(intervalId);
+      clearInterval(countdownId);
+      startCountdown();
+    }
+
+    /* ===================================================
+       EVENT HANDLERS
+       =================================================== */
+
+    // Pause / Resume
+    $pauseBtn.addEventListener('click', function () {
+      isPaused = !isPaused;
+      if (isPaused) {
+        $pauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polygon points="5 3 19 12 5 21 5 3"/></svg> Reprendre';
+        $countdown.textContent = 'En pause';
+        $countdown.style.color = '#f57c00';
+      } else {
+        $pauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Pause';
+        $countdown.style.color = '#999';
+        countdown = 1;
+      }
+    });
+
+    // Refresh now
+    $refreshNow.addEventListener('click', function () {
+      fetchAndRender();
+      if (!isPaused) {
+        countdown = getInterval();
+      }
+      if (typeof window.showToast === 'function') {
+        window.showToast('Rafraichissement des indicateurs...', 'info');
+      }
+    });
+
+    // Threshold modal
+    $thresholdBtn.addEventListener('click', function () {
+      var th = loadThresholds();
+      if (th) applyThresholdsToForm(th);
+      openModal('thresholdModal');
+    });
+
+    // Save thresholds
+    $saveThresholds.addEventListener('click', function () {
+      var th = readThresholdsFromForm();
+      saveThresholdsToStorage(th);
+      closeModal('thresholdModal');
+      resetAutoRefresh();
+      if (typeof window.showToast === 'function') {
+        window.showToast('Seuils enregistres avec succes.', 'success');
+      }
+    });
+
+    // Clear alerts
+    $clearAlerts.addEventListener('click', function () {
+      localAlerts = [];
+      document.getElementById('rtrAlertsList').innerHTML = '<li class="rtr-alert-empty">Aucune alerte en cours</li>';
+      if (typeof window.showToast === 'function') {
+        window.showToast('Alertes acquittees.', 'success');
+      }
+    });
+
+    // Chart metric selector
+    $chartMetric.addEventListener('change', function () {
+      updateHistoryChart();
+    });
+
+    /* ===================================================
+       INIT
+       =================================================== */
+    document.addEventListener('DOMContentLoaded', function () {
+      initHistoryChart();
+
+      // Load saved thresholds
+      var th = loadThresholds();
+      if (th) applyThresholdsToForm(th);
+
+      // Initial fetch
+      fetchAndRender();
+
+      // Start auto-refresh countdown
+      startCountdown();
+    });
+
+  })();
+  </script>
+</body>
+</html>

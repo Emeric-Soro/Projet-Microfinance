@@ -1,5 +1,6 @@
 package com.soutra.microfinance.api.controller.mobile;
 
+import com.soutra.microfinance.api.helper.ApiEnvelope;
 import com.soutra.microfinance.api.helper.SoutraSecurityHelper;
 import com.soutra.microfinance.audit.AuditLog;
 import com.soutra.microfinance.dto.response.mobile.MobileReleveResponseDTO;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/mobile/comptes")
@@ -57,7 +59,7 @@ public class MobileCompteController {
     @GetMapping
     @PreAuthorize("hasAuthority('CLIENT')")
     @AuditLog(action = "MOBILE_COMPTE_LIST", resource = "COMPTE")
-    public ResponseEntity<List<MobileSoldeResponseDTO>> listerComptes(Authentication authentication) {
+    public ResponseEntity<ApiEnvelope<List<MobileSoldeResponseDTO>>> listerComptes(Authentication authentication) {
         Utilisateur utilisateur = SoutraSecurityHelper.extraireUtilisateurAuthentifie();
         Long idClient = utilisateur.getClient().getIdClient();
 
@@ -67,7 +69,7 @@ public class MobileCompteController {
                 .map(this::toSoldeResponse)
                 .toList();
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiEnvelope.success(response));
     }
 
     @Operation(summary = "Detail d'un compte", description = "Retourne les informations detaillees d'un compte.")
@@ -100,7 +102,7 @@ public class MobileCompteController {
     @GetMapping("/{idCompte}/solde")
     @PreAuthorize("hasAuthority('CLIENT')")
     @AuditLog(action = "MOBILE_COMPTE_SOLDE", resource = "COMPTE")
-    public ResponseEntity<BigDecimal> consulterSolde(
+    public ResponseEntity<ApiEnvelope<Map<String, Object>>> consulterSolde(
             @PathVariable Long idCompte,
             Authentication authentication
     ) {
@@ -111,7 +113,12 @@ public class MobileCompteController {
             throw new EntityNotFoundException("Compte introuvable");
         }
 
-        return ResponseEntity.ok(compte.getSolde());
+        Map<String, Object> data = Map.of(
+                "idCompte", compte.getIdCompte(),
+                "numCompte", compte.getNumCompte(),
+                "solde", compte.getSolde()
+        );
+        return ResponseEntity.ok(ApiEnvelope.success(data));
     }
 
     @Operation(summary = "Operations d'un compte", description = "Retourne les operations paginees d'un compte.")

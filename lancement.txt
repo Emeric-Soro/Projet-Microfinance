@@ -1,0 +1,19 @@
+#!/bin/bash
+# ============================================
+#  Commandes de lancement - MicroFinance
+# ============================================
+
+
+# --- Frontend / Backoffice (port 5173) ---
+npx serve Frontend -l 5173
+
+# --- Client Portal / E-Banking (port 3000) ---
+npx serve ClientPortal -l 3000
+
+# ============================================
+#  URLs
+# ============================================
+# Backoffice:   http://localhost:5173
+# Client Portal: http://localhost:3000
+# Backend API:  http://localhost:8080
+

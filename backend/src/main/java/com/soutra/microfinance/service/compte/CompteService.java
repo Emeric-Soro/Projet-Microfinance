@@ -16,6 +16,8 @@ public interface CompteService {
 
     Page<Compte> listerComptesClient(Long idClient, Pageable pageable);
 
+    Page<Compte> listerTousLesComptes(Pageable pageable);
+
     Compte changerDecouvertAutorise(String numCompte, BigDecimal nouveauPlafond);
 
     Compte cloturerCompte(String numCompte);

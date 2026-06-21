@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rapport personnalise - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    /* ---- Field Selector ---- */
+    .builder-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 900px) {
+      .builder-columns { grid-template-columns: 1fr; }
+    }
+    .field-group {
+      margin-bottom: 14px;
+    }
+    .field-group-title {
+      font-weight: 700;
+      font-size: 12px;
+      color: var(--color-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--color-secondary);
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .field-group-title .caret {
+      font-size: 10px;
+      transition: transform 0.2s;
+    }
+    .field-group-title.collapsed .caret {
+      transform: rotate(-90deg);
+    }
+    .field-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .field-grid.collapsed {
+      display: none;
+    }
+    .field-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      border: 1px solid var(--color-border);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--color-surface);
+      color: var(--color-text-secondary);
+      cursor: grab;
+      user-select: none;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .field-chip:active {
+      cursor: grabbing;
+    }
+    .field-chip:hover {
+      border-color: var(--color-secondary);
+      background: rgba(140, 213, 250, 0.08);
+      color: var(--color-primary);
+    }
+    .field-chip.selected {
+      background: var(--color-primary);
+      color: #fff;
+      border-color: var(--color-primary);
+      opacity: 0.5;
+      cursor: default;
+      pointer-events: none;
+    }
+    .field-chip .chip-icon {
+      font-size: 10px;
+      opacity: 0.6;
+    }
+
+    /* ---- Drop Zone ---- */
+    .drop-zone {
+      min-height: 120px;
+      border: 2px dashed var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-content: flex-start;
+      transition: var(--transition);
+    }
+    .drop-zone.drag-over {
+      border-color: var(--color-secondary);
+      background: rgba(140, 213, 250, 0.08);
+    }
+    .drop-zone-placeholder {
+      color: var(--color-text-muted);
+      font-size: 13px;
+      font-style: italic;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      justify-content: center;
+      padding: 20px 0;
+    }
+    .selected-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      background: var(--color-primary);
+      color: #fff;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: grab;
+      user-select: none;
+      transition: var(--transition);
+    }
+    .selected-tag:active {
+      cursor: grabbing;
+    }
+    .selected-tag.dragging {
+      opacity: 0.4;
+    }
+    .selected-tag .tag-remove {
+      margin-left: 2px;
+      cursor: pointer;
+      opacity: 0.7;
+      font-size: 14px;
+      line-height: 1;
+    }
+    .selected-tag .tag-remove:hover {
+      opacity: 1;
+    }
+    .selected-tag .tag-handle {
+      opacity: 0.5;
+      font-size: 10px;
+      margin-right: 2px;
+    }
+
+    /* ---- Period ---- */
+    .period-presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .period-preset {
+      padding: 5px 14px;
+      border: 1px solid var(--color-border);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--color-surface);
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .period-preset:hover {
+      border-color: var(--color-secondary);
+      color: var(--color-primary);
+    }
+    .period-preset.active {
+      background: var(--color-primary);
+      color: #fff;
+      border-color: var(--color-primary);
+    }
+
+    /* ---- Filter Builder ---- */
+    .filter-row {
+      display: grid;
+      grid-template-columns: 1.4fr 0.8fr 1.2fr 32px;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .filter-row .btn-remove {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      color: var(--color-danger);
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+    .filter-row .btn-remove:hover {
+      background: var(--color-danger);
+      color: #fff;
+      border-color: var(--color-danger);
+    }
+
+    /* ---- Preview ---- */
+    .preview-area {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      min-height: 200px;
+      max-height: 420px;
+      overflow: auto;
+    }
+    .preview-area table {
+      width: 100%;
+      font-size: 12px;
+      border-collapse: collapse;
+    }
+    .preview-area table th {
+      background: var(--color-primary);
+      color: #fff;
+      padding: 8px 10px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 11px;
+      position: sticky;
+      top: 0;
+    }
+    .preview-area table td {
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .preview-area table tr:hover td {
+      background: rgba(140, 213, 250, 0.06);
+    }
+    .preview-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--color-text-muted);
+    }
+
+    /* ---- Template Manager ---- */
+    .template-bar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .template-bar select {
+      min-width: 200px;
+    }
+    .template-list-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      background: rgba(140, 213, 250, 0.15);
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+
+    /* ---- Actions Bar ---- */
+    .actions-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .actions-bar-left,
+    .actions-bar-right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .btn svg {
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Rapport personnalise</div>
+            <div class="topbar-breadcrumb">Reporting / Rapport personnalise</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Constructeur de rapports</h1>
+            <p class="page-subtitle">Selectionnez les champs, configurez la periode et les filtres, puis previsualisez ou generez votre rapport.</p>
+          </div>
+          <div class="export-buttons">
+            <button class="export-btn" id="btnExportCSV" title="Exporter CSV">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              CSV
+            </button>
+            <button class="export-btn" id="btnExportPDF" title="Exporter PDF">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- ====== FIELD SELECTOR (Draggable) ====== -->
+        <section class="card" style="margin-bottom:16px;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Selection des champs</div>
+              <div class="card-subtitle">Glissez les champs dans la zone de selection a droite, puis reorganisez-les.</div>
+            </div>
+            <button class="btn btn-sm btn-outline" onclick="clearAllFields()" title="Reinitialiser">Reinitialiser</button>
+          </div>
+          <div style="padding:20px;">
+            <div class="builder-columns">
+              <!-- Left: Available fields (draggable sources) -->
+              <div id="fieldPalette">
+                <!-- Transactions -->
+                <div class="field-group">
+                  <div class="field-group-title" onclick="toggleGroup(this)">
+                    <span class="caret">&#9660;</span> Transactions
+                  </div>
+                  <div class="field-grid">
+                    <span class="field-chip" draggable="true" data-field="tx.date" data-label="Date transaction"><span class="chip-icon">&#128197;</span> Date transaction</span>
+                    <span class="field-chip" draggable="true" data-field="tx.reference" data-label="Reference"><span class="chip-icon">&#128279;</span> Reference</span>
+                    <span class="field-chip" draggable="true" data-field="tx.type" data-label="Type"><span class="chip-icon">&#128196;</span> Type</span>
+                    <span class="field-chip" draggable="true" data-field="tx.montant" data-label="Montant"><span class="chip-icon">&#128176;</span> Montant</span>
+                    <span class="field-chip" draggable="true" data-field="tx.frais" data-label="Frais"><span class="chip-icon">&#128178;</span> Frais</span>
+                    <span class="field-chip" draggable="true" data-field="tx.statut" data-label="Statut"><span class="chip-icon">&#9989;</span> Statut</span>
+                    <span class="field-chip" draggable="true" data-field="tx.compte" data-label="Compte"><span class="chip-icon">&#127974;</span> Compte</span>
+                    <span class="field-chip" draggable="true" data-field="tx.guichetier" data-label="Guichetier"><span class="chip-icon">&#128100;</span> Guichetier</span>
+                    <span class="field-chip" draggable="true" data-field="tx.canal" data-label="Canal"><span class="chip-icon">&#128225;</span> Canal</span>
+                  </div>
+                </div>
+
+                <!-- Clients -->
+                <div class="field-group">
+                  <div class="field-group-title" onclick="toggleGroup(this)">
+                    <span class="caret">&#9660;</span> Clients
+                  </div>
+                  <div class="field-grid">
+                    <span class="field-chip" draggable="true" data-field="cl.nom" data-label="Nom"><span class="chip-icon">&#128100;</span> Nom</span>
+                    <span class="field-chip" draggable="true" data-field="cl.prenom" data-label="Prenom"><span class="chip-icon">&#128100;</span> Prenom</span>
+                    <span class="field-chip" draggable="true" data-field="cl.telephone" data-label="Telephone"><span class="chip-icon">&#128222;</span> Telephone</span>
+                    <span class="field-chip" draggable="true" data-field="cl.email" data-label="Email"><span class="chip-icon">&#9993;</span> Email</span>
+                    <span class="field-chip" draggable="true" data-field="cl.type" data-label="Type client"><span class="chip-icon">&#128101;</span> Type client</span>
+                    <span class="field-chip" draggable="true" data-field="cl.statut" data-label="Statut KYC"><span class="chip-icon">&#128196;</span> Statut KYC</span>
+                    <span class="field-chip" draggable="true" data-field="cl.dateInscription" data-label="Date inscription"><span class="chip-icon">&#128197;</span> Date inscription</span>
+                    <span class="field-chip" draggable="true" data-field="cl.agence" data-label="Agence"><span class="chip-icon">&#127970;</span> Agence</span>
+                  </div>
+                </div>
+
+                <!-- Comptes -->
+                <div class="field-group">
+                  <div class="field-group-title" onclick="toggleGroup(this)">
+                    <span class="caret">&#9660;</span> Comptes
+                  </div>
+                  <div class="field-grid">
+                    <span class="field-chip" draggable="true" data-field="cp.numero" data-label="Numero"><span class="chip-icon">&#128196;</span> Numero</span>
+                    <span class="field-chip" draggable="true" data-field="cp.type" data-label="Type"><span class="chip-icon">&#128196;</span> Type</span>
+                    <span class="field-chip" draggable="true" data-field="cp.solde" data-label="Solde"><span class="chip-icon">&#128176;</span> Solde</span>
+                    <span class="field-chip" draggable="true" data-field="cp.devise" data-label="Devise"><span class="chip-icon">&#128176;</span> Devise</span>
+                    <span class="field-chip" draggable="true" data-field="cp.statut" data-label="Statut"><span class="chip-icon">&#9989;</span> Statut</span>
+                    <span class="field-chip" draggable="true" data-field="cp.dateOuverture" data-label="Date ouverture"><span class="chip-icon">&#128197;</span> Date ouverture</span>
+                  </div>
+                </div>
+
+                <!-- Credits -->
+                <div class="field-group">
+                  <div class="field-group-title" onclick="toggleGroup(this)">
+                    <span class="caret">&#9660;</span> Credits
+                  </div>
+                  <div class="field-grid">
+                    <span class="field-chip" draggable="true" data-field="cr.produit" data-label="Produit"><span class="chip-icon">&#128196;</span> Produit</span>
+                    <span class="field-chip" draggable="true" data-field="cr.montant" data-label="Montant"><span class="chip-icon">&#128176;</span> Montant</span>
+                    <span class="field-chip" draggable="true" data-field="cr.taux" data-label="Taux"><span class="chip-icon">&#128200;</span> Taux</span>
+                    <span class="field-chip" draggable="true" data-field="cr.duree" data-label="Duree"><span class="chip-icon">&#9203;</span> Duree</span>
+                    <span class="field-chip" draggable="true" data-field="cr.encours" data-label="Encours"><span class="chip-icon">&#128200;</span> Encours</span>
+                    <span class="field-chip" draggable="true" data-field="cr.statut" data-label="Statut"><span class="chip-icon">&#9989;</span> Statut</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Selected / ordered fields (drop zone) -->
+              <div>
+                <div style="font-weight:700;font-size:12px;color:var(--color-primary);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--color-secondary);">
+                  Champs selectionnes <span id="selectedCount" style="font-weight:400;color:var(--color-text-muted);">(0)</span>
+                </div>
+                <div class="drop-zone" id="dropZone">
+                  <div class="drop-zone-placeholder" id="dropPlaceholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Glissez des champs ici pour les selectionner
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ====== PERIOD CONFIGURATOR ====== -->
+        <section class="card" style="margin-bottom:16px;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Periode</div>
+              <div class="card-subtitle">Choisissez une periode predefinie ou definissez des dates personnalisees.</div>
+            </div>
+          </div>
+          <div style="padding:20px;">
+            <div class="period-presets" id="periodPresets">
+              <button class="period-preset" data-period="mois">Mois en cours</button>
+              <button class="period-preset" data-period="moisPrec">Mois precedent</button>
+              <button class="period-preset" data-period="trimestre">Trimestre</button>
+              <button class="period-preset" data-period="semestre">Semestre</button>
+              <button class="period-preset active" data-period="annee">Annee en cours</button>
+              <button class="period-preset" data-period="anneePrec">Annee derniere</button>
+              <button class="period-preset" data-period="custom">Personnalise</button>
+            </div>
+            <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Date debut</label>
+                <input type="date" class="form-control" id="rpDateDeb">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Date fin</label>
+                <input type="date" class="form-control" id="rpDateFin">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ====== FILTER BUILDER ====== -->
+        <section class="card" style="margin-bottom:16px;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Filtres</div>
+              <div class="card-subtitle">Ajoutez des conditions pour affiner les donnees du rapport.</div>
+            </div>
+          </div>
+          <div style="padding:20px;">
+            <div id="filtersContainer"></div>
+            <button class="btn btn-sm btn-outline" onclick="addFilter()" style="margin-top:4px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Ajouter un filtre
+            </button>
+          </div>
+        </section>
+
+        <!-- ====== TEMPLATE MANAGER + ACTIONS ====== -->
+        <section class="card" style="margin-bottom:16px;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Modeles</div>
+              <div class="card-subtitle">Enregistrez et restaurez vos configurations de rapport.</div>
+            </div>
+          </div>
+          <div style="padding:20px;">
+            <div class="template-bar">
+              <select class="form-control" id="templateSelect">
+                <option value="">-- Choisir un modele --</option>
+              </select>
+              <button class="btn btn-sm btn-outline" onclick="loadTemplate()" title="Charger le modele selectionne">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Charger
+              </button>
+              <button class="btn btn-sm btn-primary" onclick="saveTemplate()" title="Enregistrer la configuration actuelle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Enregistrer
+              </button>
+              <button class="btn btn-sm btn-outline" onclick="deleteTemplate()" title="Supprimer le modele selectionne" style="color:var(--color-danger);border-color:var(--color-danger);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ====== ACTIONS BAR ====== -->
+        <div class="actions-bar">
+          <div class="actions-bar-left">
+            <span id="configSummary" style="font-size:12px;color:var(--color-text-muted);"></span>
+          </div>
+          <div class="actions-bar-right">
+            <button class="btn btn-outline" id="btnPreview" onclick="previsualiser()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              Apercu
+            </button>
+            <button class="btn btn-primary" id="btnGenerer" onclick="generer()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Generer le rapport
+            </button>
+          </div>
+        </div>
+
+        <!-- ====== PREVIEW / RESULT ====== -->
+        <section class="card" style="margin-top:20px;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Apercu / Resultat</div>
+              <div class="card-subtitle" id="previewSubtitle">Configurez les champs et cliquez sur "Apercu" ou "Generer".</div>
+            </div>
+          </div>
+          <div style="padding:20px;">
+            <div class="preview-area" id="previewArea">
+              <p style="color:var(--color-text-muted);text-align:center;padding:40px 0;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40" style="opacity:0.3;display:block;margin:0 auto 10px;"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                Configurez les champs, la periode et cliquez sur "Apercu" ou "Generer le rapport".
+              </p>
+            </div>
+            <div class="preview-meta" id="previewMeta" style="display:none;">
+              <span id="previewRowCount"></span>
+              <span id="previewTimestamp"></span>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ============================================
+       Rapport Personnalise - M11 Custom Report Builder
+       Draggable field selector, period configurator,
+       filter builder, preview, templates
+       ============================================ */
+    (function () {
+      'use strict';
+
+      // ---- State ----
+      var selectedFields = []; // [{field, label}]
+      var filterCount = 0;
+      var lastPayload = null;
+
+      // ---- Filter field options ----
+      var filterFieldOptions = [
+        { value: 'tx.date', label: 'Date transaction' },
+        { value: 'tx.type', label: 'Type transaction' },
+        { value: 'tx.montant', label: 'Montant' },
+        { value: 'tx.statut', label: 'Statut transaction' },
+        { value: 'tx.compte', label: 'Compte' },
+        { value: 'tx.canal', label: 'Canal' },
+        { value: 'cl.nom', label: 'Nom client' },
+        { value: 'cl.type', label: 'Type client' },
+        { value: 'cl.statut', label: 'Statut KYC' },
+        { value: 'cl.agence', label: 'Agence' },
+        { value: 'cp.type', label: 'Type compte' },
+        { value: 'cp.solde', label: 'Solde' },
+        { value: 'cp.statut', label: 'Statut compte' },
+        { value: 'cr.produit', label: 'Produit credit' },
+        { value: 'cr.statut', label: 'Statut credit' },
+        { value: 'cr.montant', label: 'Montant credit' }
+      ];
+
+      // ---- Date helpers ----
+      function getToday() {
+        return new Date().toISOString().split('T')[0];
+      }
+      function getFirstDayOfMonth() {
+        var d = new Date(); d.setDate(1); return d.toISOString().split('T')[0];
+      }
+      function getFirstDayOfPrevMonth() {
+        var d = new Date(); d.setMonth(d.getMonth() - 1); d.setDate(1); return d.toISOString().split('T')[0];
+      }
+      function getLastDayOfPrevMonth() {
+        var d = new Date(); d.setDate(0); return d.toISOString().split('T')[0];
+      }
+      function getFirstDayOfQuarter() {
+        var d = new Date(); var q = Math.floor(d.getMonth() / 3); d.setMonth(q * 3, 1); return d.toISOString().split('T')[0];
+      }
+      function getFirstDayOfSemester() {
+        var d = new Date(); d.setMonth(d.getMonth() < 6 ? 0 : 6, 1); return d.toISOString().split('T')[0];
+      }
+      function getFirstDayOfYear() {
+        var d = new Date(); d.setMonth(0, 1); return d.toISOString().split('T')[0];
+      }
+      function getFirstDayOfPrevYear() {
+        var d = new Date(); d.setFullYear(d.getFullYear() - 1); d.setMonth(0, 1); return d.toISOString().split('T')[0];
+      }
+      function getLastDayOfPrevYear() {
+        var d = new Date(); d.setFullYear(d.getFullYear() - 1); d.setMonth(11, 31); return d.toISOString().split('T')[0];
+      }
+
+      // ---- Period presets ----
+      function applyPeriod(preset) {
+        var deb = document.getElementById('rpDateDeb');
+        var fin = document.getElementById('rpDateFin');
+        var presets = document.querySelectorAll('.period-preset');
+        presets.forEach(function (p) { p.classList.remove('active'); });
+        var activeBtn = document.querySelector('.period-preset[data-period="' + preset + '"]');
+        if (activeBtn) activeBtn.classList.add('active');
+
+        switch (preset) {
+          case 'mois':       deb.value = getFirstDayOfMonth(); fin.value = getToday(); break;
+          case 'moisPrec':   deb.value = getFirstDayOfPrevMonth(); fin.value = getLastDayOfPrevMonth(); break;
+          case 'trimestre':  deb.value = getFirstDayOfQuarter(); fin.value = getToday(); break;
+          case 'semestre':   deb.value = getFirstDayOfSemester(); fin.value = getToday(); break;
+          case 'annee':      deb.value = getFirstDayOfYear(); fin.value = getToday(); break;
+          case 'anneePrec':  deb.value = getFirstDayOfPrevYear(); fin.value = getLastDayOfPrevYear(); break;
+          case 'custom':     /* leave dates as-is */ break;
+        }
+      }
+
+      // ---- Group collapse ----
+      window.toggleGroup = function (titleEl) {
+        titleEl.classList.toggle('collapsed');
+        var grid = titleEl.nextElementSibling;
+        if (grid) grid.classList.toggle('collapsed');
+      };
+
+      // ---- Update selected count label ----
+      function updateSelectedCount() {
+        var el = document.getElementById('selectedCount');
+        el.textContent = '(' + selectedFields.length + ')';
+        updateConfigSummary();
+        updatePaletteState();
+      }
+
+      function updateConfigSummary() {
+        var el = document.getElementById('configSummary');
+        var parts = [];
+        parts.push(selectedFields.length + ' champ(s)');
+        var deb = document.getElementById('rpDateDeb').value;
+        var fin = document.getElementById('rpDateFin').value;
+        if (deb && fin) parts.push('du ' + deb + ' au ' + fin);
+        var fc = document.querySelectorAll('#filtersContainer .filter-row').length;
+        if (fc > 0) parts.push(fc + ' filtre(s)');
+        el.textContent = parts.join(' | ');
+      }
+
+      // ---- Mark palette chips as selected ----
+      function updatePaletteState() {
+        var chips = document.querySelectorAll('#fieldPalette .field-chip');
+        var selectedKeys = {};
+        selectedFields.forEach(function (f) { selectedKeys[f.field] = true; });
+        chips.forEach(function (chip) {
+          if (selectedKeys[chip.dataset.field]) {
+            chip.classList.add('selected');
+            chip.setAttribute('draggable', 'false');
+          } else {
+            chip.classList.remove('selected');
+            chip.setAttribute('draggable', 'true');
+          }
+        });
+      }
+
+      // ---- Render the drop zone from state ----
+      function renderDropZone() {
+        var zone = document.getElementById('dropZone');
+        var placeholder = document.getElementById('dropPlaceholder');
+        zone.innerHTML = '';
+        if (selectedFields.length === 0) {
+          zone.innerHTML = '';
+          zone.appendChild(placeholder);
+          placeholder.style.display = 'flex';
+        } else {
+          selectedFields.forEach(function (f, idx) {
+            var tag = document.createElement('span');
+            tag.className = 'selected-tag';
+            tag.setAttribute('draggable', 'true');
+            tag.dataset.index = idx;
+            tag.innerHTML = '<span class="tag-handle">&#9776;</span>' +
+              '<span>' + f.label + '</span>' +
+              '<span class="tag-remove" data-index="' + idx + '">&times;</span>';
+            zone.appendChild(tag);
+          });
+        }
+        updateSelectedCount();
+      }
+
+      // ---- Drag: from palette to drop zone ----
+      function initPaletteDrag() {
+        var palette = document.getElementById('fieldPalette');
+        palette.addEventListener('dragstart', function (e) {
+          var chip = e.target.closest('.field-chip');
+          if (!chip || chip.classList.contains('selected')) { e.preventDefault(); return; }
+          e.dataTransfer.setData('text/plain', JSON.stringify({
+            field: chip.dataset.field,
+            label: chip.dataset.label,
+            source: 'palette'
+          }));
+          e.dataTransfer.effectAllowed = 'copy';
+        });
+      }
+
+      // ---- Drag: reorder within drop zone ----
+      function initDropZoneDrag() {
+        var zone = document.getElementById('dropZone');
+
+        zone.addEventListener('dragstart', function (e) {
+          var tag = e.target.closest('.selected-tag');
+          if (!tag) return;
+          e.dataTransfer.setData('text/plain', JSON.stringify({
+            index: parseInt(tag.dataset.index, 10),
+            source: 'zone'
+          }));
+          e.dataTransfer.effectAllowed = 'move';
+          tag.classList.add('dragging');
+        });
+
+        zone.addEventListener('dragend', function (e) {
+          var tag = e.target.closest('.selected-tag');
+          if (tag) tag.classList.remove('dragging');
+        });
+
+        zone.addEventListener('dragover', function (e) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          zone.classList.add('drag-over');
+        });
+
+        zone.addEventListener('dragleave', function (e) {
+          if (!zone.contains(e.relatedTarget)) {
+            zone.classList.remove('drag-over');
+          }
+        });
+
+        zone.addEventListener('drop', function (e) {
+          e.preventDefault();
+          zone.classList.remove('drag-over');
+          var raw;
+          try { raw = JSON.parse(e.dataTransfer.getData('text/plain')); } catch (err) { return; }
+
+          if (raw.source === 'palette') {
+            // Adding new field from palette
+            var exists = selectedFields.some(function (f) { return f.field === raw.field; });
+            if (!exists) {
+              selectedFields.push({ field: raw.field, label: raw.label });
+              renderDropZone();
+            }
+          } else if (raw.source === 'zone') {
+            // Reordering within zone
+            var fromIdx = raw.index;
+            // Determine drop position from mouse
+            var tags = zone.querySelectorAll('.selected-tag');
+            var toIdx = tags.length;
+            for (var i = 0; i < tags.length; i++) {
+              var rect = tags[i].getBoundingClientRect();
+              if (e.clientX < rect.left + rect.width / 2) {
+                toIdx = i;
+                break;
+              }
+            }
+            if (fromIdx !== toIdx) {
+              var item = selectedFields.splice(fromIdx, 1)[0];
+              if (toIdx > fromIdx) toIdx--;
+              selectedFields.splice(toIdx, 0, item);
+              renderDropZone();
+            }
+          }
+        });
+
+        // Remove via click
+        zone.addEventListener('click', function (e) {
+          var removeBtn = e.target.closest('.tag-remove');
+          if (removeBtn) {
+            var idx = parseInt(removeBtn.dataset.index, 10);
+            selectedFields.splice(idx, 1);
+            renderDropZone();
+          }
+        });
+      }
+
+      // ---- Double-click on palette chip to add ----
+      function initPaletteDoubleClick() {
+        var palette = document.getElementById('fieldPalette');
+        palette.addEventListener('dblclick', function (e) {
+          var chip = e.target.closest('.field-chip');
+          if (!chip || chip.classList.contains('selected')) return;
+          var exists = selectedFields.some(function (f) { return f.field === chip.dataset.field; });
+          if (!exists) {
+            selectedFields.push({ field: chip.dataset.field, label: chip.dataset.label });
+            renderDropZone();
+          }
+        });
+      }
+
+      // ---- Clear all fields ----
+      window.clearAllFields = function () {
+        selectedFields = [];
+        renderDropZone();
+      };
+
+      // ---- Filter builder ----
+      function buildFilterFieldOptions() {
+        return filterFieldOptions.map(function (opt) {
+          return '<option value="' + opt.value + '">' + opt.label + '</option>';
+        }).join('');
+      }
+
+      function buildFilterOperatorOptions() {
+        return '<option value="eq">=</option>' +
+          '<option value="neq">!=</option>' +
+          '<option value="gt">&gt;</option>' +
+          '<option value="lt">&lt;</option>' +
+          '<option value="gte">&gt;=</option>' +
+          '<option value="lte">&lt;=</option>' +
+          '<option value="contains">Contient</option>' +
+          '<option value="startsWith">Commence par</option>';
+      }
+
+      window.addFilter = function () {
+        var container = document.getElementById('filtersContainer');
+        var idx = filterCount++;
+        var row = document.createElement('div');
+        row.className = 'filter-row';
+        row.dataset.idx = idx;
+        row.innerHTML =
+          '<select class="form-control" id="filterField' + idx + '"><option value="">-- Champs --</option>' + buildFilterFieldOptions() + '</select>' +
+          '<select class="form-control" id="filterOp' + idx + '">' + buildFilterOperatorOptions() + '</select>' +
+          '<input class="form-control" id="filterVal' + idx + '" placeholder="Valeur">' +
+          '<button class="btn-remove" title="Supprimer ce filtre">&times;</button>';
+        container.appendChild(row);
+        updateConfigSummary();
+      };
+
+      // Remove filter via event delegation
+      document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.btn-remove');
+        if (btn) {
+          btn.closest('.filter-row').remove();
+          updateConfigSummary();
+        }
+      });
+
+      // ---- Collect filters ----
+      function collectFilters() {
+        var filters = [];
+        var rows = document.querySelectorAll('#filtersContainer .filter-row');
+        rows.forEach(function (row) {
+          var sel = row.querySelector('select');
+          var selects = row.querySelectorAll('select');
+          var fieldSel = selects[0];
+          var opSel = selects[1];
+          var valInput = row.querySelector('input');
+          if (fieldSel && opSel && valInput && fieldSel.value && valInput.value) {
+            filters.push({ field: fieldSel.value, operator: opSel.value, value: valInput.value });
+          }
+        });
+        return filters;
+      }
+
+      // ---- Build payload ----
+      function buildPayload(options) {
+        options = options || {};
+        var fields = selectedFields.map(function (f) { return f.field; });
+        var dateDeb = document.getElementById('rpDateDeb').value;
+        var dateFin = document.getElementById('rpDateFin').value;
+        var filters = collectFilters();
+        var payload = { fields: fields, dateDebut: dateDeb, dateFin: dateFin, filters: filters };
+        if (options.limit) payload.limit = options.limit;
+        return payload;
+      }
+
+      // ---- Preview ----
+      window.previsualiser = async function () {
+        var payload = buildPayload({ limit: 25 });
+        if (!payload.fields.length) {
+          showToast('Selectionnez au moins un champ.', 'warning');
+          return;
+        }
+        lastPayload = payload;
+        var btnPreview = document.getElementById('btnPreview');
+        btnPreview.disabled = true;
+        btnPreview.textContent = 'Chargement...';
+        showToast('Chargement de l\'apercu...', 'info');
+
+        try {
+          var res = await SF.apiFetch('/api/v1/reporting/personnalise', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+          });
+
+          if (!res || !res.ok) {
+            if (res) showToast('Erreur serveur (HTTP ' + res.status + ').', 'error');
+            return;
+          }
+
+          var data = await res.json();
+          var items = Array.isArray(data) ? data : (data.content || data.lignes || data.data || []);
+
+          if (items.length === 0) {
+            document.getElementById('previewArea').innerHTML =
+              '<p style="text-align:center;color:var(--color-text-muted);padding:30px 0;">Aucune donnee trouvee pour cette configuration.</p>';
+            document.getElementById('previewMeta').style.display = 'none';
+            showToast('Aucun resultat.', 'warning');
+            return;
+          }
+
+          var cols = payload.fields;
+          var html = '<table><thead><tr>';
+          cols.forEach(function (c) {
+            var label = c;
+            selectedFields.forEach(function (f) { if (f.field === c) label = f.label; });
+            html += '<th>' + label + '</th>';
+          });
+          html += '</tr></thead><tbody>';
+          items.forEach(function (item) {
+            html += '<tr>';
+            cols.forEach(function (c) {
+              var val = item[c];
+              html += '<td>' + (val !== undefined && val !== null ? val : '---') + '</td>';
+            });
+            html += '</tr>';
+          });
+          html += '</tbody></table>';
+
+          document.getElementById('previewArea').innerHTML = html;
+          document.getElementById('previewMeta').style.display = 'flex';
+          document.getElementById('previewRowCount').textContent = items.length + ' ligne(s) affichee(s)';
+          document.getElementById('previewTimestamp').textContent = 'Genere le ' + new Date().toLocaleString('fr-FR');
+          document.getElementById('previewSubtitle').textContent = 'Dernier apercu : ' + items.length + ' lignes';
+          showToast('Apercu charge (' + items.length + ' lignes).', 'success');
+        } catch (e) {
+          showToast('Erreur: ' + e.message, 'error');
+        } finally {
+          btnPreview.disabled = false;
+          btnPreview.textContent = 'Apercu';
+        }
+      };
+
+      // ---- Generate (CSV download) ----
+      window.generer = async function () {
+        var payload = buildPayload();
+        if (!payload.fields.length) {
+          showToast('Selectionnez au moins un champ.', 'warning');
+          return;
+        }
+        lastPayload = payload;
+        var btnGenerer = document.getElementById('btnGenerer');
+        btnGenerer.disabled = true;
+        btnGenerer.textContent = 'Generation...';
+        showToast('Generation du rapport...', 'info');
+
+        try {
+          var res = await SF.apiFetch('/api/v1/reporting/personnalise', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+          });
+
+          if (!res || !res.ok) {
+            if (res) showToast('Erreur serveur (HTTP ' + res.status + ').', 'error');
+            return;
+          }
+
+          var data = await res.json();
+          var items = Array.isArray(data) ? data : (data.content || data.lignes || data.data || []);
+
+          if (items.length === 0) {
+            showToast('Aucune donnee a exporter.', 'warning');
+            return;
+          }
+
+          // Show in preview too
+          var cols = payload.fields;
+          var html = '<table><thead><tr>';
+          cols.forEach(function (c) {
+            var label = c;
+            selectedFields.forEach(function (f) { if (f.field === c) label = f.label; });
+            html += '<th>' + label + '</th>';
+          });
+          html += '</tr></thead><tbody>';
+          items.forEach(function (item) {
+            html += '<tr>';
+            cols.forEach(function (c) {
+              var val = item[c];
+              html += '<td>' + (val !== undefined && val !== null ? val : '---') + '</td>';
+            });
+            html += '</tr>';
+          });
+          html += '</tbody></table>';
+          document.getElementById('previewArea').innerHTML = html;
+          document.getElementById('previewMeta').style.display = 'flex';
+          document.getElementById('previewRowCount').textContent = items.length + ' ligne(s) exportee(s)';
+          document.getElementById('previewTimestamp').textContent = 'Exporte le ' + new Date().toLocaleString('fr-FR');
+
+          // CSV export
+          var csv = cols.join(';') + '\n';
+          items.forEach(function (item) {
+            var row = cols.map(function (c) {
+              var val = item[c];
+              return val !== undefined && val !== null ? String(val).replace(/;/g, ',') : '';
+            });
+            csv += row.join(';') + '\n';
+          });
+          var bom = '﻿';
+          var blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'rapport-personnalise-' + new Date().toISOString().slice(0, 10) + '.csv';
+          a.click();
+          URL.revokeObjectURL(a.href);
+          showToast('Rapport exporte (' + items.length + ' lignes).', 'success');
+        } catch (e) {
+          showToast('Erreur: ' + e.message, 'error');
+        } finally {
+          btnGenerer.disabled = false;
+          btnGenerer.textContent = 'Generer le rapport';
+        }
+      };
+
+      // ---- Export CSV (from header button) ----
+      document.getElementById('btnExportCSV').addEventListener('click', function () {
+        if (!lastPayload) {
+          showToast('Generez d\'abord un rapport avant d\'exporter.', 'warning');
+          return;
+        }
+        window.generer();
+      });
+
+      // ---- Export PDF (attempt backend PDF) ----
+      document.getElementById('btnExportPDF').addEventListener('click', async function () {
+        if (!lastPayload) {
+          showToast('Generez d\'abord un rapport avant d\'exporter.', 'warning');
+          return;
+        }
+        try {
+          var res = await SF.apiFetch('/api/v1/reporting/personnalise/export?format=PDF', {
+            method: 'POST',
+            body: JSON.stringify(lastPayload)
+          });
+          if (res && res.ok) {
+            var data = await res.json();
+            if (data && data.contenuBase64) {
+              var byteChars = atob(data.contenuBase64);
+              var byteArray = new Uint8Array(byteChars.length);
+              for (var i = 0; i < byteChars.length; i++) {
+                byteArray[i] = byteChars.charCodeAt(i);
+              }
+              var blob = new Blob([byteArray], { type: 'application/pdf' });
+              var link = document.createElement('a');
+              link.href = URL.createObjectURL(blob);
+              link.download = 'rapport-personnalise-' + new Date().toISOString().slice(0, 10) + '.pdf';
+              link.click();
+              URL.revokeObjectURL(link.href);
+              showToast('PDF telecharge.', 'success');
+            } else {
+              showToast('Le serveur a retourne un PDF vide.', 'warning');
+            }
+          } else {
+            showToast('Export PDF non disponible. Utilisez CSV.', 'info');
+          }
+        } catch (e) {
+          showToast('Export PDF non disponible. Utilisez CSV a la place.', 'info');
+        }
+      });
+
+      // ---- Template management (localStorage) ----
+      var TEMPLATES_KEY = 'sf_report_templates';
+
+      function getTemplates() {
+        try {
+          return JSON.parse(localStorage.getItem(TEMPLATES_KEY) || '{}');
+        } catch (e) {
+          return {};
+        }
+      }
+
+      function saveTemplates(obj) {
+        localStorage.setItem(TEMPLATES_KEY, JSON.stringify(obj));
+      }
+
+      function refreshTemplateSelect() {
+        var select = document.getElementById('templateSelect');
+        var templates = getTemplates();
+        select.innerHTML = '<option value="">-- Choisir un modele --</option>';
+        Object.keys(templates).sort().forEach(function (name) {
+          var opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name;
+          select.appendChild(opt);
+        });
+      }
+
+      window.saveTemplate = function () {
+        var name = prompt('Nom du modele :');
+        if (!name || !name.trim()) return;
+        name = name.trim();
+        var templates = getTemplates();
+        if (templates[name]) {
+          if (!confirm('Un modele "' + name + '" existe deja. Remplacer ?')) return;
+        }
+        templates[name] = {
+          fields: selectedFields.map(function (f) { return { field: f.field, label: f.label }; }),
+          dateDebut: document.getElementById('rpDateDeb').value,
+          dateFin: document.getElementById('rpDateFin').value,
+          filters: collectFilters()
+        };
+        saveTemplates(templates);
+        refreshTemplateSelect();
+        document.getElementById('templateSelect').value = name;
+        showToast('Modele "' + name + '" enregistre.', 'success');
+      };
+
+      window.loadTemplate = function () {
+        var name = document.getElementById('templateSelect').value;
+        if (!name) { showToast('Selectionnez un modele a charger.', 'warning'); return; }
+        var templates = getTemplates();
+        var tpl = templates[name];
+        if (!tpl) { showToast('Modele introuvable.', 'error'); return; }
+
+        // Restore fields
+        selectedFields = (tpl.fields || []).map(function (f) { return { field: f.field, label: f.label }; });
+        renderDropZone();
+
+        // Restore dates
+        if (tpl.dateDebut) document.getElementById('rpDateDeb').value = tpl.dateDebut;
+        if (tpl.dateFin) document.getElementById('rpDateFin').value = tpl.dateFin;
+
+        // Mark period preset as custom since dates are user-set
+        document.querySelectorAll('.period-preset').forEach(function (p) { p.classList.remove('active'); });
+        document.querySelector('.period-preset[data-period="custom"]').classList.add('active');
+
+        // Restore filters
+        document.getElementById('filtersContainer').innerHTML = '';
+        filterCount = 0;
+        (tpl.filters || []).forEach(function (f) {
+          addFilter();
+          var idx = filterCount - 1;
+          var row = document.querySelector('.filter-row[data-idx="' + idx + '"]');
+          if (row) {
+            var selects = row.querySelectorAll('select');
+            selects[0].value = f.field;
+            selects[1].value = f.operator;
+            row.querySelector('input').value = f.value;
+          }
+        });
+
+        updateConfigSummary();
+        showToast('Modele "' + name + '" charge.', 'success');
+      };
+
+      window.deleteTemplate = function () {
+        var name = document.getElementById('templateSelect').value;
+        if (!name) { showToast('Selectionnez un modele a supprimer.', 'warning'); return; }
+        if (!confirm('Supprimer le modele "' + name + '" ?')) return;
+        var templates = getTemplates();
+        delete templates[name];
+        saveTemplates(templates);
+        refreshTemplateSelect();
+        showToast('Modele "' + name + '" supprime.', 'success');
+      };
+
+      // ---- Date change handlers ----
+      function onDateChange() {
+        document.querySelectorAll('.period-preset').forEach(function (p) { p.classList.remove('active'); });
+        document.querySelector('.period-preset[data-period="custom"]').classList.add('active');
+        updateConfigSummary();
+      }
+
+      // ---- Init ----
+      document.addEventListener('DOMContentLoaded', function () {
+        // Default period: year to date
+        applyPeriod('annee');
+
+        // Period presets
+        document.querySelectorAll('.period-preset').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            applyPeriod(btn.dataset.period);
+          });
+        });
+
+        // Date change
+        document.getElementById('rpDateDeb').addEventListener('change', onDateChange);
+        document.getElementById('rpDateFin').addEventListener('change', onDateChange);
+
+        // Drag & drop
+        initPaletteDrag();
+        initDropZoneDrag();
+        initPaletteDoubleClick();
+
+        // Templates
+        refreshTemplateSelect();
+
+        // Default fields (pre-select 3 common ones)
+        selectedFields = [
+          { field: 'tx.date', label: 'Date transaction' },
+          { field: 'tx.montant', label: 'Montant' },
+          { field: 'tx.type', label: 'Type' }
+        ];
+        renderDropZone();
+
+        // Add one default filter row
+        addFilter();
+      });
+    })();
+  </script>
+</body>
+</html>

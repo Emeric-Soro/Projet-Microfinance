@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comptes a terme (DAT) - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    /* Page-specific enhancements */
+    .kpi-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .kpi-icon svg { width: 22px; height: 22px; }
+    .kpi-icon.blue   { background: #E8F4FD; color: #1976D2; }
+    .kpi-icon.green  { background: #E8F5E9; color: #2E7D32; }
+    .kpi-icon.orange { background: #FFF3E0; color: #E65100; }
+    .kpi-icon.purple { background: #F3E5F5; color: #7B1FA2; }
+    .kpi-card { display: flex; align-items: center; gap: 16px; }
+    .kpi-trend { font-size: 12px; font-weight: 600; margin-top: 2px; }
+    .kpi-trend.up   { color: #2E7D32; }
+    .kpi-trend.down { color: #D93025; }
+    .filter-bar { display: flex; gap: 12px; flex-wrap: wrap; padding: 16px 20px; }
+    .filter-bar .form-control { flex: 1; min-width: 160px; }
+    .filter-bar .form-control[type="date"] { max-width: 170px; flex: 0 0 auto; }
+    .date-range-group { display: flex; align-items: center; gap: 6px; }
+    .date-range-group span { font-size: 12px; color: #4A7A8A; white-space: nowrap; }
+    .action-btn-group { display: flex; gap: 4px; }
+    .btn-icon { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid #C9DFE8; background: #fff; color: #084355; cursor: pointer; transition: all 0.2s; }
+    .btn-icon:hover { background: #F0F6FA; border-color: #4A7A8A; }
+    .btn-icon svg { width: 15px; height: 15px; }
+    .btn-icon.danger { color: #D93025; border-color: #F5C6CB; }
+    .btn-icon.danger:hover { background: #FDE8E8; }
+    .btn-icon.success { color: #2E7D32; border-color: #C8E6C9; }
+    .btn-icon.success:hover { background: #E8F5E9; }
+    .btn-icon.warning { color: #E65100; border-color: #FFE0B2; }
+    .btn-icon.warning:hover { background: #FFF3E0; }
+    .modal-body .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .simulation-box { background: #F0F6FA; border: 1px solid #C9DFE8; border-radius: 10px; padding: 16px; margin-top: 16px; }
+    .simulation-box h4 { font-size: 13px; font-weight: 700; color: #084355; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+    .simulation-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; color: #4A7A8A; }
+    .simulation-row strong { color: #084355; }
+    .simulation-row.total { border-top: 1px solid #C9DFE8; margin-top: 6px; padding-top: 8px; font-weight: 700; color: #084355; }
+    .search-predictive { position: relative; }
+    .search-results { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #C9DFE8; border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .search-results.show { display: block; }
+    .search-result-item { padding: 10px 14px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #F0F6FA; transition: background 0.15s; }
+    .search-result-item:hover { background: #F0F6FA; }
+    .search-result-item:last-child { border-bottom: none; }
+    .empty-state { text-align: center; padding: 40px 20px; color: #4A7A8A; }
+    .empty-state svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.4; }
+    .empty-state p { margin: 0; font-size: 14px; }
+    @media (max-width: 768px) {
+      .filter-bar { flex-direction: column; }
+      .filter-bar .form-control[type="date"] { max-width: 100%; }
+      .modal-body .form-row { grid-template-columns: 1fr; }
+      .action-btn-group { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Comptes a terme (DAT)</div>
+            <div class="topbar-breadcrumb">Epargne / Comptes a terme</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="btn btn-primary btn-sm" onclick="openModal('newDatModal')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nouveau DAT
+          </button>
+          <button class="topbar-icon-btn" title="Notifications">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <main class="content-area">
+
+        <!-- KPI CARDS -->
+        <section class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 24px;">
+          <div class="kpi-card">
+            <div class="kpi-icon blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Total DAT</div>
+              <div class="kpi-value" id="kpiTotal">-</div>
+              <div class="kpi-trend up" id="kpiTotalTrend"></div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Encours total</div>
+              <div class="kpi-value" id="kpiEncours">-</div>
+              <div class="kpi-trend up" id="kpiEncoursTrend"></div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon orange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Echeances 30j</div>
+              <div class="kpi-value" id="kpiEcheances">-</div>
+              <div class="kpi-trend" id="kpiEcheancesTrend"></div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Taux moyen</div>
+              <div class="kpi-value" id="kpiTaux">-</div>
+              <div class="kpi-trend" id="kpiTauxTrend"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- DATA TABLE CARD -->
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Liste des depots a terme</div>
+              <div class="card-subtitle">Endpoint : /api/v1/epargne/dat</div>
+            </div>
+          </div>
+
+          <!-- FILTERS -->
+          <div class="filter-bar">
+            <input class="form-control" placeholder="Rechercher client ou reference..." id="datSearch" oninput="filterDAT()">
+            <select class="form-control" id="datStatut" onchange="filterDAT()">
+              <option value="ALL">Tous statuts</option>
+              <option value="EN_COURS">En cours</option>
+              <option value="A_ECHEANCE">A echeance</option>
+              <option value="CLOTURE">Cloture</option>
+              <option value="ANNULE">Annule</option>
+            </select>
+            <select class="form-control" id="datAgence" onchange="filterDAT()">
+              <option value="ALL">Toutes agences</option>
+            </select>
+            <div class="date-range-group">
+              <input type="date" class="form-control" id="datDateDebut" onchange="filterDAT()" title="Date de debut">
+              <span>au</span>
+              <input type="date" class="form-control" id="datDateFin" onchange="filterDAT()" title="Date de fin">
+            </div>
+          </div>
+
+          <!-- TABLE -->
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Ref DAT</th>
+                <th>Client</th>
+                <th>Montant</th>
+                <th>Taux</th>
+                <th>Duree</th>
+                <th>Echeance</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="datBody">
+              <tr>
+                <td colspan="8" class="empty-state">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <p>Chargement des DAT...</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- MODAL: NOUVEAU DAT -->
+  <div class="modal-overlay" id="newDatModal">
+    <div class="modal" style="max-width: 640px;">
+      <div class="modal-header">
+        <div class="modal-title">Nouveau depot a terme</div>
+        <button class="modal-close" onclick="closeModal('newDatModal')">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Client search -->
+        <div class="form-group">
+          <label class="form-label">Client *</label>
+          <div class="search-predictive">
+            <input type="text" class="form-control" id="datClientSearch" placeholder="Rechercher par nom, telephone ou code client..." oninput="searchDatClient()">
+            <div class="search-results" id="datClientResults"></div>
+          </div>
+          <div id="selectedClientHint" style="display:none; margin-top:8px; padding:10px 12px; border-radius:8px; background:#F0F6FA; color:#084355; font-size:12px;"></div>
+        </div>
+        <!-- Product -->
+        <div class="form-group">
+          <label class="form-label">Produit DAT *</label>
+          <select class="form-control" id="datProduit" onchange="onProduitChange()">
+            <option value="">Selectionner un produit...</option>
+          </select>
+        </div>
+        <!-- Amount + Duration -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Montant (FCFA) *</label>
+            <div class="input-group">
+              <input type="number" class="form-control" id="datMontant" min="50000" placeholder="Ex: 500000" oninput="simulerDAT()">
+              <span class="input-addon">FCFA</span>
+            </div>
+            <div style="font-size:11px; color:#4A7A8A; margin-top:4px;">Minimum : 50 000 FCFA</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Duree (jours) *</label>
+            <input type="number" class="form-control" id="datDuree" min="30" max="1095" placeholder="Ex: 180" oninput="simulerDAT()">
+            <div style="font-size:11px; color:#4A7A8A; margin-top:4px;">Entre 30 et 1095 jours</div>
+          </div>
+        </div>
+        <!-- Auto-renewal -->
+        <div class="form-group">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+            <input type="checkbox" id="datRenouvellement">
+            Renouvellement automatique a l'echeance
+          </label>
+        </div>
+        <!-- Simulation box -->
+        <div class="simulation-box" id="simulationBox" style="display:none;">
+          <h4>Simulation</h4>
+          <div class="simulation-row"><span>Taux conventionnel</span><strong id="simTaux">-</strong></div>
+          <div class="simulation-row"><span>Duree</span><strong id="simDuree">-</strong></div>
+          <div class="simulation-row"><span>Interets prevus</span><strong id="simInterets">-</strong></div>
+          <div class="simulation-row total"><span>Montant total a l'echeance</span><strong id="simTotal">-</strong></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('newDatModal')">Annuler</button>
+        <button class="btn btn-outline" onclick="simulerDAT()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Simuler
+        </button>
+        <button class="btn btn-primary" onclick="creerDAT()">Creer le DAT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DETAIL DAT -->
+  <div class="modal-overlay" id="detailDatModal">
+    <div class="modal" style="max-width: 600px;">
+      <div class="modal-header">
+        <div class="modal-title">Detail du DAT</div>
+        <button class="modal-close" onclick="closeModal('detailDatModal')">&#10005;</button>
+      </div>
+      <div class="modal-body" id="detailDatBody">
+        <p style="text-align:center; color:#4A7A8A;">Chargement...</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('detailDatModal')">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container"></div>
+
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ============================================
+       M08 - Comptes a terme (DAT)
+       Gestion des depots a terme
+       Endpoint principal : /api/v1/epargne/dat
+       ============================================ */
+
+    let allDAT = [];
+    let selectedDatClientId = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDAT();
+      loadProduits();
+      loadAgences();
+    });
+
+    /* ── Chargement des donnees ─────────────────────── */
+
+    async function loadDAT() {
+      try {
+        const res = await SF.apiFetch('/api/v1/epargne/dat?page=0&size=200');
+        if (res && res.ok) {
+          const data = await res.json();
+          allDAT = data.content || data || [];
+          renderDAT(allDAT);
+          updateKpis(allDAT);
+        } else {
+          document.getElementById('datBody').innerHTML = renderEmptyRow('Erreur de chargement des DAT.');
+        }
+      } catch (e) {
+        console.error('loadDAT error:', e);
+        document.getElementById('datBody').innerHTML = renderEmptyRow('Impossible de joindre le serveur.');
+      }
+    }
+
+    async function loadProduits() {
+      try {
+        const res = await SF.apiFetch('/api/v1/parametrages/produits-epargne?type=A_TERME');
+        if (res && res.ok) {
+          const data = await res.json();
+          const select = document.getElementById('datProduit');
+          const produits = data.content || data || [];
+          select.innerHTML = '<option value="">Selectionner un produit...</option>' +
+            produits.map(p =>
+              '<option value="' + p.id + '" data-taux="' + (p.tauxInteret || p.taux || 0) + '">' +
+              (p.libelle || p.nom || 'Produit') + ' — ' + (p.tauxInteret || p.taux || 0) + '%</option>'
+            ).join('');
+        }
+      } catch (e) {
+        console.error('loadProduits error:', e);
+      }
+    }
+
+    async function loadAgences() {
+      try {
+        const res = await SF.apiFetch('/api/v1/agences?page=0&size=100');
+        if (res && res.ok) {
+          const data = await res.json();
+          const select = document.getElementById('datAgence');
+          const agences = data.content || data || [];
+          agences.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.id || a.code || a.nom;
+            opt.textContent = a.nom || a.libelle || a.code;
+            select.appendChild(opt);
+          });
+        }
+      } catch (e) {
+        console.error('loadAgences error:', e);
+      }
+    }
+
+    /* ── Rendu du tableau ───────────────────────────── */
+
+    function renderDAT(items) {
+      const tbody = document.getElementById('datBody');
+      if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/></svg>' +
+          '<p>Aucun depot a terme trouve.</p></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = items.map(d => {
+        const ref = d.referenceDat || d.reference || '-';
+        const client = d.clientNom || (d.client ? (d.client.nom + ' ' + d.client.prenom) : '-');
+        const montant = (d.montantDepot || d.montant || 0);
+        const taux = d.tauxConventionnel || d.taux || 0;
+        const duree = d.dureeJours || d.duree || 0;
+        const echeance = formatDate(d.dateEcheance);
+        const statut = d.statut || 'EN_COURS';
+        const badgeClass = {
+          'EN_COURS': 'badge-active',
+          'A_ECHEANCE': 'badge-warning',
+          'CLOTURE': 'badge-blocked',
+          'ANNULE': 'badge-danger'
+        }[statut] || 'badge-info';
+        const statutLabel = {
+          'EN_COURS': 'En cours',
+          'A_ECHEANCE': 'A echeance',
+          'CLOTURE': 'Cloture',
+          'ANNULE': 'Annule'
+        }[statut] || statut;
+
+        return '<tr>' +
+          '<td style="font-family:monospace; font-weight:600;">' + escapeHtml(ref) + '</td>' +
+          '<td>' + escapeHtml(client) + '</td>' +
+          '<td style="font-weight:600;">' + montant.toLocaleString('fr-FR') + ' FCFA</td>' +
+          '<td>' + taux + '%</td>' +
+          '<td>' + duree + 'j</td>' +
+          '<td>' + echeance + '</td>' +
+          '<td><span class="badge ' + badgeClass + '">' + statutLabel + '</span></td>' +
+          '<td><div class="action-btn-group">' +
+            '<button class="btn-icon" title="Voir detail" onclick="voirDetailDAT(\'' + escapeJs(ref) + '\')">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' +
+            '</button>' +
+            (statut === 'EN_COURS' ?
+              '<button class="btn-icon warning" title="Simuler" onclick="simulerDATDetail(\'' + escapeJs(ref) + '\')">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+              '</button>' +
+              '<button class="btn-icon success" title="Renouveler" onclick="renouvelerDAT(\'' + escapeJs(ref) + '\')">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>' +
+              '</button>' +
+              '<button class="btn-icon danger" title="Cloturer" onclick="cloturerDAT(\'' + escapeJs(ref) + '\')">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' +
+              '</button>'
+            : '') +
+          '</div></td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function renderEmptyRow(msg) {
+      return '<tr><td colspan="8" class="empty-state">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+        '<p>' + escapeHtml(msg) + '</p></td></tr>';
+    }
+
+    /* ── KPI ────────────────────────────────────────── */
+
+    function updateKpis(items) {
+      const total = items.length;
+      const actifs = items.filter(d => d.statut === 'EN_COURS');
+      const encours = actifs.reduce((s, d) => s + (d.montantDepot || d.montant || 0), 0);
+
+      // Echeances dans les 30 prochains jours
+      const now = new Date();
+      const in30 = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const echeances30 = items.filter(d => {
+        if (d.statut !== 'EN_COURS' && d.statut !== 'A_ECHEANCE') return false;
+        if (!d.dateEcheance) return false;
+        const dte = new Date(d.dateEcheance);
+        return dte >= now && dte <= in30;
+      }).length;
+
+      // Taux moyen pondere par montant
+      const totalMontant = actifs.reduce((s, d) => s + (d.montantDepot || d.montant || 0), 0);
+      const tauxPondere = totalMontant > 0
+        ? actifs.reduce((s, d) => s + (d.tauxConventionnel || d.taux || 0) * (d.montantDepot || d.montant || 0), 0) / totalMontant
+        : 0;
+
+      document.getElementById('kpiTotal').textContent = total;
+      document.getElementById('kpiEncours').textContent = formatFCFA(encours);
+      document.getElementById('kpiEcheances').textContent = echeances30;
+      document.getElementById('kpiTaux').textContent = tauxPondere.toFixed(2) + '%';
+
+      // Trend indicators
+      document.getElementById('kpiTotalTrend').textContent = actifs.length + ' actifs';
+      document.getElementById('kpiTotalTrend').className = 'kpi-trend up';
+      document.getElementById('kpiEncoursTrend').textContent = actifs.length + ' contrats actifs';
+      document.getElementById('kpiEncoursTrend').className = 'kpi-trend up';
+
+      if (echeances30 > 0) {
+        document.getElementById('kpiEcheancesTrend').textContent = 'Attention requise';
+        document.getElementById('kpiEcheancesTrend').className = 'kpi-trend down';
+      } else {
+        document.getElementById('kpiEcheancesTrend').textContent = 'Aucune echeance proche';
+        document.getElementById('kpiEcheancesTrend').className = 'kpi-trend up';
+      }
+    }
+
+    /* ── Filtres ────────────────────────────────────── */
+
+    function filterDAT() {
+      const q = document.getElementById('datSearch').value.toLowerCase().trim();
+      const statut = document.getElementById('datStatut').value;
+      const agence = document.getElementById('datAgence').value;
+      const dateDebut = document.getElementById('datDateDebut').value;
+      const dateFin = document.getElementById('datDateFin').value;
+
+      const filtered = allDAT.filter(d => {
+        // Text search
+        const matchQ = !q ||
+          (d.clientNom || '').toLowerCase().includes(q) ||
+          (d.referenceDat || d.reference || '').toLowerCase().includes(q) ||
+          (d.client && ((d.client.nom || '') + ' ' + (d.client.prenom || '')).toLowerCase().includes(q));
+
+        // Status filter
+        const matchS = statut === 'ALL' || d.statut === statut;
+
+        // Agency filter
+        const matchA = agence === 'ALL' ||
+          (d.agenceId && String(d.agenceId) === agence) ||
+          (d.agenceNom || '').toLowerCase() === agence.toLowerCase();
+
+        // Date range filter (on creation date or echeance)
+        let matchD = true;
+        if (dateDebut || dateFin) {
+          const dte = d.dateCreation || d.dateSouscription || d.dateEcheance;
+          if (dte) {
+            const dteVal = new Date(dte).getTime();
+            if (dateDebut && dteVal < new Date(dateDebut).getTime()) matchD = false;
+            if (dateFin && dteVal > new Date(dateFin + 'T23:59:59').getTime()) matchD = false;
+          }
+        }
+
+        return matchQ && matchS && matchA && matchD;
+      });
+
+      renderDAT(filtered);
+    }
+
+    /* ── Recherche client (modal) ──────────────────── */
+
+    let datClientSearchTimeout;
+    async function searchDatClient() {
+      const q = document.getElementById('datClientSearch').value.trim();
+      const div = document.getElementById('datClientResults');
+      if (q.length < 2) { div.classList.remove('show'); return; }
+
+      clearTimeout(datClientSearchTimeout);
+      datClientSearchTimeout = setTimeout(async () => {
+        try {
+          const res = await Clients.lister(0, 10, q);
+          if (res && res.ok) {
+            const data = await res.json();
+            const clients = data.content || [];
+            if (clients.length === 0) {
+              div.innerHTML = '<div class="search-result-item" style="color:#4A7A8A;">Aucun client trouve.</div>';
+            } else {
+              div.innerHTML = clients.map(c =>
+                '<div class="search-result-item" onclick="pickDatClient(' + c.idClient + ',\'' +
+                escapeJs((c.nom || '') + ' ' + (c.prenom || '')) + '\',\'' +
+                escapeJs(c.numeroClient || '') + '\')">' +
+                '<strong>' + escapeHtml((c.nom || '') + ' ' + (c.prenom || '')) + '</strong>' +
+                ' — ' + escapeHtml(c.numeroClient || c.telephone || '') +
+                '</div>'
+              ).join('');
+            }
+            div.classList.add('show');
+          }
+        } catch (e) {
+          console.error('searchDatClient error:', e);
+        }
+      }, 300);
+    }
+
+    function pickDatClient(id, name, code) {
+      selectedDatClientId = id;
+      document.getElementById('datClientSearch').value = name;
+      document.getElementById('datClientResults').classList.remove('show');
+      const hint = document.getElementById('selectedClientHint');
+      hint.textContent = 'Client selectionne : ' + name + (code ? ' (' + code + ')' : '');
+      hint.style.display = 'block';
+    }
+
+    // Close search results when clicking outside
+    document.addEventListener('click', function(e) {
+      const results = document.getElementById('datClientResults');
+      const input = document.getElementById('datClientSearch');
+      if (results && input && !results.contains(e.target) && e.target !== input) {
+        results.classList.remove('show');
+      }
+    });
+
+    /* ── Produit change ─────────────────────────────── */
+
+    function onProduitChange() {
+      // Reset simulation when product changes
+      document.getElementById('simulationBox').style.display = 'none';
+    }
+
+    /* ── Simulation ─────────────────────────────────── */
+
+    function simulerDAT() {
+      const montant = parseFloat(document.getElementById('datMontant').value) || 0;
+      const duree = parseInt(document.getElementById('datDuree').value) || 0;
+      const produitSelect = document.getElementById('datProduit');
+      const opt = produitSelect.options[produitSelect.selectedIndex];
+      const taux = parseFloat(opt?.dataset?.taux) || 0;
+
+      if (montant <= 0 || duree <= 0) {
+        document.getElementById('simulationBox').style.display = 'none';
+        return;
+      }
+
+      const interets = montant * (taux / 100) * (duree / 365);
+      const total = montant + interets;
+
+      document.getElementById('simTaux').textContent = taux + '%';
+      document.getElementById('simDuree').textContent = duree + ' jours';
+      document.getElementById('simInterets').textContent = Math.round(interets).toLocaleString('fr-FR') + ' FCFA';
+      document.getElementById('simTotal').textContent = Math.round(total).toLocaleString('fr-FR') + ' FCFA';
+      document.getElementById('simulationBox').style.display = 'block';
+    }
+
+    function simulerDATDetail(ref) {
+      const dat = allDAT.find(d => (d.referenceDat || d.reference) === ref);
+      if (!dat) { showToast('DAT introuvable.', 'error'); return; }
+
+      const montant = dat.montantDepot || dat.montant || 0;
+      const taux = dat.tauxConventionnel || dat.taux || 0;
+      const duree = dat.dureeJours || dat.duree || 0;
+      const interets = montant * (taux / 100) * (duree / 365);
+      const total = montant + interets;
+
+      showToast(
+        'Simulation ' + ref + ' : ' + Math.round(interets).toLocaleString('fr-FR') + ' FCFA d\'interets prevus (total : ' + Math.round(total).toLocaleString('fr-FR') + ' FCFA)',
+        'info'
+      );
+    }
+
+    /* ── Creation DAT ───────────────────────────────── */
+
+    async function creerDAT() {
+      if (!selectedDatClientId) {
+        showToast('Veuillez selectionner un client.', 'warning');
+        return;
+      }
+      if (!document.getElementById('datProduit').value) {
+        showToast('Veuillez selectionner un produit DAT.', 'warning');
+        return;
+      }
+      const montant = parseFloat(document.getElementById('datMontant').value);
+      if (!montant || montant < 50000) {
+        showToast('Le montant minimum est de 50 000 FCFA.', 'warning');
+        return;
+      }
+      const duree = parseInt(document.getElementById('datDuree').value);
+      if (!duree || duree < 30 || duree > 1095) {
+        showToast('La duree doit etre entre 30 et 1095 jours.', 'warning');
+        return;
+      }
+
+      try {
+        const res = await SF.apiFetch('/api/v1/epargne/dat', {
+          method: 'POST',
+          body: JSON.stringify({
+            clientId: selectedDatClientId,
+            produitId: document.getElementById('datProduit').value,
+            montantDepot: montant,
+            dureeJours: duree,
+            renouvellementAuto: document.getElementById('datRenouvellement').checked
+          })
+        });
+
+        if (res && (res.ok || res.status === 201)) {
+          showToast('DAT cree avec succes !', 'success');
+          closeModal('newDatModal');
+          resetNewDatForm();
+          loadDAT();
+        } else {
+          const err = res ? await res.json().catch(() => ({})) : {};
+          showToast(err.message || 'Erreur lors de la creation du DAT.', 'error');
+        }
+      } catch (e) {
+        console.error('creerDAT error:', e);
+        showToast(e.message || 'Erreur de communication avec le serveur.', 'error');
+      }
+    }
+
+    function resetNewDatForm() {
+      selectedDatClientId = null;
+      document.getElementById('datClientSearch').value = '';
+      document.getElementById('datProduit').value = '';
+      document.getElementById('datMontant').value = '';
+      document.getElementById('datDuree').value = '';
+      document.getElementById('datRenouvellement').checked = false;
+      document.getElementById('simulationBox').style.display = 'none';
+      document.getElementById('selectedClientHint').style.display = 'none';
+    }
+
+    /* ── Detail DAT ─────────────────────────────────── */
+
+    async function voirDetailDAT(ref) {
+      const dat = allDAT.find(d => (d.referenceDat || d.reference) === ref);
+      if (!dat) { showToast('DAT introuvable.', 'error'); return; }
+
+      const statut = dat.statut || 'EN_COURS';
+      const badgeClass = {
+        'EN_COURS': 'badge-active',
+        'A_ECHEANCE': 'badge-warning',
+        'CLOTURE': 'badge-blocked',
+        'ANNULE': 'badge-danger'
+      }[statut] || 'badge-info';
+      const statutLabel = {
+        'EN_COURS': 'En cours',
+        'A_ECHEANCE': 'A echeance',
+        'CLOTURE': 'Cloture',
+        'ANNULE': 'Annule'
+      }[statut] || statut;
+
+      const montant = dat.montantDepot || dat.montant || 0;
+      const taux = dat.tauxConventionnel || dat.taux || 0;
+      const duree = dat.dureeJours || dat.duree || 0;
+      const interets = montant * (taux / 100) * (duree / 365);
+
+      const body = document.getElementById('detailDatBody');
+      body.innerHTML =
+        '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">' +
+          '<div style="font-family:monospace; font-size:18px; font-weight:700; color:#084355;">' + escapeHtml(dat.referenceDat || dat.reference || '-') + '</div>' +
+          '<span class="badge ' + badgeClass + '">' + statutLabel + '</span>' +
+        '</div>' +
+        '<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">' +
+          detailField('Client', dat.clientNom || '-') +
+          detailField('Montant depot', formatFCFA(montant)) +
+          detailField('Taux conventionnel', taux + '%') +
+          detailField('Duree', duree + ' jours') +
+          detailField('Date souscription', formatDate(dat.dateSouscription || dat.dateCreation)) +
+          detailField('Date echeance', formatDate(dat.dateEcheance)) +
+          detailField('Interets prevus', formatFCFA(Math.round(interets))) +
+          detailField('Total a l\'echeance', formatFCFA(Math.round(montant + interets))) +
+          detailField('Agence', dat.agenceNom || '-') +
+          detailField('Renouvellement auto', dat.renouvellementAuto ? 'Oui' : 'Non') +
+        '</div>';
+
+      openModal('detailDatModal');
+    }
+
+    function detailField(label, value) {
+      return '<div style="padding:8px 0;">' +
+        '<div style="font-size:11px; color:#4A7A8A; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">' + escapeHtml(label) + '</div>' +
+        '<div style="font-size:14px; font-weight:600; color:#084355;">' + escapeHtml(String(value)) + '</div>' +
+      '</div>';
+    }
+
+    /* ── Cloture DAT ────────────────────────────────── */
+
+    async function cloturerDAT(ref) {
+      if (!confirm('Voulez-vous vraiment cloturer le DAT ' + ref + ' ?\nCette action est irreversible.')) return;
+
+      try {
+        const res = await SF.apiFetch('/api/v1/epargne/dat/' + encodeURIComponent(ref) + '/cloture', {
+          method: 'PUT'
+        });
+        if (res && res.ok) {
+          showToast('DAT ' + ref + ' cloture avec succes.', 'success');
+          loadDAT();
+        } else {
+          const err = res ? await res.json().catch(() => ({})) : {};
+          showToast(err.message || 'Erreur lors de la cloture.', 'error');
+        }
+      } catch (e) {
+        console.error('cloturerDAT error:', e);
+        showToast(e.message || 'Erreur de communication.', 'error');
+      }
+    }
+
+    /* ── Renouvellement DAT ─────────────────────────── */
+
+    async function renouvelerDAT(ref) {
+      const dat = allDAT.find(d => (d.referenceDat || d.reference) === ref);
+      if (!dat) { showToast('DAT introuvable.', 'error'); return; }
+
+      const montant = (dat.montantDepot || dat.montant || 0).toLocaleString('fr-FR');
+      if (!confirm('Renouveler le DAT ' + ref + ' de ' + montant + ' FCFA aux memes conditions ?')) return;
+
+      try {
+        const res = await SF.apiFetch('/api/v1/epargne/dat/' + encodeURIComponent(ref) + '/renouvellement', {
+          method: 'PUT'
+        });
+        if (res && res.ok) {
+          showToast('DAT ' + ref + ' renouvele avec succes.', 'success');
+          loadDAT();
+        } else {
+          const err = res ? await res.json().catch(() => ({})) : {};
+          showToast(err.message || 'Erreur lors du renouvellement.', 'error');
+        }
+      } catch (e) {
+        console.error('renouvelerDAT error:', e);
+        showToast(e.message || 'Erreur de communication.', 'error');
+      }
+    }
+
+    /* ── Utilitaires ────────────────────────────────── */
+
+    function formatFCFA(montant) {
+      return (montant || 0).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function escapeJs(str) {
+      if (!str) return '';
+      return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+  </script>
+</body>
+</html>

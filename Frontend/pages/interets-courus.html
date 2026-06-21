@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interets courus - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    .method-toggle { display: inline-flex; border-radius: 8px; overflow: hidden; border: 1px solid #C9DFE8; }
+    .method-toggle .method-btn { padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; background: #fff; color: #4A7A8A; transition: all .2s; }
+    .method-toggle .method-btn.active { background: #084355; color: #fff; }
+    .method-toggle .method-btn:hover:not(.active) { background: #F0F6FA; }
+    .validation-status { display: flex; align-items: center; gap: 12px; }
+    .validation-status .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .validation-status .status-dot.draft { background: #F59E0B; }
+    .validation-status .status-dot.validated { background: #2E7D32; }
+    .kpi-icon.purple { background: rgba(139,92,246,0.12); color: #7C3AED; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Interets courus</div>
+            <div class="topbar-breadcrumb">Epargne / Interets courus</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <span style="font-size:12px;color:#4A7A8A;" id="topbarPeriode"></span>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <!-- Page header -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Calcul des interets courus</h1>
+            <p class="page-subtitle">Calcul mensuel des interets, ventilation par produit d'epargne et validation superviseur.</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-outline" onclick="exportCSV()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export CSV
+            </button>
+            <button class="btn btn-outline" onclick="exportPDF()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Export PDF
+            </button>
+            <button class="btn btn-primary" onclick="calculerInterets()" id="btnCalculer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Calculer
+            </button>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <section class="card" style="margin-bottom:20px;">
+          <div class="card-header">
+            <div><div class="card-title">Parametres de calcul</div><div class="card-subtitle">Selectionnez la periode, la methode et les filtres</div></div>
+          </div>
+          <div style="padding:16px 20px;display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;">
+            <div class="form-group" style="margin:0;min-width:160px;">
+              <label class="form-label">Periode</label>
+              <select class="form-control" id="icPeriode" onchange="onFilterChange()">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;min-width:180px;">
+              <label class="form-label">Methode de calcul</label>
+              <div class="method-toggle">
+                <button type="button" class="method-btn active" data-method="LINEAIRE" onclick="selectMethod(this)">Lineaire</button>
+                <button type="button" class="method-btn" data-method="EXPONENTIELLE" onclick="selectMethod(this)">Exponentielle</button>
+              </div>
+              <input type="hidden" id="icMethode" value="LINEAIRE">
+            </div>
+            <div class="form-group" style="margin:0;min-width:180px;">
+              <label class="form-label">Agence</label>
+              <select class="form-control" id="icAgence" onchange="onFilterChange()">
+                <option value="ALL">Toutes les agences</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;min-width:180px;">
+              <label class="form-label">Produit d'epargne</label>
+              <select class="form-control" id="icProduit" onchange="onFilterChange()">
+                <option value="ALL">Tous les produits</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- KPI Summary Cards -->
+        <section class="kpi-grid" style="margin-bottom:20px;">
+          <div class="kpi-card">
+            <div class="kpi-icon blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Epargne mobilisee</div>
+              <div class="kpi-value" id="kpiEpargne">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Interets de la periode</div>
+              <div class="kpi-value" id="kpiInterets">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Interets cumules (YTD)</div>
+              <div class="kpi-value" id="kpiYTD">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon orange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Comptes actifs</div>
+              <div class="kpi-value" id="kpiComptes">-</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Ventilation table -->
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Ventilation par produit</div>
+              <div class="card-subtitle">Detail des interets courus par produit d'epargne</div>
+            </div>
+          </div>
+          <table class="data-table" id="ventilationTable">
+            <thead>
+              <tr>
+                <th>Produit</th>
+                <th>Encours</th>
+                <th>Taux</th>
+                <th>Nombre comptes</th>
+                <th>Interets courus</th>
+              </tr>
+            </thead>
+            <tbody id="icBody">
+              <tr><td colspan="5" style="text-align:center;color:#4A7A8A;padding:32px;">Cliquez sur "Calculer" pour lancer le calcul des interets courus.</td></tr>
+            </tbody>
+            <tfoot id="icFooter" style="display:none;">
+              <tr style="border-top:2px solid #084355;font-weight:700;">
+                <td>TOTAL</td>
+                <td id="totalEncours">-</td>
+                <td></td>
+                <td id="totalComptes">-</td>
+                <td id="totalInterets">-</td>
+              </tr>
+            </tfoot>
+          </table>
+        </section>
+
+        <!-- Validation section (SUPERVISEUR only) -->
+        <section class="card" style="margin-top:20px;" id="validationSection">
+          <div class="card-header">
+            <div><div class="card-title">Validation</div><div class="card-subtitle">Validation superviseur des interets courus de la periode</div></div>
+          </div>
+          <div style="padding:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+            <div class="validation-status">
+              <div class="status-dot draft" id="statusDot"></div>
+              <div>
+                <div style="font-size:.95rem;font-weight:600;color:#084355;">Statut : <span id="icStatut">Brouillon</span></div>
+                <div style="font-size:.85rem;color:#4A7A8A;margin-top:2px;" id="icValidationInfo">Les interets n'ont pas encore ete valides pour cette periode.</div>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="validerInterets()" id="btnValider" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>
+              Valider les interets
+            </button>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ==============================
+       INIT
+       ============================== */
+    document.addEventListener('DOMContentLoaded', () => {
+      populatePeriods();
+      loadFilters();
+      checkSuperviseur();
+      loadResume();
+    });
+
+    /* ==============================
+       PERIOD SELECTOR — generate 12 months back from current
+       ============================== */
+    function populatePeriods() {
+      var sel = document.getElementById('icPeriode');
+      var now = new Date();
+      var mois = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+      for (var i = 0; i < 12; i++) {
+        var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        var val = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        var label = mois[d.getMonth()] + ' ' + d.getFullYear();
+        var opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = label;
+        sel.appendChild(opt);
+      }
+      updateTopbarPeriode();
+    }
+
+    function updateTopbarPeriode() {
+      var sel = document.getElementById('icPeriode');
+      var el = document.getElementById('topbarPeriode');
+      if (sel && el) el.textContent = sel.options[sel.selectedIndex]?.textContent || '';
+    }
+
+    /* ==============================
+       METHOD TOGGLE
+       ============================== */
+    function selectMethod(btn) {
+      document.querySelectorAll('.method-toggle .method-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('icMethode').value = btn.dataset.method;
+    }
+
+    /* ==============================
+       DYNAMIC FILTERS — load agencies & products from API
+       ============================== */
+    async function loadFilters() {
+      // Load agencies
+      try {
+        var resAg = await SF.apiFetch('/api/v1/agences');
+        if (resAg && resAg.ok) {
+          var agences = await resAg.json();
+          var list = Array.isArray(agences) ? agences : (agences.content || []);
+          var sel = document.getElementById('icAgence');
+          list.forEach(function(a) {
+            var opt = document.createElement('option');
+            opt.value = a.id || a.codeAgence || a.code;
+            opt.textContent = a.nom || a.libelle || a.code;
+            sel.appendChild(opt);
+          });
+        }
+      } catch (e) { console.warn('Agences non chargees:', e.message); }
+
+      // Load savings products
+      try {
+        var resPr = await SF.apiFetch('/api/v1/epargne/produits');
+        if (resPr && resPr.ok) {
+          var produits = await resPr.json();
+          var list = Array.isArray(produits) ? produits : (produits.content || []);
+          var sel = document.getElementById('icProduit');
+          list.forEach(function(p) {
+            var opt = document.createElement('option');
+            opt.value = p.id || p.code || p.codeProduit;
+            opt.textContent = p.nom || p.libelle || p.designation;
+            sel.appendChild(opt);
+          });
+        }
+      } catch (e) { console.warn('Produits epargne non charges:', e.message); }
+    }
+
+    /* ==============================
+       ROLE CHECK — show validation button for SUPERVISEUR
+       ============================== */
+    function checkSuperviseur() {
+      var user = SF.getUser();
+      var isSuperviseur = user && Array.isArray(user.roles) && user.roles.includes('SUPERVISEUR');
+      var isAdmin = user && Array.isArray(user.roles) && user.roles.includes('ADMIN');
+      var section = document.getElementById('validationSection');
+      var btn = document.getElementById('btnValider');
+      if (isSuperviseur || isAdmin) {
+        section.style.display = '';
+        btn.style.display = '';
+      } else {
+        section.style.display = 'none';
+      }
+    }
+
+    /* ==============================
+       FILTER CHANGE — auto-reload
+       ============================== */
+    function onFilterChange() {
+      updateTopbarPeriode();
+    }
+
+    /* ==============================
+       LOAD DATA
+       ============================== */
+    async function loadResume() {
+      var periode = document.getElementById('icPeriode').value;
+      var methode = document.getElementById('icMethode').value;
+      var agence = document.getElementById('icAgence').value;
+      var produit = document.getElementById('icProduit').value;
+
+      var params = 'periode=' + encodeURIComponent(periode);
+      params += '&methode=' + encodeURIComponent(methode);
+      if (agence && agence !== 'ALL') params += '&agenceId=' + encodeURIComponent(agence);
+      if (produit && produit !== 'ALL') params += '&produitId=' + encodeURIComponent(produit);
+
+      try {
+        var res = await SF.apiFetch('/api/v1/epargne/interets-courus?' + params);
+        if (res && res.ok) {
+          var data = await res.json();
+          // Update KPIs
+          document.getElementById('kpiEpargne').textContent = formatMontant(data.encoursTotal || 0);
+          document.getElementById('kpiInterets').textContent = formatMontant(data.interetsCourus || 0);
+          document.getElementById('kpiYTD').textContent = formatMontant(data.interetsCumules || 0);
+          document.getElementById('kpiComptes').textContent = (data.nombreComptes || 0).toLocaleString('fr-FR');
+
+          // Ventilation
+          var ventilation = data.ventilation || [];
+          renderVentilation(ventilation);
+
+          // Validation status
+          var statut = data.statut || 'BROUILLON';
+          updateStatut(statut, data.validationInfo);
+        } else if (res && res.status === 403) {
+          showToast('Droits insuffisants pour consulter les interets courus.', 'error');
+        } else {
+          showToast('Erreur lors du chargement des donnees.', 'error');
+        }
+      } catch (e) {
+        console.error(e);
+        showToast('Erreur reseau: ' + e.message, 'error');
+      }
+    }
+
+    /* ==============================
+       RENDER VENTILATION TABLE
+       ============================== */
+    function renderVentilation(items) {
+      var tbody = document.getElementById('icBody');
+      if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#4A7A8A;padding:32px;">Aucune donnee de ventilation pour cette periode.</td></tr>';
+        document.getElementById('icFooter').style.display = 'none';
+        return;
+      }
+
+      var totalE = 0, totalC = 0, totalI = 0;
+      tbody.innerHTML = items.map(function(v) {
+        var encours = v.encours || 0;
+        var comptes = v.nombreComptes || 0;
+        var interets = v.interetsCourus || 0;
+        totalE += encours;
+        totalC += comptes;
+        totalI += interets;
+        return '<tr>' +
+          '<td><strong>' + (v.produit || v.nomProduit || '-') + '</strong></td>' +
+          '<td>' + formatMontant(encours) + ' FCFA</td>' +
+          '<td>' + (v.taux != null ? v.taux + '%' : '-') + '</td>' +
+          '<td>' + comptes.toLocaleString('fr-FR') + '</td>' +
+          '<td style="font-weight:600;color:#084355;">' + formatMontant(interets) + ' FCFA</td>' +
+        '</tr>';
+      }).join('');
+
+      document.getElementById('totalEncours').textContent = formatMontant(totalE) + ' FCFA';
+      document.getElementById('totalComptes').textContent = totalC.toLocaleString('fr-FR');
+      document.getElementById('totalInterets').textContent = formatMontant(totalI) + ' FCFA';
+      document.getElementById('icFooter').style.display = '';
+    }
+
+    /* ==============================
+       VALIDATION STATUS
+       ============================== */
+    function updateStatut(statut, info) {
+      var el = document.getElementById('icStatut');
+      var dot = document.getElementById('statusDot');
+      var infoEl = document.getElementById('icValidationInfo');
+      var btn = document.getElementById('btnValider');
+
+      if (statut === 'VALIDE') {
+        el.textContent = 'Valide';
+        el.style.color = '#2E7D32';
+        dot.className = 'status-dot validated';
+        infoEl.textContent = info || 'Interets valides pour la periode.';
+        if (btn) btn.disabled = true;
+        if (btn) btn.textContent = 'Deja valide';
+      } else {
+        el.textContent = 'Brouillon';
+        el.style.color = '#F59E0B';
+        dot.className = 'status-dot draft';
+        infoEl.textContent = info || 'Les interets n\'ont pas encore ete valides pour cette periode.';
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    /* ==============================
+       CALCULER BUTTON
+       ============================== */
+    async function calculerInterets() {
+      var btn = document.getElementById('btnCalculer');
+      btn.disabled = true;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px;animation:spin 1s linear infinite;"><circle cx="12" cy="12" r="10"/></svg> Calcul en cours...';
+      showToast('Lancement du calcul des interets courus...', 'info');
+
+      try {
+        var periode = document.getElementById('icPeriode').value;
+        var methode = document.getElementById('icMethode').value;
+        var res = await SF.apiFetch('/api/v1/epargne/interets-courus/calculer', {
+          method: 'POST',
+          body: JSON.stringify({ periode: periode, methode: methode })
+        });
+        if (res && res.ok) {
+          showToast('Calcul termine avec succes.', 'success');
+          await loadResume();
+        } else {
+          var err = await res.json().catch(function() { return {}; });
+          showToast(err.message || 'Erreur lors du calcul.', 'error');
+        }
+      } catch (e) {
+        showToast('Erreur reseau: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Calculer';
+      }
+    }
+
+    /* ==============================
+       VALIDER (SUPERVISEUR)
+       ============================== */
+    async function validerInterets() {
+      var periode = document.getElementById('icPeriode').value;
+      var periodeLabel = document.getElementById('icPeriode').options[document.getElementById('icPeriode').selectedIndex].textContent;
+      if (!confirm('Confirmer la validation des interets courus pour la periode ' + periodeLabel + ' ?\n\nCette action est irreversible.')) return;
+
+      var btn = document.getElementById('btnValider');
+      btn.disabled = true;
+
+      try {
+        var res = await SF.apiFetch('/api/v1/epargne/interets-courus/valider', {
+          method: 'POST',
+          body: JSON.stringify({ periode: periode })
+        });
+        if (res && res.ok) {
+          showToast('Interets courus valides avec succes pour ' + periodeLabel + '.', 'success');
+          await loadResume();
+        } else {
+          var err = await res.json().catch(function() { return {}; });
+          showToast(err.message || 'Erreur lors de la validation.', 'error');
+          btn.disabled = false;
+        }
+      } catch (e) {
+        showToast('Erreur reseau: ' + e.message, 'error');
+        btn.disabled = false;
+      }
+    }
+
+    /* ==============================
+       EXPORT CSV
+       ============================== */
+    function exportCSV() {
+      var table = document.getElementById('ventilationTable');
+      if (!table) { showToast('Aucun donnee a exporter.', 'warning'); return; }
+
+      var rows = [];
+      // Header
+      var headers = [];
+      table.querySelectorAll('thead th').forEach(function(th) { headers.push('"' + th.textContent.trim() + '"'); });
+      rows.push(headers.join(';'));
+
+      // Body rows
+      table.querySelectorAll('tbody tr').forEach(function(tr) {
+        var cells = [];
+        tr.querySelectorAll('td').forEach(function(td) {
+          cells.push('"' + td.textContent.trim().replace(/"/g, '""') + '"');
+        });
+        if (cells.length) rows.push(cells.join(';'));
+      });
+
+      // Footer
+      var footCells = [];
+      table.querySelectorAll('tfoot tr td').forEach(function(td) {
+        footCells.push('"' + td.textContent.trim().replace(/"/g, '""') + '"');
+      });
+      if (footCells.length) rows.push(footCells.join(';'));
+
+      // Metadata
+      var periode = document.getElementById('icPeriode').options[document.getElementById('icPeriode').selectedIndex].textContent;
+      var methode = document.getElementById('icMethode').value;
+      rows.push('');
+      rows.push('"Periode";"' + periode + '"');
+      rows.push('"Methode";"' + methode + '"');
+      rows.push('"Exporte le";"' + new Date().toLocaleString('fr-FR') + '"');
+
+      var blob = new Blob(['﻿' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      var link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'interets-courus-' + document.getElementById('icPeriode').value + '.csv';
+      link.click();
+      URL.revokeObjectURL(link.href);
+      showToast('Export CSV genere.', 'success');
+    }
+
+    /* ==============================
+       EXPORT PDF
+       ============================== */
+    function exportPDF() {
+      showToast('Export PDF prepare. Le document sera genere par le serveur.', 'info');
+      var periode = document.getElementById('icPeriode').value;
+      var methode = document.getElementById('icMethode').value;
+      window.open('/api/v1/epargne/interets-courus/export-pdf?periode=' + encodeURIComponent(periode) + '&methode=' + encodeURIComponent(methode), '_blank');
+    }
+
+    /* ==============================
+       HELPERS
+       ============================== */
+    function formatMontant(n) {
+      return Number(n || 0).toLocaleString('fr-FR');
+    }
+  </script>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+</body>
+</html>

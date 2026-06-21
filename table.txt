@@ -1,0 +1,58 @@
+Projet : Logiciel de gestion des opérations d’une microfinance
+Thème : Logiciel de gestion des opérations d’une microfinance
+Organisation du projet
+- Groupe de 5 personnes
+- Déploiement par étudiant :
+  * 1 machine pour l’hébergement (Java Spring Boot)
+  * 1 machine pour la bd Oracle
+  * 1 serveur DHCP configuré 
+- Délai : 2 mois
+Technologies envisagées
+- Java (Spring Boot)
+- Oracle (Base de données)
+- HTML, CSS, PHP pour le web
+Modélisation UML
+- Diagramme de classes
+- Cas d’utilisation
+- Diagramme d’activités
+- Diagramme de séquence
+- Diagramme d’états
+- Diagramme de composants et déploiement
+
+6. Rôles
+- Chef de projet
+- Admin base de données (Oracle)
+- Admin système
+- Équipe développement
+- Gestionnaire (gestion des données personnelles)
+
+7. Méthodologie de développement
+- Processus unifié 
+Ou
+- Scrum
+
+8. Données
+- Environ 150 clients
+- 600 opérations
+- Données générées avec IA ou Python
+
+9. Fonctionnalités
+- Systèmes d’information bancaire
+- Gestion des clients (enregistrement, mise à jour)
+- Gestion des comptes (ouverture, Suivi, bloquer, débloquer, fermeture)
+- Gestion des opérations (Virement, versement, retrait, surveillance, montant maximal-minima)
+- Gestion des finances (Option BCEAO, système décentralisé, Les AGIOS, SMS Banking / E-Banking, Carte VISA, Transactions avec contrôle)
+
+10. Autres exigences
+- Chaque groupe doit défini un logo, 2 à 3 messages de communication 
+- Utilisation de l’IA ( Autorisée ) 
+
+11. Spécifications réseau
+- 2 adresses IP fixes pour les serveurs (BD, application)
+* 1 serveur DHCP configuré
+* 2 machines clients
+
+13. Livrables
+- Présentation intermédiaire
+- Application web fonctionnelle
+

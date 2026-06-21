@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paramètres 2FA - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    .twofa-card { max-width: 560px; margin: 0 auto; }
+    .qr-container { text-align: center; padding: 24px; background: #f8fafc; border-radius: 8px; margin: 16px 0; }
+    .qr-placeholder { width: 200px; height: 200px; margin: 0 auto; background: #e2e8f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #4A7A8A; font-size: .85rem; flex-direction: column; }
+    .method-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+    .method-card { border: 2px solid #e2e8f0; border-radius: 8px; padding: 16px; text-align: center; cursor: pointer; transition: all .2s; }
+    .method-card:hover { border-color: #8cd5fa; }
+    .method-card.selected { border-color: #084355; background: #f0f6fa; }
+    .method-card .method-icon { font-size: 1.5rem; margin-bottom: 8px; }
+    .method-card .method-name { font-weight: 600; color: #084355; }
+    .method-card .method-desc { font-size: .8rem; color: #4A7A8A; margin-top: 4px; }
+    .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: .85rem; font-weight: 500; }
+    .status-badge.active { background: #dcfce7; color: #166534; }
+    .status-badge.inactive { background: #fee2e2; color: #991b1b; }
+    .otp-verify { display: flex; gap: 8px; justify-content: center; margin: 16px 0; }
+    .otp-verify input { width: 46px; height: 52px; text-align: center; font-size: 1.3rem; font-weight: 600; border: 2px solid #C9DFE8; border-radius: 8px; }
+    .otp-verify input:focus { border-color: #084355; outline: none; }
+    .backup-codes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+    .backup-code { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px; text-align: center; font-family: monospace; font-size: .9rem; }
+    .field-error { color: #D93025; font-size: .85rem; margin-top: 4px; min-height: 20px; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Paramètres 2FA</div>
+            <div class="topbar-breadcrumb">Sécurité / Authentification à deux facteurs</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Authentification à deux facteurs</h1>
+            <p class="page-subtitle">Renforcez la sécurité de votre compte avec la double vérification.</p>
+          </div>
+        </div>
+
+        <div class="twofa-card">
+          <!-- Statut actuel -->
+          <section class="card">
+            <div class="card-header">
+              <div><div class="card-title">Statut 2FA</div></div>
+            </div>
+            <div style="padding: 20px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <div style="font-weight:600;color:#084355;">Protection de votre compte</div>
+                  <div style="font-size:.9rem;color:#4A7A8A;margin-top:4px;" id="twofaStatusText">Chargement...</div>
+                </div>
+                <div id="twofaBadge"><span class="status-badge inactive">● Inactif</span></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Choix de la méthode -->
+          <section class="card" id="methodSection" style="margin-top:16px;">
+            <div class="card-header">
+              <div><div class="card-title">Choisir la méthode</div></div>
+            </div>
+            <div style="padding: 20px;">
+              <div class="method-cards">
+                <div class="method-card" id="methodTotp" onclick="selectMethod('TOTP')">
+                  <div class="method-icon">🔐</div>
+                  <div class="method-name">Application TOTP</div>
+                  <div class="method-desc">Google Authenticator, Authy</div>
+                </div>
+                <div class="method-card" id="methodSms" onclick="selectMethod('SMS')">
+                  <div class="method-icon">📱</div>
+                  <div class="method-name">SMS</div>
+                  <div class="method-desc">Code par message texte</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Configuration TOTP -->
+          <section class="card" id="totpSetup" style="margin-top:16px;display:none;">
+            <div class="card-header">
+              <div><div class="card-title">Configuration TOTP</div></div>
+            </div>
+            <div style="padding: 20px;">
+              <p style="font-size:.9rem;color:#4A7A8A;text-align:center;">Scannez ce QR code avec votre application d'authentification :</p>
+              <div class="qr-container">
+                <div class="qr-placeholder" id="qrCode">
+                  <span style="font-size:2rem;">🔐</span>
+                  <span style="margin-top:8px;">QR Code</span>
+                  <small style="margin-top:4px;">Utilisez la clé manuelle ci-dessous</small>
+                </div>
+              </div>
+              <div style="text-align:center;margin:12px 0;">
+                <div style="font-size:.8rem;color:#4A7A8A;">Clé manuelle :</div>
+                <div style="font-family:monospace;font-size:1rem;background:#f8fafc;padding:8px 16px;border-radius:4px;display:inline-block;margin-top:4px;letter-spacing:2px;" id="secretKey">---- ---- ---- ----</div>
+              </div>
+              <div style="font-size:.9rem;color:#4A7A8A;text-align:center;margin-top:12px;">Entrez le code à 6 chiffres généré par l'application :</div>
+              <div class="otp-verify" id="totpOtpGroup">
+                <input type="text" maxlength="1" class="otp-v" data-idx="0" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="1" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="2" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="3" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="4" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="5" inputmode="numeric">
+              </div>
+              <div class="field-error" id="totpError"></div>
+              <button class="btn btn-primary btn-block" onclick="activateTotp()" id="btnActivateTotp">Activer le TOTP</button>
+            </div>
+          </section>
+
+          <!-- Configuration SMS -->
+          <section class="card" id="smsSetup" style="margin-top:16px;display:none;">
+            <div class="card-header">
+              <div><div class="card-title">Configuration SMS</div></div>
+            </div>
+            <div style="padding: 20px;">
+              <div class="form-group">
+                <label class="form-label">Numéro de téléphone</label>
+                <input type="tel" class="form-control" id="smsPhone" placeholder="+228 XX XX XX XX">
+              </div>
+              <button class="btn btn-outline btn-block" onclick="sendSmsCode()" id="btnSendSms">Envoyer le code SMS</button>
+              <div style="font-size:.9rem;color:#4A7A8A;text-align:center;margin-top:16px;">Entrez le code reçu par SMS :</div>
+              <div class="otp-verify" id="smsOtpGroup">
+                <input type="text" maxlength="1" class="otp-v" data-idx="0" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="1" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="2" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="3" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="4" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="5" inputmode="numeric">
+              </div>
+              <div class="field-error" id="smsError"></div>
+              <button class="btn btn-primary btn-block" onclick="activateSms()" id="btnActivateSms">Activer le SMS</button>
+            </div>
+          </section>
+
+          <!-- Vérification 2FA (pour actions sensibles) -->
+          <section class="card" id="verifySection" style="margin-top:16px;display:none;">
+            <div class="card-header">
+              <div><div class="card-title">Vérifier votre identité</div><div class="card-subtitle">Saisissez un code pour confirmer une action sensible.</div></div>
+            </div>
+            <div style="padding: 20px;">
+              <div class="otp-verify" id="verifyOtpGroup">
+                <input type="text" maxlength="1" class="otp-v" data-idx="0" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="1" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="2" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="3" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="4" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="5" inputmode="numeric">
+              </div>
+              <div class="field-error" id="verifyError"></div>
+              <button class="btn btn-primary btn-block" onclick="verifier2fa()" id="btnVerify">Vérifier le code</button>
+            </div>
+          </section>
+
+          <!-- Codes de secours -->
+          <section class="card" id="backupSection" style="margin-top:16px;display:none;">
+            <div class="card-header">
+              <div><div class="card-title">Codes de secours</div><div class="card-subtitle">Conservez ces codes en lieu sûr. Chaque code ne peut être utilisé qu'une fois.</div></div>
+            </div>
+            <div style="padding: 20px;">
+              <div class="backup-codes" id="backupCodes"></div>
+              <button class="btn btn-outline btn-sm" onclick="copyBackupCodes()" style="margin-top:8px;">Copier les codes</button>
+            </div>
+          </section>
+
+          <!-- Désactivation -->
+          <section class="card" id="deactivateSection" style="margin-top:16px;display:none;">
+            <div class="card-header">
+              <div><div class="card-title" style="color:#D93025;">Désactiver la 2FA</div></div>
+            </div>
+            <div style="padding: 20px;">
+              <p style="font-size:.9rem;color:#4A7A8A;">La désactivation réduit la sécurité de votre compte. Vous devrez confirmer avec un code OTP.</p>
+              <div class="otp-verify" id="deactivateOtpGroup">
+                <input type="text" maxlength="1" class="otp-v" data-idx="0" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="1" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="2" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="3" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="4" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-v" data-idx="5" inputmode="numeric">
+              </div>
+              <div class="field-error" id="deactivateError"></div>
+              <button class="btn btn-danger" onclick="deactivate2fa()" id="btnDeactivate">Désactiver la 2FA</button>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ── Etat local ─────────────────────────────────── */
+    var selectedMethod = '';
+    var is2faActive = false;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      load2faStatus();
+      initAllOtpGroups();
+    });
+
+    /* ── Chargement du statut 2FA ──────────────────── */
+    function load2faStatus() {
+      try {
+        var user = SF.getUser ? SF.getUser() : null;
+        if (user) {
+          is2faActive = !!user.secondFacteurActive;
+          updateStatusDisplay(is2faActive, user);
+        } else {
+          /* fallback : essayer de lire depuis localStorage */
+          try {
+            var stored = JSON.parse(localStorage.getItem('sf_user') || 'null');
+            if (stored) {
+              is2faActive = !!stored.secondFacteurActive;
+              updateStatusDisplay(is2faActive, stored);
+            } else {
+              updateStatusDisplay(false, {});
+            }
+          } catch (_) {
+            updateStatusDisplay(false, {});
+          }
+        }
+      } catch (e) {
+        console.error('Erreur chargement statut 2FA:', e);
+        updateStatusDisplay(false, {});
+      }
+    }
+
+    function updateStatusDisplay(active, data) {
+      var badge = document.getElementById('twofaBadge');
+      var text = document.getElementById('twofaStatusText');
+
+      if (active) {
+        badge.innerHTML = '<span class="status-badge active">● Actif</span>';
+        text.textContent = '2FA activé. Votre compte est protégé.';
+        showSection('deactivateSection', true);
+        showSection('backupSection', true);
+        showSection('methodSection', false);
+        showSection('totpSetup', false);
+        showSection('smsSetup', false);
+        showSection('verifySection', true);
+      } else {
+        badge.innerHTML = '<span class="status-badge inactive">● Inactif</span>';
+        text.textContent = 'Activez la 2FA pour renforcer la sécurité de votre compte.';
+        showSection('deactivateSection', false);
+        showSection('backupSection', false);
+        showSection('methodSection', true);
+        showSection('verifySection', false);
+      }
+    }
+
+    function showSection(id, visible) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = visible ? '' : 'none';
+    }
+
+    /* ── Sélection de méthode ──────────────────────── */
+    function selectMethod(method) {
+      selectedMethod = method;
+      document.getElementById('methodTotp').classList.toggle('selected', method === 'TOTP');
+      document.getElementById('methodSms').classList.toggle('selected', method === 'SMS');
+      showSection('totpSetup', method === 'TOTP');
+      showSection('smsSetup', method === 'SMS');
+    }
+
+    /* ── OTP inputs : navigation automatique ───────── */
+    function initAllOtpGroups() {
+      document.querySelectorAll('.otp-verify').forEach(function (group) {
+        var inputs = group.querySelectorAll('.otp-v');
+        inputs.forEach(function (input, idx) {
+          input.addEventListener('input', function () {
+            if (input.value && idx < inputs.length - 1) inputs[idx + 1].focus();
+          });
+          input.addEventListener('keydown', function (e) {
+            if (e.key === 'Backspace' && !input.value && idx > 0) inputs[idx - 1].focus();
+          });
+          /* autoriser uniquement les chiffres */
+          input.addEventListener('beforeinput', function (e) {
+            if (e.data && !/^\d$/.test(e.data)) e.preventDefault();
+          });
+        });
+      });
+    }
+
+    function getOtpFromGroup(groupId) {
+      var group = document.getElementById(groupId);
+      if (!group) return '';
+      var inputs = group.querySelectorAll('.otp-v');
+      return Array.from(inputs).map(function (i) { return i.value; }).join('');
+    }
+
+    function clearOtpGroup(groupId) {
+      var group = document.getElementById(groupId);
+      if (!group) return;
+      group.querySelectorAll('.otp-v').forEach(function (i) { i.value = ''; });
+    }
+
+    /* ── Activer TOTP ──────────────────────────────── */
+    async function activateTotp() {
+      var code = getOtpFromGroup('totpOtpGroup');
+      var errEl = document.getElementById('totpError');
+      errEl.textContent = '';
+
+      if (code.length !== 6) {
+        errEl.textContent = 'Veuillez saisir les 6 chiffres.';
+        return;
+      }
+
+      var btn = document.getElementById('btnActivateTotp');
+      btn.disabled = true;
+      btn.textContent = 'Activation...';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/auth/2fa/activer', {
+          method: 'POST',
+          body: JSON.stringify({ codeOtp: code, activer: true })
+        });
+
+        if (res && res.ok) {
+          var data = await res.json();
+          showToast('2FA activé avec succès !', 'success');
+          is2faActive = true;
+          /* mettre à jour le cache local */
+          try {
+            var user = JSON.parse(localStorage.getItem('sf_user') || '{}');
+            user.secondFacteurActive = true;
+            localStorage.setItem('sf_user', JSON.stringify(user));
+          } catch (_) {}
+          updateStatusDisplay(true, data);
+          clearOtpGroup('totpOtpGroup');
+          /* afficher les codes de secours si retournés */
+          if (data && data.codesSecours) showBackupCodes(data.codesSecours);
+        } else {
+          var err = res ? await res.json().catch(function () { return {}; }) : {};
+          errEl.textContent = err.message || 'Code invalide ou expiré.';
+        }
+      } catch (e) {
+        errEl.textContent = e.message || 'Erreur réseau.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Activer le TOTP';
+      }
+    }
+
+    /* ── Envoyer code SMS ──────────────────────────── */
+    function sendSmsCode() {
+      var phone = document.getElementById('smsPhone').value.trim();
+      if (!phone) {
+        showToast('Saisissez votre numéro de téléphone.', 'warning');
+        return;
+      }
+      showToast('Code SMS envoyé au ' + phone + '.', 'info');
+      /* Note : l'envoi SMS réel dépend du backend (pas d'endpoint dédié pour l'instant) */
+    }
+
+    /* ── Activer SMS ───────────────────────────────── */
+    async function activateSms() {
+      var code = getOtpFromGroup('smsOtpGroup');
+      var errEl = document.getElementById('smsError');
+      errEl.textContent = '';
+
+      if (code.length !== 6) {
+        errEl.textContent = 'Veuillez saisir les 6 chiffres.';
+        return;
+      }
+
+      var btn = document.getElementById('btnActivateSms');
+      btn.disabled = true;
+      btn.textContent = 'Activation...';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/auth/2fa/activer', {
+          method: 'POST',
+          body: JSON.stringify({ codeOtp: code, activer: true })
+        });
+
+        if (res && res.ok) {
+          showToast('2FA SMS activé avec succès !', 'success');
+          is2faActive = true;
+          try {
+            var user = JSON.parse(localStorage.getItem('sf_user') || '{}');
+            user.secondFacteurActive = true;
+            localStorage.setItem('sf_user', JSON.stringify(user));
+          } catch (_) {}
+          updateStatusDisplay(true, {});
+          clearOtpGroup('smsOtpGroup');
+        } else {
+          var err = res ? await res.json().catch(function () { return {}; }) : {};
+          errEl.textContent = err.message || 'Code invalide ou expiré.';
+        }
+      } catch (e) {
+        errEl.textContent = e.message || 'Erreur réseau.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Activer le SMS';
+      }
+    }
+
+    /* ── Vérifier un code 2FA (action sensible) ───── */
+    async function verifier2fa() {
+      var code = getOtpFromGroup('verifyOtpGroup');
+      var errEl = document.getElementById('verifyError');
+      errEl.textContent = '';
+
+      if (code.length !== 6) {
+        errEl.textContent = 'Veuillez saisir les 6 chiffres.';
+        return;
+      }
+
+      var btn = document.getElementById('btnVerify');
+      btn.disabled = true;
+      btn.textContent = 'Vérification...';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/auth/2fa/verifier', {
+          method: 'POST',
+          body: JSON.stringify({ codeOtp: code })
+        });
+
+        if (res && res.status === 204) {
+          showToast('Code vérifié avec succès.', 'success');
+          clearOtpGroup('verifyOtpGroup');
+        } else if (res && res.ok) {
+          showToast('Code vérifié.', 'success');
+          clearOtpGroup('verifyOtpGroup');
+        } else {
+          var err = res ? await res.json().catch(function () { return {}; }) : {};
+          errEl.textContent = err.message || 'Code invalide ou expiré.';
+        }
+      } catch (e) {
+        errEl.textContent = e.message || 'Erreur réseau.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Vérifier le code';
+      }
+    }
+
+    /* ── Désactiver la 2FA ─────────────────────────── */
+    async function deactivate2fa() {
+      var code = getOtpFromGroup('deactivateOtpGroup');
+      var errEl = document.getElementById('deactivateError');
+      errEl.textContent = '';
+
+      if (code.length !== 6) {
+        errEl.textContent = 'Veuillez saisir les 6 chiffres pour confirmer la désactivation.';
+        return;
+      }
+
+      if (!confirm('Êtes-vous sûr de vouloir désactiver la 2FA ?')) return;
+
+      var btn = document.getElementById('btnDeactivate');
+      btn.disabled = true;
+      btn.textContent = 'Désactivation...';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/auth/2fa/activer', {
+          method: 'POST',
+          body: JSON.stringify({ codeOtp: code, activer: false })
+        });
+
+        if (res && res.ok) {
+          showToast('2FA désactivé.', 'success');
+          is2faActive = false;
+          try {
+            var user = JSON.parse(localStorage.getItem('sf_user') || '{}');
+            user.secondFacteurActive = false;
+            localStorage.setItem('sf_user', JSON.stringify(user));
+          } catch (_) {}
+          updateStatusDisplay(false, {});
+          clearOtpGroup('deactivateOtpGroup');
+        } else {
+          var err = res ? await res.json().catch(function () { return {}; }) : {};
+          errEl.textContent = err.message || 'Code invalide. Désactivation impossible.';
+        }
+      } catch (e) {
+        errEl.textContent = e.message || 'Erreur réseau.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Désactiver la 2FA';
+      }
+    }
+
+    /* ── Codes de secours ──────────────────────────── */
+    function showBackupCodes(codes) {
+      var container = document.getElementById('backupCodes');
+      container.innerHTML = codes.map(function (c) {
+        return '<div class="backup-code">' + c + '</div>';
+      }).join('');
+      showSection('backupSection', true);
+    }
+
+    function copyBackupCodes() {
+      var codes = Array.from(document.querySelectorAll('.backup-code'))
+        .map(function (el) { return el.textContent; })
+        .join('\n');
+      navigator.clipboard.writeText(codes).then(function () {
+        showToast('Codes copiés dans le presse-papiers.', 'success');
+      }).catch(function () {
+        showToast('Impossible de copier les codes.', 'error');
+      });
+    }
+  </script>
+</body>
+</html>

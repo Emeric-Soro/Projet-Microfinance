@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Déclarations SAR - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Déclarations SAR</div>
+            <div class="topbar-breadcrumb">Accueil / Conformité / SAR / Liste</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a href="sar-creer.html" class="btn btn-primary btn-sm">+ Nouvelle déclaration</a>
+          <button class="topbar-icon-btn" onclick="loadSAR()" title="Rafraîchir">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+          <button class="topbar-icon-btn" onclick="exportSAR()" title="Exporter CSV">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Rapports d'Activité Suspecte (SAR)</h1>
+            <p class="page-subtitle">Déclarations obligatoires dans les 24h — Endpoint : GET /api/v1/conformite/sar</p>
+          </div>
+          <a href="sar-creer.html" class="btn btn-primary">+ Nouvelle déclaration</a>
+        </div>
+
+        <!-- KPI Cards -->
+        <section class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Total SAR</div>
+              <div class="kpi-value" id="kpiTotal">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">En cours</div>
+              <div class="kpi-value" id="kpiEnCours">-</div>
+              <div class="kpi-trend down" id="kpiEnCoursTrend"></div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Traitées</div>
+              <div class="kpi-value" id="kpiTraitees">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Critiques</div>
+              <div class="kpi-value" id="kpiCritiques">-</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Table -->
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Liste des déclarations SAR</div>
+              <div class="card-subtitle">Endpoint : /api/v1/conformite/sar</div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="exportSAR()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exporter CSV
+            </button>
+          </div>
+
+          <div class="filter-bar">
+            <input class="form-control" placeholder="Rechercher par client, type d'activité..." id="sarSearch" oninput="filterSAR()">
+            <select class="form-control" id="sarStatut" onchange="filterSAR()">
+              <option value="ALL">Tous statuts</option>
+              <option value="BROUILLON">Brouillon</option>
+              <option value="SOUMISE">Soumise</option>
+              <option value="TRAITEE">Traitée</option>
+              <option value="REJETEE">Rejetée</option>
+            </select>
+            <select class="form-control" id="sarUrgence" onchange="filterSAR()">
+              <option value="ALL">Toutes urgences</option>
+              <option value="CRITIQUE">Critique</option>
+              <option value="HAUTE">Haute</option>
+              <option value="MOYENNE">Moyenne</option>
+            </select>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Client</th>
+                <th>Type activité</th>
+                <th>Statut</th>
+                <th>Urgence</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sarBody">
+              <tr><td colspan="7" style="text-align:center;color:#4A7A8A;padding:20px;">Chargement...</td></tr>
+            </tbody>
+          </table>
+
+          <!-- Pagination -->
+          <div class="pagination" id="paginationBar" style="display:none;">
+            <div class="pagination-info" id="paginationInfo"></div>
+            <div class="pagination-buttons" id="paginationButtons"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    var allSAR = [];
+    var currentPage = 0;
+    var pageSize = 20;
+    var totalElements = 0;
+    var totalPages = 0;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      loadSAR();
+    });
+
+    /* -- Load SAR from API ------------------------------------ */
+    async function loadSAR(page) {
+      if (typeof page === 'number') {
+        currentPage = page;
+      }
+
+      var tbody = document.getElementById('sarBody');
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#4A7A8A;padding:20px;">Chargement...</td></tr>';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/conformite/sar?page=' + currentPage + '&size=' + pageSize + '&sort=dateDeclaration,desc');
+
+        if (!res) return; // 401 redirected
+
+        if (res.ok) {
+          var data = await res.json();
+
+          // Paginated response
+          if (data.content !== undefined) {
+            allSAR = data.content || [];
+            totalElements = data.totalElements || 0;
+            totalPages = data.totalPages || 0;
+          } else {
+            // Non-paginated fallback
+            allSAR = Array.isArray(data) ? data : [];
+            totalElements = allSAR.length;
+            totalPages = 1;
+          }
+
+          renderSAR(allSAR);
+          updateKPIs(allSAR);
+          renderPagination();
+        } else {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#D93025;padding:20px;">Erreur lors du chargement (HTTP ' + res.status + ')</td></tr>';
+        }
+      } catch (e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#D93025;padding:20px;">Impossible de charger les déclarations SAR.</td></tr>';
+      }
+    }
+
+    /* -- Render table rows ------------------------------------ */
+    function renderSAR(items) {
+      var tbody = document.getElementById('sarBody');
+
+      if (!items || !items.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#4A7A8A;padding:20px;">Aucune déclaration SAR trouvée.</td></tr>';
+        document.getElementById('paginationBar').style.display = 'none';
+        return;
+      }
+
+      tbody.innerHTML = items.map(function (s) {
+        var statutBadge = getStatutBadge(s.statut);
+        var urgenceBadge = getUrgenceBadge(s.urgence);
+        var dateStr = formatDate(s.dateDeclaration || s.createdAt);
+
+        return '<tr>' +
+          '<td style="font-family:monospace;">' + (s.id || '-') + '</td>' +
+          '<td>' + dateStr + '</td>' +
+          '<td>' + (s.clientNom || '-') + '</td>' +
+          '<td>' + (s.typeActivite || '-') + '</td>' +
+          '<td><span class="badge ' + statutBadge.cls + '">' + statutBadge.label + '</span></td>' +
+          '<td><span class="badge ' + urgenceBadge.cls + '">' + urgenceBadge.label + '</span></td>' +
+          '<td>' +
+            '<a href="sar-detail.html?id=' + s.id + '" class="btn btn-outline btn-sm">Voir</a>' +
+            (s.statut === 'BROUILLON' || s.statut === 'SOUMISE'
+              ? ' <a href="sar-traiter.html?id=' + s.id + '" class="btn btn-primary btn-sm">Traiter</a>'
+              : '') +
+          '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    /* -- Update KPI cards ------------------------------------- */
+    function updateKPIs(items) {
+      var total = totalElements || items.length;
+      var enCours = 0;
+      var traitees = 0;
+      var critiques = 0;
+
+      items.forEach(function (s) {
+        var statut = (s.statut || '').toUpperCase();
+        var urgence = (s.urgence || '').toUpperCase();
+        if (statut === 'SOUMISE') enCours++;
+        if (statut === 'TRAITEE') traitees++;
+        if (urgence === 'CRITIQUE') critiques++;
+      });
+
+      document.getElementById('kpiTotal').textContent = total;
+      document.getElementById('kpiEnCours').textContent = enCours;
+      document.getElementById('kpiEnCoursTrend').textContent = enCours > 0 ? enCours + ' en attente de traitement' : 'Aucune en cours';
+      document.getElementById('kpiTraitees').textContent = traitees;
+      document.getElementById('kpiCritiques').textContent = critiques;
+    }
+
+    /* -- Pagination ------------------------------------------- */
+    function renderPagination() {
+      var bar = document.getElementById('paginationBar');
+      var info = document.getElementById('paginationInfo');
+      var buttons = document.getElementById('paginationButtons');
+
+      if (totalPages <= 1) {
+        bar.style.display = 'none';
+        return;
+      }
+
+      bar.style.display = 'flex';
+
+      var start = currentPage * pageSize + 1;
+      var end = Math.min((currentPage + 1) * pageSize, totalElements);
+      info.textContent = 'Affichage ' + start + '-' + end + ' sur ' + totalElements;
+
+      var html = '';
+
+      // Previous button
+      html += '<button class="page-btn' + (currentPage === 0 ? ' disabled' : '') + '"' +
+        (currentPage === 0 ? ' disabled' : ' onclick="loadSAR(' + (currentPage - 1) + ')"') +
+        '>&laquo;</button>';
+
+      // Page buttons (show max 5 pages around current)
+      var startPage = Math.max(0, currentPage - 2);
+      var endPage = Math.min(totalPages, startPage + 5);
+      if (endPage - startPage < 5) {
+        startPage = Math.max(0, endPage - 5);
+      }
+
+      for (var i = startPage; i < endPage; i++) {
+        html += '<button class="page-btn' + (i === currentPage ? ' active' : '') + '"' +
+          ' onclick="loadSAR(' + i + ')">' + (i + 1) + '</button>';
+      }
+
+      // Next button
+      html += '<button class="page-btn' + (currentPage >= totalPages - 1 ? ' disabled' : '') + '"' +
+        (currentPage >= totalPages - 1 ? ' disabled' : ' onclick="loadSAR(' + (currentPage + 1) + ')"') +
+        '>&raquo;</button>';
+
+      buttons.innerHTML = html;
+    }
+
+    /* -- Filters ---------------------------------------------- */
+    function filterSAR() {
+      var q = document.getElementById('sarSearch').value.toLowerCase();
+      var statut = document.getElementById('sarStatut').value;
+      var urgence = document.getElementById('sarUrgence').value;
+
+      var filtered = allSAR.filter(function (s) {
+        var matchQ = !q ||
+          (s.clientNom || '').toLowerCase().includes(q) ||
+          (s.typeActivite || '').toLowerCase().includes(q) ||
+          (s.description || '').toLowerCase().includes(q);
+        var matchS = statut === 'ALL' || (s.statut || '').toUpperCase() === statut;
+        var matchU = urgence === 'ALL' || (s.urgence || '').toUpperCase() === urgence;
+        return matchQ && matchS && matchU;
+      });
+
+      renderSAR(filtered);
+      updateKPIs(filtered);
+    }
+
+    /* -- Export CSV -------------------------------------------- */
+    function exportSAR() {
+      var items = allSAR;
+      if (!items.length) {
+        alert('Aucune donnée à exporter.');
+        return;
+      }
+
+      var headers = ['ID', 'Date', 'Client', 'Type activité', 'Statut', 'Urgence'];
+      var rows = items.map(function (s) {
+        return [
+          s.id || '',
+          formatDate(s.dateDeclaration || s.createdAt),
+          s.clientNom || '',
+          s.typeActivite || '',
+          s.statut || '',
+          s.urgence || ''
+        ].map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(';');
+      });
+
+      var csv = headers.join(';') + '\n' + rows.join('\n');
+      var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'sar-declarations-' + new Date().toISOString().slice(0, 10) + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    /* -- Badge mappings --------------------------------------- */
+    function getStatutBadge(statut) {
+      var map = {
+        'BROUILLON': { cls: 'badge-info',     label: 'Brouillon' },
+        'SOUMISE':   { cls: 'badge-pending',   label: 'Soumise' },
+        'TRAITEE':   { cls: 'badge-success',   label: 'Traitée' },
+        'REJETEE':   { cls: 'badge-danger',    label: 'Rejetée' }
+      };
+      return map[(statut || '').toUpperCase()] || { cls: 'badge-info', label: statut || '-' };
+    }
+
+    function getUrgenceBadge(urgence) {
+      var map = {
+        'CRITIQUE': { cls: 'badge-danger',   label: 'Critique' },
+        'HAUTE':    { cls: 'badge-warning',  label: 'Haute' },
+        'MOYENNE':  { cls: 'badge-info',     label: 'Moyenne' }
+      };
+      return map[(urgence || '').toUpperCase()] || { cls: 'badge-info', label: urgence || '-' };
+    }
+
+    /* -- Helpers ---------------------------------------------- */
+    function formatDate(d) {
+      if (!d) return '-';
+      try {
+        return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      } catch (e) {
+        return d;
+      }
+    }
+  </script>
+</body>
+</html>

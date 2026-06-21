@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Commissions - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    .group-header {
+      background: #F0F6FA;
+      font-weight: 700;
+      font-size: 13px;
+      color: #084355;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .group-header td {
+      padding: 10px 16px !important;
+      border-bottom: 2px solid #C9DFE8 !important;
+    }
+    .group-header .group-count {
+      font-weight: 400;
+      font-size: 11px;
+      color: #4A7A8A;
+      margin-left: 8px;
+      text-transform: none;
+    }
+    .impact-preview {
+      background: #F0F6FA;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+      border-left: 3px solid #084355;
+    }
+    .impact-preview .impact-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #084355;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .impact-preview .impact-title svg {
+      width: 14px;
+      height: 14px;
+    }
+    .impact-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 13px;
+    }
+    .impact-row + .impact-row {
+      border-top: 1px solid #C9DFE8;
+    }
+    .impact-label {
+      color: #4A7A8A;
+    }
+    .impact-value {
+      font-weight: 600;
+      color: #084355;
+    }
+    .impact-delta {
+      font-weight: 700;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .impact-delta.positive {
+      background: rgba(39,174,96,0.12);
+      color: #27ae60;
+    }
+    .impact-delta.negative {
+      background: rgba(217,48,37,0.12);
+      color: #D93025;
+    }
+    .impact-delta.neutral {
+      background: rgba(74,122,138,0.12);
+      color: #4A7A8A;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .stat-card {
+      background: #F0F6FA;
+      border-radius: 8px;
+      padding: 14px 16px;
+      text-align: center;
+    }
+    .stat-card .stat-label {
+      font-size: 11px;
+      color: #4A7A8A;
+      margin-bottom: 4px;
+    }
+    .stat-card .stat-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: #084355;
+    }
+    .admin-only {
+      display: none;
+    }
+    body.is-admin .admin-only {
+      display: inline-flex;
+    }
+    .btn-edit-sm {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+      border: 1px solid #C9DFE8;
+      background: #fff;
+      color: #084355;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-edit-sm:hover {
+      background: #084355;
+      color: #fff;
+      border-color: #084355;
+    }
+    .btn-edit-sm svg {
+      width: 12px;
+      height: 12px;
+    }
+    .badge-canal {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.3px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #4A7A8A;
+    }
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      stroke: #C9DFE8;
+      margin-bottom: 12px;
+    }
+    .empty-state p {
+      font-size: 13px;
+    }
+    .filter-count {
+      font-size: 12px;
+      color: #4A7A8A;
+      margin-left: auto;
+      align-self: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Commissions</div>
+            <div class="topbar-breadcrumb">Paramétrage / Commissions</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Gestion des commissions</h1>
+            <p class="page-subtitle">Paramétrage des commissions par type d'operation et canal. Regroupement par operation.</p>
+          </div>
+          <div class="export-buttons">
+            <button class="export-btn" onclick="exportCSV()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              CSV
+            </button>
+            <button class="export-btn" onclick="exportPDF()">PDF</button>
+          </div>
+        </div>
+
+        <!-- Summary stats -->
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card">
+            <div class="stat-label">Total commissions</div>
+            <div class="stat-value" id="statTotal">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Actives</div>
+            <div class="stat-value" id="statActives" style="color:#27ae60;">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Inactives</div>
+            <div class="stat-value" id="statInactives" style="color:#D93025;">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Types d'operation</div>
+            <div class="stat-value" id="statOperations">--</div>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <section class="card">
+          <div class="card-header">
+            <div><div class="card-title">Filtres</div></div>
+            <span class="filter-count" id="filterCount"></span>
+          </div>
+          <div style="padding:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+            <div class="form-group" style="margin:0;">
+              <label class="form-label" style="margin-bottom:4px;font-size:11px;">Canal</label>
+              <select class="form-control" id="fCanal" style="width:180px;" onchange="appliquerFiltres()">
+                <option value="">Tous les canaux</option>
+                <option value="GUICHET">Guichet</option>
+                <option value="MOBILE">Mobile</option>
+                <option value="INTERNET">Internet</option>
+                <option value="ATM">ATM</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label" style="margin-bottom:4px;font-size:11px;">Operation</label>
+              <select class="form-control" id="fOperation" style="width:180px;" onchange="appliquerFiltres()">
+                <option value="">Toutes les operations</option>
+                <option value="VIREMENT">Virement</option>
+                <option value="RETRAIT">Retrait</option>
+                <option value="DEPOT">Depot</option>
+                <option value="MM">Mobile Money</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label" style="margin-bottom:4px;font-size:11px;">Statut</label>
+              <select class="form-control" id="fStatut" style="width:160px;" onchange="appliquerFiltres()">
+                <option value="">Tous</option>
+                <option value="ACTIF">Actif</option>
+                <option value="INACTIF">Inactif</option>
+              </select>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="reinitialiserFiltres()" style="height:36px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              Reinitialiser
+            </button>
+          </div>
+        </section>
+
+        <!-- Table grouped by operation -->
+        <section class="card" style="margin-top:16px;">
+          <div class="card-header">
+            <div><div class="card-title">Parametres de commission</div><div class="card-subtitle">Endpoint : /api/v1/tarification/parametres?categorie=COMMISSION</div></div>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Operation</th>
+                <th>Canal</th>
+                <th>Commission</th>
+                <th>Type</th>
+                <th>Statut</th>
+                <th class="admin-only">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="comTableBody">
+              <tr><td colspan="6" style="text-align:center;padding:32px;">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Edit modal (ADMIN only) -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal" style="max-width:520px;">
+      <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px 0;">
+        <h3 style="font-size:16px;font-weight:700;color:#084355;margin:0;">Modifier la commission</h3>
+        <button class="btn btn-sm" onclick="fermerModal()" style="background:none;border:none;cursor:pointer;font-size:18px;color:#4A7A8A;padding:4px;" aria-label="Fermer">&#10005;</button>
+      </div>
+      <div style="padding:20px 24px 24px;">
+        <input type="hidden" id="editId">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Operation</label>
+            <input class="form-control" id="editOperation" readonly style="background:#F0F6FA;color:#4A7A8A;">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Canal</label>
+            <input class="form-control" id="editCanal" readonly style="background:#F0F6FA;color:#4A7A8A;">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Valeur commission</label>
+            <div class="input-group">
+              <input class="form-control" id="editValeur" type="number" min="0" step="0.01" oninput="updateImpactPreview()">
+              <span class="input-addon" id="editValeurAddon">FCFA</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Type</label>
+            <select class="form-control" id="editType" onchange="updateImpactPreview()">
+              <option value="FIXE">Fixe (FCFA)</option>
+              <option value="POURCENTAGE">Pourcentage (%)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Statut</label>
+          <select class="form-control" id="editStatut">
+            <option value="ACTIF">Actif</option>
+            <option value="INACTIF">Inactif</option>
+          </select>
+        </div>
+
+        <!-- Impact preview -->
+        <div class="impact-preview" id="impactPreview">
+          <div class="impact-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Apercu de l'impact
+          </div>
+          <div class="impact-row">
+            <span class="impact-label">Commission actuelle</span>
+            <span class="impact-value" id="impactCurrent">--</span>
+          </div>
+          <div class="impact-row">
+            <span class="impact-label">Nouvelle commission</span>
+            <span class="impact-value" id="impactNew">--</span>
+          </div>
+          <div class="impact-row">
+            <span class="impact-label">Variation</span>
+            <span id="impactDelta"><span class="impact-delta neutral">--</span></span>
+          </div>
+          <div class="impact-row">
+            <span class="impact-label">Transactions affectees (est.)</span>
+            <span class="impact-value" id="impactTxCount">--</span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:20px;">
+          <button class="btn btn-outline" onclick="fermerModal()" style="flex:1;">Annuler</button>
+          <button class="btn btn-primary" onclick="sauvegarderCommission()" style="flex:2;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ── State ──────────────────────────────────────── */
+    let allCommissions = [];
+    let commissionBeforeEdit = null;
+
+    /* ── Helpers ────────────────────────────────────── */
+    function formatCurrency(n) {
+      return (n || 0).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function isAdmin() {
+      try {
+        var user = SF.getUser();
+        if (!user || !user.roles) return false;
+        return user.roles.some(function(r) {
+          return typeof r === 'string' ? r.toUpperCase().includes('ADMIN') : (r.nom || '').toUpperCase().includes('ADMIN');
+        });
+      } catch (e) { return false; }
+    }
+
+    function applyAdminClass() {
+      if (isAdmin()) document.body.classList.add('is-admin');
+    }
+
+    function badgeCanal(c) {
+      var map = {
+        'GUICHET':  { bg: '#2980b9', label: 'Guichet' },
+        'MOBILE':   { bg: '#27ae60', label: 'Mobile' },
+        'INTERNET': { bg: '#8e44ad', label: 'Internet' },
+        'ATM':      { bg: '#e67e22', label: 'ATM' }
+      };
+      var info = map[c] || { bg: '#888', label: c || '---' };
+      return '<span class="badge-canal" style="background:' + info.bg + ';">' + info.label + '</span>';
+    }
+
+    function badgeType(t) {
+      if (t === 'POURCENTAGE') return '<span class="badge badge-info" style="font-size:11px;">% Pourcentage</span>';
+      return '<span class="badge badge-default" style="font-size:11px;">Fixe</span>';
+    }
+
+    function badgeStatut(s) {
+      if (s === 'ACTIF') return '<span class="badge badge-success">Actif</span>';
+      return '<span class="badge badge-danger">Inactif</span>';
+    }
+
+    function operationIcon(op) {
+      var icons = {
+        'VIREMENT': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>',
+        'RETRAIT': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+        'DEPOT': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/></svg>',
+        'MM': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>'
+      };
+      return icons[op] || '';
+    }
+
+    function displayCommission(c) {
+      if (c.type === 'POURCENTAGE') return c.valeur + '%';
+      return formatCurrency(c.valeur);
+    }
+
+    /* ── Rendering ──────────────────────────────────── */
+    function updateStats(data) {
+      document.getElementById('statTotal').textContent = data.length;
+      document.getElementById('statActives').textContent = data.filter(function(c) { return c.statut === 'ACTIF'; }).length;
+      document.getElementById('statInactives').textContent = data.filter(function(c) { return c.statut === 'INACTIF'; }).length;
+      var ops = {};
+      data.forEach(function(c) { if (c.operation) ops[c.operation] = true; });
+      document.getElementById('statOperations').textContent = Object.keys(ops).length;
+    }
+
+    function groupByOperation(data) {
+      var groups = {};
+      var order = ['VIREMENT', 'RETRAIT', 'DEPOT', 'MM'];
+      data.forEach(function(c) {
+        var key = c.operation || 'AUTRE';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(c);
+      });
+      // Sort groups by predefined order, then alphabetically for unknowns
+      var sorted = {};
+      order.forEach(function(op) {
+        if (groups[op]) sorted[op] = groups[op];
+      });
+      Object.keys(groups).forEach(function(op) {
+        if (!sorted[op]) sorted[op] = groups[op];
+      });
+      return sorted;
+    }
+
+    function renderTable(data) {
+      var tbody = document.getElementById('comTableBody');
+      var filterCount = document.getElementById('filterCount');
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+          '<p>Aucune commission trouvee pour les filtres selectionnes.</p></div></td></tr>';
+        filterCount.textContent = '';
+        return;
+      }
+
+      filterCount.textContent = data.length + ' commission(s) affichee(s)';
+
+      var groups = groupByOperation(data);
+      var html = '';
+
+      Object.keys(groups).forEach(function(op) {
+        var items = groups[op];
+        var opLabel = op === 'MM' ? 'Mobile Money' : op.charAt(0) + op.slice(1).toLowerCase();
+        html += '<tr class="group-header"><td colspan="6">' +
+          operationIcon(op) + opLabel +
+          '<span class="group-count">' + items.length + ' parametre(s)</span></td></tr>';
+
+        items.forEach(function(c) {
+          var actionCol = isAdmin()
+            ? '<td><button class="btn-edit-sm" onclick="ouvrirModal(\'' + c.id + '\')">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+              'Modifier</button></td>'
+            : '';
+
+          html += '<tr>' +
+            '<td><span style="font-weight:600;color:#084355;">' + (c.operation || '---') + '</span></td>' +
+            '<td>' + badgeCanal(c.canal) + '</td>' +
+            '<td style="font-weight:700;">' + displayCommission(c) + '</td>' +
+            '<td>' + badgeType(c.type) + '</td>' +
+            '<td>' + badgeStatut(c.statut) + '</td>' +
+            actionCol +
+            '</tr>';
+        });
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    /* ── Filters ────────────────────────────────────── */
+    function appliquerFiltres() {
+      var filtered = allCommissions.slice();
+      var canal = document.getElementById('fCanal').value;
+      var op = document.getElementById('fOperation').value;
+      var statut = document.getElementById('fStatut').value;
+      if (canal) filtered = filtered.filter(function(c) { return c.canal === canal; });
+      if (op) filtered = filtered.filter(function(c) { return c.operation === op; });
+      if (statut) filtered = filtered.filter(function(c) { return c.statut === statut; });
+      renderTable(filtered);
+    }
+
+    function reinitialiserFiltres() {
+      document.getElementById('fCanal').value = '';
+      document.getElementById('fOperation').value = '';
+      document.getElementById('fStatut').value = '';
+      renderTable(allCommissions);
+    }
+
+    /* ── Modal & Impact Preview ─────────────────────── */
+    function ouvrirModal(id) {
+      var c = allCommissions.find(function(x) { return String(x.id) === String(id); });
+      if (!c) return;
+
+      commissionBeforeEdit = Object.assign({}, c);
+
+      document.getElementById('editId').value = c.id;
+      document.getElementById('editOperation').value = c.operation || '';
+      document.getElementById('editCanal').value = c.canal || '';
+      document.getElementById('editValeur').value = c.valeur || '';
+      document.getElementById('editType').value = c.type || 'FIXE';
+      document.getElementById('editStatut').value = c.statut || 'ACTIF';
+
+      updateValeurAddon();
+      updateImpactPreview();
+      openModal('editModal');
+    }
+
+    function fermerModal() {
+      closeModal('editModal');
+      commissionBeforeEdit = null;
+    }
+
+    function updateValeurAddon() {
+      var type = document.getElementById('editType').value;
+      document.getElementById('editValeurAddon').textContent = type === 'POURCENTAGE' ? '%' : 'FCFA';
+    }
+
+    function updateImpactPreview() {
+      updateValeurAddon();
+
+      var type = document.getElementById('editType').value;
+      var newValeur = parseFloat(document.getElementById('editValeur').value) || 0;
+
+      if (!commissionBeforeEdit) return;
+
+      var oldValeur = commissionBeforeEdit.valeur || 0;
+      var oldType = commissionBeforeEdit.type || 'FIXE';
+
+      // Current value display
+      var oldDisplay = oldType === 'POURCENTAGE' ? oldValeur + '%' : formatCurrency(oldValeur);
+      var newDisplay = type === 'POURCENTAGE' ? newValeur + '%' : formatCurrency(newValeur);
+
+      document.getElementById('impactCurrent').textContent = oldDisplay;
+      document.getElementById('impactNew').textContent = newDisplay;
+
+      // Delta calculation
+      var deltaEl = document.getElementById('impactDelta');
+      if (oldType !== type) {
+        // Type changed
+        deltaEl.innerHTML = '<span class="impact-delta neutral">Changement de type</span>';
+      } else if (newValeur === oldValeur) {
+        deltaEl.innerHTML = '<span class="impact-delta neutral">Aucun changement</span>';
+      } else {
+        var diff = newValeur - oldValeur;
+        var pct = oldValeur !== 0 ? ((diff / oldValeur) * 100).toFixed(1) : '---';
+        var sign = diff > 0 ? '+' : '';
+        var cssClass = diff > 0 ? 'negative' : 'positive';
+        if (type === 'POURCENTAGE') {
+          deltaEl.innerHTML = '<span class="impact-delta ' + cssClass + '">' + sign + diff.toFixed(2) + ' pts (' + sign + pct + '%)</span>';
+        } else {
+          deltaEl.innerHTML = '<span class="impact-delta ' + cssClass + '">' + sign + diff.toLocaleString('fr-FR') + ' FCFA (' + sign + pct + '%)</span>';
+        }
+      }
+
+      // Estimated affected transactions (simulated based on operation type)
+      var txEstimates = {
+        'VIREMENT': 1240,
+        'RETRAIT': 3850,
+        'DEPOT': 2100,
+        'MM': 5600
+      };
+      var op = commissionBeforeEdit.operation || '';
+      var estimate = txEstimates[op] || 500;
+      document.getElementById('impactTxCount').textContent = '~' + estimate.toLocaleString('fr-FR') + ' / mois';
+    }
+
+    /* ── Save ───────────────────────────────────────── */
+    async function sauvegarderCommission() {
+      var id = document.getElementById('editId').value;
+      var body = {
+        valeur: parseFloat(document.getElementById('editValeur').value),
+        type: document.getElementById('editType').value,
+        statut: document.getElementById('editStatut').value
+      };
+
+      if (isNaN(body.valeur) || body.valeur < 0) {
+        showToast('Veuillez saisir une valeur de commission valide.', 'warning');
+        return;
+      }
+
+      try {
+        var res = await SF.apiFetch('/api/v1/tarification/parametres/' + id, {
+          method: 'PUT',
+          body: JSON.stringify(body)
+        });
+        if (res && res.status === 403) {
+          showToast('Acces refuse : droits administrateur requis.', 'error');
+          return;
+        }
+        showToast('Commission mise a jour avec succes.', 'success');
+        fermerModal();
+        chargerCommissions();
+      } catch (e) {
+        showToast('Erreur lors de la sauvegarde : ' + e.message, 'error');
+      }
+    }
+
+    /* ── Export ──────────────────────────────────────── */
+    function exportCSV() {
+      if (!allCommissions.length) {
+        showToast('Aucune donnee a exporter.', 'warning');
+        return;
+      }
+      var headers = ['Operation', 'Canal', 'Valeur', 'Type', 'Statut'];
+      var rows = allCommissions.map(function(c) {
+        return [c.operation, c.canal, c.valeur, c.type, c.statut].join(';');
+      });
+      var csv = headers.join(';') + '\n' + rows.join('\n');
+      var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'commissions-export.csv';
+      a.click();
+      showToast('Export CSV genere.', 'success');
+    }
+
+    function exportPDF() {
+      window.open(SF.API_BASE + '/api/v1/tarification/parametres/export?categorie=COMMISSION&format=PDF', '_blank');
+      showToast('Export PDF lance.', 'success');
+    }
+
+    /* ── Data loading ───────────────────────────────── */
+    async function chargerCommissions() {
+      try {
+        var data = await SF.apiFetch('/api/v1/tarification/parametres?categorie=COMMISSION');
+        if (!data) return;
+        var parsed = Array.isArray(data) ? data : (data.content || []);
+        allCommissions = parsed;
+        updateStats(allCommissions);
+        appliquerFiltres();
+      } catch (e) {
+        showToast('Erreur de chargement : ' + e.message, 'error');
+      }
+    }
+
+    /* ── Init ────────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function() {
+      applyAdminClass();
+      chargerCommissions();
+    });
+  </script>
+</body>
+</html>

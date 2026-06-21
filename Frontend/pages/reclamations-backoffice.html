@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Réclamations clients - MicroFinance</title>
+  <meta name="description" content="Back-office de gestion et traitement des réclamations clients.">
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar"></aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Réclamations clients</div>
+            <div class="topbar-breadcrumb">Accueil / Conformite / Reclamations</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn" onclick="loadReclamations()" title="Rafraichir">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <!-- PAGE HEADER -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Gestion des reclamations clients</h1>
+            <p class="page-subtitle">Suivi et traitement des reclamations — Endpoint : GET /api/v1/conformite/reclamations</p>
+          </div>
+        </div>
+
+        <!-- KPI CARDS -->
+        <section class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Total</div>
+              <div class="kpi-value" id="kpiTotal">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon orange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Ouvertes</div>
+              <div class="kpi-value" id="kpiOuvertes">-</div>
+              <div class="kpi-trend down" id="kpiOuvertesTrend"></div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon orange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">En cours</div>
+              <div class="kpi-value" id="kpiEnCours">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Resolues</div>
+              <div class="kpi-value" id="kpiResolues">-</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TABLE -->
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Liste des reclamations</div>
+              <div class="card-subtitle">Endpoint : /api/v1/conformite/reclamations</div>
+            </div>
+          </div>
+
+          <div class="filter-bar">
+            <input class="form-control" placeholder="Rechercher par client, categorie, description..." id="reclSearch" oninput="filterRecl()">
+            <select class="form-control" id="reclStatut" onchange="filterRecl()">
+              <option value="ALL">Tous statuts</option>
+              <option value="OUVERTE">Ouverte</option>
+              <option value="EN_COURS">En cours</option>
+              <option value="RESOLUE">Resolue</option>
+              <option value="FERMEE">Fermee</option>
+            </select>
+            <select class="form-control" id="reclPriorite" onchange="filterRecl()">
+              <option value="ALL">Toutes priorites</option>
+              <option value="HAUTE">Haute</option>
+              <option value="MOYENNE">Moyenne</option>
+              <option value="BASSE">Basse</option>
+            </select>
+            <select class="form-control" id="reclCategorie" onchange="filterRecl()">
+              <option value="ALL">Toutes categories</option>
+              <option value="SERVICE">Service</option>
+              <option value="TECHNIQUE">Technique</option>
+              <option value="FACTURATION">Facturation</option>
+              <option value="COMPTE">Compte</option>
+              <option value="CREDIT">Credit</option>
+              <option value="AUTRE">Autre</option>
+            </select>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Client</th>
+                <th>Categorie</th>
+                <th>Priorite</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="reclBody">
+              <tr><td colspan="7" style="text-align:center;color:#4A7A8A;padding:20px;">Chargement...</td></tr>
+            </tbody>
+          </table>
+
+          <!-- Pagination -->
+          <div class="pagination" id="paginationBar" style="display:none;">
+            <div class="pagination-info" id="paginationInfo"></div>
+            <div class="pagination-buttons" id="paginationButtons"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- DETAIL / RESOLUTION MODAL -->
+  <div class="modal-overlay" id="reclDetailModal">
+    <div class="modal" style="max-width:620px;">
+      <div class="modal-header">
+        <div class="modal-title">Detail de la reclamation</div>
+        <button class="modal-close" onclick="fermerDetailRecl()" title="Fermer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="reclDetailContent"></div>
+
+        <hr style="margin:20px 0;border:none;border-top:1px solid var(--gris-moyen);">
+
+        <h4 style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--azur-fonce);">Resolution</h4>
+        <div class="form-group">
+          <label class="form-label">Statut</label>
+          <select class="form-control" id="reclResolutionStatut">
+            <option value="EN_COURS">En cours</option>
+            <option value="RESOLUE">Resolue</option>
+            <option value="FERMEE">Fermee</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Commentaire de resolution</label>
+          <textarea class="form-control" id="reclResolutionComment" rows="4" placeholder="Decrivez la resolution apportee..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="fermerDetailRecl()">Annuler</button>
+        <button class="btn btn-primary" onclick="soumettreResolution()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="20 6 9 17 4 12"/></svg>
+          Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    var allRecl = [];
+    var currentReclId = null;
+    var currentPage = 0;
+    var pageSize = 20;
+    var totalElements = 0;
+    var totalPages = 0;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      loadReclamations();
+    });
+
+    /* -- Load reclamations from API -------------------------------- */
+    async function loadReclamations(page) {
+      if (typeof page === 'number') {
+        currentPage = page;
+      }
+
+      var tbody = document.getElementById('reclBody');
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#4A7A8A;padding:20px;">Chargement...</td></tr>';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/conformite/reclamations?page=' + currentPage + '&size=' + pageSize + '&sort=dateReclamation,desc');
+
+        if (!res) return; // 401 redirected
+
+        if (res.ok) {
+          var data = await res.json();
+
+          // Paginated response
+          if (data.content !== undefined) {
+            allRecl = data.content || [];
+            totalElements = data.totalElements || 0;
+            totalPages = data.totalPages || 0;
+          } else {
+            // Non-paginated fallback
+            allRecl = Array.isArray(data) ? data : [];
+            totalElements = allRecl.length;
+            totalPages = 1;
+          }
+
+          renderRecl(allRecl);
+          updateReclKpis(allRecl);
+          renderPagination();
+        } else {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#D93025;padding:20px;">Erreur lors du chargement (HTTP ' + res.status + ')</td></tr>';
+        }
+      } catch (e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#D93025;padding:20px;">Impossible de charger les reclamations.</td></tr>';
+      }
+    }
+
+    /* -- Render table rows ----------------------------------------- */
+    function renderRecl(items) {
+      var tbody = document.getElementById('reclBody');
+
+      if (!items || !items.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#4A7A8A;padding:20px;">Aucune reclamation trouvee.</td></tr>';
+        document.getElementById('paginationBar').style.display = 'none';
+        return;
+      }
+
+      tbody.innerHTML = items.map(function (r) {
+        var statutBadge = getStatutBadge(r.statut);
+        var prioriteBadge = getPrioriteBadge(r.priorite);
+        var dateStr = formatDate(r.dateReclamation || r.createdAt);
+
+        return '<tr>' +
+          '<td style="font-family:monospace;">' + (r.id || '-') + '</td>' +
+          '<td>' + (r.clientNom || '-') + '</td>' +
+          '<td>' + formatCategorie(r.categorie) + '</td>' +
+          '<td><span class="badge ' + prioriteBadge.cls + '">' + prioriteBadge.label + '</span></td>' +
+          '<td><span class="badge ' + statutBadge.cls + '">' + statutBadge.label + '</span></td>' +
+          '<td>' + dateStr + '</td>' +
+          '<td>' +
+            '<button class="btn btn-outline btn-sm" onclick="voirDetailRecl(\'' + r.id + '\')">Traiter</button>' +
+          '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    /* -- Update KPI cards ------------------------------------------ */
+    function updateReclKpis(items) {
+      var total = totalElements || items.length;
+      var ouvertes = 0;
+      var enCours = 0;
+      var resolues = 0;
+
+      items.forEach(function (r) {
+        var s = (r.statut || '').toUpperCase();
+        if (s === 'OUVERTE') ouvertes++;
+        if (s === 'EN_COURS') enCours++;
+        if (s === 'RESOLUE' || s === 'FERMEE') resolues++;
+      });
+
+      document.getElementById('kpiTotal').textContent = total;
+      document.getElementById('kpiOuvertes').textContent = ouvertes;
+      document.getElementById('kpiOuvertesTrend').textContent = ouvertes > 0 ? ouvertes + ' en attente de traitement' : 'Aucune en attente';
+      document.getElementById('kpiEnCours').textContent = enCours;
+      document.getElementById('kpiResolues').textContent = resolues;
+    }
+
+    /* -- Pagination ----------------------------------------------- */
+    function renderPagination() {
+      var bar = document.getElementById('paginationBar');
+      var info = document.getElementById('paginationInfo');
+      var buttons = document.getElementById('paginationButtons');
+
+      if (totalPages <= 1) {
+        bar.style.display = 'none';
+        return;
+      }
+
+      bar.style.display = 'flex';
+
+      var start = currentPage * pageSize + 1;
+      var end = Math.min((currentPage + 1) * pageSize, totalElements);
+      info.textContent = 'Affichage ' + start + '-' + end + ' sur ' + totalElements;
+
+      var html = '';
+
+      // Previous button
+      html += '<button class="page-btn' + (currentPage === 0 ? ' disabled' : '') + '"' +
+        (currentPage === 0 ? ' disabled' : ' onclick="loadReclamations(' + (currentPage - 1) + ')"') +
+        '>&laquo;</button>';
+
+      // Page buttons (show max 5 pages around current)
+      var startPage = Math.max(0, currentPage - 2);
+      var endPage = Math.min(totalPages, startPage + 5);
+      if (endPage - startPage < 5) {
+        startPage = Math.max(0, endPage - 5);
+      }
+
+      for (var i = startPage; i < endPage; i++) {
+        html += '<button class="page-btn' + (i === currentPage ? ' active' : '') + '"' +
+          ' onclick="loadReclamations(' + i + ')">' + (i + 1) + '</button>';
+      }
+
+      // Next button
+      html += '<button class="page-btn' + (currentPage >= totalPages - 1 ? ' disabled' : '') + '"' +
+        (currentPage >= totalPages - 1 ? ' disabled' : ' onclick="loadReclamations(' + (currentPage + 1) + ')"') +
+        '>&raquo;</button>';
+
+      buttons.innerHTML = html;
+    }
+
+    /* -- Filters -------------------------------------------------- */
+    function filterRecl() {
+      var q = document.getElementById('reclSearch').value.toLowerCase();
+      var statut = document.getElementById('reclStatut').value;
+      var priorite = document.getElementById('reclPriorite').value;
+      var categorie = document.getElementById('reclCategorie').value;
+
+      var filtered = allRecl.filter(function (r) {
+        var matchQ = !q ||
+          (r.clientNom || '').toLowerCase().includes(q) ||
+          (r.categorie || '').toLowerCase().includes(q) ||
+          (r.description || '').toLowerCase().includes(q) ||
+          (r.sujet || '').toLowerCase().includes(q);
+        var matchS = statut === 'ALL' || (r.statut || '').toUpperCase() === statut;
+        var matchP = priorite === 'ALL' || (r.priorite || '').toUpperCase() === priorite;
+        var matchC = categorie === 'ALL' || (r.categorie || '').toUpperCase() === categorie;
+        return matchQ && matchS && matchP && matchC;
+      });
+
+      renderRecl(filtered);
+      updateReclKpis(filtered);
+    }
+
+    /* -- View detail modal ----------------------------------------- */
+    async function voirDetailRecl(id) {
+      currentReclId = id;
+      var r = allRecl.find(function (x) { return String(x.id) === String(id); });
+      if (!r) return;
+
+      var statutBadge = getStatutBadge(r.statut);
+      var prioriteBadge = getPrioriteBadge(r.priorite);
+
+      document.getElementById('reclDetailContent').innerHTML =
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">' +
+          '<div><strong style="font-size:12px;color:var(--gris-texte);display:block;margin-bottom:2px;">ID</strong><span style="font-family:monospace;">' + (r.id || '-') + '</span></div>' +
+          '<div><strong style="font-size:12px;color:var(--gris-texte);display:block;margin-bottom:2px;">Client</strong>' + (r.clientNom || '-') + '</div>' +
+          '<div><strong style="font-size:12px;color:var(--gris-texte);display:block;margin-bottom:2px;">Categorie</strong>' + formatCategorie(r.categorie) + '</div>' +
+          '<div><strong style="font-size:12px;color:var(--gris-texte);display:block;margin-bottom:2px;">Priorite</strong><span class="badge ' + prioriteBadge.cls + '">' + prioriteBadge.label + '</span></div>' +
+          '<div><strong style="font-size:12px;color:var(--gris-texte);display:block;margin-bottom:2px;">Statut</strong><span class="badge ' + statutBadge.cls + '">' + statutBadge.label + '</span></div>' +
+          '<div><strong style="font-size:12px;color:var(--gris-texte);display:block;margin-bottom:2px;">Date</strong>' + formatDate(r.dateReclamation || r.createdAt) + '</div>' +
+        '</div>' +
+        '<div style="background:var(--gris-clair);padding:16px;border-radius:var(--radius-sm);">' +
+          '<strong style="font-size:12px;color:var(--gris-texte);display:block;margin-bottom:8px;">Description</strong>' +
+          '<div style="line-height:1.6;">' + (r.description || r.sujet || '-') + '</div>' +
+        '</div>';
+
+      // Pre-select next logical status
+      var statutVal = r.statut || 'OUVERTE';
+      if (statutVal === 'OUVERTE') {
+        document.getElementById('reclResolutionStatut').value = 'EN_COURS';
+      } else {
+        document.getElementById('reclResolutionStatut').value = statutVal;
+      }
+      document.getElementById('reclResolutionComment').value = r.resolutionCommentaire || '';
+
+      document.getElementById('reclDetailModal').classList.add('active');
+    }
+
+    /* -- Close detail modal ---------------------------------------- */
+    function fermerDetailRecl() {
+      document.getElementById('reclDetailModal').classList.remove('active');
+      currentReclId = null;
+    }
+
+    /* -- Submit resolution ----------------------------------------- */
+    async function soumettreResolution() {
+      if (!currentReclId) return;
+
+      var comment = document.getElementById('reclResolutionComment').value.trim();
+      if (!comment) {
+        showToast('Veuillez saisir un commentaire de resolution.', 'warning');
+        return;
+      }
+
+      var btn = document.querySelector('.modal-footer .btn-primary');
+      var originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = 'Enregistrement...';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/conformite/reclamations/' + currentReclId, {
+          method: 'PUT',
+          body: JSON.stringify({
+            statut: document.getElementById('reclResolutionStatut').value,
+            resolutionCommentaire: comment
+          })
+        });
+
+        if (res && res.ok) {
+          showToast('Reclamation mise a jour avec succes.', 'success');
+          fermerDetailRecl();
+          loadReclamations(currentPage);
+        } else {
+          var err = res ? await res.json().catch(function () { return {}; }) : {};
+          showToast(err.message || 'Erreur lors de la mise a jour.', 'error');
+        }
+      } catch (e) {
+        console.error(e);
+        showToast('Impossible de contacter le serveur.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    /* -- Badge mappings -------------------------------------------- */
+    function getStatutBadge(statut) {
+      var map = {
+        'OUVERTE':  { cls: 'badge-danger',  label: 'Ouverte' },
+        'EN_COURS': { cls: 'badge-pending',  label: 'En cours' },
+        'RESOLUE':  { cls: 'badge-success',  label: 'Resolue' },
+        'FERMEE':   { cls: 'badge-info',     label: 'Fermee' }
+      };
+      return map[(statut || '').toUpperCase()] || { cls: 'badge-info', label: statut || '-' };
+    }
+
+    function getPrioriteBadge(priorite) {
+      var map = {
+        'HAUTE':   { cls: 'badge-danger',  label: 'Haute' },
+        'MOYENNE': { cls: 'badge-warning', label: 'Moyenne' },
+        'BASSE':   { cls: 'badge-success', label: 'Basse' }
+      };
+      return map[(priorite || '').toUpperCase()] || { cls: 'badge-info', label: priorite || '-' };
+    }
+
+    function formatCategorie(cat) {
+      var map = {
+        'SERVICE':     'Service',
+        'TECHNIQUE':   'Technique',
+        'FACTURATION': 'Facturation',
+        'COMPTE':      'Compte',
+        'CREDIT':      'Credit',
+        'AUTRE':       'Autre'
+      };
+      return map[(cat || '').toUpperCase()] || cat || '-';
+    }
+
+    /* -- Helpers -------------------------------------------------- */
+    function formatDate(d) {
+      if (!d) return '-';
+      try {
+        return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      } catch (e) {
+        return d;
+      }
+    }
+
+    // Close modal on overlay click
+    document.getElementById('reclDetailModal').addEventListener('click', function (e) {
+      if (e.target === this) fermerDetailRecl();
+    });
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') fermerDetailRecl();
+    });
+  </script>
+</body>
+</html>

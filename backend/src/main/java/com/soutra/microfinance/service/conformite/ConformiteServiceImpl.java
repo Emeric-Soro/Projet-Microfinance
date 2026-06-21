@@ -30,6 +30,7 @@ import com.soutra.microfinance.repository.conformite.ReclamationRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -88,7 +89,25 @@ public class ConformiteServiceImpl implements ConformiteService {
     @Override
     @Transactional(readOnly = true)
     public Page<RapportSarResponseDTO> listerRapportsSar(Pageable pageable) {
-        return rapportSarsCentifRepository.findAll(pageable).map(this::toRapportSarResponseDTO);
+        // Corriger le tri : l'entité a dateCreation, pas dateDeclaration
+        Pageable correctedPageable = pageable;
+        Sort sort = pageable.getSort();
+        if (sort.isSorted()) {
+            Sort correctedSort = Sort.unsorted();
+            for (Sort.Order order : sort) {
+                String property = order.getProperty();
+                if ("dateDeclaration".equals(property)) {
+                    property = "dateCreation";
+                }
+                correctedSort = correctedSort.and(
+                    order.isAscending() ? Sort.by(Sort.Direction.ASC, property)
+                                        : Sort.by(Sort.Direction.DESC, property)
+                );
+            }
+            correctedPageable = org.springframework.data.domain.PageRequest.of(
+                pageable.getPageNumber(), pageable.getPageSize(), correctedSort);
+        }
+        return rapportSarsCentifRepository.findAll(correctedPageable).map(this::toRapportSarResponseDTO);
     }
 
     @Override

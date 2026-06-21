@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Détail du Crédit — Soutra Finance E-Banking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/portal.css">
+  <style>
+    /* ── Credit Hero Header ──────────────────────────── */
+    .credit-hero {
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+      border-radius: 20px;
+      padding: 35px 40px;
+      color: #ffffff;
+      position: relative;
+      overflow: hidden;
+    }
+    .credit-hero::before {
+      content: '';
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 250px;
+      height: 250px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 50%;
+    }
+    .credit-hero::after {
+      content: '';
+      position: absolute;
+      bottom: -60px;
+      left: 30%;
+      width: 200px;
+      height: 200px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 50%;
+    }
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 25px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-ref-label {
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .hero-ref-value {
+      font-size: 22px;
+      font-weight: 800;
+      margin-top: 6px;
+      letter-spacing: 1px;
+    }
+    .hero-product {
+      font-size: 14px;
+      font-weight: 500;
+      opacity: 0.8;
+      margin-top: 4px;
+    }
+    .hero-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .hero-status.status-active {
+      background: rgba(46, 125, 50, 0.25);
+      color: #a5d6a7;
+    }
+    .hero-status.status-termine {
+      background: rgba(140, 213, 250, 0.25);
+      color: #8cd5fa;
+    }
+    .hero-status.status-en-retard {
+      background: rgba(217, 48, 37, 0.25);
+      color: #ef9a9a;
+    }
+    .hero-status.status-en-attente {
+      background: rgba(230, 81, 0, 0.25);
+      color: #ffcc80;
+    }
+    .hero-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* ── Hero Amount Section ─────────────────────────── */
+    .hero-amount-section {
+      position: relative;
+      z-index: 1;
+    }
+    .hero-amount-label {
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .hero-amount-value {
+      font-size: 40px;
+      font-weight: 800;
+      margin-top: 8px;
+      letter-spacing: -1px;
+    }
+
+    /* ── Hero Details Row ────────────────────────────── */
+    .hero-details-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      position: relative;
+      z-index: 1;
+    }
+    .hero-details-grid {
+      display: flex;
+      gap: 40px;
+    }
+    .hero-detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .hero-detail-label {
+      font-size: 11px;
+      opacity: 0.6;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .hero-detail-value {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .btn-hero {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--font-family);
+      text-decoration: none;
+    }
+    .btn-hero:hover {
+      background: rgba(255, 255, 255, 0.22);
+      border-color: rgba(255, 255, 255, 0.4);
+      transform: translateY(-1px);
+      color: #ffffff;
+    }
+
+    /* ── Summary Row ─────────────────────────────────── */
+    .summary-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+    .summary-item {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px 20px;
+      text-align: center;
+    }
+    .summary-item-label {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+    }
+    .summary-item-value {
+      font-size: 20px;
+      font-weight: 800;
+      margin-top: 4px;
+    }
+    .summary-item-value.color-success { color: var(--color-success); }
+    .summary-item-value.color-danger { color: var(--color-danger); }
+    .summary-item-value.color-primary { color: var(--color-primary); }
+    .summary-item-value.color-warning { color: var(--color-warning); }
+
+    /* ── Next Payment Alert ──────────────────────────── */
+    .next-payment-alert {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: linear-gradient(135deg, rgba(230, 81, 0, 0.06), rgba(250, 180, 130, 0.1));
+      border: 1px solid rgba(230, 81, 0, 0.2);
+      border-radius: 14px;
+      padding: 20px 25px;
+      margin-bottom: 25px;
+    }
+    .next-payment-alert.alert-urgent {
+      background: linear-gradient(135deg, rgba(217, 48, 37, 0.06), rgba(217, 48, 37, 0.12));
+      border-color: rgba(217, 48, 37, 0.25);
+    }
+    .next-payment-alert.alert-ok {
+      background: linear-gradient(135deg, rgba(46, 125, 50, 0.06), rgba(46, 125, 50, 0.1));
+      border-color: rgba(46, 125, 50, 0.2);
+    }
+    .alert-icon {
+      font-size: 36px;
+      flex-shrink: 0;
+    }
+    .alert-body {
+      flex: 1;
+    }
+    .alert-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 4px;
+    }
+    .alert-subtitle {
+      font-size: 13px;
+      color: var(--color-text-muted);
+    }
+    .alert-amount {
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .alert-amount-label {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+    .alert-amount-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--color-warning);
+    }
+    .alert-urgent .alert-amount-value {
+      color: var(--color-danger);
+    }
+    .alert-ok .alert-amount-value {
+      color: var(--color-success);
+    }
+
+    /* ── Schedule Status Badges ──────────────────────── */
+    .ech-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .ech-status.ech-payee {
+      background: rgba(46, 125, 50, 0.1);
+      color: var(--color-success);
+    }
+    .ech-status.ech-attente {
+      background: rgba(230, 81, 0, 0.08);
+      color: var(--color-warning);
+    }
+    .ech-status.ech-retard {
+      background: rgba(217, 48, 37, 0.1);
+      color: var(--color-danger);
+    }
+    .ech-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* ── Highlighted Row ─────────────────────────────── */
+    tr.row-next-due {
+      background: rgba(230, 81, 0, 0.04);
+    }
+    tr.row-overdue {
+      background: rgba(217, 48, 37, 0.04);
+    }
+    tr.row-next-due td {
+      border-left: 3px solid var(--color-warning);
+    }
+    tr.row-overdue td {
+      border-left: 3px solid var(--color-danger);
+    }
+
+    /* ── Payment History Badge ───────────────────────── */
+    .payment-method-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 6px;
+      background: rgba(8, 67, 85, 0.06);
+      color: var(--color-text-muted);
+    }
+
+    /* ── Loading Skeleton ────────────────────────────── */
+    .skeleton {
+      background: linear-gradient(90deg, #e8eff4 25%, #f0f6fa 50%, #e8eff4 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 8px;
+    }
+    .skeleton-block {
+      height: 120px;
+      margin-bottom: 20px;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* ── Back Link ───────────────────────────────────── */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      margin-bottom: 20px;
+      transition: color 0.2s;
+    }
+    .back-link:hover {
+      color: var(--color-primary);
+    }
+
+    /* ── Section Divider ─────────────────────────────── */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 30px 0 20px;
+    }
+    .section-divider-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--color-text-muted);
+      white-space: nowrap;
+    }
+    .section-divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border-color);
+    }
+
+    /* ── Progress Bar ────────────────────────────────── */
+    .repayment-progress {
+      margin-bottom: 25px;
+    }
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .progress-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+    }
+    .progress-pct {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--color-primary);
+    }
+    .progress-track {
+      width: 100%;
+      height: 10px;
+      background: rgba(8, 67, 85, 0.08);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+      border-radius: 10px;
+      transition: width 0.8s ease;
+    }
+
+    /* ── Empty State ─────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+    }
+    .empty-state-icon {
+      font-size: 48px;
+      opacity: 0.3;
+      margin-bottom: 15px;
+    }
+    .empty-state-text {
+      font-size: 15px;
+      color: var(--color-text-muted);
+      font-weight: 500;
+    }
+    .empty-state-sub {
+      font-size: 13px;
+      color: var(--color-text-muted);
+      opacity: 0.7;
+      margin-top: 5px;
+    }
+
+    /* ── Responsive ──────────────────────────────────── */
+    @media (max-width: 768px) {
+      .credit-hero {
+        padding: 25px 20px;
+      }
+      .hero-top {
+        flex-direction: column;
+        gap: 12px;
+      }
+      .hero-amount-value {
+        font-size: 30px;
+      }
+      .hero-details-row {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+      }
+      .hero-details-grid {
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+      .hero-actions {
+        width: 100%;
+      }
+      .hero-actions .btn-hero {
+        flex: 1;
+        justify-content: center;
+      }
+      .summary-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .next-payment-alert {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+      }
+      .alert-amount {
+        text-align: center;
+      }
+    }
+    @media (max-width: 480px) {
+      .summary-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="portal-layout">
+    <!-- Sidebar -->
+    <aside class="portal-sidebar">
+      <div class="portal-brand">
+        <div class="brand-icon">S</div>
+        <span class="brand-name">Soutra Finance</span>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="dashboard">📊 Tableau de bord</a></li>
+        <li class="nav-item"><a href="comptes">💳 Mes Comptes</a></li>
+        <li class="nav-item"><a href="virement">💸 Virements</a></li>
+        <li class="nav-item active"><a href="credits">📈 Crédits</a></li>
+        <li class="nav-item"><a href="reclamations">✉️ Réclamations</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+          <span class="user-name" id="portalUserName">Chargement...</span>
+          <span class="user-role">Client E-Banking</span>
+        </div>
+        <a href="#" class="logout-btn" id="portalLogoutBtn">🚪</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="portal-main">
+      <a href="credits" class="back-link">← Retour à mes crédits</a>
+
+      <!-- Credit Hero Header -->
+      <div id="creditHeroSection">
+        <!-- Skeleton while loading -->
+        <div id="heroSkeleton" class="skeleton skeleton-block" style="border-radius: 20px; height: 230px;"></div>
+
+        <!-- Actual hero (hidden until loaded) -->
+        <div id="heroContent" class="credit-hero" style="display: none;">
+          <div class="hero-top">
+            <div>
+              <div class="hero-ref-label">Référence du crédit</div>
+              <div class="hero-ref-value" id="heroRef">--</div>
+              <div class="hero-product" id="heroProduct">--</div>
+            </div>
+            <div class="hero-status status-active" id="heroStatus">
+              <span class="hero-status-dot"></span>
+              <span id="heroStatusText">ACTIF</span>
+            </div>
+          </div>
+          <div class="hero-amount-section">
+            <div class="hero-amount-label">Montant accordé</div>
+            <div class="hero-amount-value" id="heroMontant">0 FCFA</div>
+          </div>
+          <div class="hero-details-row">
+            <div class="hero-details-grid">
+              <div class="hero-detail-item">
+                <span class="hero-detail-label">Taux d'intérêt</span>
+                <span class="hero-detail-value" id="heroTaux">--%</span>
+              </div>
+              <div class="hero-detail-item">
+                <span class="hero-detail-label">Durée</span>
+                <span class="hero-detail-value" id="heroDuree">-- mois</span>
+              </div>
+              <div class="hero-detail-item">
+                <span class="hero-detail-label">Date de décaissement</span>
+                <span class="hero-detail-value" id="heroDateDecaissement">--</span>
+              </div>
+              <div class="hero-detail-item">
+                <span class="hero-detail-label">Capital restant dû</span>
+                <span class="hero-detail-value" id="heroRestantDu">0 FCFA</span>
+              </div>
+            </div>
+            <div class="hero-actions">
+              <button class="btn-hero" onclick="downloadEcheancier()">📥 Télécharger l'échéancier</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Next Payment Alert -->
+      <div id="nextPaymentAlert" class="next-payment-alert" style="display: none;">
+        <div class="alert-icon" id="alertIcon">⏰</div>
+        <div class="alert-body">
+          <div class="alert-title" id="alertTitle">Prochaine échéance</div>
+          <div class="alert-subtitle" id="alertSubtitle">--</div>
+        </div>
+        <div class="alert-amount">
+          <div class="alert-amount-label">Montant à payer</div>
+          <div class="alert-amount-value" id="alertAmount">0 FCFA</div>
+        </div>
+      </div>
+
+      <!-- Repayment Progress -->
+      <div id="progressSection" class="card" style="display: none;">
+        <div class="repayment-progress">
+          <div class="progress-header">
+            <span class="progress-label">Progression du remboursement</span>
+            <span class="progress-pct" id="progressPct">0%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Summary Row -->
+        <div class="summary-row">
+          <div class="summary-item">
+            <div class="summary-item-label">Échéances payées</div>
+            <div class="summary-item-value color-success" id="summaryPaid">0</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-item-label">Échéances restantes</div>
+            <div class="summary-item-value color-primary" id="summaryPending">0</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-item-label">En retard</div>
+            <div class="summary-item-value color-danger" id="summaryLate">0</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-item-label">Total payé</div>
+            <div class="summary-item-value color-success" id="summaryTotalPaid">0 FCFA</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Repayment Schedule Table -->
+      <div class="card" id="scheduleCard">
+        <div class="card-header">
+          <span class="card-title">📅 Tableau d'amortissement</span>
+          <span class="page-indicator" id="echCount">-- échéances</span>
+        </div>
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Date d'échéance</th>
+                <th style="text-align: right;">Capital</th>
+                <th style="text-align: right;">Intérêts</th>
+                <th style="text-align: right;">Mensualité</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody id="scheduleTableBody">
+              <tr>
+                <td colspan="6">
+                  <div class="empty-state">
+                    <div class="empty-state-icon">📅</div>
+                    <div class="empty-state-text">Chargement de l'échéancier...</div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Payment History -->
+      <div class="card" id="paymentHistoryCard">
+        <div class="card-header">
+          <span class="card-title">💰 Historique des paiements</span>
+          <span class="page-indicator" id="paymentCount">-- paiements</span>
+        </div>
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Date du paiement</th>
+                <th>Échéance N°</th>
+                <th style="text-align: right;">Montant payé</th>
+                <th>Méthode</th>
+                <th>Référence</th>
+              </tr>
+            </thead>
+            <tbody id="paymentHistoryBody">
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state">
+                    <div class="empty-state-icon">💰</div>
+                    <div class="empty-state-text">Chargement de l'historique...</div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="../assets/js/portal-app.js?v=1.0.1"></script>
+  <script>
+    /* ── State ──────────────────────────────────────── */
+    var creditId = null;
+    var creditData = null;
+    var echeances = [];
+
+    /* ── Init ───────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function () {
+      var params = new URLSearchParams(window.location.search);
+      creditId = params.get('id');
+
+      if (!creditId) {
+        showToast('Aucun crédit spécifié. Redirection...', 'warning');
+        setTimeout(function () { window.location.href = 'credits'; }, 1500);
+        return;
+      }
+
+      loadCreditDetail();
+    });
+
+    /* ── Load Credit Detail ─────────────────────────── */
+    async function loadCreditDetail() {
+      try {
+        var res = await window.ClientCredits.detail(creditId);
+        if (!res.ok) {
+          showToast('Impossible de charger les détails du crédit.', 'error');
+          return;
+        }
+        creditData = await res.json();
+        populateHero();
+        loadEcheancier();
+      } catch (err) {
+        console.error(err);
+        showToast('Erreur lors du chargement du crédit.', 'error');
+      }
+    }
+
+    /* ── Populate Hero Header ───────────────────────── */
+    function populateHero() {
+      document.getElementById('heroRef').textContent = creditData.reference || '--';
+      document.getElementById('heroProduct').textContent = creditData.libelleProduit || creditData.codeProduit || 'Crédit';
+      document.getElementById('heroMontant').textContent = formatCurrency(creditData.montantAccorde);
+      document.getElementById('heroTaux').textContent = (creditData.taux || 0) + ' %';
+      document.getElementById('heroDuree').textContent = (creditData.dureeMois || 0) + ' mois';
+      document.getElementById('heroRestantDu').textContent = formatCurrency(creditData.montantRestantDu);
+
+      if (creditData.dateDecaissement) {
+        document.getElementById('heroDateDecaissement').textContent = formatDateShort(creditData.dateDecaissement);
+      }
+
+      // Status badge
+      var statusEl = document.getElementById('heroStatus');
+      var statusText = document.getElementById('heroStatusText');
+      var statut = (creditData.statut || '').toUpperCase();
+      statusText.textContent = statut || 'N/A';
+
+      statusEl.className = 'hero-status';
+      if (statut === 'ACTIF' || statut === 'ACTIVE' || statut === 'EN_COURS') {
+        statusEl.classList.add('status-active');
+      } else if (statut === 'TERMINE' || statut === 'SOLDE' || statut === 'REMBOURSE') {
+        statusEl.classList.add('status-termine');
+      } else if (statut === 'EN_RETARD') {
+        statusEl.classList.add('status-en-retard');
+      } else if (statut === 'EN_ATTENTE' || statut === 'EN_ATTENTE_VALIDATION') {
+        statusEl.classList.add('status-en-attente');
+      } else {
+        statusEl.classList.add('status-active');
+      }
+
+      // Show hero, hide skeleton
+      document.getElementById('heroSkeleton').style.display = 'none';
+      document.getElementById('heroContent').style.display = 'block';
+    }
+
+    /* ── Load Echeancier ────────────────────────────── */
+    async function loadEcheancier() {
+      try {
+        var res = await window.ClientCredits.echeancier(creditId);
+        if (!res.ok) {
+          showToast('Impossible de charger l\'échéancier.', 'error');
+          return;
+        }
+        echeances = await res.json();
+        renderSchedule();
+        renderSummary();
+        renderNextPaymentAlert();
+        renderPaymentHistory();
+      } catch (err) {
+        console.error(err);
+        showToast('Erreur lors du chargement de l\'échéancier.', 'error');
+      }
+    }
+
+    /* ── Render Schedule Table ──────────────────────── */
+    function renderSchedule() {
+      var tbody = document.getElementById('scheduleTableBody');
+      tbody.innerHTML = '';
+
+      document.getElementById('echCount').textContent =
+        echeances.length + ' échéance' + (echeances.length !== 1 ? 's' : '');
+
+      if (echeances.length === 0) {
+        tbody.innerHTML =
+          '<tr><td colspan="6">' +
+          '<div class="empty-state">' +
+          '<div class="empty-state-icon">📭</div>' +
+          '<div class="empty-state-text">Aucune échéance trouvée</div>' +
+          '</div></td></tr>';
+        return;
+      }
+
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      var foundNext = false;
+
+      echeances.forEach(function (ech) {
+        var isPaid = ech.statut === 'PAYEE';
+        var echDate = new Date(ech.dateEcheance);
+        echDate.setHours(0, 0, 0, 0);
+        var isLate = !isPaid && echDate < today;
+        var isNext = !isPaid && !isLate && !foundNext;
+
+        if (isNext) foundNext = true;
+
+        var rowClass = '';
+        if (isLate) rowClass = 'row-overdue';
+        else if (isNext) rowClass = 'row-next-due';
+
+        var statusBadge = '';
+        if (isPaid) {
+          statusBadge = '<span class="ech-status ech-payee"><span class="ech-status-dot"></span>Payée</span>';
+        } else if (isLate) {
+          statusBadge = '<span class="ech-status ech-retard"><span class="ech-status-dot"></span>En retard</span>';
+        } else {
+          statusBadge = '<span class="ech-status ech-attente"><span class="ech-status-dot"></span>En attente</span>';
+        }
+
+        var row = document.createElement('tr');
+        if (rowClass) row.className = rowClass;
+        row.innerHTML =
+          '<td style="font-weight: 700;">' + ech.numero + '</td>' +
+          '<td>' + formatDateShort(ech.dateEcheance) + '</td>' +
+          '<td style="text-align: right;">' + formatCurrency(ech.principal) + '</td>' +
+          '<td style="text-align: right;">' + formatCurrency(ech.interets) + '</td>' +
+          '<td style="text-align: right; font-weight: 700; font-size: 15px;">' + formatCurrency(ech.montant) + '</td>' +
+          '<td>' + statusBadge + '</td>';
+        tbody.appendChild(row);
+      });
+    }
+
+    /* ── Render Summary ─────────────────────────────── */
+    function renderSummary() {
+      var paidCount = 0;
+      var pendingCount = 0;
+      var lateCount = 0;
+      var totalPaid = 0;
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      echeances.forEach(function (ech) {
+        if (ech.statut === 'PAYEE') {
+          paidCount++;
+          totalPaid += (ech.montant || 0);
+        } else {
+          var echDate = new Date(ech.dateEcheance);
+          echDate.setHours(0, 0, 0, 0);
+          if (echDate < today) {
+            lateCount++;
+          } else {
+            pendingCount++;
+          }
+        }
+      });
+
+      document.getElementById('summaryPaid').textContent = paidCount;
+      document.getElementById('summaryPending').textContent = pendingCount;
+      document.getElementById('summaryLate').textContent = lateCount;
+      document.getElementById('summaryTotalPaid').textContent = formatCurrency(totalPaid);
+
+      // Progress bar
+      var total = echeances.length;
+      var pct = total > 0 ? Math.round((paidCount / total) * 100) : 0;
+      document.getElementById('progressPct').textContent = pct + '%';
+      document.getElementById('progressFill').style.width = pct + '%';
+
+      document.getElementById('progressSection').style.display = 'block';
+    }
+
+    /* ── Render Next Payment Alert ──────────────────── */
+    function renderNextPaymentAlert() {
+      var alertEl = document.getElementById('nextPaymentAlert');
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Find first unpaid
+      var nextEch = null;
+      var overdueEch = null;
+
+      for (var i = 0; i < echeances.length; i++) {
+        var ech = echeances[i];
+        if (ech.statut === 'PAYEE') continue;
+        var echDate = new Date(ech.dateEcheance);
+        echDate.setHours(0, 0, 0, 0);
+        if (echDate < today) {
+          if (!overdueEch) overdueEch = ech;
+        } else {
+          if (!nextEch) nextEch = ech;
+        }
+      }
+
+      // If there's an overdue, show urgent alert
+      if (overdueEch) {
+        var overdueDate = new Date(overdueEch.dateEcheance);
+        var daysLate = Math.floor((today - overdueDate) / (1000 * 60 * 60 * 24));
+
+        alertEl.className = 'next-payment-alert alert-urgent';
+        document.getElementById('alertIcon').textContent = '🚨';
+        document.getElementById('alertTitle').textContent = 'Échéance en retard (N°' + overdueEch.numero + ')';
+        document.getElementById('alertSubtitle').textContent =
+          'Échéance du ' + formatDateShort(overdueEch.dateEcheance) + ' — ' + daysLate + ' jour(s) de retard';
+        document.getElementById('alertAmount').textContent = formatCurrency(overdueEch.montant);
+        alertEl.style.display = 'flex';
+      } else if (nextEch) {
+        var nextDate = new Date(nextEch.dateEcheance);
+        var daysUntil = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24));
+
+        if (daysUntil <= 7) {
+          alertEl.className = 'next-payment-alert';
+          document.getElementById('alertIcon').textContent = '⏰';
+        } else {
+          alertEl.className = 'next-payment-alert alert-ok';
+          document.getElementById('alertIcon').textContent = '📅';
+        }
+
+        document.getElementById('alertTitle').textContent = 'Prochaine échéance (N°' + nextEch.numero + ')';
+        document.getElementById('alertSubtitle').textContent =
+          'Le ' + formatDateShort(nextEch.dateEcheance) +
+          (daysUntil <= 0 ? ' — Aujourd\'hui' : ' — Dans ' + daysUntil + ' jour(s)');
+        document.getElementById('alertAmount').textContent = formatCurrency(nextEch.montant);
+        alertEl.style.display = 'flex';
+      } else {
+        alertEl.style.display = 'none';
+      }
+    }
+
+    /* ── Render Payment History ─────────────────────── */
+    function renderPaymentHistory() {
+      var tbody = document.getElementById('paymentHistoryBody');
+      tbody.innerHTML = '';
+
+      var paidEcheances = echeances.filter(function (ech) {
+        return ech.statut === 'PAYEE';
+      });
+
+      document.getElementById('paymentCount').textContent =
+        paidEcheances.length + ' paiement' + (paidEcheances.length !== 1 ? 's' : '');
+
+      if (paidEcheances.length === 0) {
+        tbody.innerHTML =
+          '<tr><td colspan="5">' +
+          '<div class="empty-state">' +
+          '<div class="empty-state-icon">💸</div>' +
+          '<div class="empty-state-text">Aucun paiement enregistré</div>' +
+          '<div class="empty-state-sub">Les paiements effectués apparaîtront ici.</div>' +
+          '</div></td></tr>';
+        return;
+      }
+
+      // Sort by payment date descending (if available), fallback to echeance date
+      paidEcheances.sort(function (a, b) {
+        var dateA = a.datePaiement || a.dateEcheance;
+        var dateB = b.datePaiement || b.dateEcheance;
+        return new Date(dateB) - new Date(dateA);
+      });
+
+      paidEcheances.forEach(function (ech) {
+        var row = document.createElement('tr');
+        row.innerHTML =
+          '<td style="font-weight: 600;">' + formatDateShort(ech.datePaiement || ech.dateEcheance) + '</td>' +
+          '<td style="font-weight: 700;">N°' + ech.numero + '</td>' +
+          '<td style="text-align: right; font-weight: 700; color: var(--color-success);">' + formatCurrency(ech.montant) + '</td>' +
+          '<td><span class="payment-method-badge">' + escapeHtml(ech.modePaiement || 'Virement') + '</span></td>' +
+          '<td style="font-size: 13px; color: var(--color-text-muted);">' + escapeHtml(ech.referencePaiement || '--') + '</td>';
+        tbody.appendChild(row);
+      });
+    }
+
+    /* ── Download Echeancier ────────────────────────── */
+    function downloadEcheancier() {
+      if (!echeances || echeances.length === 0) {
+        showToast('Aucun échéancier à télécharger.', 'warning');
+        return;
+      }
+
+      // Build CSV content
+      var csv = 'N°,Date échéance,Capital,Intérêts,Mensualité,Statut\n';
+      echeances.forEach(function (ech) {
+        csv += ech.numero + ',' +
+               formatDateShort(ech.dateEcheance) + ',' +
+               (ech.principal || 0) + ',' +
+               (ech.interets || 0) + ',' +
+               (ech.montant || 0) + ',' +
+               (ech.statut || '') + '\n';
+      });
+
+      var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = url;
+      link.download = 'echeancier-' + (creditData.reference || creditId) + '.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      showToast('Échéancier téléchargé.', 'success');
+    }
+
+    /* ── Helpers ────────────────────────────────────── */
+    function formatCurrency(amount) {
+      if (amount === undefined || amount === null) return '0 FCFA';
+      return Number(amount).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function formatDateShort(dateStr) {
+      if (!dateStr) return '--';
+      var d = new Date(dateStr);
+      return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      var div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

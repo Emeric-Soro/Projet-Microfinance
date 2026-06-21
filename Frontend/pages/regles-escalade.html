@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Règles d'escalade - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Règles d'escalade</div>
+            <div class="topbar-breadcrumb">Accueil / Pilotage &amp; Audit / Exceptions / Règles d'escalade</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="btn btn-primary btn-sm" onclick="openRuleModal()">+ Ajouter une règle</button>
+          <button class="topbar-icon-btn" onclick="loadRegles()" title="Rafraîchir">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <!-- Page header -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Configuration des règles d'escalade</h1>
+            <p class="page-subtitle">Définir les seuils et destinataires de notification pour chaque niveau d'alerte</p>
+          </div>
+          <button class="btn btn-primary" onclick="openRuleModal()">+ Ajouter une règle</button>
+        </div>
+
+        <!-- KPI Summary Cards -->
+        <section class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Total règles</div>
+              <div class="kpi-value" id="kpiTotal">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Actives</div>
+              <div class="kpi-value" id="kpiActives">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Inactives</div>
+              <div class="kpi-value" id="kpiInactives">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Niveau critique (N4)</div>
+              <div class="kpi-value" id="kpiCritiques">-</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Rules table card -->
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Règles configurées</div>
+              <div class="card-subtitle">Endpoint : /api/v1/exceptions/regles-escalade</div>
+            </div>
+          </div>
+
+          <!-- Filter bar -->
+          <div class="filter-bar">
+            <input class="form-control" placeholder="Rechercher par règle, destinataire..." id="ruleSearch" oninput="filterRegles()">
+            <select class="form-control" id="ruleNiveau" onchange="filterRegles()">
+              <option value="ALL">Tous niveaux</option>
+              <option value="N1">N1 - Faible</option>
+              <option value="N2">N2 - Moyen</option>
+              <option value="N3">N3 - Élevé</option>
+              <option value="N4">N4 - Critique</option>
+            </select>
+            <select class="form-control" id="ruleStatut" onchange="filterRegles()">
+              <option value="ALL">Tous statuts</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+            </select>
+          </div>
+
+          <!-- Table -->
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Règle</th>
+                <th>Seuil</th>
+                <th>Destinataire</th>
+                <th>Niveau</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="reglesBody">
+              <tr><td colspan="6" style="text-align:center;color:#4A7A8A;padding:20px;">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Add / Edit Rule Modal -->
+        <div class="modal-overlay" id="ruleModal">
+          <div class="modal" style="max-width:560px;">
+            <div class="modal-header">
+              <div class="modal-title" id="ruleModalTitle">Ajouter une règle</div>
+              <button class="modal-close" onclick="closeRuleModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+              <input type="hidden" id="ruleId">
+              <div class="form-group">
+                <label class="form-label" for="ruleNom">Nom de la règle *</label>
+                <input type="text" class="form-control" id="ruleNom" placeholder="Ex: Montant > seuil" maxlength="120">
+                <div class="field-error" id="ruleNom-error" style="display:none;">Le nom de la règle est obligatoire.</div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="ruleSeuil">Seuil (montant) *</label>
+                  <input type="number" class="form-control" id="ruleSeuil" placeholder="Ex: 5000000" min="0" step="1">
+                  <div class="field-error" id="ruleSeuil-error" style="display:none;">Le seuil est obligatoire.</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="ruleNiveauSelect">Niveau *</label>
+                  <select class="form-control" id="ruleNiveauSelect">
+                    <option value="N1">N1 - Faible</option>
+                    <option value="N2">N2 - Moyen</option>
+                    <option value="N3">N3 - Élevé</option>
+                    <option value="N4">N4 - Critique</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="ruleDestinataires">Destinataire(s) de notification *</label>
+                <input type="text" class="form-control" id="ruleDestinataires" placeholder="Emails séparés par virgule" maxlength="500">
+                <div class="field-error" id="ruleDestinataires-error" style="display:none;">Au moins un destinataire est requis.</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Activer cette règle</label>
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                  <input type="checkbox" id="ruleActive" checked style="width:18px;height:18px;cursor:pointer;">
+                  <span id="ruleActiveLabel" style="font-size:13px;color:#4A7A8A;">Règle activée</span>
+                </label>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-outline" onclick="closeRuleModal()">Annuler</button>
+              <button class="btn btn-primary" id="btnSaveRule" onclick="saveRule()">Enregistrer</button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ============================================
+       Règles d'escalade — Page M15
+       Endpoint: /api/v1/exceptions/regles-escalade
+       ============================================ */
+
+    var allRegles = [];
+
+    /* -- Init ----------------------------------------------------- */
+    document.addEventListener('DOMContentLoaded', function () {
+      loadRegles();
+
+      /* Toggle label sync */
+      var chk = document.getElementById('ruleActive');
+      chk.addEventListener('change', function () {
+        document.getElementById('ruleActiveLabel').textContent = chk.checked ? 'Règle activée' : 'Règle désactivée';
+      });
+    });
+
+    /* -- Load rules from API -------------------------------------- */
+    async function loadRegles() {
+      var tbody = document.getElementById('reglesBody');
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#4A7A8A;padding:20px;">Chargement...</td></tr>';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/exceptions/regles-escalade');
+
+        if (!res) return; /* 401 redirected */
+
+        if (res.ok) {
+          var data = await res.json();
+          allRegles = data.content || data || [];
+          renderRegles(allRegles);
+          updateKPIs(allRegles);
+        } else {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#D93025;padding:20px;">Erreur lors du chargement (HTTP ' + res.status + ')</td></tr>';
+        }
+      } catch (e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#D93025;padding:20px;">Impossible de charger les règles. ' + e.message + '</td></tr>';
+      }
+    }
+
+    /* -- Render table rows ---------------------------------------- */
+    function renderRegles(items) {
+      var tbody = document.getElementById('reglesBody');
+
+      if (!items || !items.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#4A7A8A;padding:20px;">Aucune règle configurée.</td></tr>';
+        return;
+      }
+
+      var niveauBadge = { N1: 'badge-info', N2: 'badge-warning', N3: 'badge-pending', N4: 'badge-danger' };
+      var niveauLabel = { N1: 'N1 - Faible', N2: 'N2 - Moyen', N3: 'N3 - Élevé', N4: 'N4 - Critique' };
+
+      tbody.innerHTML = items.map(function (r) {
+        return '<tr>' +
+          '<td>' + escapeHtml(r.nom || r.description || '-') + '</td>' +
+          '<td style="font-family:monospace;">' + (r.seuil != null ? r.seuil.toLocaleString('fr-FR') : '-') + '</td>' +
+          '<td>' + escapeHtml(r.destinataires || '-') + '</td>' +
+          '<td><span class="badge ' + (niveauBadge[r.niveau] || 'badge-info') + '">' + (niveauLabel[r.niveau] || r.niveau || '-') + '</span></td>' +
+          '<td><span class="badge ' + (r.actif ? 'badge-success' : 'badge-secondary') + '">' + (r.actif ? 'Active' : 'Inactive') + '</span></td>' +
+          '<td>' +
+            '<button class="btn btn-outline btn-sm" onclick="editRule(' + r.id + ')" title="Modifier">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+              ' Modifier</button>' +
+            ' <button class="btn btn-sm ' + (r.actif ? 'btn-warning' : 'btn-success') + '" onclick="toggleRule(' + r.id + ', ' + (!r.actif) + ')" title="' + (r.actif ? 'Désactiver' : 'Activer') + '">' +
+              (r.actif ? 'Désactiver' : 'Activer') + '</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    /* -- Update KPI cards ----------------------------------------- */
+    function updateKPIs(items) {
+      var total = items.length;
+      var actives = 0;
+      var inactives = 0;
+      var critiques = 0;
+
+      items.forEach(function (r) {
+        if (r.actif) actives++;
+        else inactives++;
+        if ((r.niveau || '').toUpperCase() === 'N4') critiques++;
+      });
+
+      document.getElementById('kpiTotal').textContent = total;
+      document.getElementById('kpiActives').textContent = actives;
+      document.getElementById('kpiInactives').textContent = inactives;
+      document.getElementById('kpiCritiques').textContent = critiques;
+    }
+
+    /* -- Filter rules --------------------------------------------- */
+    function filterRegles() {
+      var q = document.getElementById('ruleSearch').value.toLowerCase();
+      var niveau = document.getElementById('ruleNiveau').value;
+      var statut = document.getElementById('ruleStatut').value;
+
+      var filtered = allRegles.filter(function (r) {
+        var matchQ = !q ||
+          (r.nom || r.description || '').toLowerCase().indexOf(q) !== -1 ||
+          (r.destinataires || '').toLowerCase().indexOf(q) !== -1;
+        var matchN = niveau === 'ALL' || (r.niveau || '').toUpperCase() === niveau;
+        var matchS = statut === 'ALL' ||
+          (statut === 'ACTIVE' && r.actif) ||
+          (statut === 'INACTIVE' && !r.actif);
+        return matchQ && matchN && matchS;
+      });
+
+      renderRegles(filtered);
+      updateKPIs(filtered);
+    }
+
+    /* -- Open modal (add or edit) --------------------------------- */
+    function openRuleModal(rule) {
+      var modal = document.getElementById('ruleModal');
+      modal.classList.add('active');
+
+      document.getElementById('ruleModalTitle').textContent = rule ? 'Modifier la règle' : 'Ajouter une règle';
+      document.getElementById('ruleId').value = rule ? rule.id : '';
+      document.getElementById('ruleNom').value = rule ? (rule.nom || rule.description || '') : '';
+      document.getElementById('ruleSeuil').value = rule ? (rule.seuil || '') : '';
+      document.getElementById('ruleNiveauSelect').value = rule ? (rule.niveau || 'N1') : 'N1';
+      document.getElementById('ruleDestinataires').value = rule ? (rule.destinataires || '') : '';
+      document.getElementById('ruleActive').checked = rule ? !!rule.actif : true;
+      document.getElementById('ruleActiveLabel').textContent = (rule ? !!rule.actif : true) ? 'Règle activée' : 'Règle désactivée';
+
+      clearFieldErrors();
+    }
+
+    /* -- Close modal ---------------------------------------------- */
+    function closeRuleModal() {
+      var modal = document.getElementById('ruleModal');
+      modal.classList.remove('active');
+      clearFieldErrors();
+    }
+
+    /* -- Edit rule (find by id, open modal) ----------------------- */
+    function editRule(id) {
+      var rule = allRegles.find(function (r) { return r.id === id; });
+      if (rule) openRuleModal(rule);
+    }
+
+    /* -- Save rule (create or update) ----------------------------- */
+    async function saveRule() {
+      var nom = document.getElementById('ruleNom').value.trim();
+      var seuil = document.getElementById('ruleSeuil').value;
+      var destinataires = document.getElementById('ruleDestinataires').value.trim();
+
+      /* Field validation */
+      clearFieldErrors();
+      var valid = true;
+
+      if (!nom) {
+        showFieldError('ruleNom', 'Le nom de la règle est obligatoire.');
+        valid = false;
+      }
+      if (!seuil && seuil !== '0') {
+        showFieldError('ruleSeuil', 'Le seuil est obligatoire.');
+        valid = false;
+      }
+      if (!destinataires) {
+        showFieldError('ruleDestinataires', 'Au moins un destinataire est requis.');
+        valid = false;
+      }
+
+      if (!valid) {
+        showToast('Veuillez remplir tous les champs obligatoires.', 'warning');
+        return;
+      }
+
+      var id = document.getElementById('ruleId').value;
+      var payload = {
+        nom: nom,
+        seuil: parseFloat(seuil),
+        niveau: document.getElementById('ruleNiveauSelect').value,
+        destinataires: destinataires,
+        actif: document.getElementById('ruleActive').checked
+      };
+
+      var btn = document.getElementById('btnSaveRule');
+      btn.disabled = true;
+      btn.textContent = 'Enregistrement...';
+
+      try {
+        var url = id
+          ? '/api/v1/exceptions/regles-escalade/' + id
+          : '/api/v1/exceptions/regles-escalade';
+        var method = id ? 'PUT' : 'POST';
+
+        var res = await SF.apiFetch(url, {
+          method: method,
+          body: JSON.stringify(payload)
+        });
+
+        if (!res) return; /* 401 redirected */
+
+        if (res.ok || res.status === 201) {
+          showToast(id ? 'Règle mise à jour avec succès.' : 'Règle créée avec succès.', 'success');
+          closeRuleModal();
+          loadRegles();
+        } else {
+          var err = await res.json().catch(function () { return {}; });
+          var msg = err.message || (err.errors ? err.errors.map(function (e) { return e.defaultMessage || e.message || e; }).join(' · ') : 'Erreur lors de l\'enregistrement.');
+          showToast(msg, 'error');
+        }
+      } catch (e) {
+        showToast(e.message || 'Impossible de joindre le serveur.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Enregistrer';
+      }
+    }
+
+    /* -- Toggle rule active/inactive ------------------------------ */
+    async function toggleRule(id, enable) {
+      try {
+        var res = await SF.apiFetch('/api/v1/exceptions/regles-escalade/' + id, {
+          method: 'PATCH',
+          body: JSON.stringify({ actif: enable })
+        });
+
+        if (!res) return; /* 401 redirected */
+
+        if (res.ok) {
+          showToast(enable ? 'Règle activée.' : 'Règle désactivée.', 'success');
+          loadRegles();
+        } else {
+          showToast('Erreur lors du changement de statut.', 'error');
+        }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    /* -- Validation helpers --------------------------------------- */
+    function showFieldError(fieldId, message) {
+      var input = document.getElementById(fieldId);
+      var err = document.getElementById(fieldId + '-error');
+      if (input) input.classList.add('is-invalid');
+      if (err) {
+        err.textContent = message;
+        err.style.display = 'block';
+      }
+    }
+
+    function clearFieldErrors() {
+      var fields = ['ruleNom', 'ruleSeuil', 'ruleDestinataires'];
+      fields.forEach(function (id) {
+        var input = document.getElementById(id);
+        var err = document.getElementById(id + '-error');
+        if (input) input.classList.remove('is-invalid');
+        if (err) err.style.display = 'none';
+      });
+    }
+
+    /* -- XSS-safe text -------------------------------------------- */
+    function escapeHtml(str) {
+      if (!str) return '';
+      var div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+
+    /* -- Close modal on overlay click ----------------------------- */
+    document.addEventListener('click', function (e) {
+      if (e.target && e.target.id === 'ruleModal') {
+        closeRuleModal();
+      }
+    });
+
+    /* -- Close modal on Escape key -------------------------------- */
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeRuleModal();
+    });
+  </script>
+</body>
+</html>

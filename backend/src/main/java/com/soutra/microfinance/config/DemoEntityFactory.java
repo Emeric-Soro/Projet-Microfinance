@@ -45,8 +45,9 @@ final class DemoEntityFactory {
         client.setJustificatifRevenusUrl("demo/kyc/" + seed.login() + "/revenus.pdf");
         client.setProfession(seed.profession());
         client.setEmployeur(seed.secteurActivite());
-        client.setPaysNationalite("Cote d'Ivoire");
-        client.setPaysResidence("Cote d'Ivoire");
+        String pays = seed.telephone().startsWith("+243") ? "RDC" : "Cote d'Ivoire";
+        client.setPaysNationalite(pays);
+        client.setPaysResidence(pays);
         client.setPep(false);
         client.setNiveauRisque(NiveauRisqueClient.FAIBLE);
         client.setStatutKyc(StatutKycClient.VALIDE);

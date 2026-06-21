@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documents — Soutra Finance E-Banking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/portal.css">
+  <style>
+    /* ── Documents Page Specific ─────────────────────── */
+
+    .docs-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .docs-filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--font-family);
+      color: var(--color-text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    .filter-chip.active {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(8, 67, 85, 0.2);
+    }
+
+    .filter-chip .chip-count {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      padding: 1px 7px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .filter-chip.active .chip-count {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Upload area */
+    .docs-upload-area {
+      margin-bottom: 30px;
+    }
+
+    .upload-zone {
+      border: 2px dashed var(--border-color);
+      border-radius: 16px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: rgba(8, 67, 85, 0.005);
+      position: relative;
+    }
+
+    .upload-zone:hover {
+      border-color: var(--color-primary);
+      background: rgba(8, 67, 85, 0.02);
+    }
+
+    .upload-zone.dragover {
+      border-color: var(--color-primary);
+      background: rgba(8, 67, 85, 0.04);
+      transform: scale(1.01);
+    }
+
+    .upload-zone-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+      opacity: 0.6;
+    }
+
+    .upload-zone-text {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 6px;
+    }
+
+    .upload-zone-hint {
+      font-size: 13px;
+      color: var(--color-text-muted);
+    }
+
+    .upload-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    /* Category section */
+    .docs-category {
+      margin-bottom: 30px;
+    }
+
+    .docs-category-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .docs-category-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .docs-category-icon.cat-cni {
+      background: rgba(140, 213, 250, 0.2);
+      color: var(--color-primary);
+    }
+
+    .docs-category-icon.cat-justificatif {
+      background: rgba(250, 180, 130, 0.2);
+      color: var(--color-accent-dark);
+    }
+
+    .docs-category-icon.cat-contrat {
+      background: rgba(46, 125, 50, 0.1);
+      color: var(--color-success);
+    }
+
+    .docs-category-icon.cat-autre {
+      background: rgba(8, 67, 85, 0.08);
+      color: var(--color-text-muted);
+    }
+
+    .docs-category-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .docs-category-count {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      margin-left: auto;
+    }
+
+    /* Document list item */
+    .doc-item {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 16px 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+    }
+
+    .doc-item:hover {
+      background: var(--color-surface-hover);
+      border-color: var(--color-primary-light);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(8, 67, 85, 0.06);
+    }
+
+    .doc-icon {
+      width: 42px;
+      height: 42px;
+      min-width: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .doc-icon.type-pdf {
+      background: rgba(217, 48, 37, 0.1);
+      color: var(--color-danger);
+    }
+
+    .doc-icon.type-image {
+      background: rgba(140, 213, 250, 0.2);
+      color: var(--color-primary);
+    }
+
+    .doc-icon.type-doc {
+      background: rgba(46, 125, 50, 0.1);
+      color: var(--color-success);
+    }
+
+    .doc-icon.type-other {
+      background: rgba(8, 67, 85, 0.08);
+      color: var(--color-text-muted);
+    }
+
+    .doc-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .doc-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+
+    .doc-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--color-text-muted);
+    }
+
+    .doc-meta-sep {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--color-text-muted);
+      opacity: 0.5;
+    }
+
+    .doc-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .doc-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: #ffffff;
+      color: var(--color-text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 15px;
+    }
+
+    .doc-btn:hover {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(8, 67, 85, 0.2);
+    }
+
+    .doc-btn.doc-btn-danger:hover {
+      background: var(--color-danger);
+      border-color: var(--color-danger);
+    }
+
+    /* Upload progress bar */
+    .upload-progress {
+      display: none;
+      margin-top: 15px;
+      background: rgba(8, 67, 85, 0.05);
+      border-radius: 10px;
+      overflow: hidden;
+      height: 6px;
+    }
+
+    .upload-progress.active {
+      display: block;
+    }
+
+    .upload-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+      border-radius: 10px;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* Category selection for upload modal */
+    .upload-modal {
+      display: none;
+      position: fixed;
+      top: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 500px;
+      z-index: 100;
+      box-shadow: 0 30px 60px rgba(8, 67, 85, 0.25);
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(8, 67, 85, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 90;
+    }
+
+    .upload-file-preview {
+      background: rgba(8, 67, 85, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .upload-file-icon {
+      font-size: 28px;
+    }
+
+    .upload-file-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--color-text);
+    }
+
+    .upload-file-size {
+      font-size: 12px;
+      color: var(--color-text-muted);
+    }
+
+    /* Empty state */
+    .docs-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--color-text-muted);
+    }
+
+    .docs-empty-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+
+    .docs-empty-text {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: var(--color-text);
+    }
+
+    .docs-empty-sub {
+      font-size: 13px;
+    }
+
+    /* Stats summary */
+    .docs-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .docs-stat-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .docs-stat-card:hover {
+      border-color: var(--color-primary-light);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(8, 67, 85, 0.06);
+    }
+
+    .docs-stat-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .docs-stat-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--color-primary);
+      margin-bottom: 2px;
+    }
+
+    .docs-stat-label {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .docs-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .docs-filters {
+        width: 100%;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 5px;
+      }
+
+      .filter-chip {
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .doc-item {
+        padding: 14px 16px;
+        gap: 12px;
+      }
+
+      .docs-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .doc-meta {
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .docs-stats {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="portal-layout">
+    <!-- Sidebar -->
+    <aside class="portal-sidebar">
+      <div class="portal-brand">
+        <div class="brand-icon">S</div>
+        <span class="brand-name">Soutra Finance</span>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="dashboard">📊 Tableau de bord</a></li>
+        <li class="nav-item"><a href="comptes">💳 Mes Comptes</a></li>
+        <li class="nav-item"><a href="virement">💸 Virements</a></li>
+        <li class="nav-item"><a href="credits">📈 Crédits</a></li>
+        <li class="nav-item"><a href="reclamations">✉️ Réclamations</a></li>
+        <li class="nav-item"><a href="notifications-client">🔔 Notifications</a></li>
+        <li class="nav-item active"><a href="documents">📄 Documents</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+          <span class="user-name" id="portalUserName">Chargement...</span>
+          <span class="user-role">Client E-Banking</span>
+        </div>
+        <a href="#" class="logout-btn" id="portalLogoutBtn">🚪</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="header-title">
+          <h2>Mes Documents</h2>
+          <p>Consultez, téléversez et gérez vos pièces justificatives, identités et contrats.</p>
+        </div>
+        <button class="btn btn-primary" id="btnUpload">
+          <span>📤 Téléverser</span>
+        </button>
+      </header>
+
+      <!-- Stats Summary -->
+      <div class="docs-stats" id="docsStats">
+        <div class="docs-stat-card">
+          <div class="docs-stat-icon">📁</div>
+          <div class="docs-stat-value" id="statTotal">0</div>
+          <div class="docs-stat-label">Total</div>
+        </div>
+        <div class="docs-stat-card">
+          <div class="docs-stat-icon">🪪</div>
+          <div class="docs-stat-value" id="statCNI">0</div>
+          <div class="docs-stat-label">CNI</div>
+        </div>
+        <div class="docs-stat-card">
+          <div class="docs-stat-icon">📋</div>
+          <div class="docs-stat-value" id="statJustificatif">0</div>
+          <div class="docs-stat-label">Justificatifs</div>
+        </div>
+        <div class="docs-stat-card">
+          <div class="docs-stat-icon">📝</div>
+          <div class="docs-stat-value" id="statContrat">0</div>
+          <div class="docs-stat-label">Contrats</div>
+        </div>
+      </div>
+
+      <!-- Upload Zone -->
+      <div class="card docs-upload-area" id="uploadZoneCard" style="display: none;">
+        <h3 class="card-section-title">📤 Téléverser un document</h3>
+        <div class="upload-zone" id="uploadZone">
+          <div class="upload-zone-icon">📂</div>
+          <div class="upload-zone-text">Glissez votre fichier ici ou cliquez pour parcourir</div>
+          <div class="upload-zone-hint">PDF, JPG, PNG — Max 10 Mo</div>
+          <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+        </div>
+        <div class="upload-progress" id="uploadProgress">
+          <div class="upload-progress-bar" id="uploadProgressBar"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <!-- Toolbar: Filters -->
+        <div class="docs-toolbar">
+          <div class="docs-filters" id="docsFilters">
+            <button class="filter-chip active" data-filter="all">
+              Tous <span class="chip-count" id="countAll">0</span>
+            </button>
+            <button class="filter-chip" data-filter="CNI">
+              🪪 CNI
+            </button>
+            <button class="filter-chip" data-filter="JUSTIFICATIF">
+              📋 Justificatifs
+            </button>
+            <button class="filter-chip" data-filter="CONTRAT">
+              📝 Contrats
+            </button>
+            <button class="filter-chip" data-filter="AUTRE">
+              📎 Autres
+            </button>
+          </div>
+        </div>
+
+        <!-- Document List by Category -->
+        <div id="docsList">
+          <div class="no-data-lg">Chargement de vos documents...</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Upload Modal (Category Selection) -->
+  <div id="uploadModal" class="card upload-modal">
+    <div class="card-header">
+      <span class="card-title">📤 Téléverser un document</span>
+      <button class="btn btn-danger btn-sm" onclick="closeUploadModal()">Fermer</button>
+    </div>
+    <div class="upload-file-preview" id="uploadFilePreview">
+      <span class="upload-file-icon">📄</span>
+      <div>
+        <div class="upload-file-name" id="uploadFileName">fichier.pdf</div>
+        <div class="upload-file-size" id="uploadFileSize">0 Ko</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="docCategory">Catégorie du document *</label>
+      <select id="docCategory" class="input-control">
+        <option value="CNI">🪪 Carte Nationale d'Identité</option>
+        <option value="JUSTIFICATIF">📋 Justificatif de domicile</option>
+        <option value="CONTRAT">📝 Contrat signé</option>
+        <option value="AUTRE">📎 Autre document</option>
+      </select>
+    </div>
+    <div class="form-group mt-15">
+      <label for="docLabel">Libellé (optionnel)</label>
+      <input type="text" id="docLabel" class="input-control" placeholder="Ex : CNI recto, Justificatif EDF...">
+    </div>
+    <button class="btn btn-primary mt-15 w-100" id="btnConfirmUpload">
+      <span>Confirmer le téléversement</span>
+    </button>
+  </div>
+  <div id="modalOverlay" class="modal-overlay" onclick="closeUploadModal()"></div>
+
+  <script src="../assets/js/portal-app.js?v=1.0.1"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      var allDocuments = [];
+      var currentFilter = 'all';
+      var pendingFile = null;
+
+      /* ── Category helpers ────────────────────────────── */
+
+      var CATEGORY_META = {
+        CNI:           { icon: '🪪', label: 'Carte Nationale d\'Identité', cssClass: 'cat-cni' },
+        JUSTIFICATIF:  { icon: '📋', label: 'Justificatifs',              cssClass: 'cat-justificatif' },
+        CONTRAT:       { icon: '📝', label: 'Contrats',                   cssClass: 'cat-contrat' },
+        AUTRE:         { icon: '📎', label: 'Autres documents',           cssClass: 'cat-autre' }
+      };
+
+      function getCategoryMeta(cat) {
+        return CATEGORY_META[cat] || CATEGORY_META['AUTRE'];
+      }
+
+      /* ── File type helpers ───────────────────────────── */
+
+      function fileIcon(filename) {
+        if (!filename) return { icon: '📄', cssClass: 'type-other' };
+        var ext = filename.split('.').pop().toLowerCase();
+        if (ext === 'pdf') return { icon: '📕', cssClass: 'type-pdf' };
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].indexOf(ext) !== -1) return { icon: '🖼️', cssClass: 'type-image' };
+        if (['doc', 'docx'].indexOf(ext) !== -1) return { icon: '📗', cssClass: 'type-doc' };
+        return { icon: '📄', cssClass: 'type-other' };
+      }
+
+      function formatFileSize(bytes) {
+        if (!bytes || bytes === 0) return '0 o';
+        var units = ['o', 'Ko', 'Mo', 'Go'];
+        var i = Math.floor(Math.log(bytes) / Math.log(1024));
+        var size = (bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0);
+        return size + ' ' + units[i];
+      }
+
+      /* ── Date formatting ─────────────────────────────── */
+
+      function formatDate(dateStr) {
+        if (!dateStr) return '';
+        var d = new Date(dateStr);
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      }
+
+      function formatDateTime(dateStr) {
+        if (!dateStr) return '';
+        var d = new Date(dateStr);
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+               ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+      }
+
+      /* ── API layer ───────────────────────────────────── */
+
+      async function loadDocuments() {
+        try {
+          var res = await window.SF_Client.apiFetch('/api/v1/mobile/documents');
+          if (res.ok) {
+            var data = await res.json();
+            allDocuments = Array.isArray(data) ? data : (data.content || []);
+            renderDocuments();
+            updateStats();
+          } else {
+            showToast('Impossible de charger les documents.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Erreur technique lors du chargement des documents.', 'error');
+        }
+      }
+
+      async function uploadDocument(file, category, label) {
+        var formData = new FormData();
+        formData.append('file', file);
+        formData.append('categorie', category);
+        if (label) formData.append('libelle', label);
+
+        var progressEl = document.getElementById('uploadProgress');
+        var progressBar = document.getElementById('uploadProgressBar');
+        progressEl.classList.add('active');
+        progressBar.style.width = '30%';
+
+        try {
+          progressBar.style.width = '60%';
+          var res = await window.SF_Client.apiFetch('/api/v1/mobile/documents', {
+            method: 'POST',
+            body: formData,
+            headers: {}  // Let browser set Content-Type with boundary for FormData
+          });
+
+          progressBar.style.width = '100%';
+
+          if (res.ok || res.status === 201) {
+            showToast('Document téléversé avec succès.', 'success');
+            loadDocuments();
+          } else {
+            var errData = await res.json().catch(function() { return {}; });
+            showToast(errData.message || 'Échec du téléversement.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Erreur technique lors du téléversement.', 'error');
+        } finally {
+          setTimeout(function () {
+            progressEl.classList.remove('active');
+            progressBar.style.width = '0%';
+          }, 800);
+        }
+      }
+
+      async function downloadDocument(docId, filename) {
+        try {
+          var res = await window.SF_Client.apiFetch('/api/v1/mobile/documents/' + docId + '/download');
+          if (res.ok) {
+            var blob = await res.blob();
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename || 'document';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          } else {
+            showToast('Impossible de télécharger le document.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Erreur technique lors du téléchargement.', 'error');
+        }
+      }
+
+      async function deleteDocument(docId) {
+        if (!confirm('Voulez-vous vraiment supprimer ce document ?')) return;
+
+        try {
+          var res = await window.SF_Client.apiFetch('/api/v1/mobile/documents/' + docId, {
+            method: 'DELETE'
+          });
+          if (res.ok || res.status === 204) {
+            showToast('Document supprimé.', 'success');
+            loadDocuments();
+          } else {
+            showToast('Impossible de supprimer le document.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Erreur technique lors de la suppression.', 'error');
+        }
+      }
+
+      /* ── Rendering ───────────────────────────────────── */
+
+      function getFilteredDocuments() {
+        if (currentFilter === 'all') return allDocuments;
+        return allDocuments.filter(function (d) {
+          return (d.categorie || '').toUpperCase() === currentFilter;
+        });
+      }
+
+      function renderDocuments() {
+        var container = document.getElementById('docsList');
+        var filtered = getFilteredDocuments();
+
+        if (filtered.length === 0) {
+          container.innerHTML =
+            '<div class="docs-empty">' +
+              '<div class="docs-empty-icon">📂</div>' +
+              '<div class="docs-empty-text">Aucun document trouvé</div>' +
+              '<div class="docs-empty-sub">' +
+                (currentFilter === 'all'
+                  ? 'Vous n\'avez encore téléversé aucun document.'
+                  : 'Aucun document dans cette catégorie.') +
+              '</div>' +
+            '</div>';
+          return;
+        }
+
+        // Group by category
+        var groups = {};
+        var categoryOrder = ['CNI', 'JUSTIFICATIF', 'CONTRAT', 'AUTRE'];
+
+        filtered.forEach(function (doc) {
+          var cat = (doc.categorie || 'AUTRE').toUpperCase();
+          if (!groups[cat]) groups[cat] = [];
+          groups[cat].push(doc);
+        });
+
+        var html = '';
+        categoryOrder.forEach(function (cat) {
+          if (!groups[cat] || groups[cat].length === 0) return;
+
+          var meta = getCategoryMeta(cat);
+          html +=
+            '<div class="docs-category">' +
+              '<div class="docs-category-header">' +
+                '<div class="docs-category-icon ' + meta.cssClass + '">' + meta.icon + '</div>' +
+                '<span class="docs-category-title">' + escapeHtml(meta.label) + '</span>' +
+                '<span class="docs-category-count">' + groups[cat].length + ' document' + (groups[cat].length > 1 ? 's' : '') + '</span>' +
+              '</div>';
+
+          groups[cat].forEach(function (doc) {
+            var ft = fileIcon(doc.nomFichier || doc.nom);
+            var fileName = doc.nomFichier || doc.nom || 'Document sans nom';
+            var fileSize = formatFileSize(doc.taille || doc.size);
+            var docDate = formatDate(doc.dateCreation || doc.dateUpload || doc.createdAt);
+            var docId = doc.id;
+            var label = doc.libelle || '';
+
+            html +=
+              '<div class="doc-item">' +
+                '<div class="doc-icon ' + ft.cssClass + '">' + ft.icon + '</div>' +
+                '<div class="doc-info">' +
+                  '<div class="doc-name" title="' + escapeHtml(fileName) + '">' + escapeHtml(label || fileName) + '</div>' +
+                  '<div class="doc-meta">' +
+                    '<span>' + escapeHtml(fileName) + '</span>' +
+                    (label ? '<span class="doc-meta-sep"></span><span>' + escapeHtml(fileName) + '</span>' : '') +
+                    '<span class="doc-meta-sep"></span>' +
+                    '<span>' + fileSize + '</span>' +
+                    '<span class="doc-meta-sep"></span>' +
+                    '<span>' + docDate + '</span>' +
+                  '</div>' +
+                '</div>' +
+                '<div class="doc-actions">' +
+                  '<button class="doc-btn" title="Télécharger" onclick="window._docs.download(' + docId + ',\'' + escapeHtml(fileName).replace(/'/g, "\\'") + '\')">⬇️</button>' +
+                  '<button class="doc-btn doc-btn-danger" title="Supprimer" onclick="window._docs.delete(' + docId + ')">🗑️</button>' +
+                '</div>' +
+              '</div>';
+          });
+
+          html += '</div>';
+        });
+
+        container.innerHTML = html;
+      }
+
+      function updateStats() {
+        var total = allDocuments.length;
+        var cni = 0, justificatif = 0, contrat = 0;
+
+        allDocuments.forEach(function (d) {
+          var cat = (d.categorie || '').toUpperCase();
+          if (cat === 'CNI') cni++;
+          else if (cat === 'JUSTIFICATIF') justificatif++;
+          else if (cat === 'CONTRAT') contrat++;
+        });
+
+        document.getElementById('statTotal').textContent = total;
+        document.getElementById('statCNI').textContent = cni;
+        document.getElementById('statJustificatif').textContent = justificatif;
+        document.getElementById('statContrat').textContent = contrat;
+        document.getElementById('countAll').textContent = total;
+      }
+
+      /* ── Upload Modal ────────────────────────────────── */
+
+      function openUploadModal(file) {
+        pendingFile = file;
+        document.getElementById('uploadFileName').textContent = file.name;
+        document.getElementById('uploadFileSize').textContent = formatFileSize(file.size);
+
+        // Auto-select category based on filename
+        var nameLower = file.name.toLowerCase();
+        var catSelect = document.getElementById('docCategory');
+        if (nameLower.indexOf('cni') !== -1 || nameLower.indexOf('carte') !== -1 || nameLower.indexOf('identite') !== -1 || nameLower.indexOf('identit') !== -1) {
+          catSelect.value = 'CNI';
+        } else if (nameLower.indexOf('justificatif') !== -1 || nameLower.indexOf('domicile') !== -1 || nameLower.indexOf('edf') !== -1 || nameLower.indexOf('facture') !== -1) {
+          catSelect.value = 'JUSTIFICATIF';
+        } else if (nameLower.indexOf('contrat') !== -1 || nameLower.indexOf('contrat') !== -1) {
+          catSelect.value = 'CONTRAT';
+        } else {
+          catSelect.value = 'AUTRE';
+        }
+
+        document.getElementById('docLabel').value = '';
+        document.getElementById('uploadModal').style.display = 'block';
+        document.getElementById('modalOverlay').style.display = 'block';
+      }
+
+      window.closeUploadModal = function () {
+        document.getElementById('uploadModal').style.display = 'none';
+        document.getElementById('modalOverlay').style.display = 'none';
+        pendingFile = null;
+      };
+
+      /* ── Event Binding ───────────────────────────────── */
+
+      document.addEventListener('DOMContentLoaded', function () {
+        loadDocuments();
+
+        // Upload zone toggle
+        var btnUpload = document.getElementById('btnUpload');
+        var uploadCard = document.getElementById('uploadZoneCard');
+
+        btnUpload.addEventListener('click', function () {
+          var isVisible = uploadCard.style.display !== 'none';
+          uploadCard.style.display = isVisible ? 'none' : 'block';
+        });
+
+        // File input change
+        var fileInput = document.getElementById('fileInput');
+        fileInput.addEventListener('change', function () {
+          if (fileInput.files && fileInput.files[0]) {
+            var file = fileInput.files[0];
+            if (file.size > 10 * 1024 * 1024) {
+              showToast('Le fichier dépasse la taille maximale de 10 Mo.', 'warning');
+              fileInput.value = '';
+              return;
+            }
+            openUploadModal(file);
+            fileInput.value = '';
+          }
+        });
+
+        // Drag and drop
+        var uploadZone = document.getElementById('uploadZone');
+        uploadZone.addEventListener('dragover', function (e) {
+          e.preventDefault();
+          uploadZone.classList.add('dragover');
+        });
+        uploadZone.addEventListener('dragleave', function () {
+          uploadZone.classList.remove('dragover');
+        });
+        uploadZone.addEventListener('drop', function (e) {
+          e.preventDefault();
+          uploadZone.classList.remove('dragover');
+          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            var file = e.dataTransfer.files[0];
+            if (file.size > 10 * 1024 * 1024) {
+              showToast('Le fichier dépasse la taille maximale de 10 Mo.', 'warning');
+              return;
+            }
+            openUploadModal(file);
+          }
+        });
+
+        // Confirm upload button in modal
+        document.getElementById('btnConfirmUpload').addEventListener('click', function () {
+          if (!pendingFile) return;
+          var category = document.getElementById('docCategory').value;
+          var label = document.getElementById('docLabel').value.trim();
+          closeUploadModal();
+          uploadDocument(pendingFile, category, label);
+        });
+
+        // Filter chips
+        var chips = document.querySelectorAll('.filter-chip');
+        chips.forEach(function (chip) {
+          chip.addEventListener('click', function () {
+            chips.forEach(function (c) { c.classList.remove('active'); });
+            chip.classList.add('active');
+            currentFilter = chip.getAttribute('data-filter');
+            renderDocuments();
+          });
+        });
+      });
+
+      // Expose functions for inline onclick handlers
+      window._docs = {
+        download: downloadDocument,
+        delete: deleteDocument
+      };
+
+    })();
+  </script>
+</body>
+</html>

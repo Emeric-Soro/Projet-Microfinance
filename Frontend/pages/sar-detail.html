@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Détail SAR - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    /* ── SAR detail-specific styles ─────────────────────── */
+    .sar-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .sar-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .sar-kpi {
+      background: var(--color-surface);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .sar-kpi-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .sar-kpi-icon svg { width: 20px; height: 20px; }
+    .sar-kpi-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 2px; }
+    .sar-kpi-value { font-size: 18px; font-weight: 700; color: var(--color-primary); }
+
+    /* ── Status stepper ──────────────────────────────────── */
+    .sar-stepper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 8px 0;
+    }
+    .sar-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-width: 100px;
+      position: relative;
+      z-index: 1;
+    }
+    .sar-step-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      border: 3px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text-muted);
+      transition: all 0.3s ease;
+    }
+    .sar-step.active .sar-step-dot {
+      border-color: var(--color-primary);
+      background: var(--color-primary);
+      color: #fff;
+    }
+    .sar-step.done .sar-step-dot {
+      border-color: var(--color-success);
+      background: var(--color-success);
+      color: #fff;
+    }
+    .sar-step-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .sar-step.active .sar-step-label,
+    .sar-step.done .sar-step-label {
+      color: var(--color-primary);
+    }
+    .sar-connector {
+      flex: 1;
+      height: 3px;
+      background: var(--color-border);
+      margin: 0 -4px;
+      margin-bottom: 22px;
+      transition: background 0.3s ease;
+    }
+    .sar-connector.done { background: var(--color-success); }
+    .sar-connector.active { background: var(--color-primary); }
+
+    /* ── Info rows ───────────────────────────────────────── */
+    .sar-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .sar-info-row:last-child { border-bottom: none; }
+    .sar-info-label {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      font-weight: 500;
+      min-width: 140px;
+    }
+    .sar-info-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-primary);
+      text-align: right;
+      max-width: 280px;
+      word-break: break-word;
+    }
+
+    /* ── Timeline ────────────────────────────────────────── */
+    .sar-timeline {
+      position: relative;
+      padding-left: 28px;
+    }
+    .sar-timeline::before {
+      content: '';
+      position: absolute;
+      left: 10px;
+      top: 4px;
+      bottom: 4px;
+      width: 2px;
+      background: var(--color-border);
+    }
+    .sar-tl-item {
+      position: relative;
+      padding: 0 0 20px 20px;
+    }
+    .sar-tl-item:last-child { padding-bottom: 0; }
+    .sar-tl-dot {
+      position: absolute;
+      left: -22px;
+      top: 4px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      border: 2px solid var(--color-surface);
+      box-shadow: 0 0 0 2px var(--color-primary);
+    }
+    .sar-tl-dot.success {
+      background: var(--color-success);
+      box-shadow: 0 0 0 2px var(--color-success);
+    }
+    .sar-tl-dot.warning {
+      background: var(--color-warning);
+      box-shadow: 0 0 0 2px var(--color-warning);
+    }
+    .sar-tl-dot.danger {
+      background: var(--color-danger);
+      box-shadow: 0 0 0 2px var(--color-danger);
+    }
+    .sar-tl-date {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+    .sar-tl-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+    .sar-tl-desc {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      margin-top: 2px;
+    }
+    .sar-tl-author {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── Document list ───────────────────────────────────── */
+    .sar-doc-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--color-bg);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      transition: var(--transition);
+    }
+    .sar-doc-item:hover { background: var(--color-secondary-light); }
+    .sar-doc-item:last-child { margin-bottom: 0; }
+    .sar-doc-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .sar-doc-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      background: rgba(8,67,85,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .sar-doc-icon svg { width: 18px; height: 18px; color: var(--color-primary); }
+    .sar-doc-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sar-doc-meta {
+      font-size: 11px;
+      color: var(--color-text-muted);
+    }
+
+    /* ── Decision form ───────────────────────────────────── */
+    .sar-decision-card {
+      border-left: 4px solid var(--color-accent);
+    }
+    .sar-decision-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .sar-decision-opt {
+      padding: 12px 16px;
+      border: 2px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      background: var(--color-surface);
+    }
+    .sar-decision-opt:hover {
+      border-color: var(--color-primary-light);
+      background: var(--color-bg);
+    }
+    .sar-decision-opt.selected {
+      border-color: var(--color-primary);
+      background: rgba(8,67,85,0.06);
+    }
+    .sar-decision-opt-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-primary);
+      margin-bottom: 2px;
+    }
+    .sar-decision-opt-desc {
+      font-size: 11px;
+      color: var(--color-text-muted);
+    }
+
+    /* ── Action bar ──────────────────────────────────────── */
+    .sar-action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 20px;
+      background: var(--color-bg);
+      border-radius: var(--radius-md);
+      margin-top: 16px;
+    }
+    .sar-action-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sar-action-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Responsive ──────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .sar-detail-grid { grid-template-columns: 1fr; }
+      .sar-kpi-grid { grid-template-columns: 1fr 1fr; }
+      .sar-decision-options { grid-template-columns: 1fr; }
+      .sar-step { min-width: 70px; }
+      .sar-step-label { font-size: 10px; }
+      .sar-action-bar { flex-direction: column; }
+      .sar-action-bar-left, .sar-action-bar-right { width: 100%; justify-content: center; }
+    }
+    @media (max-width: 480px) {
+      .sar-kpi-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Détail déclaration SAR</div>
+            <div class="topbar-breadcrumb">Conformité / SAR / Détail</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn" onclick="loadSARDetail()" title="Rafraîchir">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <!-- Page header -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title" id="sarTitle">Chargement...</h1>
+            <p class="page-subtitle" id="sarSubtitle">-</p>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-outline" onclick="window.location.href='sar-liste.html'">&#8592; Retour</button>
+            <button class="btn btn-outline" onclick="exportSARPdf()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exporter PDF
+            </button>
+            <button class="btn btn-primary" id="btnMettreAJour" style="display:none;" onclick="scrollToDecision()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>
+              Mettre à jour statut
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI strip -->
+        <div class="sar-kpi-grid" id="sarKpis" style="display:none;">
+          <div class="sar-kpi">
+            <div class="sar-kpi-icon" style="background:rgba(8,67,85,0.08);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div>
+              <div class="sar-kpi-label">Statut</div>
+              <div class="sar-kpi-value" id="kpiStatut">-</div>
+            </div>
+          </div>
+          <div class="sar-kpi">
+            <div class="sar-kpi-icon" style="background:rgba(217,48,37,0.08);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-danger)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div>
+              <div class="sar-kpi-label">Urgence</div>
+              <div class="sar-kpi-value" id="kpiUrgence">-</div>
+            </div>
+          </div>
+          <div class="sar-kpi">
+            <div class="sar-kpi-icon" style="background:rgba(46,125,50,0.08);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <div>
+              <div class="sar-kpi-label">Date déclaration</div>
+              <div class="sar-kpi-value" id="kpiDate" style="font-size:14px;">-</div>
+            </div>
+          </div>
+          <div class="sar-kpi">
+            <div class="sar-kpi-icon" style="background:rgba(250,180,130,0.15);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-dark)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div>
+              <div class="sar-kpi-label">Montant</div>
+              <div class="sar-kpi-value" id="kpiMontant" style="font-size:14px;">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status progression stepper -->
+        <section class="card" style="margin-bottom:16px;" id="sarStepperCard" style="display:none;">
+          <div class="card-header">
+            <div class="card-title">Progression du statut</div>
+            <span class="badge" id="stepperBadge">-</span>
+          </div>
+          <div style="padding:24px 20px 16px;">
+            <div class="sar-stepper" id="sarStepper">
+              <div class="sar-step" data-step="BROUILLON">
+                <div class="sar-step-dot">1</div>
+                <div class="sar-step-label">Brouillon</div>
+              </div>
+              <div class="sar-connector" data-idx="0"></div>
+              <div class="sar-step" data-step="SOUMISE">
+                <div class="sar-step-dot">2</div>
+                <div class="sar-step-label">Soumise</div>
+              </div>
+              <div class="sar-connector" data-idx="1"></div>
+              <div class="sar-step" data-step="EN_COURS">
+                <div class="sar-step-dot">3</div>
+                <div class="sar-step-label">En cours</div>
+              </div>
+              <div class="sar-connector" data-idx="2"></div>
+              <div class="sar-step" data-step="TRAITEE">
+                <div class="sar-step-dot">4</div>
+                <div class="sar-step-label">Traitée</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Two-column: SAR info + Client info -->
+        <div class="sar-detail-grid">
+          <section class="card">
+            <div class="card-header">
+              <div class="card-title">Informations de la déclaration</div>
+            </div>
+            <div style="padding:16px 20px;" id="sarInfoContent">
+              <p style="color:var(--color-text-secondary);">Chargement...</p>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <div class="card-title">Client concerné</div>
+            </div>
+            <div style="padding:16px 20px;" id="sarClientContent">
+              <p style="color:var(--color-text-secondary);">Chargement...</p>
+            </div>
+          </section>
+        </div>
+
+        <!-- Description des faits -->
+        <section class="card" style="margin-top:16px;">
+          <div class="card-header">
+            <div class="card-title">Description des faits</div>
+          </div>
+          <div style="padding:16px 20px;" id="sarDescription">
+            <p style="color:var(--color-text-secondary);">Chargement...</p>
+          </div>
+        </section>
+
+        <!-- Attached documents -->
+        <section class="card" style="margin-top:16px;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Pièces jointes</div>
+              <div class="card-subtitle" id="sarDocCount">-</div>
+            </div>
+          </div>
+          <div id="sarPieces">
+            <p style="color:var(--color-text-secondary);">Chargement...</p>
+          </div>
+        </section>
+
+        <!-- Timeline of actions -->
+        <section class="card" style="margin-top:16px;">
+          <div class="card-header">
+            <div class="card-title">Chronologie des actions</div>
+          </div>
+          <div style="padding:20px;" id="sarTimeline">
+            <p style="color:var(--color-text-secondary);">Chargement...</p>
+          </div>
+        </section>
+
+        <!-- Decision form for supervisor -->
+        <section class="card sar-decision-card" style="margin-top:16px;" id="sarDecisionCard">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Décision du superviseur</div>
+              <div class="card-subtitle">Endpoint : PUT /api/v1/conformite/sar/{id}</div>
+            </div>
+          </div>
+          <div style="padding:0 20px 20px;">
+            <!-- Decision options -->
+            <div class="sar-decision-options" id="sarDecisionOptions">
+              <div class="sar-decision-opt" data-value="SOUMISE" onclick="selectDecision(this)">
+                <div class="sar-decision-opt-label">Soumise</div>
+                <div class="sar-decision-opt-desc">Envoyer pour traitement</div>
+              </div>
+              <div class="sar-decision-opt" data-value="TRAITEE" onclick="selectDecision(this)">
+                <div class="sar-decision-opt-label">Traitée</div>
+                <div class="sar-decision-opt-desc">Marquer comme résolue</div>
+              </div>
+              <div class="sar-decision-opt" data-value="REJETEE" onclick="selectDecision(this)">
+                <div class="sar-decision-opt-label">Rejetée</div>
+                <div class="sar-decision-opt-desc">Rejeter la déclaration</div>
+              </div>
+            </div>
+
+            <!-- Motif de la décision -->
+            <div class="form-group">
+              <label class="form-label" for="sarDecisionMotif">Motif de la décision *</label>
+              <textarea class="form-control" id="sarDecisionMotif" rows="4" placeholder="Indiquez le motif de votre décision, les observations du superviseur..."></textarea>
+            </div>
+
+            <!-- Recommandations -->
+            <div class="form-group">
+              <label class="form-label" for="sarRecommandations">Recommandations / Actions correctives</label>
+              <textarea class="form-control" id="sarRecommandations" rows="3" placeholder="Mesures correctives recommandées, suivi à prévoir..."></textarea>
+            </div>
+
+            <!-- Transmettre à CENTIF -->
+            <div class="form-group">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--color-primary);">
+                <input type="checkbox" id="sarTransmettreCentif">
+                Transmettre à CENTIF (Cellule Nationale de Traitement des Informations Financières)
+              </label>
+            </div>
+
+            <!-- Error message -->
+            <div id="decisionError" style="display:none;background:#FFF3F3;border-left:3px solid var(--color-danger);padding:10px 14px;border-radius:6px;color:var(--color-danger);font-size:13px;margin-bottom:16px;"></div>
+
+            <!-- Submit button -->
+            <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px;">
+              <button class="btn btn-primary" id="btnDecision" onclick="submitDecision()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>
+                <span class="btn-text">Valider la décision</span>
+                <div class="login-spinner" style="display:none;width:16px;height:16px;"></div>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Action bar -->
+        <div class="sar-action-bar" id="sarActionBar" style="display:none;">
+          <div class="sar-action-bar-left">
+            <span style="font-size:13px;color:var(--color-text-secondary);">Actions rapides :</span>
+          </div>
+          <div class="sar-action-bar-right">
+            <button class="btn btn-outline btn-sm" onclick="exportSARPdf()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exporter PDF
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="printSAR()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              Imprimer
+            </button>
+            <a class="btn btn-primary btn-sm" id="btnTraiterLink" href="#" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>
+              Traiter
+            </a>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ==========================================================
+       M14 — SAR Detail Page
+       Endpoint: GET /api/v1/conformite/sar/{id}
+       Update:   PUT /api/v1/conformite/sar/{id}
+       ========================================================== */
+
+    var sarId = null;
+    var sarData = null;
+    var selectedDecision = null;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      sarId = new URLSearchParams(window.location.search).get('id');
+      if (sarId) {
+        loadSARDetail();
+      } else {
+        showToast('Identifiant manquant dans l\'URL.', 'error');
+      }
+    });
+
+    /* ── Main data loader ──────────────────────────────────── */
+    async function loadSARDetail() {
+      if (!sarId) return;
+
+      try {
+        var res = await SF.apiFetch('/api/v1/conformite/sar/' + sarId);
+
+        if (!res) return; // 401 already handled
+
+        if (res.ok) {
+          sarData = await res.json();
+          renderAll(sarData);
+        } else if (res.status === 404) {
+          showToast('Déclaration SAR introuvable (ID: ' + sarId + ').', 'error');
+        } else {
+          showToast('Erreur lors du chargement (HTTP ' + res.status + ').', 'error');
+        }
+      } catch (err) {
+        showToast(err.message || 'Impossible de charger la déclaration SAR.', 'error');
+      }
+    }
+
+    /* ── Render all sections ────────────────────────────────── */
+    function renderAll(s) {
+      renderHeader(s);
+      renderKPIs(s);
+      renderStepper(s);
+      renderInfoSection(s);
+      renderClientSection(s);
+      renderDescription(s);
+      renderDocuments(s);
+      renderTimeline(s);
+      renderDecisionForm(s);
+      renderActionBar(s);
+    }
+
+    /* ── Page title & subtitle badges ──────────────────────── */
+    function renderHeader(s) {
+      document.getElementById('sarTitle').textContent = 'SAR #' + (s.id || sarId);
+
+      var statutBadge = getStatutBadge(s.statut);
+      var urgenceBadge = getUrgenceBadge(s.urgence);
+      var subtitle = '<span class="badge ' + statutBadge.cls + '">' + statutBadge.label + '</span> ' +
+        '<span class="badge ' + urgenceBadge.cls + '">' + urgenceBadge.label + '</span>';
+      if (s.typesActivite && s.typesActivite.length) {
+        subtitle += ' &nbsp;<span style="color:var(--color-text-secondary);font-size:13px;">' + escapeHtml(s.typesActivite.join(', ')) + '</span>';
+      }
+      document.getElementById('sarSubtitle').innerHTML = subtitle;
+    }
+
+    /* ── KPI strip ─────────────────────────────────────────── */
+    function renderKPIs(s) {
+      document.getElementById('sarKpis').style.display = '';
+
+      var statutBadge = getStatutBadge(s.statut);
+      var urgenceBadge = getUrgenceBadge(s.urgence);
+
+      document.getElementById('kpiStatut').innerHTML = '<span class="badge ' + statutBadge.cls + '">' + statutBadge.label + '</span>';
+      document.getElementById('kpiUrgence').innerHTML = '<span class="badge ' + urgenceBadge.cls + '">' + urgenceBadge.label + '</span>';
+      document.getElementById('kpiDate').textContent = formatDate(s.dateDeclaration || s.createdAt);
+      document.getElementById('kpiMontant').textContent = formatMontant(s.montant);
+    }
+
+    /* ── Status progression stepper ────────────────────────── */
+    function renderStepper(s) {
+      var steps = ['BROUILLON', 'SOUMISE', 'EN_COURS', 'TRAITEE'];
+      var currentStatut = (s.statut || '').toUpperCase();
+
+      // Handle REJETEE as a branch off SOUMISE
+      var currentIdx = steps.indexOf(currentStatut);
+      if (currentStatut === 'REJETEE') {
+        currentIdx = 1; // stays at SOUMISE visually, badge shows rejected
+      }
+      if (currentIdx === -1) currentIdx = 0;
+
+      var stepEls = document.querySelectorAll('.sar-step');
+      var connectorEls = document.querySelectorAll('.sar-connector');
+
+      stepEls.forEach(function (el, i) {
+        el.classList.remove('active', 'done');
+        if (i < currentIdx) {
+          el.classList.add('done');
+          el.querySelector('.sar-step-dot').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:16px;height:16px;"><polyline points="20 6 9 17 4 12"/></svg>';
+        } else if (i === currentIdx) {
+          el.classList.add('active');
+          el.querySelector('.sar-step-dot').textContent = (i + 1);
+        } else {
+          el.querySelector('.sar-step-dot').textContent = (i + 1);
+        }
+      });
+
+      connectorEls.forEach(function (el, i) {
+        el.classList.remove('done', 'active');
+        if (i < currentIdx) {
+          el.classList.add('done');
+        } else if (i === currentIdx) {
+          el.classList.add('active');
+        }
+      });
+
+      // Update stepper badge
+      var statutBadge = getStatutBadge(s.statut);
+      document.getElementById('stepperBadge').className = 'badge ' + statutBadge.cls;
+      document.getElementById('stepperBadge').textContent = statutBadge.label;
+    }
+
+    /* ── SAR info section ──────────────────────────────────── */
+    function renderInfoSection(s) {
+      var html = '' +
+        '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Statut</span>' +
+          '<span class="sar-info-value"><span class="badge ' + getStatutBadge(s.statut).cls + '">' + getStatutBadge(s.statut).label + '</span></span>' +
+        '</div>' +
+        '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Urgence</span>' +
+          '<span class="sar-info-value"><span class="badge ' + getUrgenceBadge(s.urgence).cls + '">' + getUrgenceBadge(s.urgence).label + '</span></span>' +
+        '</div>' +
+        '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Date déclaration</span>' +
+          '<span class="sar-info-value">' + formatDateTime(s.dateDeclaration || s.createdAt) + '</span>' +
+        '</div>' +
+        '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Date activité</span>' +
+          '<span class="sar-info-value">' + formatDate(s.dateActivite) + '</span>' +
+        '</div>' +
+        '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Types d\'activité</span>' +
+          '<span class="sar-info-value">' + formatTypesActivite(s.typesActivite) + '</span>' +
+        '</div>' +
+        '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Montant concerné</span>' +
+          '<span class="sar-info-value">' + formatMontant(s.montant) + '</span>' +
+        '</div>' +
+        '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Déclaré par</span>' +
+          '<span class="sar-info-value">' + escapeHtml(s.declarePar || s.creePar || '-') + '</span>' +
+        '</div>' +
+        '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Transmis CENTIF</span>' +
+          '<span class="sar-info-value">' + (s.transmisCentif ? '<span class="badge badge-success">Oui</span>' : '<span class="badge badge-info">Non</span>') + '</span>' +
+        '</div>';
+
+      document.getElementById('sarInfoContent').innerHTML = html;
+    }
+
+    /* ── Client section ────────────────────────────────────── */
+    function renderClientSection(s) {
+      var html = '' +
+        '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Nom complet</span>' +
+          '<span class="sar-info-value">' + escapeHtml(s.clientNom || '-') + '</span>' +
+        '</div>' +
+        '<div class="sar-info-row">' +
+          '<span class="sar-info-label">N° Client</span>' +
+          '<span class="sar-info-value" style="font-family:monospace;">' + escapeHtml(s.numeroClient || '-') + '</span>' +
+        '</div>';
+
+      if (s.clientTelephone) {
+        html += '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Téléphone</span>' +
+          '<span class="sar-info-value">' + escapeHtml(s.clientTelephone) + '</span>' +
+        '</div>';
+      }
+
+      if (s.clientEmail) {
+        html += '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Email</span>' +
+          '<span class="sar-info-value">' + escapeHtml(s.clientEmail) + '</span>' +
+        '</div>';
+      }
+
+      if (s.clientType) {
+        html += '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Type client</span>' +
+          '<span class="sar-info-value">' + escapeHtml(s.clientType) + '</span>' +
+        '</div>';
+      }
+
+      if (!s.clientNom && !s.numeroClient) {
+        html = '<div style="text-align:center;padding:20px 0;">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="1.5" style="width:40px;height:40px;margin-bottom:8px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+          '<div style="color:var(--color-text-muted);font-size:13px;">Aucun client associé</div>' +
+        '</div>';
+      }
+
+      document.getElementById('sarClientContent').innerHTML = html;
+    }
+
+    /* ── Description section ────────────────────────────────── */
+    function renderDescription(s) {
+      var desc = s.description || '-';
+      document.getElementById('sarDescription').innerHTML =
+        '<div style="background:var(--color-bg);border-radius:var(--radius-sm);padding:16px;border-left:3px solid var(--color-primary);">' +
+          '<p style="white-space:pre-wrap;line-height:1.7;font-size:13px;color:var(--color-primary);margin:0;">' + escapeHtml(desc) + '</p>' +
+        '</div>';
+    }
+
+    /* ── Documents section ──────────────────────────────────── */
+    function renderDocuments(s) {
+      var pieces = s.pieces || s.documents || [];
+      document.getElementById('sarDocCount').textContent = pieces.length + ' document(s)';
+
+      if (!pieces.length) {
+        document.getElementById('sarPieces').innerHTML =
+          '<div style="text-align:center;padding:24px 0;">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="1.5" style="width:40px;height:40px;margin-bottom:8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>' +
+            '<div style="color:var(--color-text-muted);font-size:13px;">Aucune pièce jointe</div>' +
+          '</div>';
+        return;
+      }
+
+      var html = '';
+      pieces.forEach(function (p) {
+        var iconSvg = getFileIcon(p.nom || p.typeDocument || '');
+        html += '<div class="sar-doc-item">' +
+          '<div class="sar-doc-info">' +
+            '<div class="sar-doc-icon">' + iconSvg + '</div>' +
+            '<div style="min-width:0;">' +
+              '<div class="sar-doc-name">' + escapeHtml(p.nom || p.filename || 'Document') + '</div>' +
+              '<div class="sar-doc-meta">' + (p.typeDocument || 'Justificatif') + (p.taille ? ' - ' + formatFileSize(p.taille) : '') + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:6px;">' +
+            (p.id ? '<button class="btn btn-outline btn-sm" onclick="downloadDocument(' + p.id + ')" title="Télécharger">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+            '</button>' : '') +
+          '</div>' +
+        '</div>';
+      });
+
+      document.getElementById('sarPieces').innerHTML = html;
+    }
+
+    /* ── Timeline of actions ───────────────────────────────── */
+    function renderTimeline(s) {
+      var container = document.getElementById('sarTimeline');
+      var events = [];
+
+      // Build timeline from available data
+      if (s.createdAt || s.dateDeclaration) {
+        events.push({
+          date: s.createdAt || s.dateDeclaration,
+          title: 'Déclaration créée',
+          desc: 'Type: ' + (s.typesActivite || []).join(', ') + ' — Urgence: ' + (s.urgence || '-'),
+          author: s.declarePar || s.creePar || 'Système',
+          dotClass: ''
+        });
+      }
+
+      if (s.statut === 'SOUMISE' || s.statut === 'EN_COURS' || s.statut === 'TRAITEE' || s.statut === 'REJETEE') {
+        events.push({
+          date: s.dateSoumission || s.dateDeclaration || s.createdAt,
+          title: 'Déclaration soumise',
+          desc: 'Soumise pour traitement et validation',
+          author: s.declarePar || s.creePar || '-',
+          dotClass: 'warning'
+        });
+      }
+
+      if (s.statut === 'EN_COURS' || s.statut === 'TRAITEE') {
+        events.push({
+          date: s.dateTraitement || s.updatedAt,
+          title: 'Prise en charge',
+          desc: 'La déclaration est en cours d\'analyse',
+          author: s.traitePar || '-',
+          dotClass: 'warning'
+        });
+      }
+
+      if (s.statut === 'TRAITEE') {
+        events.push({
+          date: s.dateTraitement || s.updatedAt,
+          title: 'Déclaration traitée',
+          desc: s.commentaire || 'La déclaration a été traitée avec succès',
+          author: s.traitePar || '-',
+          dotClass: 'success'
+        });
+      }
+
+      if (s.statut === 'REJETEE') {
+        events.push({
+          date: s.dateTraitement || s.updatedAt,
+          title: 'Déclaration rejetée',
+          desc: s.commentaire || 'La déclaration a été rejetée',
+          author: s.traitePar || '-',
+          dotClass: 'danger'
+        });
+      }
+
+      if (s.transmisCentif && s.dateTransmissionCentif) {
+        events.push({
+          date: s.dateTransmissionCentif,
+          title: 'Transmis à CENTIF',
+          desc: 'Déclaration transmise à la Cellule Nationale de Traitement des Informations Financières',
+          author: s.traitePar || 'Système',
+          dotClass: 'success'
+        });
+      }
+
+      // Add custom timeline events if available
+      if (s.historique && Array.isArray(s.historique)) {
+        s.historique.forEach(function (h) {
+          events.push({
+            date: h.date || h.createdAt,
+            title: h.action || h.titre || 'Action',
+            desc: h.commentaire || h.description || '',
+            author: h.utilisateur || h.acteur || '-',
+            dotClass: h.statut === 'TRAITEE' ? 'success' : (h.statut === 'REJETEE' ? 'danger' : 'warning')
+          });
+        });
+      }
+
+      if (!events.length) {
+        container.innerHTML =
+          '<div style="text-align:center;padding:20px 0;">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="1.5" style="width:40px;height:40px;margin-bottom:8px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+            '<div style="color:var(--color-text-muted);font-size:13px;">Aucune action enregistrée</div>' +
+          '</div>';
+        return;
+      }
+
+      // Sort events by date descending
+      events.sort(function (a, b) {
+        return new Date(b.date || 0) - new Date(a.date || 0);
+      });
+
+      var html = '<div class="sar-timeline">';
+      events.forEach(function (evt) {
+        html += '' +
+          '<div class="sar-tl-item">' +
+            '<div class="sar-tl-dot ' + evt.dotClass + '"></div>' +
+            '<div class="sar-tl-date">' + formatDateTime(evt.date) + '</div>' +
+            '<div class="sar-tl-title">' + escapeHtml(evt.title) + '</div>' +
+            (evt.desc ? '<div class="sar-tl-desc">' + escapeHtml(evt.desc) + '</div>' : '') +
+            '<div class="sar-tl-author">Par : ' + escapeHtml(evt.author) + '</div>' +
+          '</div>';
+      });
+      html += '</div>';
+
+      container.innerHTML = html;
+    }
+
+    /* ── Decision form ─────────────────────────────────────── */
+    function renderDecisionForm(s) {
+      var card = document.getElementById('sarDecisionCard');
+
+      // Hide form if already finalized
+      if (s.statut === 'TRAITEE' || s.statut === 'REJETEE') {
+        card.style.display = 'none';
+        return;
+      }
+
+      card.style.display = '';
+
+      // Pre-select current statut
+      if (s.statut) {
+        var opt = document.querySelector('.sar-decision-opt[data-value="' + s.statut + '"]');
+        if (opt) selectDecision(opt);
+      }
+
+      // Pre-fill existing values
+      if (s.commentaire) {
+        document.getElementById('sarDecisionMotif').value = s.commentaire;
+      }
+      if (s.recommandations) {
+        document.getElementById('sarRecommandations').value = s.recommandations;
+      }
+      if (s.transmisCentif) {
+        document.getElementById('sarTransmettreCentif').checked = true;
+      }
+    }
+
+    /* ── Action bar ────────────────────────────────────────── */
+    function renderActionBar(s) {
+      var bar = document.getElementById('sarActionBar');
+      bar.style.display = '';
+
+      var btnUpdate = document.getElementById('btnMettreAJour');
+      if (s.statut !== 'TRAITEE' && s.statut !== 'REJETEE') {
+        btnUpdate.style.display = '';
+      }
+
+      var btnTraiter = document.getElementById('btnTraiterLink');
+      if (s.statut === 'SOUMISE' || s.statut === 'BROUILLON') {
+        btnTraiter.style.display = '';
+        btnTraiter.href = 'sar-traiter.html?id=' + sarId;
+      }
+    }
+
+    /* ── Decision option selection ─────────────────────────── */
+    function selectDecision(el) {
+      document.querySelectorAll('.sar-decision-opt').forEach(function (opt) {
+        opt.classList.remove('selected');
+      });
+      el.classList.add('selected');
+      selectedDecision = el.getAttribute('data-value');
+    }
+
+    /* ── Submit decision ───────────────────────────────────── */
+    async function submitDecision() {
+      var errBox = document.getElementById('decisionError');
+      errBox.style.display = 'none';
+
+      // Validate
+      if (!selectedDecision) {
+        errBox.textContent = 'Veuillez sélectionner une décision.';
+        errBox.style.display = 'block';
+        showToast('Veuillez sélectionner une décision.', 'error');
+        return;
+      }
+
+      var motif = document.getElementById('sarDecisionMotif').value.trim();
+      if (!motif) {
+        errBox.textContent = 'Le motif de la décision est obligatoire.';
+        errBox.style.display = 'block';
+        showToast('Le motif est obligatoire.', 'error');
+        document.getElementById('sarDecisionMotif').focus();
+        return;
+      }
+
+      var btn = document.getElementById('btnDecision');
+      var spinner = btn.querySelector('.login-spinner');
+      var label = btn.querySelector('.btn-text');
+
+      // Loading state
+      btn.disabled = true;
+      if (label) label.style.display = 'none';
+      if (spinner) spinner.style.display = 'inline-block';
+
+      var payload = {
+        statut: selectedDecision,
+        commentaire: motif,
+        recommandations: document.getElementById('sarRecommandations').value.trim(),
+        transmisCentif: document.getElementById('sarTransmettreCentif').checked
+      };
+
+      try {
+        var res = await SF.apiFetch('/api/v1/conformite/sar/' + sarId, {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        });
+
+        if (!res) return; // 401 redirected
+
+        if (res.ok) {
+          showToast('Décision enregistrée avec succès.', 'success');
+          loadSARDetail(); // Reload to show updated state
+        } else if (res.status === 400) {
+          var data = await res.json().catch(function () { return {}; });
+          var msg = data.errors
+            ? data.errors.map(function (e) { return e.defaultMessage || e.message || e; }).join('. ')
+            : (data.message || 'Données invalides.');
+          errBox.textContent = msg;
+          errBox.style.display = 'block';
+          showToast('Données invalides.', 'error');
+        } else {
+          var data2 = await res.json().catch(function () { return {}; });
+          var msg2 = data2.message || 'Erreur serveur. Réessayez.';
+          errBox.textContent = msg2;
+          errBox.style.display = 'block';
+          showToast(msg2, 'error');
+        }
+      } catch (e) {
+        showToast('Impossible de joindre le serveur.', 'error');
+      } finally {
+        btn.disabled = false;
+        if (label) label.style.display = 'inline';
+        if (spinner) spinner.style.display = 'none';
+      }
+    }
+
+    /* ── Export PDF ─────────────────────────────────────────── */
+    function exportSARPdf() {
+      window.open(SF.API_BASE + '/api/v1/conformite/sar/' + sarId + '/export', '_blank');
+    }
+
+    /* ── Print ─────────────────────────────────────────────── */
+    function printSAR() {
+      window.print();
+    }
+
+    /* ── Download document ─────────────────────────────────── */
+    function downloadDocument(docId) {
+      window.open(SF.API_BASE + '/api/v1/conformite/sar/' + sarId + '/documents/' + docId, '_blank');
+    }
+
+    /* ── Scroll to decision form ───────────────────────────── */
+    function scrollToDecision() {
+      var el = document.getElementById('sarDecisionCard');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    /* ── Badge helpers ─────────────────────────────────────── */
+    function getStatutBadge(statut) {
+      var map = {
+        'BROUILLON': { cls: 'badge-info',      label: 'Brouillon' },
+        'SOUMISE':   { cls: 'badge-pending',    label: 'Soumise' },
+        'EN_COURS':  { cls: 'badge-warning',    label: 'En cours' },
+        'TRAITEE':   { cls: 'badge-success',    label: 'Traitée' },
+        'REJETEE':   { cls: 'badge-danger',     label: 'Rejetée' }
+      };
+      return map[(statut || '').toUpperCase()] || { cls: 'badge-info', label: statut || '-' };
+    }
+
+    function getUrgenceBadge(urgence) {
+      var map = {
+        'BASSE':    { cls: 'badge-active',   label: 'Basse' },
+        'MOYENNE':  { cls: 'badge-info',     label: 'Moyenne' },
+        'HAUTE':    { cls: 'badge-warning',  label: 'Haute' },
+        'CRITIQUE': { cls: 'badge-danger',   label: 'Critique' }
+      };
+      return map[(urgence || '').toUpperCase()] || { cls: 'badge-info', label: urgence || '-' };
+    }
+
+    /* ── Format helpers ────────────────────────────────────── */
+    function formatTypesActivite(types) {
+      if (!types || !types.length) return '-';
+      var labelMap = {
+        'BLANCHIMENT': 'Blanchiment',
+        'FINANCEMENT_TERRORISME': 'Financement terrorisme',
+        'FRAUDE': 'Fraude',
+        'TRANSACTION_SUSPECTE': 'Transaction suspecte',
+        'IDENTITE_SUSPECTE': 'Identité suspecte',
+        'AUTRE': 'Autre'
+      };
+      return types.map(function (t) {
+        return '<span class="badge badge-info" style="margin:2px;">' + (labelMap[t] || t) + '</span>';
+      }).join(' ');
+    }
+
+    function formatMontant(montant) {
+      if (montant === null || montant === undefined || montant === 0) return '-';
+      return Number(montant).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function formatFileSize(bytes) {
+      if (!bytes) return '';
+      if (bytes < 1024) return bytes + ' o';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' Ko';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' Mo';
+    }
+
+    function getFileIcon(filename) {
+      var ext = (filename || '').split('.').pop().toLowerCase();
+      if (ext === 'pdf') {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
+      }
+      if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].indexOf(ext) !== -1) {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+      }
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+    }
+
+    function formatDate(d) {
+      if (!d) return '-';
+      try {
+        return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      } catch (e) { return d; }
+    }
+
+    function formatDateTime(d) {
+      if (!d) return '-';
+      try {
+        return new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      } catch (e) { return d; }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

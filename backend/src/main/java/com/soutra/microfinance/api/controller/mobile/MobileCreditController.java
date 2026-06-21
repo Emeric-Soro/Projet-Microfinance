@@ -1,5 +1,6 @@
 package com.soutra.microfinance.api.controller.mobile;
 
+import com.soutra.microfinance.api.helper.ApiEnvelope;
 import com.soutra.microfinance.api.helper.SoutraSecurityHelper;
 import com.soutra.microfinance.audit.AuditLog;
 import com.soutra.microfinance.dto.request.mobile.MobileDemandeCreditRequestDTO;
@@ -97,7 +98,7 @@ public class MobileCreditController {
     @GetMapping("/{idCredit}/echeancier")
     @PreAuthorize("hasAuthority('CLIENT')")
     @AuditLog(action = "MOBILE_CREDIT_SCHEDULE", resource = "CREDIT")
-    public ResponseEntity<List<MobileEcheanceResponseDTO>> echeancierCredit(
+    public ResponseEntity<ApiEnvelope<List<MobileEcheanceResponseDTO>>> echeancierCredit(
             @PathVariable Long idCredit,
             Authentication authentication
     ) {
@@ -111,7 +112,7 @@ public class MobileCreditController {
                 .map(this::toEcheanceResponse)
                 .toList();
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiEnvelope.success(response));
     }
 
     @Operation(summary = "Simuler un credit", description = "Simule un credit avec les parametres fournis.")
@@ -121,7 +122,7 @@ public class MobileCreditController {
     @PostMapping("/simulation")
     @PreAuthorize("permitAll()")
     @AuditLog(action = "MOBILE_CREDIT_SIMULATION", resource = "CREDIT")
-    public ResponseEntity<List<MobileEcheanceResponseDTO>> simulerCredit(
+    public ResponseEntity<ApiEnvelope<List<MobileEcheanceResponseDTO>>> simulerCredit(
             @Valid @RequestBody MobileSimulationCreditRequestDTO requestDTO,
             Authentication authentication
     ) {
@@ -136,7 +137,7 @@ public class MobileCreditController {
                 .map(this::toEcheanceResponse)
                 .toList();
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiEnvelope.success(response));
     }
 
     @Operation(summary = "Soumettre une demande de credit", description = "Soumet une nouvelle demande de credit.")

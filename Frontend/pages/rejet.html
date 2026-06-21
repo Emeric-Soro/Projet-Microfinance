@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rejet transaction - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Rejet</div>
+            <div class="topbar-breadcrumb">Transactions / Validation 4-yeux / Rejet</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Rejet de transaction</h1>
+            <p class="page-subtitle">Le motif de rejet est obligatoire. Le rejet est définitif et irréversible.</p>
+          </div>
+          <button class="btn btn-outline" onclick="history.back()">← Retour</button>
+        </div>
+        <div style="max-width:640px;">
+          <!-- Transaction info (read-only) -->
+          <section class="card">
+            <div class="card-header">
+              <div class="card-title">Transaction à rejeter</div>
+            </div>
+            <div style="padding:20px;" id="txInfo">
+              <div style="color:#4A7A8A;">Chargement...</div>
+            </div>
+          </section>
+
+          <!-- Rejection form -->
+          <section class="card" style="margin-top:16px;">
+            <div class="card-header">
+              <div class="card-title">Motif du rejet *</div>
+            </div>
+            <div style="padding:20px;">
+              <div class="form-group">
+                <label class="form-label" for="categorieRejet">Catégorie de rejet *</label>
+                <select class="form-control" id="categorieRejet">
+                  <option value="">Sélectionner...</option>
+                  <option value="DOCUMENTS_MANQUANTS">Documents manquants</option>
+                  <option value="MONTANT_ERRONE">Montant erroné</option>
+                  <option value="COMPTE_NON_ELIGIBLE">Compte non éligible</option>
+                  <option value="ACTIVITE_SUSPECTE">Activité suspecte</option>
+                  <option value="DEPASSEMENT_PLAFOND">Dépassement de plafond</option>
+                  <option value="ERREUR_SAISIE">Erreur de saisie</option>
+                  <option value="AUTRE">Autre</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="motifRejet">Motif détaillé * (10-500 caractères)</label>
+                <textarea class="form-control" id="motifRejet" rows="4" maxlength="500" placeholder="Décrivez la raison du rejet..." oninput="updateCharCount()"></textarea>
+                <div style="display:flex;justify-content:space-between;font-size:.8rem;color:#4A7A8A;margin-top:4px;">
+                  <span id="motifError" style="color:#D93025;"></span>
+                  <span id="charCount">0/500</span>
+                </div>
+              </div>
+              <div style="display:flex;gap:12px;">
+                <button class="btn btn-outline" onclick="history.back()" style="flex:1;">Annuler</button>
+                <button class="btn btn-danger" onclick="rejeter()" id="btnRejeter" style="flex:2;">Confirmer le rejet</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    let txRef = '';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      txRef = new URLSearchParams(window.location.search).get('ref');
+      if (!txRef) {
+        document.getElementById('txInfo').innerHTML =
+          '<div style="color:#D93025;">Aucune référence de transaction fournie. <a href="validation.html">Retour à la validation.</a></div>';
+        document.getElementById('btnRejeter').disabled = true;
+        return;
+      }
+      loadTx();
+    });
+
+    async function loadTx() {
+      try {
+        const res = await Transactions.listerEnAttente(0, 100);
+        if (res && res.ok) {
+          const page = await res.json();
+          const tx = (page.content || []).find(t => t.referenceUnique === txRef);
+          if (tx) {
+            renderTxInfo(tx);
+            return;
+          }
+        }
+      } catch (_) {}
+
+      /* fallback: fetch single transaction directly */
+      try {
+        const res = await SF.apiFetch('/api/v1/transactions/' + encodeURIComponent(txRef));
+        if (res && res.ok) {
+          const tx = await res.json();
+          renderTxInfo(tx);
+        } else {
+          document.getElementById('txInfo').innerHTML =
+            '<div style="color:#D93025;">Transaction introuvable ou déjà traitée.</div>';
+          document.getElementById('btnRejeter').disabled = true;
+        }
+      } catch (e) {
+        document.getElementById('txInfo').innerHTML =
+          '<div style="color:#D93025;">Erreur de chargement : ' + e.message + '</div>';
+        document.getElementById('btnRejeter').disabled = true;
+      }
+    }
+
+    function renderTxInfo(tx) {
+      var ref = tx.referenceUnique || tx.reference || '-';
+      var type = (tx.typeOperation || tx.type || '-').toUpperCase();
+      var montant = Number(tx.montant || 0).toLocaleString('fr-FR');
+      var guichetier = tx.guichetierNom || tx.demandeurNom || '-';
+      var client = tx.clientNom || '-';
+      var compte = tx.compteSource || tx.numCompte || '-';
+      var heure = '';
+      if (tx.dateCreation) {
+        try { heure = new Date(tx.dateCreation).toLocaleString('fr-FR'); } catch (_) { heure = tx.dateCreation; }
+      }
+
+      document.getElementById('txInfo').innerHTML =
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div>' +
+            '<span style="color:#4A7A8A;font-size:.85rem;">Référence</span><br>' +
+            '<strong style="font-family:monospace;">' + ref + '</strong>' +
+          '</div>' +
+          '<div>' +
+            '<span style="color:#4A7A8A;font-size:.85rem;">Type</span><br>' +
+            '<strong>' + type + '</strong>' +
+          '</div>' +
+          '<div>' +
+            '<span style="color:#4A7A8A;font-size:.85rem;">Montant</span><br>' +
+            '<strong style="font-size:1.2rem;color:#084355;">' + montant + ' FCFA</strong>' +
+          '</div>' +
+          '<div>' +
+            '<span style="color:#4A7A8A;font-size:.85rem;">Guichetier</span><br>' +
+            '<strong>' + guichetier + '</strong>' +
+          '</div>' +
+          '<div>' +
+            '<span style="color:#4A7A8A;font-size:.85rem;">Client</span><br>' +
+            '<strong>' + client + '</strong>' +
+          '</div>' +
+          '<div>' +
+            '<span style="color:#4A7A8A;font-size:.85rem;">Compte</span><br>' +
+            '<strong style="font-family:monospace;font-size:.9rem;">' + compte + '</strong>' +
+          '</div>' +
+          (heure
+            ? '<div style="grid-column:1/-1;">' +
+                '<span style="color:#4A7A8A;font-size:.85rem;">Date / Heure</span><br>' +
+                '<strong>' + heure + '</strong>' +
+              '</div>'
+            : '') +
+        '</div>';
+    }
+
+    function updateCharCount() {
+      var v = document.getElementById('motifRejet').value;
+      document.getElementById('charCount').textContent = v.length + '/500';
+      document.getElementById('motifError').textContent =
+        (v.length > 0 && v.length < 10) ? 'Minimum 10 caractères' : '';
+    }
+
+    async function rejeter() {
+      var categorie = document.getElementById('categorieRejet').value;
+      var motif = document.getElementById('motifRejet').value.trim();
+
+      if (!categorie) {
+        showToast('Sélectionnez une catégorie de rejet.', 'warning');
+        document.getElementById('categorieRejet').focus();
+        return;
+      }
+      if (motif.length < 10) {
+        document.getElementById('motifError').textContent = 'Minimum 10 caractères';
+        document.getElementById('motifRejet').focus();
+        return;
+      }
+
+      /* Concatenate category + detailed motif for the API (single motif field) */
+      var motifComplet = categorie + ' : ' + motif;
+
+      var user = SF.getUser();
+      var idSuperviseur = user ? (user.idUtilisateur || user.idUser || user.id) : null;
+      if (!idSuperviseur) {
+        showToast('Session expirée. Veuillez vous reconnecter.', 'error');
+        return;
+      }
+
+      var btn = document.getElementById('btnRejeter');
+      btn.disabled = true;
+      btn.textContent = 'Rejet en cours...';
+
+      try {
+        var res = await Transactions.rejeter(txRef, idSuperviseur, motifComplet);
+        if (res && res.ok) {
+          showToast('Transaction ' + txRef + ' rejetée avec succès.', 'success');
+          setTimeout(function () { window.location.href = 'validation.html'; }, 1500);
+        } else {
+          var err = {};
+          try { err = await res.json(); } catch (_) {}
+          showToast(err.message || 'Erreur lors du rejet de la transaction.', 'error');
+          btn.disabled = false;
+          btn.textContent = 'Confirmer le rejet';
+        }
+      } catch (e) {
+        showToast('Erreur réseau : ' + e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Confirmer le rejet';
+      }
+    }
+  </script>
+</body>
+</html>

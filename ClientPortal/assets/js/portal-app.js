@@ -57,7 +57,7 @@
       // Rediriger vers login si session expirée
       clearSession();
       if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/ClientPortal/pages/login';
+        window.location.href = '/pages/login';
       }
     }
 
@@ -225,6 +225,21 @@
     }
   };
 
+  var ClientEpargne = {
+    listerComptes: async function () {
+      return await apiFetch('/api/v1/mobile/epargne/comptes');
+    },
+    detailCompte: async function (idCompte) {
+      return await apiFetch('/api/v1/mobile/epargne/comptes/' + idCompte);
+    },
+    listerDats: async function () {
+      return await apiFetch('/api/v1/mobile/epargne/dats');
+    },
+    detailDat: async function (idDat) {
+      return await apiFetch('/api/v1/mobile/epargne/dats/' + idDat);
+    }
+  };
+
   var ClientProfil = {
     consulterKyc: async function () {
       return await apiFetch('/api/v1/mobile/profil/kyc');
@@ -259,6 +274,7 @@
   window.ClientComptes = ClientComptes;
   window.ClientVirements = ClientVirements;
   window.ClientCredits = ClientCredits;
+  window.ClientEpargne = ClientEpargne;
   window.ClientReclamations = ClientReclamations;
   window.ClientProfil = ClientProfil;
 
@@ -281,7 +297,7 @@
                      path.endsWith('/clientportal');
   
   if (!isPublicPage && !window.SF_Client.getToken()) {
-    window.location.href = '/ClientPortal/pages/login';
+    window.location.href = '/pages/login';
   }
 
   // Active navigation highlight & Layout injection helper
@@ -296,7 +312,7 @@
           console.error(err);
         }
         window.SF_Client.clearSession();
-        window.location.href = '/ClientPortal/pages/login';
+        window.location.href = '/pages/login';
       });
     }
 

@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications — Soutra Finance E-Banking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/portal.css">
+  <style>
+    /* ── Notifications Page Specific ─────────────────── */
+    .notif-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .notif-filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--font-family);
+      color: var(--color-text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    .filter-chip.active {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(8, 67, 85, 0.2);
+    }
+
+    .filter-chip .chip-count {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      padding: 1px 7px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .filter-chip.active .chip-count {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .btn-mark-all {
+      font-size: 13px;
+      padding: 8px 18px;
+    }
+
+    /* Notification list item */
+    .notif-item {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 18px 22px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+      position: relative;
+    }
+
+    .notif-item:hover {
+      background: var(--color-surface-hover);
+      border-color: var(--color-primary-light);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(8, 67, 85, 0.06);
+    }
+
+    .notif-item.unread {
+      border-left: 3px solid var(--color-primary);
+      background: rgba(8, 67, 85, 0.015);
+    }
+
+    .notif-item.unread:hover {
+      background: rgba(8, 67, 85, 0.03);
+    }
+
+    .notif-item.read {
+      opacity: 0.7;
+    }
+
+    .notif-item.read:hover {
+      opacity: 1;
+    }
+
+    /* Type icon circle */
+    .notif-icon {
+      width: 42px;
+      height: 42px;
+      min-width: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .notif-icon.type-virement {
+      background: rgba(140, 213, 250, 0.2);
+      color: var(--color-primary);
+    }
+
+    .notif-icon.type-credit {
+      background: rgba(46, 125, 50, 0.1);
+      color: var(--color-success);
+    }
+
+    .notif-icon.type-alerte {
+      background: rgba(217, 48, 37, 0.1);
+      color: var(--color-danger);
+    }
+
+    .notif-icon.type-compte {
+      background: rgba(250, 180, 130, 0.2);
+      color: var(--color-accent-dark);
+    }
+
+    .notif-icon.type-otp {
+      background: rgba(230, 81, 0, 0.1);
+      color: var(--color-warning);
+    }
+
+    .notif-icon.type-default {
+      background: rgba(8, 67, 85, 0.08);
+      color: var(--color-text-muted);
+    }
+
+    /* Content area */
+    .notif-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .notif-message {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text);
+      line-height: 1.5;
+      margin-bottom: 6px;
+    }
+
+    .notif-item.unread .notif-message {
+      font-weight: 600;
+    }
+
+    .notif-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--color-text-muted);
+    }
+
+    .notif-type-label {
+      background: rgba(8, 67, 85, 0.06);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    /* Unread dot */
+    .notif-dot {
+      width: 10px;
+      height: 10px;
+      min-width: 10px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      margin-top: 5px;
+      box-shadow: 0 0 8px rgba(8, 67, 85, 0.3);
+      transition: all 0.3s;
+    }
+
+    .notif-item.read .notif-dot {
+      background: transparent;
+      box-shadow: none;
+    }
+
+    /* Unread count badge in header */
+    .unread-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--color-primary);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-left: 12px;
+      vertical-align: middle;
+    }
+
+    /* Empty state */
+    .notif-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--color-text-muted);
+    }
+
+    .notif-empty-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+
+    .notif-empty-text {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: var(--color-text);
+    }
+
+    .notif-empty-sub {
+      font-size: 13px;
+    }
+
+    /* Pagination */
+    .notif-pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* Loading skeleton */
+    .notif-skeleton {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 10px;
+    }
+
+    .skeleton-circle {
+      width: 42px;
+      height: 42px;
+      min-width: 42px;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+
+    .skeleton-lines {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .skeleton-line {
+      height: 14px;
+      border-radius: 7px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+
+    .skeleton-line:first-child { width: 80%; }
+    .skeleton-line:last-child { width: 40%; }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    @media (max-width: 768px) {
+      .notif-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .notif-filters {
+        width: 100%;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 5px;
+      }
+      .filter-chip {
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .notif-item {
+        padding: 14px 16px;
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="portal-layout">
+    <!-- Sidebar -->
+    <aside class="portal-sidebar">
+      <div class="portal-brand">
+        <div class="brand-icon">S</div>
+        <span class="brand-name">Soutra Finance</span>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="dashboard">📊 Tableau de bord</a></li>
+        <li class="nav-item"><a href="comptes">💳 Mes Comptes</a></li>
+        <li class="nav-item"><a href="virement">💸 Virements</a></li>
+        <li class="nav-item"><a href="credits">📈 Crédits</a></li>
+        <li class="nav-item"><a href="reclamations">✉️ Réclamations</a></li>
+        <li class="nav-item active"><a href="notifications-client">🔔 Notifications</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+          <span class="user-name" id="portalUserName">Chargement...</span>
+          <span class="user-role">Client E-Banking</span>
+        </div>
+        <a href="#" class="logout-btn" id="portalLogoutBtn">🚪</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="header-title">
+          <h2>Mes Notifications <span id="unreadBadge" class="unread-badge" style="display: none;">0</span></h2>
+          <p>Consultez vos alertes, confirmations de virements et notifications de compte.</p>
+        </div>
+      </header>
+
+      <div class="card">
+        <!-- Toolbar: Filters + Mark All -->
+        <div class="notif-toolbar">
+          <div class="notif-filters" id="notifFilters">
+            <button class="filter-chip active" data-filter="all">
+              Toutes <span class="chip-count" id="countAll">0</span>
+            </button>
+            <button class="filter-chip" data-filter="unread">
+              Non lues <span class="chip-count" id="countUnread">0</span>
+            </button>
+            <button class="filter-chip" data-filter="virement">
+              💸 Virements
+            </button>
+            <button class="filter-chip" data-filter="credit">
+              📈 Crédits
+            </button>
+            <button class="filter-chip" data-filter="alerte">
+              ⚠️ Alertes
+            </button>
+            <button class="filter-chip" data-filter="compte">
+              💳 Comptes
+            </button>
+          </div>
+          <button class="btn btn-secondary btn-mark-all" id="btnMarkAll" style="display: none;">
+            ✓ Tout marquer comme lu
+          </button>
+        </div>
+
+        <!-- Notification List -->
+        <div id="notifList">
+          <!-- Loading skeletons -->
+          <div class="notif-skeleton"><div class="skeleton-circle"></div><div class="skeleton-lines"><div class="skeleton-line"></div><div class="skeleton-line"></div></div></div>
+          <div class="notif-skeleton"><div class="skeleton-circle"></div><div class="skeleton-lines"><div class="skeleton-line"></div><div class="skeleton-line"></div></div></div>
+          <div class="notif-skeleton"><div class="skeleton-circle"></div><div class="skeleton-lines"><div class="skeleton-line"></div><div class="skeleton-line"></div></div></div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="notif-pagination" id="notifPagination" style="display: none;">
+          <button class="btn btn-secondary btn-sm" id="btnPrevNotif" disabled>← Précédent</button>
+          <span class="page-indicator" id="notifPageIndicator">Page 1 sur 1</span>
+          <button class="btn btn-secondary btn-sm" id="btnNextNotif" disabled>Suivant →</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../assets/js/portal-app.js?v=1.0.1"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      var allNotifications = [];
+      var currentFilter = 'all';
+      var currentPage = 0;
+      var pageSize = 20;
+      var totalPages = 1;
+      var totalElements = 0;
+
+      /* ── Type classification helpers ───────────────── */
+
+      function classifyType(typeStr) {
+        if (!typeStr) return 'default';
+        var t = typeStr.toUpperCase();
+        if (t.indexOf('VIREMENT') !== -1 || t.indexOf('TRANSFERT') !== -1) return 'virement';
+        if (t.indexOf('CREDIT') !== -1 || t.indexOf('PRET') !== -1 || t.indexOf('DEMANDE') !== -1) return 'credit';
+        if (t.indexOf('ALERTE') !== -1 || t.indexOf('SECURITE') !== -1 || t.indexOf('SUSPECT') !== -1 || t.indexOf('FRAUD') !== -1) return 'alerte';
+        if (t.indexOf('COMPTE') !== -1 || t.indexOf('SOLDE') !== -1 || t.indexOf('RELEVE') !== -1) return 'compte';
+        if (t.indexOf('OTP') !== -1 || t.indexOf('CODE') !== -1 || t.indexOf('AUTH') !== -1) return 'otp';
+        return 'default';
+      }
+
+      function typeIcon(category) {
+        switch (category) {
+          case 'virement': return '💸';
+          case 'credit':   return '📈';
+          case 'alerte':   return '⚠️';
+          case 'compte':   return '💳';
+          case 'otp':      return '🔑';
+          default:         return '🔔';
+        }
+      }
+
+      function typeLabel(category) {
+        switch (category) {
+          case 'virement': return 'Virement';
+          case 'credit':   return 'Crédit';
+          case 'alerte':   return 'Alerte';
+          case 'compte':   return 'Compte';
+          case 'otp':      return 'Authentification';
+          default:         return 'Notification';
+        }
+      }
+
+      /* ── Date formatting ───────────────────────────── */
+
+      function formatDate(dateStr) {
+        if (!dateStr) return '';
+        var d = new Date(dateStr);
+        var now = new Date();
+        var diffMs = now - d;
+        var diffMin = Math.floor(diffMs / 60000);
+        var diffH = Math.floor(diffMs / 3600000);
+
+        if (diffMin < 1) return 'A l\'instant';
+        if (diffMin < 60) return 'Il y a ' + diffMin + ' min';
+        if (diffH < 24) return 'Il y a ' + diffH + 'h';
+
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+               ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      }
+
+      /* ── Notification API layer ────────────────────── */
+
+      async function loadNotifications(page) {
+        page = page || 0;
+        try {
+          var res = await window.SF_Client.apiFetch(
+            '/api/v1/mobile/notifications?page=' + page + '&size=' + pageSize + '&sort=createdAt,desc'
+          );
+          if (res.ok) {
+            var data = await res.json();
+            allNotifications = data.content || [];
+            totalPages = data.totalPages || 1;
+            totalElements = data.totalElements || 0;
+            currentPage = data.number || 0;
+            renderNotifications();
+            updateCounts();
+          } else {
+            showToast('Impossible de charger les notifications.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Erreur technique lors du chargement.', 'error');
+        }
+      }
+
+      async function loadUnreadCount() {
+        try {
+          var res = await window.SF_Client.apiFetch('/api/v1/mobile/notifications/compteur');
+          if (res.ok) {
+            var data = await res.json();
+            var count = data.nbNonLues || data.count || 0;
+            var badge = document.getElementById('unreadBadge');
+            if (count > 0) {
+              badge.textContent = count;
+              badge.style.display = 'inline-flex';
+            } else {
+              badge.style.display = 'none';
+            }
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      async function markAsRead(idNotif) {
+        try {
+          var res = await window.SF_Client.apiFetch('/api/v1/mobile/notifications/' + idNotif + '/lu', {
+            method: 'PUT'
+          });
+          if (res.ok || res.status === 204) {
+            // Update local state
+            for (var i = 0; i < allNotifications.length; i++) {
+              if (allNotifications[i].id === idNotif) {
+                allNotifications[i].lue = true;
+                break;
+              }
+            }
+            renderNotifications();
+            updateCounts();
+            loadUnreadCount();
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      async function markAllAsRead() {
+        var unreadItems = allNotifications.filter(function (n) { return !n.lue; });
+        if (unreadItems.length === 0) return;
+
+        var btn = document.getElementById('btnMarkAll');
+        btn.disabled = true;
+        btn.textContent = 'Marquage...';
+
+        try {
+          // Mark each unread notification as read
+          var promises = unreadItems.map(function (n) {
+            return window.SF_Client.apiFetch('/api/v1/mobile/notifications/' + n.id + '/lu', {
+              method: 'PUT'
+            });
+          });
+          await Promise.all(promises);
+
+          // Update local state
+          for (var i = 0; i < allNotifications.length; i++) {
+            allNotifications[i].lue = true;
+          }
+          renderNotifications();
+          updateCounts();
+          loadUnreadCount();
+          showToast('Toutes les notifications ont été marquées comme lues.', 'success');
+        } catch (err) {
+          console.error(err);
+          showToast('Erreur lors du marquage des notifications.', 'error');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = '✓ Tout marquer comme lu';
+        }
+      }
+
+      /* ── Rendering ─────────────────────────────────── */
+
+      function getFilteredNotifications() {
+        if (currentFilter === 'all') return allNotifications;
+        if (currentFilter === 'unread') return allNotifications.filter(function (n) { return !n.lue; });
+        return allNotifications.filter(function (n) {
+          return classifyType(n.type) === currentFilter;
+        });
+      }
+
+      function renderNotifications() {
+        var container = document.getElementById('notifList');
+        var filtered = getFilteredNotifications();
+
+        if (filtered.length === 0) {
+          var emptyMsg = currentFilter === 'unread'
+            ? 'Aucune notification non lue. Vous etes a jour !'
+            : 'Aucune notification dans cette categorie.';
+          container.innerHTML =
+            '<div class="notif-empty">' +
+              '<div class="notif-empty-icon">🔔</div>' +
+              '<div class="notif-empty-text">Tout est calme</div>' +
+              '<div class="notif-empty-sub">' + emptyMsg + '</div>' +
+            '</div>';
+          document.getElementById('notifPagination').style.display = 'none';
+          return;
+        }
+
+        var html = '';
+        filtered.forEach(function (n) {
+          var category = classifyType(n.type);
+          var icon = typeIcon(category);
+          var label = typeLabel(category);
+          var readClass = n.lue ? 'read' : 'unread';
+
+          html +=
+            '<div class="notif-item ' + readClass + '" data-id="' + n.id + '">' +
+              '<div class="notif-icon type-' + category + '">' + icon + '</div>' +
+              '<div class="notif-content">' +
+                '<div class="notif-message">' + escapeHtml(n.message) + '</div>' +
+                '<div class="notif-meta">' +
+                  '<span class="notif-type-label">' + label + '</span>' +
+                  '<span>' + formatDate(n.dateCreation) + '</span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="notif-dot"></div>' +
+            '</div>';
+        });
+
+        container.innerHTML = html;
+
+        // Attach click handlers
+        var items = container.querySelectorAll('.notif-item');
+        items.forEach(function (el) {
+          el.addEventListener('click', function () {
+            var id = parseInt(el.getAttribute('data-id'), 10);
+            if (el.classList.contains('unread')) {
+              markAsRead(id);
+            }
+          });
+        });
+
+        // Pagination
+        var pagDiv = document.getElementById('notifPagination');
+        if (totalPages > 1) {
+          pagDiv.style.display = 'flex';
+          document.getElementById('notifPageIndicator').textContent = 'Page ' + (currentPage + 1) + ' sur ' + totalPages;
+          document.getElementById('btnPrevNotif').disabled = (currentPage === 0);
+          document.getElementById('btnNextNotif').disabled = (currentPage >= totalPages - 1);
+        } else {
+          pagDiv.style.display = 'none';
+        }
+      }
+
+      function updateCounts() {
+        var unreadCount = allNotifications.filter(function (n) { return !n.lue; }).length;
+        document.getElementById('countAll').textContent = totalElements;
+        document.getElementById('countUnread').textContent = unreadCount;
+
+        // Show/hide mark-all button
+        var btnMarkAll = document.getElementById('btnMarkAll');
+        btnMarkAll.style.display = unreadCount > 0 ? 'inline-flex' : 'none';
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+      }
+
+      /* ── Event binding ─────────────────────────────── */
+
+      document.addEventListener('DOMContentLoaded', function () {
+        // Initial load
+        loadNotifications(0);
+        loadUnreadCount();
+
+        // Filter chips
+        var chips = document.querySelectorAll('.filter-chip');
+        chips.forEach(function (chip) {
+          chip.addEventListener('click', function () {
+            chips.forEach(function (c) { c.classList.remove('active'); });
+            chip.classList.add('active');
+            currentFilter = chip.getAttribute('data-filter');
+            renderNotifications();
+          });
+        });
+
+        // Mark all as read
+        document.getElementById('btnMarkAll').addEventListener('click', markAllAsRead);
+
+        // Pagination
+        document.getElementById('btnPrevNotif').addEventListener('click', function () {
+          if (currentPage > 0) {
+            loadNotifications(currentPage - 1);
+          }
+        });
+
+        document.getElementById('btnNextNotif').addEventListener('click', function () {
+          if (currentPage < totalPages - 1) {
+            loadNotifications(currentPage + 1);
+          }
+        });
+      });
+
+    })();
+  </script>
+</body>
+</html>

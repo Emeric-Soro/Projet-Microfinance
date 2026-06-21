@@ -142,6 +142,19 @@ public class ParametrageCreditController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Obtenir un produit credit par ID",
+            description = "Retourne les details d'un produit de credit specifique")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Produit credit trouve"),
+            @ApiResponse(responseCode = "404", description = "Produit credit introuvable")
+    })
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN','DIRECTEUR')")
+    public ResponseEntity<ProduitCreditResponseDTO> obtenirProduitCredit(@PathVariable Long id) {
+        ProduitCredit produit = produitService.obtenirProduitCredit(id);
+        return ResponseEntity.ok(toResponseDTO(produit));
+    }
+
     @Operation(summary = "Lister les produits credit actifs",
             description = "Retourne la liste des produits de credit actifs pour listes déroulantes")
     @ApiResponses({

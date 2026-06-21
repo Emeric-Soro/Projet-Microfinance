@@ -58,7 +58,7 @@
     if (!token) {
       var currentPage = (window.location.pathname.split('/').pop() || '')
         .replace(/\.html$/i, '');
-      if (!['login', 'otp'].includes(currentPage)) {
+      if (!['login', 'otp', 'mot-de-passe-oublie'].includes(currentPage)) {
         window.location.href = 'login.html';
       }
       return null;
@@ -83,7 +83,7 @@
     if (res.status === 401) {
       clearSession();
       var pg = (window.location.pathname.split('/').pop() || '').replace(/\.html$/i, '');
-      if (!['login', 'otp'].includes(pg)) {
+      if (!['login', 'otp', 'mot-de-passe-oublie'].includes(pg)) {
         if (typeof window.showToast === 'function') window.showToast('Session expirée. Redirection vers la connexion…', 'warning');
         setTimeout(function () { window.location.href = 'login.html'; }, 1200);
       }
@@ -136,7 +136,7 @@
   // Redirige vers login.html si pas de token, sauf sur les pages publiques.
   // npx serve supprime .html → normaliser le nom de page avant comparaison.
 
-  var AUTH_BASES = ['login', 'otp'];
+  var AUTH_BASES = ['login', 'otp', 'mot-de-passe-oublie'];
 
   function guardSession() {
     var currentPage = (window.location.pathname.split('/').pop() || '')
@@ -400,16 +400,27 @@
     {
       title: 'Clients',
       items: [
-        { href: 'clients.html', label: 'Liste clients', icon: icons.users, badge: '248', match: ['clients.html', 'client-detail.html'] },
+        { href: 'clients.html', label: 'Liste clients', icon: icons.users, match: ['clients.html', 'client-detail.html'] },
         { href: 'client-create.html', label: 'Nouveau client', icon: icons.users, match: ['client-create.html'] },
-        { href: 'kyc-validation.html', label: 'Validation KYC', icon: icons.audit, match: ['kyc-validation.html'] }
+        { href: 'kyc-validation.html', label: 'Validation KYC', icon: icons.audit, match: ['kyc-validation.html'] },
+        { href: 'recherche-client.html', label: 'Recherche avancée', icon: icons.users, match: ['recherche-client.html'] },
+        { href: 'documents-client.html', label: 'Documents', icon: icons.audit, match: ['documents-client.html'] },
+        { href: 'blacklist-client.html', label: 'Blacklist', icon: icons.audit, match: ['blacklist-client.html'] }
       ]
     },
     {
       title: 'Comptes & Cartes',
       items: [
         { href: 'comptes.html', label: 'Comptes', icon: icons.card, match: ['comptes.html'] },
+        { href: 'ouverture-compte.html', label: 'Ouverture compte', icon: icons.card, match: ['ouverture-compte.html'] },
+        { href: 'detail-compte.html', label: 'Détail compte', icon: icons.card, match: ['detail-compte.html'] },
+        { href: 'recherche-compte.html', label: 'Recherche compte', icon: icons.card, match: ['recherche-compte.html'] },
+        { href: 'fermeture-compte.html', label: 'Fermeture compte', icon: icons.card, match: ['fermeture-compte.html'] },
+        { href: 'blocage-compte.html', label: 'Blocage/Déblocage', icon: icons.card, match: ['blocage-compte.html'] },
         { href: 'cartes.html', label: 'Cartes Visa', icon: icons.card, match: ['cartes.html'] },
+        { href: 'demande-carte.html', label: 'Demande carte', icon: icons.card, match: ['demande-carte.html'] },
+        { href: 'detail-carte.html', label: 'Détail carte', icon: icons.card, match: ['detail-carte.html'] },
+        { href: 'opposition-carte.html', label: 'Opposition carte', icon: icons.card, match: ['opposition-carte.html'] },
         { href: 'beneficiaires.html', label: 'Bénéficiaires', icon: icons.users, match: ['beneficiaires.html'] },
         { href: 'paiement-carte.html', label: 'Paiement carte', icon: icons.card, match: ['paiement-carte.html'] }
       ]
@@ -418,10 +429,17 @@
       title: 'Caisse & Opérations',
       items: [
         { href: 'caisse.html', label: 'Caisse', icon: icons.cash, match: ['caisse.html'] },
+        { href: 'fermeture-caisse.html', label: 'Fermeture caisse', icon: icons.cash, match: ['fermeture-caisse.html'] },
+        { href: 'etat-caisse.html', label: 'État caisse', icon: icons.cash, match: ['etat-caisse.html'] },
         { href: 'guichet.html', label: 'Guichet', icon: icons.cash, match: ['guichet.html'] },
         { href: 'virement.html', label: 'Virement', icon: icons.transfer, match: ['virement.html'] },
-        // { href: 'mobile-money.html', label: 'Mobile Money', icon: icons.cash, match: ['mobile-money.html'] },
-        { href: 'validation.html', label: 'Validation 4-eyes', icon: icons.audit, badge: '12', match: ['validation.html'] },
+        { href: 'retrait-mm.html', label: 'Retrait Mobile Money', icon: icons.cash, match: ['retrait-mm.html'] },
+        { href: 'validation.html', label: 'Validation 4-eyes', icon: icons.audit, match: ['validation.html'] },
+        { href: 'approbation.html', label: 'Approbation', icon: icons.audit, match: ['approbation.html'] },
+        { href: 'rejet.html', label: 'Rejet', icon: icons.audit, match: ['rejet.html'] },
+        { href: 'detail-transaction.html', label: 'Détail transaction', icon: icons.audit, match: ['detail-transaction.html'] },
+        { href: 'annulation.html', label: 'Annulation', icon: icons.audit, match: ['annulation.html'] },
+        { href: 'export-transactions.html', label: 'Export transactions', icon: icons.audit, match: ['export-transactions.html'] },
         { href: 'historique.html', label: 'Historique', icon: icons.audit, match: ['historique.html'] }
       ]
     },
@@ -429,33 +447,99 @@
       title: 'Crédits',
       items: [
         { href: 'credit-simulation.html', label: 'Simulation', icon: icons.credit, match: ['credit-simulation.html'] },
-        { href: 'credit-demandes.html', label: 'Demandes', icon: icons.credit, badge: '7', match: ['credit-demandes.html'] },
+        { href: 'credit-demandes.html', label: 'Demandes', icon: icons.credit, match: ['credit-demandes.html'] },
         { href: 'credit-detail.html', label: 'Dossier crédit', icon: icons.credit, match: ['credit-detail.html'] },
         { href: 'credit-suivi.html', label: 'Suivi avancé', icon: icons.credit, match: ['credit-suivi.html'] }
+      ]
+    },
+    {
+      title: 'Épargne',
+      items: [
+        { href: 'comptes-a-terme.html', label: 'Comptes à terme (DAT)', icon: icons.credit, match: ['comptes-a-terme.html'] },
+        { href: 'interets-courus.html', label: 'Intérêts courus', icon: icons.credit, match: ['interets-courus.html'] }
       ]
     },
     {
       title: 'Paramétrage',
       items: [
         { href: 'produits.html', label: 'Produits', icon: icons.settings, match: ['produits.html'] },
+        { href: 'commissions.html', label: 'Commissions', icon: icons.settings, match: ['commissions.html'] },
+        { href: 'historique-frais.html', label: 'Historique frais', icon: icons.settings, match: ['historique-frais.html'] },
         { href: 'agences.html', label: 'Agences', icon: icons.settings, match: ['agences.html'] },
+        { href: 'calendrier-jours-feries.html', label: 'Jours fériés', icon: icons.settings, match: ['calendrier-jours-feries.html'] },
         { href: 'personnel-create.html', label: 'Ajouter personnel', icon: icons.users, match: ['personnel-create.html'] },
         { href: 'utilisateurs.html', label: 'Utilisateurs', icon: icons.users, match: ['utilisateurs.html'] },
         { href: 'parametres-systeme.html', label: 'Paramètres système', icon: icons.settings, match: ['parametres-systeme.html'] },
-        { href: 'cache.html', label: 'Cache tarification', icon: icons.settings, match: ['cache.html'] },
-        { href: 'securite.html', label: 'Sécurité & rôles', icon: icons.settings, match: ['securite.html'] }
+        { href: 'cache.html', label: 'Cache tarification', icon: icons.settings, match: ['cache.html'] }
       ]
     },
     {
-      title: 'Pilotage & Audit',
+      title: 'Sécurité',
+      items: [
+        { href: 'securite.html', label: 'Rôles & permissions', icon: icons.settings, match: ['securite.html'] },
+        { href: 'utilisateurs.html', label: 'Utilisateurs', icon: icons.users, match: ['utilisateurs.html'] },
+        { href: 'sessions-actives.html', label: 'Sessions actives', icon: icons.audit, match: ['sessions-actives.html'] },
+        { href: 'sessions-admin.html', label: 'Sessions admin', icon: icons.audit, match: ['sessions-admin.html'] },
+        { href: 'parametres-2fa.html', label: 'Paramètres 2FA', icon: icons.settings, match: ['parametres-2fa.html'] }
+      ]
+    },
+    {
+      title: 'Agios & Frais',
+      items: [
+        { href: 'agios.html', label: 'Agios', icon: icons.credit, match: ['agios.html'] },
+        { href: 'frais-tenue-compte.html', label: 'Frais tenue compte', icon: icons.credit, match: ['frais-tenue-compte.html'] },
+        { href: 'penalite-decouvert.html', label: 'Pénalité découvert', icon: icons.credit, match: ['penalite-decouvert.html'] },
+        { href: 'execution-prelevements.html', label: 'Exécution prélèvements', icon: icons.credit, match: ['execution-prelevements.html'] }
+      ]
+    },
+    {
+      title: 'Conformité & LCB-FT',
+      items: [
+        { href: 'conformite.html', label: 'Alertes LCB-FT', icon: icons.audit, match: ['conformite.html'] },
+        { href: 'sar-liste.html', label: 'Déclarations SAR', icon: icons.audit, match: ['sar-liste.html', 'sar-creer.html', 'sar-detail.html'] },
+        { href: 'reclamations-backoffice.html', label: 'Réclamations', icon: icons.audit, match: ['reclamations-backoffice.html'] },
+        { href: 'rgpd-consentement.html', label: 'RGPD Consentement', icon: icons.audit, match: ['rgpd-consentement.html'] },
+        { href: 'rgpd-export.html', label: 'RGPD Export', icon: icons.audit, match: ['rgpd-export.html'] },
+        { href: 'rgpd-suppression.html', label: 'RGPD Suppression', icon: icons.audit, match: ['rgpd-suppression.html'] },
+        { href: 'verification-pep.html', label: 'Vérification PEP', icon: icons.audit, match: ['verification-pep.html'] },
+        { href: 'liste-pep.html', label: 'Liste PEP', icon: icons.audit, match: ['liste-pep.html'] }
+      ]
+    },
+    {
+      title: 'Exceptions & Escalades',
+      items: [
+        { href: 'derogation-creer.html', label: 'Créer dérogation', icon: icons.audit, match: ['derogation-creer.html'] },
+        { href: 'derogation-liste.html', label: 'Liste dérogations', icon: icons.audit, match: ['derogation-liste.html'] },
+        { href: 'derogation-decision.html', label: 'Décision dérogation', icon: icons.audit, match: ['derogation-decision.html'] },
+        { href: 'escalade-liste.html', label: 'Liste escalades', icon: icons.audit, match: ['escalade-liste.html'] },
+        { href: 'escalade-creer.html', label: 'Créer escalade', icon: icons.audit, match: ['escalade-creer.html'] },
+        { href: 'regles-escalade.html', label: 'Règles escalade', icon: icons.settings, match: ['regles-escalade.html'] }
+      ]
+    },
+    {
+      title: 'Pilotage & Reporting',
       items: [
         { href: 'dashboard.html', label: 'Tableau de bord', icon: icons.dashboard, match: ['dashboard.html'] },
         { href: 'direction.html', label: 'Direction', icon: icons.dashboard, match: ['direction.html'] },
-        { href: 'agios.html', label: 'Agios', icon: icons.credit, match: ['agios.html'] },
-        { href: 'conformite.html', label: 'Conformité', icon: icons.audit, badge: '18', match: ['conformite.html'] },
-        { href: 'exceptions.html', label: 'Dérogations & escalades', icon: icons.audit, badge: '9', match: ['exceptions.html'] },
+        { href: 'statistiques-kpi.html', label: 'Statistiques KPI', icon: icons.dashboard, match: ['statistiques-kpi.html'] },
+        { href: 'indicateurs-temps-reel.html', label: 'Indicateurs temps réel', icon: icons.dashboard, match: ['indicateurs-temps-reel.html'] },
         { href: 'reporting.html', label: 'Reporting', icon: icons.dashboard, match: ['reporting.html'] },
-        { href: 'notifications.html', label: 'Notifications', icon: icons.audit, badge: '3', match: ['notifications.html'] },
+        { href: 'rapport-operationnel.html', label: 'Rapport opérationnel', icon: icons.dashboard, match: ['rapport-operationnel.html'] },
+        { href: 'rapport-financier.html', label: 'Rapport financier', icon: icons.dashboard, match: ['rapport-financier.html'] },
+        { href: 'rapport-clients.html', label: 'Rapport clients', icon: icons.dashboard, match: ['rapport-clients.html'] },
+        { href: 'rapport-credits.html', label: 'Rapport crédits', icon: icons.dashboard, match: ['rapport-credits.html'] },
+        { href: 'rapport-caisse.html', label: 'Rapport caisse', icon: icons.dashboard, match: ['rapport-caisse.html'] },
+        { href: 'rapport-bceao.html', label: 'Rapport BCEAO', icon: icons.dashboard, match: ['rapport-bceao.html'] },
+        { href: 'export-rapport.html', label: 'Export rapport', icon: icons.dashboard, match: ['export-rapport.html'] },
+        { href: 'rapport-personnalise.html', label: 'Rapport personnalisé', icon: icons.dashboard, match: ['rapport-personnalise.html'] }
+      ]
+    },
+    {
+      title: 'Notifications',
+      items: [
+        { href: 'notifications.html', label: 'Notifications', icon: icons.audit, match: ['notifications.html'] },
+        { href: 'notifications-gestion.html', label: 'Gestion notifications', icon: icons.audit, match: ['notifications-gestion.html'] },
+        { href: 'notifications-preferences.html', label: 'Préférences', icon: icons.settings, match: ['notifications-preferences.html'] },
         { href: 'audit.html', label: "Journal d'audit", icon: icons.audit, match: ['audit.html'] }
       ]
     }

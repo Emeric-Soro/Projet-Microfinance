@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vérification PEP - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    .pep-status-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+    .pep-status-card.detected {
+      background: #fdecea;
+      border: 1px solid #e57373;
+    }
+    .pep-status-card.clear {
+      background: #e8f5e9;
+      border: 1px solid #81c784;
+    }
+    .pep-status-icon {
+      font-size: 36px;
+      flex-shrink: 0;
+    }
+    .pep-status-text h3 {
+      margin: 0 0 4px 0;
+      font-size: 1.15em;
+    }
+    .pep-status-text p {
+      margin: 0;
+      font-size: 0.9em;
+      color: #5a6a7a;
+    }
+    .pep-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .pep-detail-item {
+      background: #f8fafb;
+      border: 1px solid #e0e8ee;
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .pep-detail-item .label {
+      font-size: 0.78em;
+      color: #7f8c8d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .pep-detail-item .value {
+      font-size: 0.95em;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    .pep-client-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #eaf4fb;
+      border: 1px solid #b8d9ed;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-weight: 600;
+      font-size: 0.9em;
+      color: #2980b9;
+    }
+    .pep-client-chip .remove {
+      cursor: pointer;
+      color: #95a5a6;
+      font-size: 1.1em;
+      line-height: 1;
+    }
+    .pep-client-chip .remove:hover {
+      color: #e74c3c;
+    }
+    .search-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1px solid #c9dfe8;
+      border-radius: 0 0 8px 8px;
+      max-height: 220px;
+      overflow-y: auto;
+      z-index: 50;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .search-dropdown.show {
+      display: block;
+    }
+    .search-dropdown-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f4f6;
+      font-size: 0.9em;
+      transition: background 0.15s;
+    }
+    .search-dropdown-item:hover {
+      background: #eaf4fb;
+    }
+    .search-dropdown-item:last-child {
+      border-bottom: none;
+    }
+    .search-dropdown-item .client-name {
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    .search-dropdown-item .client-meta {
+      font-size: 0.82em;
+      color: #7f8c8d;
+      margin-top: 2px;
+    }
+    .search-wrapper {
+      position: relative;
+    }
+    .flag-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .flag-modal-overlay.open {
+      display: flex;
+    }
+    .flag-modal {
+      background: #fff;
+      border-radius: 12px;
+      padding: 0;
+      width: 500px;
+      max-width: 92%;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    .flag-modal-header {
+      background: linear-gradient(135deg, #c0392b, #e74c3c);
+      color: #fff;
+      padding: 18px 24px;
+    }
+    .flag-modal-header h3 {
+      margin: 0;
+      font-size: 1.1em;
+    }
+    .flag-modal-header p {
+      margin: 4px 0 0;
+      font-size: 0.85em;
+      opacity: 0.85;
+    }
+    .flag-modal-body {
+      padding: 24px;
+    }
+    .flag-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 0 24px 20px;
+    }
+    .spinner-sm {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #c9dfe8;
+      border-top-color: #2980b9;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty-state {
+      text-align: center;
+      padding: 32px 20px;
+      color: #7f8c8d;
+    }
+    .empty-state .icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    .history-status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Vérification PEP</div>
+            <div class="topbar-breadcrumb">Conformité / PEP / Vérification</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Vérification Personne Politiquement Exposée</h1>
+            <p class="page-subtitle">Screening PEP obligatoire — Recommandation GAFI / Groupe d'action financière</p>
+          </div>
+          <div class="export-buttons">
+            <a href="liste-pep.html" class="btn btn-outline btn-sm">Voir la liste PEP</a>
+          </div>
+        </div>
+
+        <!-- KPI Summary -->
+        <section class="kpi-grid" id="pepKpiSection" style="display:none;">
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Statut PEP</div>
+              <div class="kpi-value" id="kpiPepStatus">-</div>
+              <div class="kpi-trend" id="kpiPepTrend"></div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Niveau de risque</div>
+              <div class="kpi-value" id="kpiRiskLevel">-</div>
+              <div class="kpi-trend" id="kpiRiskTrend"></div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Dernière vérification</div>
+              <div class="kpi-value" id="kpiLastCheck">-</div>
+              <div class="kpi-trend" id="kpiLastCheckTrend"></div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Nombre de vérifications</div>
+              <div class="kpi-value" id="kpiCheckCount">-</div>
+              <div class="kpi-trend" id="kpiCheckCountTrend"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Client Search -->
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Rechercher un client</div>
+              <div class="card-subtitle">Saisissez un nom, prénom ou numéro client pour lancer le screening PEP</div>
+            </div>
+          </div>
+          <div style="padding: 20px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Nom, prénom ou numéro client</label>
+              <div class="search-wrapper">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="pepSearchInput"
+                  placeholder="Ex: Kouamé, CLIENT-00123..."
+                  autocomplete="off"
+                >
+                <div class="search-dropdown" id="pepSearchDropdown"></div>
+              </div>
+            </div>
+            <div id="selectedClientChip" style="margin-top: 12px; display: none;"></div>
+          </div>
+        </section>
+
+        <!-- PEP Result -->
+        <section class="card" id="pepResultSection" style="margin-top: 16px; display: none;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Résultat de la vérification PEP</div>
+              <div class="card-subtitle" id="resultSubtitle">Résultat du screening en temps réel</div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-outline btn-sm" id="btnRelancer" onclick="relancerVerification()">
+                Relancer la vérification
+              </button>
+              <button class="btn btn-danger btn-sm" id="btnFlagManual" onclick="ouvrirModalFlag()">
+                Signaler manuellement comme PEP
+              </button>
+            </div>
+          </div>
+          <div style="padding: 20px;" id="pepResultContent">
+            <div class="empty-state">
+              <div class="spinner-sm"></div>
+              <p style="margin-top: 8px;">Vérification en cours...</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Verification History -->
+        <section class="card" id="pepHistorySection" style="margin-top: 16px; display: none;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Historique des vérifications</div>
+              <div class="card-subtitle">Traçabilité complète des screenings PEP pour ce client</div>
+            </div>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Résultat</th>
+                <th>Niveau risque</th>
+                <th>Source</th>
+                <th>Vérifié par</th>
+              </tr>
+            </thead>
+            <tbody id="pepHistoryBody">
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state">
+                    <div class="icon">&#128269;</div>
+                    <p>Aucun historique de vérification.</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Manual Flag Modal -->
+        <div class="flag-modal-overlay" id="flagPepModal">
+          <div class="flag-modal">
+            <div class="flag-modal-header">
+              <h3>Signaler comme PEP</h3>
+              <p>Cette action enregistrera le client comme Personne Politiquement Exposée</p>
+            </div>
+            <div class="flag-modal-body">
+              <div class="form-group">
+                <label class="form-label">Source d'information <span style="color:#e74c3c;">*</span></label>
+                <select class="form-control" id="pepSourceInfo">
+                  <option value="">-- Sélectionner --</option>
+                  <option value="VERIFICATION_MANUELLE">Vérification manuelle</option>
+                  <option value="LISTE_OFFICIELLE">Liste officielle PEP</option>
+                  <option value="SIGNALEMENT_INTERNE">Signalement interne</option>
+                  <option value="MEDIAS">Presse / Médias</option>
+                  <option value="AUTORITE">Autorité de régulation</option>
+                  <option value="AUTRE">Autre</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Niveau de risque <span style="color:#e74c3c;">*</span></label>
+                <select class="form-control" id="pepRiskLevel">
+                  <option value="ELEVE">Élevé</option>
+                  <option value="MOYEN">Moyen</option>
+                  <option value="FAIBLE">Faible</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Fonction / Poste occupé</label>
+                <input type="text" class="form-control" id="pepFonction" placeholder="Ex: Ministre, Député, Directeur d'agence publique...">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Pays</label>
+                <input type="text" class="form-control" id="pepPays" placeholder="Ex: Côte d'Ivoire">
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Justification / Motif <span style="color:#e74c3c;">*</span></label>
+                <textarea class="form-control" id="pepJustification" rows="4" placeholder="Décrivez les raisons du signalement PEP..."></textarea>
+              </div>
+            </div>
+            <div class="flag-modal-footer">
+              <button class="btn btn-outline" onclick="fermerModalFlag()">Annuler</button>
+              <button class="btn btn-primary" id="btnConfirmerFlag" onclick="confirmerFlagPEP()">
+                Confirmer le signalement
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ============================================
+       Vérification PEP — State & Config
+       ============================================ */
+
+    let currentClientId = null;
+    let currentClientName = '';
+    let currentClientNum = '';
+    let pepCheckData = null;
+    let searchTimeout = null;
+
+    const RISK_BADGE_MAP = {
+      ELEVE: 'badge-danger',
+      ELEVEE: 'badge-danger',
+      MOYEN: 'badge-warning',
+      MOYENNE: 'badge-warning',
+      FAIBLE: 'badge-success'
+    };
+
+    const RISK_LABEL = {
+      ELEVE: 'Élevé',
+      ELEVEE: 'Élevé',
+      MOYEN: 'Moyen',
+      MOYENNE: 'Moyen',
+      FAIBLE: 'Faible'
+    };
+
+    /* ============================================
+       Client Search
+       ============================================ */
+
+    const searchInput = document.getElementById('pepSearchInput');
+    const searchDropdown = document.getElementById('pepSearchDropdown');
+
+    searchInput.addEventListener('input', function () {
+      const q = this.value.trim();
+      if (q.length < 2) {
+        hideDropdown();
+        return;
+      }
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(function () { searchClients(q); }, 300);
+    });
+
+    searchInput.addEventListener('focus', function () {
+      if (searchDropdown.children.length > 0 && this.value.trim().length >= 2) {
+        searchDropdown.classList.add('show');
+      }
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.search-wrapper')) {
+        hideDropdown();
+      }
+    });
+
+    async function searchClients(query) {
+      try {
+        const res = await SF.apiFetch('/api/v1/clients?page=0&size=10&search=' + encodeURIComponent(query));
+        if (!res || !res.ok) return;
+        const data = await res.json();
+        const clients = data.content || data || [];
+        if (clients.length === 0) {
+          searchDropdown.innerHTML = '<div class="search-dropdown-item" style="color:#7f8c8d;cursor:default;">Aucun client trouvé.</div>';
+          searchDropdown.classList.add('show');
+          return;
+        }
+        searchDropdown.innerHTML = clients.map(function (c) {
+          return '<div class="search-dropdown-item" data-id="' + c.idClient + '" ' +
+            'data-name="' + escapeAttr((c.nom || '') + ' ' + (c.prenom || '')) + '" ' +
+            'data-num="' + escapeAttr(c.numeroClient || '') + '">' +
+            '<div class="client-name">' + escapeHtml((c.nom || '') + ' ' + (c.prenom || '')) + '</div>' +
+            '<div class="client-meta">' + escapeHtml(c.numeroClient || 'N/A') +
+            (c.email ? ' — ' + escapeHtml(c.email) : '') + '</div>' +
+            '</div>';
+        }).join('');
+        searchDropdown.querySelectorAll('.search-dropdown-item[data-id]').forEach(function (item) {
+          item.addEventListener('click', function () {
+            selectClient(
+              parseInt(this.dataset.id),
+              this.dataset.name,
+              this.dataset.num
+            );
+          });
+        });
+        searchDropdown.classList.add('show');
+      } catch (e) {
+        console.error('Erreur recherche client:', e);
+      }
+    }
+
+    function selectClient(id, name, num) {
+      currentClientId = id;
+      currentClientName = name.trim();
+      currentClientNum = num;
+      hideDropdown();
+      searchInput.value = '';
+      searchInput.style.display = 'none';
+
+      // Show chip
+      var chip = document.getElementById('selectedClientChip');
+      chip.style.display = '';
+      chip.innerHTML = '<span class="pep-client-chip">' +
+        '&#128100; ' + escapeHtml(currentClientName) +
+        (currentClientNum ? ' — ' + escapeHtml(currentClientNum) : '') +
+        ' <span class="remove" onclick="clearClient()" title="Retirer">&times;</span>' +
+        '</span>';
+
+      // Show sections and launch verification
+      document.getElementById('pepResultSection').style.display = '';
+      document.getElementById('pepHistorySection').style.display = '';
+      document.getElementById('pepKpiSection').style.display = '';
+      lancerVerificationPEP();
+    }
+
+    function clearClient() {
+      currentClientId = null;
+      currentClientName = '';
+      currentClientNum = '';
+      pepCheckData = null;
+      document.getElementById('selectedClientChip').style.display = 'none';
+      document.getElementById('selectedClientChip').innerHTML = '';
+      document.getElementById('pepResultSection').style.display = 'none';
+      document.getElementById('pepHistorySection').style.display = 'none';
+      document.getElementById('pepKpiSection').style.display = 'none';
+      searchInput.style.display = '';
+      searchInput.value = '';
+      searchInput.focus();
+    }
+
+    function hideDropdown() {
+      searchDropdown.classList.remove('show');
+    }
+
+    /* ============================================
+       PEP Verification
+       ============================================ */
+
+    async function lancerVerificationPEP() {
+      if (!currentClientId) return;
+      var content = document.getElementById('pepResultContent');
+      content.innerHTML = '<div class="empty-state"><div class="spinner-sm"></div><p style="margin-top:8px;">Vérification PEP en cours...</p></div>';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/conformite/pep/verifier', {
+          method: 'POST',
+          body: JSON.stringify({
+            idClient: currentClientId,
+            sourceInformation: 'SCREENING_BACKOFFICE',
+            verifiePar: getOperateur()
+          })
+        });
+
+        if (res && res.ok) {
+          var data = await res.json();
+          pepCheckData = data;
+          renderPepResult(data);
+          updateKpis(data);
+          loadPepHistory();
+        } else {
+          var err = res ? await res.json().catch(function () { return {}; }) : {};
+          content.innerHTML = '<div class="empty-state"><div class="icon" style="color:#e74c3c;">&#9888;</div>' +
+            '<p style="color:#e74c3c;">' + escapeHtml(err.message || 'Erreur lors de la vérification PEP.') + '</p>' +
+            '<button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="lancerVerificationPEP()">Réessayer</button></div>';
+        }
+      } catch (e) {
+        content.innerHTML = '<div class="empty-state"><div class="icon" style="color:#e74c3c;">&#9888;</div>' +
+          '<p style="color:#e74c3c;">' + escapeHtml(e.message || 'Erreur réseau.') + '</p>' +
+          '<button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="lancerVerificationPEP()">Réessayer</button></div>';
+      }
+    }
+
+    function renderPepResult(data) {
+      var content = document.getElementById('pepResultContent');
+      var isPEP = data.statut === 'ACTIF' || data.statut === 'SURVEILLE';
+      var niveauRisque = data.niveauRisque || 'FAIBLE';
+      var riskBadge = RISK_BADGE_MAP[niveauRisque] || 'badge-info';
+      var riskLabel = RISK_LABEL[niveauRisque] || niveauRisque;
+      var statutLabel = data.statut || '-';
+      var statutBadge = { ACTIF: 'badge-danger', SURVEILLE: 'badge-warning', LEVE: 'badge-success' }[data.statut] || 'badge-info';
+
+      var statusClass = isPEP ? 'detected' : 'clear';
+      var statusIcon = isPEP ? '&#9888;' : '&#10004;';
+      var statusTitle = isPEP ? 'PEP DÉTECTÉ' : 'NON PEP — Aucune exposition politique détectée';
+      var statusColor = isPEP ? '#c0392b' : '#27ae60';
+
+      content.innerHTML =
+        '<div class="pep-status-card ' + statusClass + '">' +
+          '<span class="pep-status-icon">' + statusIcon + '</span>' +
+          '<div class="pep-status-text">' +
+            '<h3 style="color:' + statusColor + ';">' + statusTitle + '</h3>' +
+            '<p>Vérification effectuée le ' + formatDate(data.dateVerification || data.dateDeclaration) + '</p>' +
+          '</div>' +
+        '</div>' +
+        '<div class="pep-detail-grid">' +
+          '<div class="pep-detail-item">' +
+            '<div class="label">Niveau de risque</div>' +
+            '<div class="value"><span class="badge ' + riskBadge + '">' + riskLabel + '</span></div>' +
+          '</div>' +
+          '<div class="pep-detail-item">' +
+            '<div class="label">Statut</div>' +
+            '<div class="value"><span class="badge ' + statutBadge + '">' + escapeHtml(statutLabel) + '</span></div>' +
+          '</div>' +
+          (data.fonction ?
+            '<div class="pep-detail-item">' +
+              '<div class="label">Fonction</div>' +
+              '<div class="value">' + escapeHtml(data.fonction) + '</div>' +
+            '</div>' : '') +
+          (data.pays ?
+            '<div class="pep-detail-item">' +
+              '<div class="label">Pays</div>' +
+              '<div class="value">' + escapeHtml(data.pays) + '</div>' +
+            '</div>' : '') +
+          (data.sourceInformation ?
+            '<div class="pep-detail-item">' +
+              '<div class="label">Source</div>' +
+              '<div class="value">' + escapeHtml(data.sourceInformation) + '</div>' +
+            '</div>' : '') +
+          (data.verifiePar ?
+            '<div class="pep-detail-item">' +
+              '<div class="label">Vérifié par</div>' +
+              '<div class="value">' + escapeHtml(data.verifiePar) + '</div>' +
+            '</div>' : '') +
+        '</div>';
+
+      document.getElementById('resultSubtitle').textContent =
+        isPEP ? 'Client identifié comme PEP — surveillance renforcée requise' : 'Aucune exposition politique détectée';
+    }
+
+    function updateKpis(data) {
+      var isPEP = data.statut === 'ACTIF' || data.statut === 'SURVEILLE';
+      var niveauRisque = data.niveauRisque || 'FAIBLE';
+
+      document.getElementById('kpiPepStatus').textContent = isPEP ? 'PEP' : 'NON PEP';
+      document.getElementById('kpiPepStatus').style.color = isPEP ? '#c0392b' : '#27ae60';
+      document.getElementById('kpiPepTrend').textContent = data.statut || '-';
+      document.getElementById('kpiPepTrend').className = 'kpi-trend ' + (isPEP ? 'down' : 'up');
+
+      document.getElementById('kpiRiskLevel').textContent = RISK_LABEL[niveauRisque] || niveauRisque;
+      document.getElementById('kpiRiskLevel').style.color =
+        { ELEVE: '#c0392b', ELEVEE: '#c0392b', MOYEN: '#f39c12', MOYENNE: '#f39c12', FAIBLE: '#27ae60' }[niveauRisque] || '#2c3e50';
+      document.getElementById('kpiRiskTrend').textContent = 'Niveau ' + (RISK_LABEL[niveauRisque] || niveauRisque).toLowerCase();
+      document.getElementById('kpiRiskTrend').className = 'kpi-trend ' + (niveauRisque === 'FAIBLE' ? 'up' : 'down');
+
+      document.getElementById('kpiLastCheck').textContent = formatDateShort(data.dateVerification || data.dateDeclaration);
+      document.getElementById('kpiLastCheckTrend').textContent = data.verifiePar || 'Système';
+      document.getElementById('kpiLastCheckTrend').className = 'kpi-trend';
+
+      document.getElementById('kpiCheckCount').textContent = '1';
+      document.getElementById('kpiCheckCountTrend').textContent = 'Vérification en cours';
+      document.getElementById('kpiCheckCountTrend').className = 'kpi-trend';
+    }
+
+    /* ============================================
+       Verification History
+       ============================================ */
+
+    async function loadPepHistory() {
+      if (!currentClientId) return;
+      try {
+        var res = await SF.apiFetch('/api/v1/conformite/pep?page=0&size=50');
+        if (res && res.ok) {
+          var data = await res.json();
+          var items = (data.content || data || []).filter(function (p) {
+            return p.idClient === currentClientId;
+          });
+          renderHistory(items);
+          // Update KPI count
+          document.getElementById('kpiCheckCount').textContent = items.length || '1';
+        }
+      } catch (e) {
+        console.error('Erreur historique PEP:', e);
+      }
+    }
+
+    function renderHistory(items) {
+      var tbody = document.getElementById('pepHistoryBody');
+      if (!items || items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5">' +
+          '<div class="empty-state"><div class="icon">&#128269;</div><p>Aucun historique de vérification.</p></div>' +
+          '</td></tr>';
+        return;
+      }
+      tbody.innerHTML = items.map(function (h) {
+        var riskBadge = RISK_BADGE_MAP[h.niveauRisque] || 'badge-info';
+        var riskLabel = RISK_LABEL[h.niveauRisque] || h.niveauRisque || '-';
+        var isPEP = h.statut === 'ACTIF' || h.statut === 'SURVEILLE';
+        var dotColor = isPEP ? '#e74c3c' : '#27ae60';
+
+        return '<tr>' +
+          '<td>' + formatDate(h.dateVerification || h.dateDeclaration || h.createdAt) + '</td>' +
+          '<td><span class="history-status-dot" style="background:' + dotColor + ';"></span>' +
+            escapeHtml(h.statut || '-') + '</td>' +
+          '<td><span class="badge ' + riskBadge + '">' + riskLabel + '</span></td>' +
+          '<td>' + escapeHtml(h.sourceInformation || '-') + '</td>' +
+          '<td>' + escapeHtml(h.verifiePar || '-') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    /* ============================================
+       Manual Flag Modal
+       ============================================ */
+
+    function ouvrirModalFlag() {
+      if (!currentClientId) {
+        showToast('Veuillez d\'abord sélectionner un client.', 'warning');
+        return;
+      }
+      document.getElementById('flagPepModal').classList.add('open');
+      document.getElementById('pepSourceInfo').value = '';
+      document.getElementById('pepRiskLevel').value = 'ELEVE';
+      document.getElementById('pepFonction').value = '';
+      document.getElementById('pepPays').value = '';
+      document.getElementById('pepJustification').value = '';
+      document.getElementById('pepSourceInfo').focus();
+    }
+
+    function fermerModalFlag() {
+      document.getElementById('flagPepModal').classList.remove('open');
+    }
+
+    // Close modal on overlay click
+    document.getElementById('flagPepModal').addEventListener('click', function (e) {
+      if (e.target === this) fermerModalFlag();
+    });
+
+    // Close modal on Escape
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') fermerModalFlag();
+    });
+
+    async function confirmerFlagPEP() {
+      var source = document.getElementById('pepSourceInfo').value;
+      var justification = document.getElementById('pepJustification').value.trim();
+
+      if (!source) {
+        showToast('Veuillez sélectionner une source d\'information.', 'warning');
+        document.getElementById('pepSourceInfo').focus();
+        return;
+      }
+      if (!justification) {
+        showToast('Veuillez saisir une justification.', 'warning');
+        document.getElementById('pepJustification').focus();
+        return;
+      }
+
+      var btn = document.getElementById('btnConfirmerFlag');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-sm"></span> Enregistrement...';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/conformite/pep/verifier', {
+          method: 'POST',
+          body: JSON.stringify({
+            idClient: currentClientId,
+            sourceInformation: source,
+            verifiePar: getOperateur()
+          })
+        });
+
+        if (res && res.ok) {
+          showToast('Client signalé comme PEP avec succès.', 'success');
+          fermerModalFlag();
+          lancerVerificationPEP();
+        } else {
+          var err = res ? await res.json().catch(function () { return {}; }) : {};
+          showToast(err.message || 'Erreur lors du signalement PEP.', 'error');
+        }
+      } catch (e) {
+        showToast(e.message || 'Erreur réseau.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Confirmer le signalement';
+      }
+    }
+
+    function relancerVerification() {
+      if (!currentClientId) {
+        showToast('Veuillez sélectionner un client.', 'warning');
+        return;
+      }
+      lancerVerificationPEP();
+    }
+
+    /* ============================================
+       Utility Functions
+       ============================================ */
+
+    function getOperateur() {
+      try {
+        var user = JSON.parse(localStorage.getItem('sf_user') || '{}');
+        return user.nom || user.username || user.email || 'BACKOFFICE';
+      } catch (e) {
+        return 'BACKOFFICE';
+      }
+    }
+
+    function formatDate(d) {
+      if (!d) return '-';
+      try {
+        var date = new Date(d);
+        return date.toLocaleDateString('fr-FR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      } catch (e) {
+        return d;
+      }
+    }
+
+    function formatDateShort(d) {
+      if (!d) return '-';
+      try {
+        return new Date(d).toLocaleDateString('fr-FR', {
+          day: '2-digit', month: 'short', year: 'numeric'
+        });
+      } catch (e) {
+        return d;
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function escapeAttr(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+  </script>
+</body>
+</html>

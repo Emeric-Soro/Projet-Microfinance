@@ -17,6 +17,12 @@ public interface NotificationService {
 
     Page<Notification> listerNotificationsClient(Long idClient, Pageable pageable);
 
+    /**
+     * Compte les notifications non lues d'un client. Utilise par l'application
+     * mobile pour afficher le badge de compteur sur l'icone de notifications.
+     */
+    long compterNotificationsNonLues(Long idClient);
+
     Notification consulterNotificationClient(Long idNotification, Long idClient);
 
     void marquerCommeLue(Long idNotification, Long idClient);

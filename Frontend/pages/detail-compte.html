@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Détail compte - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    /* ── Account Hero Header ─────────────────────────── */
+    .account-hero {
+      background: linear-gradient(135deg, #084355, #0A5C72);
+      color: #fff;
+      border-radius: 14px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .account-hero::before {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: -30px;
+      width: 220px;
+      height: 220px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 50%;
+    }
+    .account-hero::after {
+      content: '';
+      position: absolute;
+      bottom: -40px;
+      left: 20%;
+      width: 160px;
+      height: 160px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 50%;
+    }
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-account-num {
+      font-family: 'Courier New', monospace;
+      font-size: 1.05rem;
+      opacity: 0.85;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .hero-account-num:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .hero-balance-section {
+      position: relative;
+      z-index: 1;
+      margin: 20px 0;
+    }
+    .hero-balance-label {
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0.65;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .hero-balance-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-top: 6px;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .live-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      opacity: 0.7;
+      letter-spacing: 0.3px;
+    }
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4CAF50;
+      animation: livePulse 2s ease-in-out infinite;
+    }
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(76,175,80,0.5); }
+      50% { opacity: 0.6; box-shadow: 0 0 0 4px rgba(76,175,80,0); }
+    }
+    .hero-meta {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+      font-size: 0.88rem;
+      opacity: 0.8;
+      margin-top: 6px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255,255,255,0.15);
+      position: relative;
+      z-index: 1;
+    }
+    .hero-detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .hero-detail-label {
+      font-size: 10px;
+      opacity: 0.55;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .hero-detail-value {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-hero {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      font-size: 12.5px;
+      font-weight: 600;
+      border-radius: 9px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      font-family: inherit;
+    }
+    .btn-hero:hover {
+      background: rgba(255,255,255,0.22);
+      border-color: rgba(255,255,255,0.4);
+      transform: translateY(-1px);
+    }
+    .btn-hero.danger {
+      border-color: rgba(217,48,37,0.4);
+      background: rgba(217,48,37,0.15);
+    }
+    .btn-hero.danger:hover {
+      background: rgba(217,48,37,0.3);
+    }
+    .btn-hero svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+    .hero-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .hero-status-badge .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .hero-status-badge.active {
+      background: rgba(46,125,50,0.25);
+      color: #a5d6a7;
+    }
+    .hero-status-badge.bloque {
+      background: rgba(217,48,37,0.25);
+      color: #ef9a9a;
+    }
+    .hero-status-badge.clos {
+      background: rgba(117,117,117,0.25);
+      color: #bdbdbd;
+    }
+    .hero-status-badge.suspendu {
+      background: rgba(230,81,0,0.25);
+      color: #ffcc80;
+    }
+
+    /* ── Tabs ─────────────────────────────────────────── */
+    .tab-nav {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid #e2e8f0;
+      margin-bottom: 22px;
+    }
+    .tab-nav button {
+      padding: 11px 22px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      font-weight: 500;
+      color: #4A7A8A;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+    .tab-nav button:hover {
+      color: #084355;
+      background: rgba(8,67,85,0.03);
+    }
+    .tab-nav button.active {
+      color: #084355;
+      border-bottom-color: #084355;
+      font-weight: 600;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.25s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Info Grid ────────────────────────────────────── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 24px;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f6fa;
+    }
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    .info-row .label {
+      color: #4A7A8A;
+      font-size: 0.84rem;
+    }
+    .info-row .value {
+      font-weight: 500;
+      color: #084355;
+      font-size: 0.9rem;
+    }
+
+    /* ── Stat Cards Row ───────────────────────────────── */
+    .stat-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: #fff;
+      border: 1px solid #e8eff4;
+      border-radius: 10px;
+      padding: 16px 18px;
+      text-align: center;
+    }
+    .stat-card-label {
+      font-size: 11px;
+      color: #4A7A8A;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+    }
+    .stat-card-value {
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-top: 4px;
+      color: #084355;
+    }
+    .stat-card-value.success { color: #2E7D32; }
+    .stat-card-value.danger { color: #D93025; }
+    .stat-card-value.primary { color: #084355; }
+
+    /* ── Timeline ─────────────────────────────────────── */
+    .timeline-item {
+      display: flex;
+      gap: 14px;
+      padding: 14px 0;
+      border-left: 2px solid #C9DFE8;
+      margin-left: 10px;
+      padding-left: 22px;
+      position: relative;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -6px;
+      top: 18px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #084355;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 2px #C9DFE8;
+    }
+    .timeline-item .tl-date {
+      font-size: 0.78rem;
+      color: #4A7A8A;
+      min-width: 100px;
+      padding-top: 2px;
+    }
+    .timeline-item .tl-body {
+      flex: 1;
+    }
+    .timeline-item .tl-action {
+      font-weight: 600;
+      color: #084355;
+      font-size: 0.9rem;
+    }
+    .timeline-item .tl-details {
+      font-size: 0.83rem;
+      color: #4A7A8A;
+      margin-top: 3px;
+    }
+
+    /* ── Document Card ────────────────────────────────── */
+    .doc-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f6fa;
+    }
+    .doc-card:last-child {
+      border-bottom: none;
+    }
+    .doc-card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: rgba(8,67,85,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .doc-card-icon svg {
+      width: 18px;
+      height: 18px;
+      color: #084355;
+    }
+    .doc-card-info {
+      flex: 1;
+      margin-left: 12px;
+    }
+    .doc-card-name {
+      font-weight: 600;
+      color: #084355;
+      font-size: 0.9rem;
+    }
+    .doc-card-date {
+      font-size: 0.8rem;
+      color: #4A7A8A;
+      margin-top: 2px;
+    }
+
+    /* ── Skeleton Loading ─────────────────────────────── */
+    .skeleton {
+      background: linear-gradient(90deg, #e8eff4 25%, #f0f6fa 50%, #e8eff4 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 8px;
+    }
+    .skeleton-line {
+      height: 16px;
+      margin-bottom: 10px;
+    }
+    .skeleton-line.w-60 { width: 60%; }
+    .skeleton-line.w-40 { width: 40%; }
+    .skeleton-line.w-80 { width: 80%; }
+    .skeleton-block {
+      height: 180px;
+      margin-bottom: 16px;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* ── Empty State ──────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .empty-state-icon {
+      font-size: 40px;
+      opacity: 0.25;
+      margin-bottom: 12px;
+    }
+    .empty-state-text {
+      font-size: 14px;
+      color: #4A7A8A;
+      font-weight: 500;
+    }
+
+    /* ── Modal ────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .modal-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-box {
+      background: #fff;
+      border-radius: 14px;
+      padding: 28px;
+      width: 420px;
+      max-width: 90vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      transform: translateY(20px);
+      transition: transform 0.2s;
+    }
+    .modal-overlay.visible .modal-box {
+      transform: translateY(0);
+    }
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #084355;
+      margin-bottom: 8px;
+    }
+    .modal-desc {
+      font-size: 0.9rem;
+      color: #4A7A8A;
+      margin-bottom: 16px;
+    }
+    .modal-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #C9DFE8;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    .modal-input:focus {
+      border-color: #084355;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .modal-actions .btn {
+      padding: 9px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+    .modal-actions .btn-cancel {
+      background: #e8eff4;
+      color: #4A7A8A;
+    }
+    .modal-actions .btn-cancel:hover {
+      background: #dde5ed;
+    }
+    .modal-actions .btn-danger {
+      background: #D93025;
+      color: #fff;
+    }
+    .modal-actions .btn-danger:hover {
+      background: #C62828;
+    }
+
+    /* ── Responsive ───────────────────────────────────── */
+    @media (max-width: 768px) {
+      .account-hero { padding: 20px; }
+      .hero-balance-value { font-size: 1.6rem; }
+      .hero-bottom { flex-direction: column; gap: 16px; align-items: flex-start; }
+      .hero-actions { width: 100%; flex-wrap: wrap; }
+      .hero-actions .btn-hero { flex: 1; justify-content: center; min-width: 120px; }
+      .hero-meta { gap: 16px; }
+      .stat-cards { grid-template-columns: repeat(2, 1fr); }
+      .info-grid { grid-template-columns: 1fr; }
+      .tab-nav { overflow-x: auto; }
+      .tab-nav button { white-space: nowrap; padding: 10px 14px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Detail du compte</div>
+            <div class="topbar-breadcrumb">Comptes / Detail</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+      <main class="content-area">
+        <!-- Page Header -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title" id="pageTitle">Chargement...</h1>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-outline" onclick="window.location.href='comptes.html'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              Retour a la liste
+            </button>
+          </div>
+        </div>
+
+        <!-- Skeleton while loading -->
+        <div id="heroSkeleton">
+          <div class="skeleton skeleton-block" style="border-radius: 14px; height: 220px;"></div>
+        </div>
+
+        <!-- Account Hero Header -->
+        <div class="account-hero" id="accountHero" style="display:none;">
+          <div class="hero-top">
+            <div>
+              <div class="hero-account-num" id="heroNum" onclick="copyNum()" title="Cliquer pour copier"></div>
+            </div>
+            <div class="hero-status-badge active" id="heroStatus">
+              <span class="status-dot"></span>
+              <span id="heroStatusText">ACTIF</span>
+            </div>
+          </div>
+          <div class="hero-balance-section">
+            <div class="hero-balance-label">Solde disponible</div>
+            <div class="hero-balance-value">
+              <span id="heroBalance">0 FCFA</span>
+              <span class="live-indicator">
+                <span class="live-dot"></span>
+                <span id="liveText">Temps reel</span>
+              </span>
+            </div>
+          </div>
+          <div class="hero-meta">
+            <span id="heroType"></span>
+            <span id="heroClient"></span>
+            <span id="heroAgence"></span>
+            <span id="heroDevise"></span>
+          </div>
+          <div class="hero-bottom">
+            <div style="display:flex;gap:32px;">
+              <div class="hero-detail-item">
+                <span class="hero-detail-label">Date ouverture</span>
+                <span class="hero-detail-value" id="heroDateOuverture">--</span>
+              </div>
+              <div class="hero-detail-item">
+                <span class="hero-detail-label">Derniere operation</span>
+                <span class="hero-detail-value" id="heroDerniereOp">--</span>
+              </div>
+              <div class="hero-detail-item">
+                <span class="hero-detail-label">Decouvert autorise</span>
+                <span class="hero-detail-value" id="heroDecouvert">--</span>
+              </div>
+            </div>
+            <div class="hero-actions">
+              <button class="btn-hero" onclick="generateReleve()" title="Telecharger le releve PDF">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Releve PDF
+              </button>
+              <button class="btn-hero" id="btnBloquer" onclick="openBloquerModal()" title="Bloquer ce compte">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                Bloquer
+              </button>
+              <button class="btn-hero danger" id="btnFermer" onclick="openFermerModal()" title="Fermer ce compte">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tab-nav" id="tabNav" style="display:none;">
+          <button class="active" onclick="switchTab('resume', this)">Resume</button>
+          <button onclick="switchTab('mouvements', this)">Mouvements</button>
+          <button onclick="switchTab('historique', this)">Historique</button>
+          <button onclick="switchTab('documents', this)">Documents</button>
+        </div>
+
+        <!-- Tab Resume -->
+        <div class="tab-content active" id="tab-resume">
+          <!-- Stat Cards -->
+          <div class="stat-cards" id="statCards" style="display:none;">
+            <div class="stat-card">
+              <div class="stat-card-label">Solde actuel</div>
+              <div class="stat-card-value primary" id="statSolde">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-label">Derniers 30j - Credits</div>
+              <div class="stat-card-value success" id="statCredits">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-label">Derniers 30j - Debits</div>
+              <div class="stat-card-value danger" id="statDebits">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-label">Nb operations</div>
+              <div class="stat-card-value primary" id="statCount">0</div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <section class="card">
+              <div class="card-header">
+                <div class="card-title">Informations client</div>
+              </div>
+              <div style="padding:16px;" id="clientInfo">
+                <div class="skeleton skeleton-line w-80"></div>
+                <div class="skeleton skeleton-line w-60"></div>
+                <div class="skeleton skeleton-line w-40"></div>
+              </div>
+            </section>
+            <section class="card">
+              <div class="card-header">
+                <div class="card-title">Parametres du compte</div>
+              </div>
+              <div style="padding:16px;" id="compteInfo">
+                <div class="skeleton skeleton-line w-80"></div>
+                <div class="skeleton skeleton-line w-60"></div>
+                <div class="skeleton skeleton-line w-40"></div>
+              </div>
+            </section>
+          </div>
+          <section class="card" style="margin-top:16px;">
+            <div class="card-header">
+              <div class="card-title">Agence</div>
+            </div>
+            <div style="padding:16px;" id="agenceInfo">
+              <div class="skeleton skeleton-line w-60"></div>
+              <div class="skeleton skeleton-line w-40"></div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Tab Mouvements -->
+        <div class="tab-content" id="tab-mouvements">
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Mouvements du compte</div>
+                <div class="card-subtitle">Historique des transactions</div>
+              </div>
+              <span class="page-indicator" id="mvtCount">-- operations</span>
+            </div>
+            <div class="filter-bar">
+              <input type="date" class="form-control" id="mvtDateDeb" style="max-width:160px;">
+              <input type="date" class="form-control" id="mvtDateFin" style="max-width:160px;">
+              <select class="form-control" id="mvtTypeFilter" style="max-width:140px;">
+                <option value="ALL">Tous types</option>
+                <option value="CREDIT">Credit</option>
+                <option value="DEBIT">Debit</option>
+              </select>
+              <button class="btn btn-outline btn-sm" onclick="loadMouvements()">Filtrer</button>
+              <button class="btn btn-ghost btn-sm" onclick="resetMvtFilters()">Reinitialiser</button>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Libelle</th>
+                  <th>Reference</th>
+                  <th>Montant</th>
+                  <th>Solde apres</th>
+                </tr>
+              </thead>
+              <tbody id="mouvementsBody">
+                <tr>
+                  <td colspan="6">
+                    <div class="empty-state">
+                      <div class="empty-state-icon">📊</div>
+                      <div class="empty-state-text">Selectionnez cet onglet pour charger les donnees.</div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+
+        <!-- Tab Historique -->
+        <div class="tab-content" id="tab-historique">
+          <section class="card">
+            <div class="card-header">
+              <div class="card-title">Historique des evenements</div>
+            </div>
+            <div style="padding:16px;" id="historiqueTimeline">
+              <div class="skeleton skeleton-line w-80"></div>
+              <div class="skeleton skeleton-line w-60"></div>
+              <div class="skeleton skeleton-line w-40"></div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Tab Documents -->
+        <div class="tab-content" id="tab-documents">
+          <section class="card">
+            <div class="card-header">
+              <div class="card-title">Documents</div>
+            </div>
+            <div style="padding:16px;" id="documentsList">
+              <div class="skeleton skeleton-line w-80"></div>
+              <div class="skeleton skeleton-line w-60"></div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal: Bloquer -->
+  <div class="modal-overlay" id="modalBloquer">
+    <div class="modal-box">
+      <div class="modal-title">Bloquer le compte</div>
+      <div class="modal-desc">Le compte sera temporairement suspendu. Les operations seront impossible jusqu'au deblocage.</div>
+      <label style="font-size:0.85rem;font-weight:600;color:#084355;display:block;margin-bottom:6px;">Motif du blocage *</label>
+      <input type="text" class="modal-input" id="motifBloquer" placeholder="Saisissez le motif...">
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeModal('modalBloquer')">Annuler</button>
+        <button class="btn btn-danger" onclick="confirmerBlocage()">Bloquer le compte</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Fermer -->
+  <div class="modal-overlay" id="modalFermer">
+    <div class="modal-box">
+      <div class="modal-title">Fermer le compte</div>
+      <div class="modal-desc">Cette action est irreversible. Le compte sera definitivement cloture et ne pourra plus etre utilise.</div>
+      <label style="font-size:0.85rem;font-weight:600;color:#084355;display:block;margin-bottom:6px;">Motif de la fermeture *</label>
+      <input type="text" class="modal-input" id="motifFermer" placeholder="Saisissez le motif...">
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeModal('modalFermer')">Annuler</button>
+        <button class="btn btn-danger" onclick="confirmerFermeture()">Fermer le compte</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ── State ──────────────────────────────────────── */
+    var compteData = null;
+    var numCompte = '';
+    var balancePollTimer = null;
+    var BALANCE_POLL_INTERVAL = 30000; // 30s
+    var mvtAllData = [];
+    var mvtFiltered = [];
+
+    /* ── Init ───────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function () {
+      var params = new URLSearchParams(window.location.search);
+      numCompte = params.get('num') || '';
+
+      if (numCompte) {
+        loadCompte();
+      } else {
+        document.getElementById('pageTitle').textContent = 'Aucun compte specifie';
+        document.getElementById('heroSkeleton').style.display = 'none';
+      }
+
+      // Close modals on overlay click
+      document.querySelectorAll('.modal-overlay').forEach(function (overlay) {
+        overlay.addEventListener('click', function (e) {
+          if (e.target === overlay) overlay.classList.remove('visible');
+        });
+      });
+
+      // Close modals on Escape
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          document.querySelectorAll('.modal-overlay.visible').forEach(function (m) {
+            m.classList.remove('visible');
+          });
+        }
+      });
+    });
+
+    /* ── Load Compte ────────────────────────────────── */
+    async function loadCompte() {
+      try {
+        var res = await Comptes.obtenir(numCompte);
+        if (res && res.ok) {
+          compteData = await res.json();
+          renderHero(compteData);
+          renderResume(compteData);
+          startBalancePolling();
+        } else {
+          document.getElementById('pageTitle').textContent = 'Compte introuvable';
+          document.getElementById('heroSkeleton').style.display = 'none';
+          showToast('Compte non trouve.', 'error');
+        }
+      } catch (e) {
+        showToast(e.message, 'error');
+        document.getElementById('heroSkeleton').style.display = 'none';
+      }
+    }
+
+    /* ── Render Hero ────────────────────────────────── */
+    function renderHero(c) {
+      document.getElementById('heroSkeleton').style.display = 'none';
+      document.getElementById('accountHero').style.display = '';
+      document.getElementById('tabNav').style.display = '';
+
+      var num = c.numCompte || c.numeroCompte || numCompte;
+      document.getElementById('pageTitle').textContent = 'Compte ' + num;
+      document.getElementById('heroNum').textContent = num;
+      document.getElementById('heroBalance').textContent = formatCurrency(c.solde || 0) + ' FCFA';
+
+      // Status
+      var statut = (c.statut || 'ACTIF').toUpperCase();
+      var statusEl = document.getElementById('heroStatus');
+      var statusText = document.getElementById('heroStatusText');
+      statusText.textContent = statut;
+      var statusClass = {
+        'ACTIF': 'active',
+        'BLOQUE': 'bloque',
+        'CLOS': 'clos',
+        'SUSPENDU': 'suspendu'
+      }[statut] || 'active';
+      statusEl.className = 'hero-status-badge ' + statusClass;
+
+      // Meta
+      document.getElementById('heroType').textContent = 'Type : ' + (c.typeCompte || c.codeTypeCompte || '-');
+      document.getElementById('heroClient').textContent = 'Client : ' + (c.clientNom || ((c.client ? c.client.nom + ' ' + c.client.prenom : '') || '-'));
+      document.getElementById('heroAgence').textContent = 'Agence : ' + (c.agenceNom || ((c.agence ? c.agence.nom : '') || '-'));
+      document.getElementById('heroDevise').textContent = 'Devise : ' + (c.devise || 'XOF');
+
+      // Bottom details
+      document.getElementById('heroDateOuverture').textContent = formatDateShort(c.dateOuverture);
+      document.getElementById('heroDerniereOp').textContent = formatDateShort(c.dateDerniereOp);
+      document.getElementById('heroDecouvert').textContent = formatCurrency(c.decouvertAutorise || 0) + ' FCFA';
+
+      // Hide/show action buttons based on status
+      var btnBloquer = document.getElementById('btnBloquer');
+      var btnFermer = document.getElementById('btnFermer');
+      if (statut === 'BLOQUE') {
+        btnBloquer.style.display = 'none';
+      } else if (statut === 'CLOS') {
+        btnBloquer.style.display = 'none';
+        btnFermer.style.display = 'none';
+      }
+    }
+
+    /* ── Real-Time Balance Polling ──────────────────── */
+    function startBalancePolling() {
+      if (balancePollTimer) clearInterval(balancePollTimer);
+      balancePollTimer = setInterval(refreshBalance, BALANCE_POLL_INTERVAL);
+    }
+
+    function stopBalancePolling() {
+      if (balancePollTimer) {
+        clearInterval(balancePollTimer);
+        balancePollTimer = null;
+      }
+    }
+
+    async function refreshBalance() {
+      if (!numCompte) return;
+      try {
+        var res = await Comptes.obtenir(numCompte);
+        if (res && res.ok) {
+          var data = await res.json();
+          var oldSolde = compteData ? compteData.solde : null;
+          compteData = data;
+
+          // Update balance display
+          var balanceEl = document.getElementById('heroBalance');
+          var newBalanceText = formatCurrency(data.solde || 0) + ' FCFA';
+          balanceEl.textContent = newBalanceText;
+
+          // Flash animation if balance changed
+          if (oldSolde !== null && oldSolde !== data.solde) {
+            balanceEl.style.transition = 'color 0.3s';
+            balanceEl.style.color = data.solde > oldSolde ? '#4CAF50' : '#EF5350';
+            setTimeout(function () {
+              balanceEl.style.color = '';
+            }, 1500);
+          }
+
+          // Update status in case it changed
+          var statut = (data.statut || 'ACTIF').toUpperCase();
+          var statusEl = document.getElementById('heroStatus');
+          var statusText = document.getElementById('heroStatusText');
+          statusText.textContent = statut;
+          var statusClass = {
+            'ACTIF': 'active',
+            'BLOQUE': 'bloque',
+            'CLOS': 'clos',
+            'SUSPENDU': 'suspendu'
+          }[statut] || 'active';
+          statusEl.className = 'hero-status-badge ' + statusClass;
+
+          // Update stat card
+          document.getElementById('statSolde').textContent = formatCurrency(data.solde || 0);
+        }
+      } catch (e) {
+        // Silently fail on poll — don't interrupt user
+      }
+    }
+
+    /* ── Render Resume Tab ──────────────────────────── */
+    function renderResume(c) {
+      var client = c.client || {};
+
+      document.getElementById('clientInfo').innerHTML =
+        '<div class="info-grid">' +
+          infoRow('Nom', (client.nom || '-') + ' ' + (client.prenom || '')) +
+          infoRow('Telephone', client.telephone || '-') +
+          infoRow('Email', client.email || '-') +
+          infoRow('N° Client', client.numeroClient || '-') +
+          infoRow('Statut', client.statut || '-') +
+        '</div>';
+
+      document.getElementById('compteInfo').innerHTML =
+        '<div class="info-grid">' +
+          infoRow('Type', c.typeCompte || '-') +
+          infoRow('Devise', c.devise || 'XOF') +
+          infoRow('Decouvert autorise', formatCurrency(c.decouvertAutorise || 0) + ' FCFA') +
+          infoRow('Mode signature', c.modeSignature || 'INDIVIDUEL') +
+          infoRow('Date ouverture', formatDate(c.dateOuverture)) +
+          infoRow('Derniere operation', formatDate(c.dateDerniereOp)) +
+        '</div>';
+
+      var agence = c.agence || {};
+      document.getElementById('agenceInfo').innerHTML =
+        '<div class="info-grid">' +
+          infoRow('Code', agence.code || '-') +
+          infoRow('Nom', agence.nom || '-') +
+          infoRow('Adresse', agence.adresse || '-') +
+        '</div>';
+
+      // Load quick stats for resume tab
+      loadResumeStats();
+    }
+
+    function infoRow(label, value) {
+      return '<div class="info-row"><span class="label">' + escapeHtml(label) + '</span><span class="value">' + escapeHtml(value) + '</span></div>';
+    }
+
+    async function loadResumeStats() {
+      try {
+        var res = await Transactions.historiqueCompte(numCompte, 0, 200);
+        if (res && res.ok) {
+          var data = await res.json();
+          var ops = data.content || data || [];
+          var totalCredit = 0;
+          var totalDebit = 0;
+          var now = new Date();
+          var thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+          ops.forEach(function (op) {
+            var opDate = new Date(op.dateMouvement || op.dateOperation);
+            if (opDate >= thirtyDaysAgo) {
+              var type = (op.typeMouvement || op.sens || '').toUpperCase();
+              if (type === 'CREDIT') totalCredit += (op.montant || 0);
+              else if (type === 'DEBIT') totalDebit += (op.montant || 0);
+            }
+          });
+
+          document.getElementById('statSolde').textContent = formatCurrency(compteData ? compteData.solde : 0);
+          document.getElementById('statCredits').textContent = formatCurrency(totalCredit);
+          document.getElementById('statDebits').textContent = formatCurrency(totalDebit);
+          document.getElementById('statCount').textContent = ops.length;
+          document.getElementById('statCards').style.display = '';
+        }
+      } catch (e) {
+        // Stats are non-critical
+      }
+    }
+
+    /* ── Tab Switching ──────────────────────────────── */
+    function switchTab(tab, btn) {
+      document.querySelectorAll('.tab-content').forEach(function (t) { t.classList.remove('active'); });
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.querySelectorAll('.tab-nav button').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+
+      if (tab === 'mouvements') loadMouvements();
+      if (tab === 'historique') loadHistorique();
+      if (tab === 'documents') loadDocuments();
+    }
+
+    /* ── Mouvements Tab ─────────────────────────────── */
+    async function loadMouvements() {
+      var tbody = document.getElementById('mouvementsBody');
+      tbody.innerHTML = '<tr><td colspan="6"><div class="skeleton skeleton-line w-80"></div><div class="skeleton skeleton-line w-60"></div></td></tr>';
+
+      try {
+        var res = await Transactions.historiqueCompte(numCompte, 0, 200);
+        if (res && res.ok) {
+          var data = await res.json();
+          mvtAllData = data.content || data || [];
+          applyMvtFilters();
+        } else {
+          tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">Erreur</div><div class="empty-state-text">Impossible de charger les mouvements.</div></div></td></tr>';
+        }
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">Erreur</div><div class="empty-state-text">Erreur de chargement.</div></div></td></tr>';
+      }
+    }
+
+    function applyMvtFilters() {
+      var dateDeb = document.getElementById('mvtDateDeb').value;
+      var dateFin = document.getElementById('mvtDateFin').value;
+      var typeFilter = document.getElementById('mvtTypeFilter').value;
+
+      mvtFiltered = mvtAllData.filter(function (m) {
+        // Date filter
+        if (dateDeb || dateFin) {
+          var mDate = new Date(m.dateMouvement || m.dateOperation);
+          if (dateDeb) {
+            var from = new Date(dateDeb);
+            from.setHours(0, 0, 0, 0);
+            if (mDate < from) return false;
+          }
+          if (dateFin) {
+            var to = new Date(dateFin);
+            to.setHours(23, 59, 59, 999);
+            if (mDate > to) return false;
+          }
+        }
+        // Type filter
+        if (typeFilter && typeFilter !== 'ALL') {
+          var mType = (m.typeMouvement || m.sens || '').toUpperCase();
+          if (mType !== typeFilter) return false;
+        }
+        return true;
+      });
+
+      renderMouvements();
+    }
+
+    function renderMouvements() {
+      var tbody = document.getElementById('mouvementsBody');
+      var count = mvtFiltered.length;
+      document.getElementById('mvtCount').textContent = count + ' operation' + (count !== 1 ? 's' : '');
+
+      if (!count) {
+        tbody.innerHTML =
+          '<tr><td colspan="6">' +
+          '<div class="empty-state">' +
+          '<div class="empty-state-icon">📭</div>' +
+          '<div class="empty-state-text">Aucun mouvement trouve.</div>' +
+          '</div></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = mvtFiltered.map(function (m) {
+        var isCredit = (m.typeMouvement || m.sens || '').toUpperCase() === 'CREDIT';
+        var typeLabel = m.typeMouvement || m.sens || '-';
+        var badgeClass = isCredit ? 'badge-success' : 'badge-danger';
+        var amountColor = isCredit ? '#2E7D32' : '#D93025';
+        var amountSign = isCredit ? '+' : '-';
+
+        return '<tr>' +
+          '<td>' + formatDate(m.dateMouvement || m.dateOperation) + '</td>' +
+          '<td><span class="badge ' + badgeClass + '">' + escapeHtml(typeLabel) + '</span></td>' +
+          '<td>' + escapeHtml(m.libelle || m.motif || '-') + '</td>' +
+          '<td style="font-family:monospace;font-size:.83rem;">' + escapeHtml(m.reference || '-') + '</td>' +
+          '<td style="font-weight:700;color:' + amountColor + ';">' + amountSign + ' ' + formatCurrency(m.montant || 0) + '</td>' +
+          '<td>' + formatCurrency(m.soldeApres || 0) + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function resetMvtFilters() {
+      document.getElementById('mvtDateDeb').value = '';
+      document.getElementById('mvtDateFin').value = '';
+      document.getElementById('mvtTypeFilter').value = 'ALL';
+      mvtFiltered = mvtAllData.slice();
+      renderMouvements();
+    }
+
+    /* ── Historique Tab ─────────────────────────────── */
+    async function loadHistorique() {
+      var el = document.getElementById('historiqueTimeline');
+      el.innerHTML = '<div class="skeleton skeleton-line w-80"></div><div class="skeleton skeleton-line w-60"></div>';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/comptes/' + encodeURIComponent(numCompte) + '/historique');
+        if (res && res.ok) {
+          var data = await res.json();
+          var events = data.content || data || [];
+
+          if (!events.length) {
+            el.innerHTML =
+              '<div class="empty-state">' +
+              '<div class="empty-state-icon">📜</div>' +
+              '<div class="empty-state-text">Aucun evenement enregistre.</div>' +
+              '</div>';
+            return;
+          }
+
+          el.innerHTML = events.map(function (e) {
+            return '<div class="timeline-item">' +
+              '<div class="tl-date">' + formatDate(e.date || e.createdAt) + '</div>' +
+              '<div class="tl-body">' +
+                '<div class="tl-action">' + escapeHtml(e.action || e.type || '-') + '</div>' +
+                '<div class="tl-details">' + escapeHtml(e.details || e.description || '') + '</div>' +
+              '</div>' +
+            '</div>';
+          }).join('');
+        }
+      } catch (e) {
+        el.innerHTML = '<div style="color:#D93025;font-size:0.9rem;">Erreur de chargement de l\'historique.</div>';
+      }
+    }
+
+    /* ── Documents Tab ──────────────────────────────── */
+    async function loadDocuments() {
+      var el = document.getElementById('documentsList');
+      el.innerHTML = '<div class="skeleton skeleton-line w-80"></div><div class="skeleton skeleton-line w-60"></div>';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/comptes/' + encodeURIComponent(numCompte) + '/documents');
+        if (res && res.ok) {
+          var data = await res.json();
+          var docs = data.content || data || [];
+
+          if (!docs.length) {
+            el.innerHTML =
+              '<div class="empty-state">' +
+              '<div class="empty-state-icon">📁</div>' +
+              '<div class="empty-state-text">Aucun document disponible.</div>' +
+              '</div>';
+            return;
+          }
+
+          el.innerHTML = docs.map(function (d) {
+            return '<div class="doc-card">' +
+              '<div style="display:flex;align-items:center;">' +
+                '<div class="doc-card-icon">' +
+                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+                '</div>' +
+                '<div class="doc-card-info">' +
+                  '<div class="doc-card-name">' + escapeHtml(d.typeDocument || d.nom || 'Document') + '</div>' +
+                  '<div class="doc-card-date">' + formatDate(d.dateUpload || d.createdAt) + '</div>' +
+                '</div>' +
+              '</div>' +
+              '<button class="btn btn-outline btn-sm" onclick="downloadDoc(\'' + escapeHtml(d.id || d.chemin || '') + '\')">Telecharger</button>' +
+            '</div>';
+          }).join('');
+        }
+      } catch (e) {
+        el.innerHTML = '<div style="color:#D93025;font-size:0.9rem;">Erreur de chargement des documents.</div>';
+      }
+    }
+
+    function downloadDoc(docId) {
+      if (!docId) return;
+      window.open(SF.API_BASE + '/api/v1/comptes/' + encodeURIComponent(numCompte) + '/documents/' + docId, '_blank');
+    }
+
+    /* ── Action: Releve PDF ─────────────────────────── */
+    function generateReleve() {
+      showToast('Generation du releve PDF en cours...', 'info');
+      window.open(SF.API_BASE + '/api/v1/comptes/' + encodeURIComponent(numCompte) + '/releve', '_blank');
+    }
+
+    /* ── Action: Bloquer Compte ─────────────────────── */
+    function openBloquerModal() {
+      document.getElementById('motifBloquer').value = '';
+      document.getElementById('modalBloquer').classList.add('visible');
+      setTimeout(function () { document.getElementById('motifBloquer').focus(); }, 100);
+    }
+
+    async function confirmerBlocage() {
+      var motif = document.getElementById('motifBloquer').value.trim();
+      if (!motif) {
+        showToast('Veuillez saisir un motif de blocage.', 'warning');
+        document.getElementById('motifBloquer').focus();
+        return;
+      }
+      closeModal('modalBloquer');
+
+      try {
+        var res = await Comptes.bloquer(numCompte, motif);
+        if (res && res.ok) {
+          showToast('Compte bloque avec succes.', 'success');
+          loadCompte();
+        } else {
+          showToast('Erreur lors du blocage du compte.', 'error');
+        }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    /* ── Action: Fermer Compte ──────────────────────── */
+    function openFermerModal() {
+      document.getElementById('motifFermer').value = '';
+      document.getElementById('modalFermer').classList.add('visible');
+      setTimeout(function () { document.getElementById('motifFermer').focus(); }, 100);
+    }
+
+    async function confirmerFermeture() {
+      var motif = document.getElementById('motifFermer').value.trim();
+      if (!motif) {
+        showToast('Veuillez saisir un motif de fermeture.', 'warning');
+        document.getElementById('motifFermer').focus();
+        return;
+      }
+      closeModal('modalFermer');
+
+      try {
+        var res = await Comptes.cloturer(numCompte, motif);
+        if (res && res.ok) {
+          showToast('Compte ferme avec succes.', 'success');
+          loadCompte();
+        } else {
+          showToast('Erreur lors de la fermeture du compte.', 'error');
+        }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    /* ── Modal Helpers ──────────────────────────────── */
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('visible');
+    }
+
+    /* ── Copy Account Number ────────────────────────── */
+    function copyNum() {
+      var num = compteData ? (compteData.numCompte || compteData.numeroCompte || numCompte) : numCompte;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(num).then(function () {
+          showToast('Numero de compte copie.', 'success');
+        });
+      }
+    }
+
+    /* ── Utility Functions ──────────────────────────── */
+    function formatCurrency(n) {
+      return (n || 0).toLocaleString('fr-FR');
+    }
+
+    function formatDate(d) {
+      if (!d) return '-';
+      try {
+        var dt = new Date(d);
+        return dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
+               dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      } catch (e) {
+        return d;
+      }
+    }
+
+    function formatDateShort(d) {
+      if (!d) return '--';
+      try {
+        return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      } catch (e) {
+        return d;
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      var div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+
+    /* ── Cleanup on page unload ─────────────────────── */
+    window.addEventListener('beforeunload', function () {
+      stopBalancePolling();
+    });
+  </script>
+</body>
+</html>

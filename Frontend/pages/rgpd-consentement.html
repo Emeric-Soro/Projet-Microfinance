@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consentement RGPD - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left"><div><div class="topbar-title">Consentement RGPD</div><div class="topbar-breadcrumb">Conformité / RGPD / Consentement</div></div></div>
+        <div class="topbar-right"></div>
+      </header>
+      <main class="content-area">
+        <div class="page-header">
+          <div><h1 class="page-title">Gestion des consentements RGPD</h1><p class="page-subtitle">Suivi et gestion des consentements clients</p></div>
+        </div>
+        <section class="card">
+          <div class="card-header"><div class="card-title">Rechercher un client</div></div>
+          <div style="padding:20px;">
+            <div class="form-group">
+              <label class="form-label">Nom, prénom ou numéro client</label>
+              <input type="text" class="form-control" id="rgpdClientSearch" placeholder="Rechercher..." oninput="searchRgpdClient()">
+              <div class="search-results" id="rgpdClientResults"></div>
+            </div>
+            <div id="rgpdClientInfo" style="display:none;"></div>
+          </div>
+        </section>
+        <section class="card" id="consentSection" style="margin-top:16px;display:none;">
+          <div class="card-header">
+            <div><div class="card-title">Historique des consentements</div></div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-primary btn-sm" onclick="ajouterConsentement()">+ Ajouter consentement</button>
+              <button class="btn btn-outline btn-sm" onclick="revoquerConsentement()" style="color:#c0392b;">Révoquer consentement</button>
+            </div>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Date</th><th>Type</th><th>Canal</th><th>Statut</th></tr></thead>
+            <tbody id="consentBody"><tr><td colspan="4" style="text-align:center;color:#4A7A8A;padding:20px;">Sélectionnez un client pour afficher les consentements.</td></tr></tbody>
+          </table>
+        </section>
+        <div id="addConsentModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;display:none;align-items:center;justify-content:center;">
+          <div style="background:#fff;border-radius:12px;padding:24px;width:480px;max-width:90%;">
+            <h3 style="margin-top:0;">Nouveau consentement</h3>
+            <div class="form-group">
+              <label class="form-label">Type de consentement</label>
+              <select class="form-control" id="consentType">
+                <option value="TRAITEMENT_DONNEES">Traitement des données personnelles</option>
+                <option value="COMMUNICATION">Communication marketing</option>
+                <option value="PARTENAIRES">Partage avec partenaires</option>
+                <option value="COOKIES">Cookies et traceurs</option>
+                <option value="GEOLOCALISATION">Géolocalisation</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Canal</label>
+              <select class="form-control" id="consentCanal">
+                <option value="WEB">Web</option>
+                <option value="MOBILE">Mobile</option>
+                <option value="AGENCE">Agence</option>
+                <option value="TELEPHONE">Téléphone</option>
+                <option value="COURRIER">Courrier</option>
+              </select>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+              <button class="btn btn-outline" onclick="fermerModalConsent()">Annuler</button>
+              <button class="btn btn-primary" onclick="confirmerAjoutConsentement()">Enregistrer</button>
+            </div>
+          </div>
+        </div>
+        <div id="revokeModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+          <div style="background:#fff;border-radius:12px;padding:24px;width:480px;max-width:90%;">
+            <h3 style="margin-top:0;">Révoquer un consentement</h3>
+            <div class="form-group">
+              <label class="form-label">Consentement à révoquer</label>
+              <select class="form-control" id="revokeConsentId"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Motif de révocation</label>
+              <textarea class="form-control" id="revokeMotif" rows="3" placeholder="Motif de la révocation..."></textarea>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+              <button class="btn btn-outline" onclick="fermerModalRevoke()">Annuler</button>
+              <button class="btn btn-primary" onclick="confirmerRevoquer()" style="background:#c0392b;">Révoquer</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    let rgpdClientId = null;
+    let allConsentements = [];
+
+    let rgpdSearchTimeout;
+    async function searchRgpdClient() {
+      const q = document.getElementById('rgpdClientSearch').value.trim();
+      const div = document.getElementById('rgpdClientResults');
+      if (q.length < 2) { div.classList.remove('show'); return; }
+      clearTimeout(rgpdSearchTimeout);
+      rgpdSearchTimeout = setTimeout(async () => {
+        try {
+          const res = await Clients.lister(0, 10, q);
+          if (res && res.ok) {
+            const data = await res.json();
+            div.innerHTML = (data.content||[]).map(c => `<div class="search-result-item" onclick="pickRgpdClient(${c.idClient},'${c.nom} ${c.prenom}','${c.numeroClient||''}')">${c.nom} ${c.prenom} — ${c.numeroClient||''}</div>`).join('');
+            div.classList.add('show');
+          }
+        } catch(e) {}
+      }, 300);
+    }
+
+    function pickRgpdClient(id, name, num) {
+      rgpdClientId = id;
+      document.getElementById('rgpdClientSearch').value = name;
+      document.getElementById('rgpdClientResults').classList.remove('show');
+      document.getElementById('rgpdClientInfo').style.display = '';
+      document.getElementById('rgpdClientInfo').innerHTML = `<div style="background:#f0f6fa;border:1px solid #C9DFE8;border-radius:8px;padding:12px;margin-top:8px;"><strong>${name}</strong> — ${num}</div>`;
+      document.getElementById('consentSection').style.display = '';
+      loadConsentements();
+    }
+
+    async function loadConsentements() {
+      if (!rgpdClientId) return;
+      try {
+        const res = await SF.apiFetch('/api/v1/conformite/rgpd/consentement?clientId=' + rgpdClientId);
+        if (res && res.ok) {
+          const data = await res.json();
+          allConsentements = data.content || data || [];
+          renderConsentements(allConsentements);
+        }
+      } catch(e) { console.error(e); }
+    }
+
+    function renderConsentements(items) {
+      const tbody = document.getElementById('consentBody');
+      if (!items.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#4A7A8A;">Aucun consentement enregistré.</td></tr>'; return; }
+      tbody.innerHTML = items.map(c => {
+        const statutBadge = { ACTIF:'badge-success', REVOQUE:'badge-danger', EXPIRE:'badge-warning', EN_ATTENTE:'badge-pending' }[c.statut] || 'badge-info';
+        return `<tr>
+          <td>${formatDate(c.dateConsentement || c.createdAt)}</td>
+          <td>${c.typeConsentement || '-'}</td>
+          <td>${c.canal || '-'}</td>
+          <td><span class="badge ${statutBadge}">${c.statut || '-'}</span></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function ajouterConsentement() {
+      document.getElementById('addConsentModal').style.display = 'flex';
+    }
+
+    function fermerModalConsent() {
+      document.getElementById('addConsentModal').style.display = 'none';
+    }
+
+    async function confirmerAjoutConsentement() {
+      if (!rgpdClientId) { showToast('Sélectionnez un client.', 'warning'); return; }
+      try {
+        const res = await SF.apiFetch('/api/v1/conformite/rgpd/consentement', {
+          method: 'POST',
+          body: JSON.stringify({
+            clientId: rgpdClientId,
+            typeConsentement: document.getElementById('consentType').value,
+            canal: document.getElementById('consentCanal').value,
+            statut: 'ACTIF'
+          })
+        });
+        if (res && (res.ok || res.status === 201)) {
+          showToast('Consentement enregistré.', 'success');
+          fermerModalConsent();
+          loadConsentements();
+        } else {
+          const err = res ? await res.json().catch(()=>({})) : {};
+          showToast(err.message || 'Erreur.', 'error');
+        }
+      } catch(e) { showToast(e.message, 'error'); }
+    }
+
+    function revoquerConsentement() {
+      const select = document.getElementById('revokeConsentId');
+      const actifs = allConsentements.filter(c => c.statut === 'ACTIF');
+      if (!actifs.length) { showToast('Aucun consentement actif à révoquer.', 'warning'); return; }
+      select.innerHTML = actifs.map(c => `<option value="${c.id}">${c.typeConsentement} — ${formatDate(c.dateConsentement)}</option>`).join('');
+      document.getElementById('revokeModal').style.display = 'flex';
+    }
+
+    function fermerModalRevoke() {
+      document.getElementById('revokeModal').style.display = 'none';
+    }
+
+    async function confirmerRevoquer() {
+      const consentId = document.getElementById('revokeConsentId').value;
+      const motif = document.getElementById('revokeMotif').value.trim();
+      if (!motif) { showToast('Saisissez un motif.', 'warning'); return; }
+      try {
+        const res = await SF.apiFetch('/api/v1/conformite/rgpd/consentement/' + consentId + '/revoquer', {
+          method: 'POST',
+          body: JSON.stringify({ motif })
+        });
+        if (res && res.ok) {
+          showToast('Consentement révoqué.', 'success');
+          fermerModalRevoke();
+          loadConsentements();
+        } else {
+          const err = res ? await res.json().catch(()=>({})) : {};
+          showToast(err.message || 'Erreur.', 'error');
+        }
+      } catch(e) { showToast(e.message, 'error'); }
+    }
+
+    function formatDate(d) { if (!d) return '-'; try { return new Date(d).toLocaleDateString('fr-FR'); } catch { return d; } }
+  </script>
+</body>
+</html>

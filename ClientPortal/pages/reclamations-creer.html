@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nouvelle Réclamation — Soutra Finance E-Banking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/portal.css">
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="portal-layout">
+    <!-- Sidebar -->
+    <aside class="portal-sidebar">
+      <div class="portal-brand">
+        <div class="brand-icon">S</div>
+        <span class="brand-name">Soutra Finance</span>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="dashboard">📊 Tableau de bord</a></li>
+        <li class="nav-item"><a href="comptes">💳 Mes Comptes</a></li>
+        <li class="nav-item"><a href="virement">💸 Virements</a></li>
+        <li class="nav-item"><a href="credits">📈 Crédits</a></li>
+        <li class="nav-item active"><a href="reclamations">✉️ Réclamations</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+          <span class="user-name" id="portalUserName">Chargement...</span>
+          <span class="user-role">Client E-Banking</span>
+        </div>
+        <a href="#" class="logout-btn" id="portalLogoutBtn">🚪</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="header-title">
+          <h2>Nouvelle Réclamation</h2>
+          <p>Décrivez votre problème en détail. Notre service conformité traitera votre demande sous 48h.</p>
+        </div>
+      </header>
+
+      <!-- Success Box (hidden by default) -->
+      <div id="successBox" class="card" style="display: none; text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 10px;">✅</div>
+        <h3 style="color: var(--color-success); margin-bottom: 8px;">Réclamation soumise avec succès</h3>
+        <p style="color: var(--color-text-muted); margin-bottom: 15px;">Votre numéro de suivi :</p>
+        <div id="trackingNumber" class="badge badge-success" style="font-size: 22px; padding: 12px 30px; letter-spacing: 1px; display: inline-block;">—</div>
+        <p style="color: var(--color-text-muted); font-size: 13px; margin-top: 15px;">Conservez ce numéro pour suivre l'avancement de votre réclamation.</p>
+        <div style="margin-top: 25px; display: flex; gap: 15px; justify-content: center;">
+          <a href="reclamations" class="btn btn-primary">📋 Voir mes réclamations</a>
+          <button class="btn btn-secondary" onclick="resetForm()">✉️ Nouvelle réclamation</button>
+        </div>
+      </div>
+
+      <!-- Form Card -->
+      <div id="formContainer" class="card">
+        <h3 class="card-section-title mb-20">✉️ Déposer une réclamation</h3>
+
+        <form id="reclamationForm">
+          <!-- Category Select -->
+          <div class="form-group">
+            <label for="category">Catégorie *</label>
+            <select id="category" class="input-control" required>
+              <option value="">-- Sélectionnez une catégorie --</option>
+              <option value="SERVICE">🔧 Service</option>
+              <option value="TRANSACTION">💸 Transaction</option>
+              <option value="CREDIT">📈 Crédit</option>
+              <option value="AUTRE">📌 Autre</option>
+            </select>
+          </div>
+
+          <!-- Subject Input -->
+          <div class="form-group">
+            <label for="subject">Sujet *</label>
+            <input type="text" id="subject" class="input-control" placeholder="Résumé de votre réclamation" required maxlength="200">
+          </div>
+
+          <!-- Description Textarea -->
+          <div class="form-group">
+            <label for="description">Description détaillée *</label>
+            <textarea id="description" class="input-control resize-y" style="min-height: 150px;" placeholder="Décrivez le problème avec précision (date, montants, numéros de comptes concernés)..." required maxlength="2000"></textarea>
+            <div style="text-align: right; font-size: 12px; color: var(--color-text-muted); margin-top: 4px;">
+              <span id="charCount">0</span> / 2000
+            </div>
+          </div>
+
+          <!-- Priority Display -->
+          <div class="form-group">
+            <label>Priorité attribuée</label>
+            <div id="priorityDisplay" style="display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px;">
+              <span id="priorityIcon">⏳</span>
+              <span id="priorityLabel" style="font-weight: 600; font-size: 15px; color: var(--color-text-muted);">Sélectionnez une catégorie pour afficher la priorité</span>
+            </div>
+          </div>
+
+          <!-- File Attachment Upload -->
+          <div class="form-group">
+            <label>Pièces jointes (optionnel)</label>
+            <div class="upload-zone" id="dropZone">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <div style="font-size: 15px; font-weight: 600; color: var(--color-text); margin-bottom: 4px;">Glissez vos fichiers ici</div>
+              <div style="font-size: 13px; color: var(--color-text-muted);">ou <span style="color: var(--color-primary); font-weight: 600; cursor: pointer;">parcourir</span></div>
+              <div style="font-size: 11px; color: var(--color-text-muted); margin-top: 8px;">PDF, JPG, PNG, DOC — Max 5 Mo par fichier (5 fichiers max)</div>
+              <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display: none;">
+            </div>
+            <div id="fileList" style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;"></div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-primary w-100" id="submitBtn" style="margin-top: 10px;">
+            <span>📤 Envoyer la réclamation</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Back link -->
+      <div style="margin-top: 10px;">
+        <a href="reclamations" style="font-size: 14px; font-weight: 600; color: var(--color-primary);">← Retour à mes réclamations</a>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="../assets/js/portal-app.js?v=1.0.1"></script>
+  <script>
+    // ── State ──
+    var attachedFiles = [];
+
+    // Priority mapping by category
+    var priorityMap = {
+      'TRANSACTION': { label: 'Haute', icon: '🔴', badge: 'badge-danger', color: 'var(--color-danger)' },
+      'CREDIT':      { label: 'Haute', icon: '🔴', badge: 'badge-danger', color: 'var(--color-danger)' },
+      'SERVICE':     { label: 'Moyenne', icon: '🟡', badge: 'badge-warning', color: 'var(--color-warning)' },
+      'AUTRE':       { label: 'Basse', icon: '🟢', badge: 'badge-info', color: 'var(--color-primary-light)' }
+    };
+
+    // ── DOM refs ──
+    var categoryEl = document.getElementById('category');
+    var descEl = document.getElementById('description');
+    var charCountEl = document.getElementById('charCount');
+    var dropZone = document.getElementById('dropZone');
+    var fileInput = document.getElementById('fileInput');
+
+    // ── Character count ──
+    descEl.addEventListener('input', function () {
+      charCountEl.textContent = this.value.length;
+    });
+
+    // ── Priority auto-display on category change ──
+    categoryEl.addEventListener('change', function () {
+      var val = this.value;
+      var pIcon = document.getElementById('priorityIcon');
+      var pLabel = document.getElementById('priorityLabel');
+      var pBox = document.getElementById('priorityDisplay');
+
+      if (val && priorityMap[val]) {
+        var p = priorityMap[val];
+        pIcon.textContent = p.icon;
+        pLabel.textContent = 'Priorité ' + p.label;
+        pLabel.style.color = p.color;
+        pBox.style.borderColor = p.color.replace(')', ', 0.3)').replace('var(', '').replace(')', '');
+      } else {
+        pIcon.textContent = '⏳';
+        pLabel.textContent = 'Sélectionnez une catégorie pour afficher la priorité';
+        pLabel.style.color = 'var(--color-text-muted)';
+        pBox.style.borderColor = 'var(--border-color)';
+      }
+    });
+
+    // ── File upload: click ──
+    dropZone.addEventListener('click', function () {
+      fileInput.click();
+    });
+
+    // ── File upload: drag & drop ──
+    dropZone.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      this.style.borderColor = 'var(--color-primary)';
+      this.style.background = 'rgba(8, 67, 85, 0.04)';
+    });
+
+    dropZone.addEventListener('dragleave', function () {
+      this.style.borderColor = 'var(--border-color)';
+      this.style.background = 'rgba(8, 67, 85, 0.005)';
+    });
+
+    dropZone.addEventListener('drop', function (e) {
+      e.preventDefault();
+      this.style.borderColor = 'var(--border-color)';
+      this.style.background = 'rgba(8, 67, 85, 0.005)';
+      handleFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener('change', function () {
+      handleFiles(this.files);
+      this.value = '';
+    });
+
+    function handleFiles(files) {
+      var maxSize = 5 * 1024 * 1024;
+      var allowed = ['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+      for (var i = 0; i < files.length; i++) {
+        var f = files[i];
+        if (f.size > maxSize) {
+          showToast('Le fichier "' + f.name + '" dépasse 5 Mo.', 'warning');
+          continue;
+        }
+        if (allowed.indexOf(f.type) === -1) {
+          showToast('Type de fichier non autorisé : "' + f.name + '"', 'warning');
+          continue;
+        }
+        if (attachedFiles.length >= 5) {
+          showToast('Maximum 5 fichiers autorisés.', 'warning');
+          break;
+        }
+        attachedFiles.push(f);
+      }
+      renderFileList();
+    }
+
+    function renderFileList() {
+      var container = document.getElementById('fileList');
+      if (attachedFiles.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = attachedFiles.map(function (f, i) {
+        var sizeKo = (f.size / 1024).toFixed(0);
+        return '<div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid var(--border-color); border-radius: 10px; padding: 10px 14px;">' +
+          '<span style="font-size: 13px; font-weight: 600; color: var(--color-text);">📎 ' + f.name + ' <span style="color: var(--color-text-muted); font-weight: 400;">(' + sizeKo + ' Ko)</span></span>' +
+          '<button type="button" onclick="removeFile(' + i + ')" style="background: rgba(217,48,37,0.1); border: none; color: var(--color-danger); font-weight: 700; cursor: pointer; padding: 4px 10px; border-radius: 6px; font-size: 12px;">✕ Retirer</button>' +
+          '</div>';
+      }).join('');
+    }
+
+    function removeFile(index) {
+      attachedFiles.splice(index, 1);
+      renderFileList();
+    }
+
+    // ── Form submission ──
+    document.getElementById('reclamationForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      var category = document.getElementById('category').value;
+      var subject = document.getElementById('subject').value.trim();
+      var description = document.getElementById('description').value.trim();
+
+      if (!category || !subject || !description) {
+        showToast('Veuillez remplir tous les champs obligatoires.', 'warning');
+        return;
+      }
+
+      var submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.querySelector('span').textContent = '⏳ Envoi en cours...';
+
+      try {
+        var formData = new FormData();
+        formData.append('categorie', category);
+        formData.append('sujet', subject);
+        formData.append('description', description);
+        attachedFiles.forEach(function (f) {
+          formData.append('piecesJointes', f);
+        });
+
+        var result;
+        if (typeof window.ClientReclamations !== 'undefined' && window.ClientReclamations.creer) {
+          // Use the portal API helper if available
+          var res = await window.ClientReclamations.creer(category, description);
+          if (res.status === 201) {
+            var data = await res.json();
+            result = data;
+          } else {
+            throw new Error('Erreur serveur');
+          }
+        } else if (typeof portalFetch === 'function') {
+          result = await portalFetch('/api/v1/reclamations', {
+            method: 'POST',
+            body: formData
+          });
+        } else {
+          var resp = await fetch('/api/v1/reclamations', {
+            method: 'POST',
+            body: formData
+          });
+          if (!resp.ok) throw new Error('Erreur serveur');
+          result = await resp.json();
+        }
+
+        var tracking = result.numeroSuivi || result.trackingNumber || result.reference || result.numero || result.id || 'N/A';
+        document.getElementById('trackingNumber').textContent = tracking;
+        document.getElementById('formContainer').style.display = 'none';
+        document.getElementById('successBox').style.display = 'block';
+        showToast('Réclamation soumise avec succès.', 'success');
+
+      } catch (err) {
+        console.error('Erreur soumission réclamation:', err);
+        showToast('Erreur lors de la soumission. Veuillez réessayer.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.querySelector('span').textContent = '📤 Envoyer la réclamation';
+      }
+    });
+
+    // ── Reset form for new submission ──
+    function resetForm() {
+      document.getElementById('reclamationForm').reset();
+      attachedFiles = [];
+      renderFileList();
+      charCountEl.textContent = '0';
+      // Reset priority display
+      document.getElementById('priorityIcon').textContent = '⏳';
+      document.getElementById('priorityLabel').textContent = 'Sélectionnez une catégorie pour afficher la priorité';
+      document.getElementById('priorityLabel').style.color = 'var(--color-text-muted)';
+      document.getElementById('priorityDisplay').style.borderColor = 'var(--border-color)';
+      // Show form, hide success
+      document.getElementById('successBox').style.display = 'none';
+      document.getElementById('formContainer').style.display = 'block';
+      var submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = false;
+      submitBtn.querySelector('span').textContent = '📤 Envoyer la réclamation';
+    }
+  </script>
+</body>
+</html>

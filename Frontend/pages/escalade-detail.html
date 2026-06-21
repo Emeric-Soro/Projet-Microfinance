@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Détail escalade - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    /* ── Escalade detail-specific styles ─────────────────── */
+    .esc-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .esc-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .esc-kpi {
+      background: var(--color-surface);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .esc-kpi-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .esc-kpi-icon svg { width: 20px; height: 20px; }
+    .esc-kpi-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 2px; }
+    .esc-kpi-value { font-size: 18px; font-weight: 700; color: var(--color-primary); }
+
+    /* ── Status stepper ──────────────────────────────────── */
+    .esc-stepper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 8px 0;
+    }
+    .esc-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-width: 90px;
+      position: relative;
+      z-index: 1;
+    }
+    .esc-step-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      border: 3px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text-muted);
+      transition: all 0.3s ease;
+    }
+    .esc-step.active .esc-step-dot {
+      border-color: var(--color-primary);
+      background: var(--color-primary);
+      color: #fff;
+    }
+    .esc-step.done .esc-step-dot {
+      border-color: var(--color-success);
+      background: var(--color-success);
+      color: #fff;
+    }
+    .esc-step-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .esc-step.active .esc-step-label,
+    .esc-step.done .esc-step-label {
+      color: var(--color-primary);
+    }
+    .esc-connector {
+      flex: 1;
+      height: 3px;
+      background: var(--color-border);
+      margin: 0 -4px;
+      margin-bottom: 22px;
+      transition: background 0.3s ease;
+    }
+    .esc-connector.done { background: var(--color-success); }
+    .esc-connector.active { background: var(--color-primary); }
+
+    /* ── Info rows ───────────────────────────────────────── */
+    .esc-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .esc-info-row:last-child { border-bottom: none; }
+    .esc-info-label {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      font-weight: 500;
+      min-width: 140px;
+    }
+    .esc-info-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-primary);
+      text-align: right;
+      max-width: 280px;
+      word-break: break-word;
+    }
+
+    /* ── Timeline ────────────────────────────────────────── */
+    .esc-timeline {
+      position: relative;
+      padding-left: 28px;
+    }
+    .esc-timeline::before {
+      content: '';
+      position: absolute;
+      left: 10px;
+      top: 4px;
+      bottom: 4px;
+      width: 2px;
+      background: var(--color-border);
+    }
+    .esc-tl-item {
+      position: relative;
+      padding: 0 0 20px 20px;
+    }
+    .esc-tl-item:last-child { padding-bottom: 0; }
+    .esc-tl-dot {
+      position: absolute;
+      left: -22px;
+      top: 4px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      border: 2px solid var(--color-surface);
+      box-shadow: 0 0 0 2px var(--color-primary);
+    }
+    .esc-tl-dot.success {
+      background: var(--color-success);
+      box-shadow: 0 0 0 2px var(--color-success);
+    }
+    .esc-tl-dot.warning {
+      background: var(--color-warning);
+      box-shadow: 0 0 0 2px var(--color-warning);
+    }
+    .esc-tl-date {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+    .esc-tl-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+    .esc-tl-desc {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      margin-top: 2px;
+    }
+    .esc-tl-author {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── Resolution card ─────────────────────────────────── */
+    .esc-resolution-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .esc-resolution-field {
+      background: var(--color-bg);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+    }
+    .esc-resolution-field-label {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 4px;
+    }
+    .esc-resolution-field-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+
+    /* ── Responsive ──────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .esc-detail-grid { grid-template-columns: 1fr; }
+      .esc-kpi-grid { grid-template-columns: 1fr 1fr; }
+      .esc-resolution-grid { grid-template-columns: 1fr; }
+      .esc-step { min-width: 70px; }
+      .esc-step-label { font-size: 10px; }
+    }
+    @media (max-width: 480px) {
+      .esc-kpi-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Détail escalade</div>
+            <div class="topbar-breadcrumb">Exceptions / Escalades / Détail</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn" onclick="loadEscDetail()" title="Rafraîchir">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <!-- Page header -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title" id="escDetailTitle">Escalade #-</h1>
+            <p class="page-subtitle" id="escDetailSubtitle">Chargement...</p>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-outline" onclick="window.location.href='escalade-liste.html'">&#8592; Retour</button>
+            <button class="btn btn-primary" id="btnTraiter" style="display:none;" onclick="goTraiter()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>
+              Traiter
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI strip -->
+        <div class="esc-kpi-grid" id="escKpis" style="display:none;">
+          <div class="esc-kpi">
+            <div class="esc-kpi-icon" style="background:rgba(8,67,85,0.08);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div>
+              <div class="esc-kpi-label">Niveau</div>
+              <div class="esc-kpi-value" id="kpiNiveau">-</div>
+            </div>
+          </div>
+          <div class="esc-kpi">
+            <div class="esc-kpi-icon" style="background:rgba(46,125,50,0.08);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <div>
+              <div class="esc-kpi-label">Créée le</div>
+              <div class="esc-kpi-value" id="kpiDate" style="font-size:14px;">-</div>
+            </div>
+          </div>
+          <div class="esc-kpi">
+            <div class="esc-kpi-icon" style="background:rgba(230,81,0,0.08);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-warning)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div>
+              <div class="esc-kpi-label">Créée par</div>
+              <div class="esc-kpi-value" id="kpiCreePar" style="font-size:13px;">-</div>
+            </div>
+          </div>
+          <div class="esc-kpi">
+            <div class="esc-kpi-icon" style="background:rgba(217,48,37,0.08);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-danger)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div>
+              <div class="esc-kpi-label">Référence</div>
+              <div class="esc-kpi-value" id="kpiRef" style="font-size:13px;font-family:monospace;">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status progression stepper -->
+        <section class="card" style="margin-bottom:16px;">
+          <div class="card-header">
+            <div class="card-title">Progression du statut</div>
+            <span class="badge" id="stepperBadge">-</span>
+          </div>
+          <div style="padding:24px 20px 16px;">
+            <div class="esc-stepper" id="escStepper">
+              <div class="esc-step" data-step="OUVERTE">
+                <div class="esc-step-dot">1</div>
+                <div class="esc-step-label">Ouverte</div>
+              </div>
+              <div class="esc-connector" data-idx="0"></div>
+              <div class="esc-step" data-step="EN_COURS">
+                <div class="esc-step-dot">2</div>
+                <div class="esc-step-label">En cours</div>
+              </div>
+              <div class="esc-connector" data-idx="1"></div>
+              <div class="esc-step" data-step="RESOLUE">
+                <div class="esc-step-dot">3</div>
+                <div class="esc-step-label">Résolue</div>
+              </div>
+              <div class="esc-connector" data-idx="2"></div>
+              <div class="esc-step" data-step="FERMEE">
+                <div class="esc-step-dot">4</div>
+                <div class="esc-step-label">Fermée</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Two-column: Incident info + Responsible -->
+        <div class="esc-detail-grid">
+          <section class="card">
+            <div class="card-header">
+              <div class="card-title">Informations de l'incident</div>
+            </div>
+            <div style="padding:16px 20px;" id="escInfoContent">
+              <p style="color:var(--color-text-secondary);">Chargement...</p>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <div class="card-title">Responsable assigné</div>
+            </div>
+            <div style="padding:16px 20px;" id="escResponsable">
+              <p style="color:var(--color-text-secondary);">Chargement...</p>
+            </div>
+          </section>
+        </div>
+
+        <!-- Timeline of actions -->
+        <section class="card" style="margin-top:16px;">
+          <div class="card-header">
+            <div class="card-title">Chronologie des actions</div>
+          </div>
+          <div style="padding:20px;" id="escTimeline">
+            <p style="color:var(--color-text-secondary);">Chargement...</p>
+          </div>
+        </section>
+
+        <!-- Resolution history -->
+        <section class="card" style="margin-top:16px;display:none;" id="escResolutionCard">
+          <div class="card-header">
+            <div class="card-title">Historique de résolution</div>
+          </div>
+          <div style="padding:20px;" id="escResolution">
+            <p style="color:var(--color-text-secondary);">Pas encore résolue.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ==========================================================
+       M15 — Escalade Detail Page
+       Endpoint: GET /api/v1/exceptions/escalades/{id}
+       ========================================================== */
+
+    document.addEventListener('DOMContentLoaded', function () {
+      loadEscDetail();
+    });
+
+    /* ── Main data loader ──────────────────────────────────── */
+    async function loadEscDetail() {
+      var params = new URLSearchParams(window.location.search);
+      var id = params.get('id');
+      if (!id) {
+        showToast('Identifiant manquant dans l\'URL.', 'error');
+        return;
+      }
+
+      try {
+        var res = await SF.apiFetch('/api/v1/exceptions/escalades/' + id);
+
+        if (!res) return; // 401 already handled
+
+        if (res.ok) {
+          var e = await res.json();
+          renderDetail(e);
+        } else if (res.status === 404) {
+          showToast('Escalade introuvable (ID: ' + id + ').', 'error');
+        } else {
+          showToast('Erreur lors du chargement (HTTP ' + res.status + ').', 'error');
+        }
+      } catch (err) {
+        showToast(err.message || 'Impossible de charger l\'escalade.', 'error');
+      }
+    }
+
+    /* ── Render all sections ────────────────────────────────── */
+    function renderDetail(e) {
+      renderHeader(e);
+      renderKPIs(e);
+      renderStepper(e);
+      renderInfoSection(e);
+      renderResponsable(e);
+      renderTimeline(e);
+      renderResolution(e);
+      toggleTraiterButton(e);
+    }
+
+    /* ── Page title & subtitle badges ──────────────────────── */
+    function renderHeader(e) {
+      var title = document.getElementById('escDetailTitle');
+      title.textContent = 'Escalade #' + (e.id || '-') + (e.reference ? ' (' + e.reference + ')' : '');
+
+      var niveauBadge = getNiveauBadge(e.niveau);
+      var statutBadge = getStatutBadge(e.statut);
+      document.getElementById('escDetailSubtitle').innerHTML =
+        '<span class="badge ' + niveauBadge.cls + '">' + niveauBadge.label + '</span> ' +
+        '<span class="badge ' + statutBadge.cls + '">' + statutBadge.label + '</span>' +
+        (e.typeEscalade ? ' &nbsp;<span style="color:var(--color-text-secondary);font-size:13px;">' + formatType(e.typeEscalade) + '</span>' : '');
+    }
+
+    /* ── KPI strip ─────────────────────────────────────────── */
+    function renderKPIs(e) {
+      var container = document.getElementById('escKpis');
+      container.style.display = '';
+
+      var niveauMap = { N1: 'N1 - Faible', N2: 'N2 - Moyen', N3: 'N3 - Élevé', N4: 'N4 - Critique' };
+      document.getElementById('kpiNiveau').textContent = niveauMap[(e.niveau || '').toUpperCase()] || e.niveau || '-';
+      document.getElementById('kpiDate').textContent = formatDate(e.dateCreation);
+      document.getElementById('kpiCreePar').textContent = e.creePar || '-';
+      document.getElementById('kpiRef').textContent = e.reference || '-';
+    }
+
+    /* ── Status progression stepper ────────────────────────── */
+    function renderStepper(e) {
+      var steps = ['OUVERTE', 'EN_COURS', 'RESOLUE', 'FERMEE'];
+      var currentIdx = steps.indexOf((e.statut || '').toUpperCase());
+      if (currentIdx === -1) currentIdx = 0;
+
+      var stepEls = document.querySelectorAll('.esc-step');
+      var connectorEls = document.querySelectorAll('.esc-connector');
+
+      stepEls.forEach(function (el, i) {
+        el.classList.remove('active', 'done');
+        if (i < currentIdx) {
+          el.classList.add('done');
+          el.querySelector('.esc-step-dot').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:16px;height:16px;"><polyline points="20 6 9 17 4 12"/></svg>';
+        } else if (i === currentIdx) {
+          el.classList.add('active');
+          el.querySelector('.esc-step-dot').textContent = (i + 1);
+        } else {
+          el.querySelector('.esc-step-dot').textContent = (i + 1);
+        }
+      });
+
+      connectorEls.forEach(function (el, i) {
+        el.classList.remove('done', 'active');
+        if (i < currentIdx) {
+          el.classList.add('done');
+        } else if (i === currentIdx) {
+          el.classList.add('active');
+        }
+      });
+
+      // Update stepper badge
+      var statutBadge = getStatutBadge(e.statut);
+      document.getElementById('stepperBadge').className = 'badge ' + statutBadge.cls;
+      document.getElementById('stepperBadge').textContent = statutBadge.label;
+    }
+
+    /* ── Incident info section ─────────────────────────────── */
+    function renderInfoSection(e) {
+      var html = '' +
+        '<div class="esc-info-row">' +
+          '<span class="esc-info-label">Type d\'incident</span>' +
+          '<span class="esc-info-value">' + formatType(e.typeEscalade) + '</span>' +
+        '</div>' +
+        '<div class="esc-info-row">' +
+          '<span class="esc-info-label">Niveau</span>' +
+          '<span class="esc-info-value">' + formatNiveau(e.niveau) + '</span>' +
+        '</div>' +
+        '<div class="esc-info-row">' +
+          '<span class="esc-info-label">Statut</span>' +
+          '<span class="esc-info-value"><span class="badge ' + getStatutBadge(e.statut).cls + '">' + getStatutBadge(e.statut).label + '</span></span>' +
+        '</div>' +
+        '<div class="esc-info-row">' +
+          '<span class="esc-info-label">Référence</span>' +
+          '<span class="esc-info-value" style="font-family:monospace;">' + (e.reference || '-') + '</span>' +
+        '</div>' +
+        '<div class="esc-info-row">' +
+          '<span class="esc-info-label">Date de création</span>' +
+          '<span class="esc-info-value">' + formatDateTime(e.dateCreation) + '</span>' +
+        '</div>' +
+        '<div class="esc-info-row">' +
+          '<span class="esc-info-label">Description</span>' +
+          '<span class="esc-info-value" style="text-align:left;max-width:100%;font-weight:500;line-height:1.5;">' + escapeHtml(e.description || '-') + '</span>' +
+        '</div>';
+
+      document.getElementById('escInfoContent').innerHTML = html;
+    }
+
+    /* ── Assigned responsible ──────────────────────────────── */
+    function renderResponsable(e) {
+      var container = document.getElementById('escResponsable');
+
+      if (e.traitePar) {
+        var html = '' +
+          '<div class="esc-info-row">' +
+            '<span class="esc-info-label">Assigné à</span>' +
+            '<span class="esc-info-value">' + escapeHtml(e.traitePar) + '</span>' +
+          '</div>' +
+          '<div class="esc-info-row">' +
+            '<span class="esc-info-label">Date de traitement</span>' +
+            '<span class="esc-info-value">' + formatDateTime(e.dateTraitement) + '</span>' +
+          '</div>' +
+          '<div class="esc-info-row">' +
+            '<span class="esc-info-label">Action effectuée</span>' +
+            '<span class="esc-info-value" style="text-align:left;max-width:100%;">' + escapeHtml(e.action || '-') + '</span>' +
+          '</div>';
+
+        if (e.commentaire) {
+          html += '' +
+            '<div style="margin-top:12px;padding:12px;background:var(--color-bg);border-radius:var(--radius-sm);">' +
+              '<div style="font-size:11px;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;">Commentaire</div>' +
+              '<div style="font-size:13px;color:var(--color-primary);line-height:1.5;">' + escapeHtml(e.commentaire) + '</div>' +
+            '</div>';
+        }
+
+        container.innerHTML = html;
+      } else {
+        container.innerHTML = '' +
+          '<div style="text-align:center;padding:20px 0;">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="1.5" style="width:40px;height:40px;margin-bottom:8px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' +
+            '<div style="color:var(--color-text-muted);font-size:13px;">Aucun responsable assigné</div>' +
+            '<div style="color:var(--color-text-muted);font-size:12px;margin-top:4px;">L\'escalade est en attente de traitement</div>' +
+          '</div>';
+      }
+    }
+
+    /* ── Timeline of actions ───────────────────────────────── */
+    function renderTimeline(e) {
+      var container = document.getElementById('escTimeline');
+      var events = [];
+
+      // Build synthetic timeline from available data
+      if (e.dateCreation) {
+        events.push({
+          date: e.dateCreation,
+          title: 'Escalade créée',
+          desc: 'Type: ' + formatType(e.typeEscalade) + ' — Niveau: ' + (e.niveau || '-'),
+          author: e.creePar || 'Système',
+          dotClass: ''
+        });
+      }
+
+      if (e.statut === 'EN_COURS' || e.statut === 'RESOLUE' || e.statut === 'FERMEE') {
+        events.push({
+          date: e.dateTraitement || e.dateCreation,
+          title: 'Passage en cours de traitement',
+          desc: e.action || 'L\'escalade a été prise en charge',
+          author: e.traitePar || '-',
+          dotClass: 'warning'
+        });
+      }
+
+      if (e.statut === 'RESOLUE' || e.statut === 'FERMEE') {
+        events.push({
+          date: e.dateTraitement,
+          title: e.statut === 'FERMEE' ? 'Escalade fermée' : 'Escalade résolue',
+          desc: e.commentaire || e.action || 'Résolution enregistrée',
+          author: e.traitePar || '-',
+          dotClass: 'success'
+        });
+      }
+
+      if (!events.length) {
+        container.innerHTML = '' +
+          '<div style="text-align:center;padding:20px 0;">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="1.5" style="width:40px;height:40px;margin-bottom:8px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+            '<div style="color:var(--color-text-muted);font-size:13px;">Aucune action enregistrée</div>' +
+          '</div>';
+        return;
+      }
+
+      var html = '<div class="esc-timeline">';
+      events.forEach(function (evt) {
+        html += '' +
+          '<div class="esc-tl-item">' +
+            '<div class="esc-tl-dot ' + evt.dotClass + '"></div>' +
+            '<div class="esc-tl-date">' + formatDateTime(evt.date) + '</div>' +
+            '<div class="esc-tl-title">' + escapeHtml(evt.title) + '</div>' +
+            (evt.desc ? '<div class="esc-tl-desc">' + escapeHtml(evt.desc) + '</div>' : '') +
+            '<div class="esc-tl-author">Par : ' + escapeHtml(evt.author) + '</div>' +
+          '</div>';
+      });
+      html += '</div>';
+
+      container.innerHTML = html;
+    }
+
+    /* ── Resolution history ────────────────────────────────── */
+    function renderResolution(e) {
+      var card = document.getElementById('escResolutionCard');
+
+      if (e.statut === 'RESOLUE' || e.statut === 'FERMEE') {
+        card.style.display = '';
+
+        var html = '<div class="esc-resolution-grid">' +
+          '<div class="esc-resolution-field">' +
+            '<div class="esc-resolution-field-label">Statut final</div>' +
+            '<div class="esc-resolution-field-value"><span class="badge ' + getStatutBadge(e.statut).cls + '">' + getStatutBadge(e.statut).label + '</span></div>' +
+          '</div>' +
+          '<div class="esc-resolution-field">' +
+            '<div class="esc-resolution-field-label">Date de résolution</div>' +
+            '<div class="esc-resolution-field-value">' + formatDateTime(e.dateTraitement) + '</div>' +
+          '</div>' +
+          '<div class="esc-resolution-field">' +
+            '<div class="esc-resolution-field-label">Résolu par</div>' +
+            '<div class="esc-resolution-field-value">' + escapeHtml(e.traitePar || '-') + '</div>' +
+          '</div>' +
+          '<div class="esc-resolution-field">' +
+            '<div class="esc-resolution-field-label">Action corrective</div>' +
+            '<div class="esc-resolution-field-value">' + escapeHtml(e.action || '-') + '</div>' +
+          '</div>' +
+        '</div>';
+
+        if (e.commentaire) {
+          html += '' +
+            '<div style="margin-top:16px;padding:14px 16px;background:var(--color-bg);border-radius:var(--radius-sm);border-left:3px solid var(--color-success);">' +
+              '<div style="font-size:11px;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;">Commentaire de résolution</div>' +
+              '<div style="font-size:13px;color:var(--color-primary);line-height:1.6;">' + escapeHtml(e.commentaire) + '</div>' +
+            '</div>';
+        }
+
+        document.getElementById('escResolution').innerHTML = html;
+      } else {
+        card.style.display = 'none';
+      }
+    }
+
+    /* ── Show/hide "Traiter" button ────────────────────────── */
+    function toggleTraiterButton(e) {
+      var btn = document.getElementById('btnTraiter');
+      if (e.statut !== 'RESOLUE' && e.statut !== 'FERMEE') {
+        btn.style.display = '';
+      } else {
+        btn.style.display = 'none';
+      }
+    }
+
+    /* ── Navigate to treatment page ────────────────────────── */
+    function goTraiter() {
+      var id = new URLSearchParams(window.location.search).get('id');
+      window.location.href = 'escalade-traiter.html?id=' + id;
+    }
+
+    /* ── Badge helpers (shared with escalade-liste) ────────── */
+    function getNiveauBadge(niveau) {
+      var map = {
+        'N1': { cls: 'badge-info',    label: 'N1 - Faible' },
+        'N2': { cls: 'badge-warning',  label: 'N2 - Moyen' },
+        'N3': { cls: 'badge-pending',  label: 'N3 - Élevé' },
+        'N4': { cls: 'badge-danger',   label: 'N4 - Critique' }
+      };
+      return map[(niveau || '').toUpperCase()] || { cls: 'badge-info', label: niveau || '-' };
+    }
+
+    function getStatutBadge(statut) {
+      var map = {
+        'OUVERTE':   { cls: 'badge-info',     label: 'Ouverte' },
+        'EN_COURS':  { cls: 'badge-pending',   label: 'En cours' },
+        'RESOLUE':   { cls: 'badge-success',   label: 'Résolue' },
+        'FERMEE':    { cls: 'badge-secondary', label: 'Fermée' }
+      };
+      return map[(statut || '').toUpperCase()] || { cls: 'badge-info', label: statut || '-' };
+    }
+
+    function formatType(type) {
+      var map = {
+        'TECHNIQUE':      'Technique',
+        'FONCTIONNEL':    'Fonctionnel',
+        'SECURITE':       'Sécurité',
+        'REGLEMENTAIRE':  'Réglementaire',
+        'OPERATIONNEL':   'Opérationnel'
+      };
+      return map[(type || '').toUpperCase()] || type || '-';
+    }
+
+    function formatNiveau(niveau) {
+      var map = { 'N1': 'N1 - Faible', 'N2': 'N2 - Moyen', 'N3': 'N3 - Élevé', 'N4': 'N4 - Critique' };
+      return map[(niveau || '').toUpperCase()] || niveau || '-';
+    }
+
+    /* ── Date helpers ──────────────────────────────────────── */
+    function formatDate(d) {
+      if (!d) return '-';
+      try {
+        return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      } catch (e) { return d; }
+    }
+
+    function formatDateTime(d) {
+      if (!d) return '-';
+      try {
+        return new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      } catch (e) { return d; }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

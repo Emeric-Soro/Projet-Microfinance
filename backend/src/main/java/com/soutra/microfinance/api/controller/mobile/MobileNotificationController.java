@@ -1,5 +1,6 @@
 package com.soutra.microfinance.api.controller.mobile;
 
+import com.soutra.microfinance.api.helper.ApiEnvelope;
 import com.soutra.microfinance.api.helper.SoutraSecurityHelper;
 import com.soutra.microfinance.audit.AuditLog;
 import com.soutra.microfinance.dto.request.mobile.MobileNotificationPreferencesRequestDTO;
@@ -24,6 +25,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/mobile/notifications")
@@ -54,6 +57,23 @@ public class MobileNotificationController {
         Page<MobileNotificationResponseDTO> response = notifications.map(this::toNotificationResponse);
 
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Compteur de notifications non lues", description = "Retourne le nombre de notifications non lues pour le client connecte (badge de l'icone cloche).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Compteur retourne avec succes")
+    })
+    @GetMapping("/compteur")
+    @PreAuthorize("hasAuthority('CLIENT')")
+    @AuditLog(action = "MOBILE_NOTIFICATION_COMPTEUR", resource = "NOTIFICATION")
+    public ResponseEntity<ApiEnvelope<Map<String, Object>>> compteurNotifications(
+            Authentication authentication
+    ) {
+        Utilisateur utilisateur = SoutraSecurityHelper.extraireUtilisateurAuthentifie();
+        Long idClient = utilisateur.getClient().getIdClient();
+
+        long nbNonLues = notificationService.compterNotificationsNonLues(idClient);
+        return ResponseEntity.ok(ApiEnvelope.success(Map.of("count", nbNonLues, "nbNonLues", nbNonLues)));
     }
 
     @Operation(summary = "Marquer comme lue", description = "Marque une notification comme lue.")

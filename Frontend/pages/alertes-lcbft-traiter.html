@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traiter alerte LCB-FT - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    /* ── Traitement-specific styles ────────────────────── */
+    .trait-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 960px;
+    }
+
+    .trait-kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .trait-kpi {
+      background: var(--color-surface);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .trait-kpi-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .trait-kpi-icon svg { width: 18px; height: 18px; }
+    .trait-kpi-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 1px; }
+    .trait-kpi-value { font-size: 15px; font-weight: 700; color: var(--color-primary); }
+
+    /* ── Status stepper ──────────────────────────────── */
+    .trait-stepper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 8px 0;
+    }
+    .trait-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-width: 80px;
+      position: relative;
+      z-index: 1;
+    }
+    .trait-step-dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      border: 3px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text-muted);
+      transition: all 0.3s ease;
+    }
+    .trait-step.active .trait-step-dot {
+      border-color: var(--color-primary);
+      background: var(--color-primary);
+      color: #fff;
+    }
+    .trait-step.done .trait-step-dot {
+      border-color: var(--color-success);
+      background: var(--color-success);
+      color: #fff;
+    }
+    .trait-step.target .trait-step-dot {
+      border-color: var(--color-warning);
+      background: var(--color-warning);
+      color: #fff;
+      animation: pulse-ring 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-ring {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(230, 81, 0, 0.3); }
+      50% { box-shadow: 0 0 0 6px rgba(230, 81, 0, 0); }
+    }
+    .trait-step-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .trait-step.active .trait-step-label,
+    .trait-step.done .trait-step-label {
+      color: var(--color-primary);
+    }
+    .trait-step.target .trait-step-label {
+      color: var(--color-warning);
+    }
+    .trait-connector {
+      flex: 1;
+      height: 3px;
+      background: var(--color-border);
+      margin: 0 -4px;
+      margin-bottom: 20px;
+      transition: background 0.3s ease;
+    }
+    .trait-connector.done { background: var(--color-success); }
+    .trait-connector.active { background: var(--color-primary); }
+    .trait-connector.target { background: var(--color-warning); }
+
+    /* ── Info rows ───────────────────────────────────── */
+    .trait-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .trait-info-row:last-child { border-bottom: none; }
+    .trait-info-label {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      font-weight: 500;
+      min-width: 120px;
+    }
+    .trait-info-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-primary);
+      text-align: right;
+      max-width: 260px;
+      word-break: break-word;
+    }
+
+    /* ── Description card ────────────────────────────── */
+    .trait-desc-box {
+      background: var(--color-bg);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-top: 12px;
+      border-left: 3px solid var(--color-primary);
+    }
+    .trait-desc-label {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 6px;
+    }
+    .trait-desc-text {
+      font-size: 13px;
+      color: var(--color-primary);
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    /* ── Notes list ──────────────────────────────────── */
+    .note-item {
+      background: var(--color-bg);
+      border-left: 3px solid var(--color-primary);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+    }
+    .note-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--color-text-muted);
+      margin-bottom: 4px;
+    }
+    .note-text {
+      font-size: 13px;
+      color: var(--color-primary);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    /* ── Form enhancements ───────────────────────────── */
+    .form-group .form-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .form-group .form-label .required-star {
+      color: var(--color-danger);
+      font-weight: 700;
+    }
+    .form-group .field-hint {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      margin-top: 4px;
+    }
+    .is-invalid {
+      border-color: var(--color-danger) !important;
+    }
+    .field-error {
+      display: none;
+      font-size: 12px;
+      color: var(--color-danger);
+      margin-top: 4px;
+    }
+
+    /* ── Submit area ─────────────────────────────────── */
+    .trait-submit-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-top: 24px;
+      padding: 16px 0;
+      border-top: 1px solid var(--color-border);
+    }
+    .trait-submit-bar .btn { min-width: 160px; }
+
+    /* ── Warning banner ──────────────────────────────── */
+    .trait-warning-banner {
+      background: rgba(230, 81, 0, 0.06);
+      border: 1px solid rgba(230, 81, 0, 0.2);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .trait-warning-banner svg { flex-shrink: 0; margin-top: 1px; }
+    .trait-warning-text { font-size: 13px; color: var(--color-text-secondary); line-height: 1.5; }
+
+    /* ── Responsive ──────────────────────────────────── */
+    @media (max-width: 768px) {
+      .trait-grid { grid-template-columns: 1fr; }
+      .trait-kpi-strip { grid-template-columns: 1fr 1fr; }
+      .trait-step { min-width: 60px; }
+      .trait-step-label { font-size: 9px; }
+      .trait-submit-bar { flex-direction: column-reverse; }
+      .trait-submit-bar .btn { width: 100%; }
+    }
+    @media (max-width: 480px) {
+      .trait-kpi-strip { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Traiter alerte LCB-FT</div>
+            <div class="topbar-breadcrumb">Conformite / LCB-FT / Traitement</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn" onclick="window.location.reload()" title="Rafraichir">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <!-- Page header -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title" id="traitTitle">Traitement de l'alerte LCB-FT #-</h1>
+            <p class="page-subtitle" id="traitSubtitle">Chargement...</p>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-outline" onclick="window.location.href='alertes-lcbft-creer.html'">&#8592; Creer alerte</button>
+            <button class="btn btn-outline" id="btnVoirDetail" style="display:none;" onclick="goDetail()">Voir detail</button>
+          </div>
+        </div>
+
+        <!-- Loading state -->
+        <div id="loadingState" style="text-align:center;padding:60px 0;">
+          <div class="login-spinner" style="width:32px;height:32px;margin:0 auto 12px;"></div>
+          <div style="color:var(--color-text-secondary);font-size:13px;">Chargement de l'alerte...</div>
+        </div>
+
+        <!-- Error state -->
+        <div id="errorState" style="display:none;text-align:center;padding:60px 0;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-danger)" stroke-width="1.5" style="width:48px;height:48px;margin:0 auto 12px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <div style="color:var(--color-danger);font-size:14px;font-weight:600;margin-bottom:4px;" id="errorTitle">Erreur</div>
+          <div style="color:var(--color-text-secondary);font-size:13px;" id="errorMsg">Impossible de charger l'alerte.</div>
+          <button class="btn btn-outline" style="margin-top:16px;" onclick="loadAlert()">Reessayer</button>
+        </div>
+
+        <!-- Main content (hidden until loaded) -->
+        <div id="mainContent" style="display:none;">
+
+          <!-- KPI strip -->
+          <div class="trait-kpi-strip" id="traitKpis">
+            <div class="trait-kpi">
+              <div class="trait-kpi-icon" style="background:rgba(8,67,85,0.08);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-danger)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </div>
+              <div>
+                <div class="trait-kpi-label">Severite</div>
+                <div class="trait-kpi-value" id="kpiSeverite">-</div>
+              </div>
+            </div>
+            <div class="trait-kpi">
+              <div class="trait-kpi-icon" style="background:rgba(46,125,50,0.08);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <div>
+                <div class="trait-kpi-label">Creee le</div>
+                <div class="trait-kpi-value" id="kpiDate" style="font-size:13px;">-</div>
+              </div>
+            </div>
+            <div class="trait-kpi">
+              <div class="trait-kpi-icon" style="background:rgba(230,81,0,0.08);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-warning)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div>
+                <div class="trait-kpi-label">Client</div>
+                <div class="trait-kpi-value" id="kpiClient" style="font-size:13px;">-</div>
+              </div>
+            </div>
+            <div class="trait-kpi">
+              <div class="trait-kpi-icon" style="background:rgba(217,48,37,0.08);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div>
+                <div class="trait-kpi-label">Type</div>
+                <div class="trait-kpi-value" id="kpiType" style="font-size:12px;">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status stepper -->
+          <section class="card" style="margin-bottom:16px;">
+            <div class="card-header">
+              <div class="card-title">Progression du statut</div>
+              <span class="badge" id="stepperBadge">-</span>
+            </div>
+            <div style="padding:20px 20px 12px;">
+              <div class="trait-stepper" id="traitStepper">
+                <div class="trait-step" data-step="BROUILLON">
+                  <div class="trait-step-dot">1</div>
+                  <div class="trait-step-label">Brouillon</div>
+                </div>
+                <div class="trait-connector" data-idx="0"></div>
+                <div class="trait-step" data-step="OUVERTE">
+                  <div class="trait-step-dot">2</div>
+                  <div class="trait-step-label">Ouverte</div>
+                </div>
+                <div class="trait-connector" data-idx="1"></div>
+                <div class="trait-step" data-step="EN_COURS">
+                  <div class="trait-step-dot">3</div>
+                  <div class="trait-step-label">En cours</div>
+                </div>
+                <div class="trait-connector" data-idx="2"></div>
+                <div class="trait-step" data-step="RESOLUE">
+                  <div class="trait-step-dot">4</div>
+                  <div class="trait-step-label">Resolue</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Two-column layout: Summary + Form -->
+          <div class="trait-grid">
+            <!-- Left: Alert summary -->
+            <section class="card">
+              <div class="card-header">
+                <div class="card-title">Resume de l'alerte</div>
+              </div>
+              <div style="padding:16px 20px;" id="traitInfo">
+                <p style="color:var(--color-text-secondary);">Chargement...</p>
+              </div>
+            </section>
+
+            <!-- Right: Resolution form -->
+            <section class="card">
+              <div class="card-header">
+                <div class="card-title">Formulaire de traitement</div>
+              </div>
+              <div style="padding:16px 20px;">
+                <div id="submitError" style="display:none;background:rgba(217,48,37,0.06);border-left:3px solid var(--color-danger);padding:10px 14px;border-radius:6px;color:var(--color-danger);font-size:13px;margin-bottom:16px;"></div>
+
+                <form id="traitForm" novalidate>
+                  <div class="form-group">
+                    <label class="form-label" for="alertDecision">Decision <span class="required-star">*</span></label>
+                    <select class="form-control" id="alertDecision" name="decision" required>
+                      <option value="">-- Selectionner --</option>
+                      <option value="FONDEE">Fondee</option>
+                      <option value="NON_FONDEE">Non fondee</option>
+                      <option value="ESCALADEE">Escaladee</option>
+                    </select>
+                    <div class="field-error" id="alertDecision-error">La decision est obligatoire.</div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="alertAction">Action prise <span class="required-star">*</span></label>
+                    <select class="form-control" id="alertAction" name="actionPrise" required>
+                      <option value="">-- Selectionner --</option>
+                      <option value="AUCUNE">Aucune action</option>
+                      <option value="SURVEILLANCE_RENFORCEE">Surveillance renforcee</option>
+                      <option value="BLOCAGE_COMPTE">Blocage de compte</option>
+                      <option value="SAR_DECLARATION">Declaration SAR</option>
+                      <option value="CLOTURE_RELATION">Cloture de la relation</option>
+                      <option value="AUTRE">Autre</option>
+                    </select>
+                    <div class="field-error" id="alertAction-error">L'action prise est obligatoire.</div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="alertResolution">Commentaire de resolution <span class="required-star">*</span></label>
+                    <textarea class="form-control" id="alertResolution" name="resolution" rows="5" placeholder="Decrivez la decision prise et les raisons..." required maxlength="2000"></textarea>
+                    <div style="display:flex;justify-content:space-between;margin-top:4px;">
+                      <div class="field-error" id="alertResolution-error">Le commentaire de resolution est obligatoire.</div>
+                      <span style="font-size:12px;color:var(--color-text-muted);"><span id="resolutionCount">0</span>/2000</span>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </section>
+          </div>
+
+          <!-- Investigation notes section -->
+          <section class="card" style="margin-top:16px;max-width:960px;">
+            <div class="card-header">
+              <div class="card-title">Notes d'investigation</div>
+              <span class="badge badge-info" id="noteCount">0 notes</span>
+            </div>
+            <div style="padding:16px 20px;">
+              <div id="investigationNotes">
+                <p style="color:var(--color-text-muted);font-style:italic;font-size:13px;">Aucune note d'investigation.</p>
+              </div>
+              <div style="margin-top:16px;border-top:1px solid var(--color-border);padding-top:16px;">
+                <div class="form-group">
+                  <label class="form-label" for="newNote">Ajouter une note</label>
+                  <textarea class="form-control" id="newNote" rows="3" placeholder="Note d'investigation..." maxlength="1000"></textarea>
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+                    <div class="field-hint">Documentez vos observations et recherches.</div>
+                    <span style="font-size:12px;color:var(--color-text-muted);"><span id="noteCharCount">0</span>/1000</span>
+                  </div>
+                </div>
+                <button class="btn btn-outline btn-sm" id="btnAddNote" onclick="ajouterNote()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Ajouter la note
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Warning banner -->
+          <div class="trait-warning-banner" style="margin-top:16px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-warning)" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div class="trait-warning-text">
+              Cette action est irreversible. Assurez-vous que toutes les verifications ont ete effectuees avant de resoudre l'alerte.
+              Le traitement sera enregistre dans l'historique et notifie aux parties prenantes.
+            </div>
+          </div>
+
+          <!-- Submit bar -->
+          <div class="trait-submit-bar" style="max-width:960px;">
+            <button class="btn btn-outline" onclick="window.location.href='alertes-lcbft-creer.html'">Annuler</button>
+            <button class="btn btn-primary" id="btnSubmit" onclick="resoudreAlerte()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>
+              <span id="btnSubmitText">Resoudre l'alerte</span>
+              <div class="login-spinner" id="btnSpinner" style="display:none;width:18px;height:18px;margin-left:6px;"></div>
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ==========================================================
+       M14 — LCB-FT Alert Processing Page
+       Load:   GET  /api/v1/conformite/alertes-lcbft/{id}
+       Note:   POST /api/v1/conformite/alertes-lcbft/{id}/notes
+       Treat:  POST /api/v1/conformite/alertes-lcbft/{id}/traiter
+       ========================================================== */
+
+    var alertId = null;
+    var alertData = null;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      loadAlert();
+      setupCharCounters();
+    });
+
+    /* ── Character counters ─────────────────────────────── */
+    function setupCharCounters() {
+      var resolutionEl = document.getElementById('alertResolution');
+      resolutionEl.addEventListener('input', function () {
+        document.getElementById('resolutionCount').textContent = this.value.length;
+      });
+
+      var noteEl = document.getElementById('newNote');
+      noteEl.addEventListener('input', function () {
+        document.getElementById('noteCharCount').textContent = this.value.length;
+      });
+    }
+
+    /* ── Load alert data ────────────────────────────────── */
+    async function loadAlert() {
+      var params = new URLSearchParams(window.location.search);
+      alertId = params.get('id');
+
+      if (!alertId) {
+        showError('ID manquant', 'Aucun identifiant d\'alerte fourni dans l\'URL.');
+        return;
+      }
+
+      showLoading();
+
+      try {
+        var res = await SF.apiFetch('/api/v1/conformite/alertes-lcbft/' + alertId);
+
+        if (!res) return; // 401 already handled
+
+        if (res.ok) {
+          alertData = await res.json();
+
+          // Check if already resolved
+          if (alertData.statut === 'RESOLUE') {
+            showToast('Cette alerte est deja resolue.', 'warning');
+          }
+
+          renderPage(alertData);
+          showMain();
+
+        } else if (res.status === 404) {
+          showError('Alerte introuvable', 'L\'alerte #' + alertId + ' n\'existe pas ou a ete supprimee.');
+        } else {
+          showError('Erreur serveur', 'Impossible de charger l\'alerte (HTTP ' + res.status + ').');
+        }
+      } catch (err) {
+        showError('Erreur reseau', err.message || 'Impossible de joindre le serveur.');
+      }
+    }
+
+    /* ── Render all sections ────────────────────────────── */
+    function renderPage(a) {
+      renderHeader(a);
+      renderKPIs(a);
+      renderStepper(a);
+      renderInfoSection(a);
+      renderNotes(a.notes || []);
+    }
+
+    /* ── Page title & subtitle ──────────────────────────── */
+    function renderHeader(a) {
+      var title = document.getElementById('traitTitle');
+      title.textContent = 'Traitement de l\'alerte LCB-FT #' + (a.id || '-');
+
+      var statutBadge = getStatutBadge(a.statut);
+      var severiteBadge = getSeveriteBadge(a.severite);
+      document.getElementById('traitSubtitle').innerHTML =
+        '<span class="badge ' + severiteBadge.cls + '">' + severiteBadge.label + '</span> ' +
+        '<span class="badge ' + statutBadge.cls + '">' + statutBadge.label + '</span>' +
+        (a.typeAlerte ? ' &nbsp;<span style="color:var(--color-text-secondary);font-size:13px;">' + formatType(a.typeAlerte) + '</span>' : '');
+    }
+
+    /* ── KPI strip ──────────────────────────────────────── */
+    function renderKPIs(a) {
+      var severiteBadge = getSeveriteBadge(a.severite);
+      document.getElementById('kpiSeverite').innerHTML = '<span class="badge ' + severiteBadge.cls + '">' + severiteBadge.label + '</span>';
+      document.getElementById('kpiDate').textContent = formatDate(a.createdAt);
+      document.getElementById('kpiClient').textContent = a.clientNom || '-';
+      document.getElementById('kpiType').textContent = formatType(a.typeAlerte) || '-';
+    }
+
+    /* ── Status stepper ─────────────────────────────────── */
+    function renderStepper(a) {
+      var steps = ['BROUILLON', 'OUVERTE', 'EN_COURS', 'RESOLUE'];
+      var currentIdx = steps.indexOf((a.statut || '').toUpperCase());
+      if (currentIdx === -1) currentIdx = 1;
+
+      var stepEls = document.querySelectorAll('.trait-step');
+      var connectorEls = document.querySelectorAll('.trait-connector');
+
+      stepEls.forEach(function (el, i) {
+        el.classList.remove('active', 'done', 'target');
+        if (i < currentIdx) {
+          el.classList.add('done');
+          el.querySelector('.trait-step-dot').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg>';
+        } else if (i === currentIdx) {
+          el.classList.add('active');
+          el.querySelector('.trait-step-dot').textContent = (i + 1);
+        } else {
+          el.querySelector('.trait-step-dot').textContent = (i + 1);
+        }
+      });
+
+      connectorEls.forEach(function (el, i) {
+        el.classList.remove('done', 'active', 'target');
+        if (i < currentIdx) {
+          el.classList.add('done');
+        } else if (i === currentIdx) {
+          el.classList.add('active');
+        }
+      });
+
+      // Update stepper badge
+      var statutBadge = getStatutBadge(a.statut);
+      var badge = document.getElementById('stepperBadge');
+      badge.className = 'badge ' + statutBadge.cls;
+      badge.textContent = statutBadge.label;
+    }
+
+    /* ── Alert info section ─────────────────────────────── */
+    function renderInfoSection(a) {
+      var html =
+        '<div class="trait-info-row">' +
+          '<span class="trait-info-label">Type d\'alerte</span>' +
+          '<span class="trait-info-value">' + formatType(a.typeAlerte) + '</span>' +
+        '</div>' +
+        '<div class="trait-info-row">' +
+          '<span class="trait-info-label">Severite</span>' +
+          '<span class="trait-info-value"><span class="badge ' + getSeveriteBadge(a.severite).cls + '">' + getSeveriteBadge(a.severite).label + '</span></span>' +
+        '</div>' +
+        '<div class="trait-info-row">' +
+          '<span class="trait-info-label">Statut actuel</span>' +
+          '<span class="trait-info-value"><span class="badge ' + getStatutBadge(a.statut).cls + '">' + getStatutBadge(a.statut).label + '</span></span>' +
+        '</div>' +
+        '<div class="trait-info-row">' +
+          '<span class="trait-info-label">Client</span>' +
+          '<span class="trait-info-value">' + escapeHtml(a.clientNom || '-') + '</span>' +
+        '</div>' +
+        '<div class="trait-info-row">' +
+          '<span class="trait-info-label">Ref. transaction</span>' +
+          '<span class="trait-info-value" style="font-family:monospace;">' + escapeHtml(a.transactionRef || '-') + '</span>' +
+        '</div>' +
+        '<div class="trait-info-row">' +
+          '<span class="trait-info-label">Date de creation</span>' +
+          '<span class="trait-info-value">' + formatDateTime(a.createdAt) + '</span>' +
+        '</div>' +
+        '<div class="trait-info-row">' +
+          '<span class="trait-info-label">Derniere MAJ</span>' +
+          '<span class="trait-info-value">' + formatDateTime(a.updatedAt) + '</span>' +
+        '</div>';
+
+      // Description block
+      html +=
+        '<div class="trait-desc-box">' +
+          '<div class="trait-desc-label">Description de l\'alerte</div>' +
+          '<div class="trait-desc-text">' + escapeHtml(a.description || '-') + '</div>' +
+        '</div>';
+
+      document.getElementById('traitInfo').innerHTML = html;
+    }
+
+    /* ── Investigation notes ────────────────────────────── */
+    function renderNotes(notes) {
+      var container = document.getElementById('investigationNotes');
+      var countBadge = document.getElementById('noteCount');
+      countBadge.textContent = notes.length + ' note' + (notes.length !== 1 ? 's' : '');
+
+      if (!notes.length) {
+        container.innerHTML = '<p style="color:var(--color-text-muted);font-style:italic;font-size:13px;">Aucune note d\'investigation.</p>';
+        return;
+      }
+
+      container.innerHTML = notes.map(function (n) {
+        return '<div class="note-item">' +
+          '<div class="note-meta">' +
+            '<span>' + escapeHtml(n.auteur || 'Systeme') + '</span>' +
+            '<span>' + formatDateTime(n.dateCreation || n.createdAt) + '</span>' +
+          '</div>' +
+          '<p class="note-text">' + escapeHtml(n.contenu || n.texte || '-') + '</p>' +
+        '</div>';
+      }).join('');
+    }
+
+    /* ── Add investigation note ─────────────────────────── */
+    async function ajouterNote() {
+      var noteEl = document.getElementById('newNote');
+      var note = noteEl.value.trim();
+      if (!note) {
+        showToast('Saisissez une note.', 'warning');
+        noteEl.classList.add('is-invalid');
+        return;
+      }
+      noteEl.classList.remove('is-invalid');
+      if (!alertData) return;
+
+      var btn = document.getElementById('btnAddNote');
+      btn.disabled = true;
+
+      try {
+        var res = await SF.apiFetch('/api/v1/conformite/alertes-lcbft/' + alertData.id + '/notes', {
+          method: 'POST',
+          body: JSON.stringify({ contenu: note })
+        });
+        if (res && (res.ok || res.status === 201)) {
+          showToast('Note ajoutee.', 'success');
+          noteEl.value = '';
+          document.getElementById('noteCharCount').textContent = '0';
+          loadAlert();
+        } else {
+          showToast('Erreur lors de l\'ajout de la note.', 'error');
+        }
+      } catch (e) {
+        showToast(e.message, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    /* ── Resolve alert ──────────────────────────────────── */
+    async function resoudreAlerte() {
+      var decisionEl = document.getElementById('alertDecision');
+      var actionEl = document.getElementById('alertAction');
+      var resolutionEl = document.getElementById('alertResolution');
+
+      var decision = decisionEl.value;
+      var action = actionEl.value;
+      var resolution = resolutionEl.value.trim();
+
+      // Clear previous errors
+      clearFieldErrors();
+
+      // Validation
+      var valid = true;
+
+      if (!decision) {
+        decisionEl.classList.add('is-invalid');
+        document.getElementById('alertDecision-error').style.display = 'block';
+        valid = false;
+      }
+      if (!action) {
+        actionEl.classList.add('is-invalid');
+        document.getElementById('alertAction-error').style.display = 'block';
+        valid = false;
+      }
+      if (!resolution) {
+        resolutionEl.classList.add('is-invalid');
+        document.getElementById('alertResolution-error').style.display = 'block';
+        valid = false;
+      }
+
+      if (!valid) {
+        showToast('Veuillez completer tous les champs obligatoires.', 'warning');
+        return;
+      }
+
+      if (!alertData) return;
+
+      // Confirm action
+      var decisionLabel = { FONDEE: 'Fondee', NON_FONDEE: 'Non fondee', ESCALADEE: 'Escaladee' }[decision] || decision;
+      if (!confirm('Confirmer le traitement de l\'alerte avec la decision : ' + decisionLabel + ' ?')) return;
+
+      // Loading state
+      var btn = document.getElementById('btnSubmit');
+      var btnText = document.getElementById('btnSubmitText');
+      var spinner = document.getElementById('btnSpinner');
+      var errBox = document.getElementById('submitError');
+
+      errBox.style.display = 'none';
+      btn.disabled = true;
+      btnText.textContent = 'Envoi en cours...';
+      spinner.style.display = 'inline-block';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/conformite/alertes-lcbft/' + alertData.id + '/traiter', {
+          method: 'POST',
+          body: JSON.stringify({
+            decision: decision,
+            actionPrise: action,
+            resolution: resolution
+          })
+        });
+
+        if (!res) return; // 401 redirected
+
+        if (res.ok || res.status === 200) {
+          showToast('Alerte resolue avec succes.', 'success');
+          btnText.textContent = 'Envoye !';
+          spinner.style.display = 'none';
+          setTimeout(function () {
+            window.location.href = 'alertes-lcbft-creer.html';
+          }, 1500);
+        } else {
+          var errData = await res.json().catch(function () { return {}; });
+          var errMsg = errData.message || errData.errors
+            ? (Array.isArray(errData.errors) ? errData.errors.map(function (e) { return e.defaultMessage || e.message || e; }).join(' . ') : errData.message)
+            : 'Erreur lors du traitement (HTTP ' + res.status + ').';
+          errBox.textContent = errMsg;
+          errBox.style.display = 'block';
+          showToast(errMsg, 'error');
+          resetSubmitButton();
+        }
+      } catch (e) {
+        showToast('Impossible de joindre le serveur. Verifiez que le backend est demarre.', 'error');
+        resetSubmitButton();
+      }
+    }
+
+    function resetSubmitButton() {
+      var btn = document.getElementById('btnSubmit');
+      var btnText = document.getElementById('btnSubmitText');
+      var spinner = document.getElementById('btnSpinner');
+      btn.disabled = false;
+      btnText.textContent = 'Resoudre l\'alerte';
+      spinner.style.display = 'none';
+    }
+
+    function clearFieldErrors() {
+      document.querySelectorAll('.is-invalid').forEach(function (el) {
+        el.classList.remove('is-invalid');
+      });
+      document.querySelectorAll('.field-error').forEach(function (el) {
+        el.style.display = 'none';
+      });
+    }
+
+    /* ── State management ───────────────────────────────── */
+    function showLoading() {
+      document.getElementById('loadingState').style.display = '';
+      document.getElementById('errorState').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'none';
+    }
+
+    function showError(title, msg) {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorState').style.display = '';
+      document.getElementById('mainContent').style.display = 'none';
+      document.getElementById('errorTitle').textContent = title;
+      document.getElementById('errorMsg').textContent = msg;
+    }
+
+    function showMain() {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorState').style.display = 'none';
+      document.getElementById('mainContent').style.display = '';
+    }
+
+    /* ── Badge helpers ──────────────────────────────────── */
+    function getStatutBadge(statut) {
+      var map = {
+        'BROUILLON': { cls: 'badge-secondary', label: 'Brouillon' },
+        'OUVERTE':   { cls: 'badge-info',      label: 'Ouverte' },
+        'EN_COURS':  { cls: 'badge-pending',    label: 'En cours' },
+        'RESOLUE':   { cls: 'badge-success',    label: 'Resolue' },
+        'ESCALADEE': { cls: 'badge-danger',     label: 'Escaladee' }
+      };
+      return map[(statut || '').toUpperCase()] || { cls: 'badge-info', label: statut || '-' };
+    }
+
+    function getSeveriteBadge(severite) {
+      var map = {
+        'BASSE':    { cls: 'badge-success', label: 'Basse' },
+        'MOYENNE':  { cls: 'badge-warning', label: 'Moyenne' },
+        'HAUTE':    { cls: 'badge-danger',  label: 'Haute' },
+        'CRITIQUE': { cls: 'badge-danger',  label: 'Critique' }
+      };
+      return map[(severite || '').toUpperCase()] || { cls: 'badge-info', label: severite || '-' };
+    }
+
+    function formatType(type) {
+      var map = {
+        'TRANSACTION_SUSPECTE':  'Transaction suspecte',
+        'MONTANT_INHABITUEL':    'Montant inhabituel',
+        'FREQUENCE_ANORMALE':    'Frequence anormale',
+        'PROVENANCE_DOUTEUSE':   'Provenance douteuse',
+        'IDENTITE_IRREGULIERE':  'Identite irreguliere',
+        'PAYS_RISQUE':           'Correspondant pays a risque',
+        'COMPTE_DORMANT':        'Reactivation compte dormant',
+        'AUTRE':                 'Autre'
+      };
+      return map[(type || '').toUpperCase()] || type || '-';
+    }
+
+    /* ── Date helpers ───────────────────────────────────── */
+    function formatDate(d) {
+      if (!d) return '-';
+      try {
+        return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      } catch (e) { return d; }
+    }
+
+    function formatDateTime(d) {
+      if (!d) return '-';
+      try {
+        return new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      } catch (e) { return d; }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

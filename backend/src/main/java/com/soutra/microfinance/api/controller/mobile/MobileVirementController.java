@@ -1,5 +1,6 @@
 package com.soutra.microfinance.api.controller.mobile;
 
+import com.soutra.microfinance.api.helper.ApiEnvelope;
 import com.soutra.microfinance.api.helper.SoutraSecurityHelper;
 import com.soutra.microfinance.audit.AuditLog;
 import com.soutra.microfinance.dto.request.mobile.MobileOtpRequestDTO;
@@ -15,6 +16,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,6 +41,51 @@ public class MobileVirementController {
 
     public MobileVirementController(TransactionService transactionService) {
         this.transactionService = transactionService;
+    }
+
+    @Operation(summary = "Lister les virements", description = "Retourne l'historique pagine des virements du client connecte.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Liste des virements retournee avec succes")
+    })
+    @GetMapping
+    @PreAuthorize("hasAuthority('CLIENT')")
+    @AuditLog(action = "MOBILE_VIREMENT_LIST", resource = "VIREMENT")
+    public ResponseEntity<ApiEnvelope<Page<MobileVirementResponseDTO>>> listerVirements(
+            @ParameterObject Pageable pageable,
+            Authentication authentication
+    ) {
+        Utilisateur utilisateur = SoutraSecurityHelper.extraireUtilisateurAuthentifie();
+
+        // Force un tri du plus recent au plus ancien.
+        Pageable tri = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                pageable.getSort().isUnsorted()
+                        ? Sort.by(Sort.Direction.DESC, "dateHeureTransaction")
+                        : pageable.getSort()
+        );
+
+        // On charge les transactions de l'utilisateur puis on filtre sur le type VIREMENT.
+        // Pour des volumes faibles (compte client), c'est acceptable ; on pourra
+        // optimiser ulterieurement avec une requete dediee dans TransactionRepository.
+        Page<Transaction> toutes = transactionService.listerTransactionsUtilisateur(utilisateur.getIdUser(), tri);
+        Page<MobileVirementResponseDTO> virements = toutes.map(t -> {
+            if (t.getTypeTransaction() != null
+                    && "VIREMENT".equals(t.getTypeTransaction().getCodeTypeTransaction())) {
+                return toVirementResponse(t);
+            }
+            return null;
+        });
+
+        // Page#map ne permet pas de filtrer ; on reconstruit une Page filtree.
+        java.util.List<MobileVirementResponseDTO> filtres = virements.getContent().stream()
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        Page<MobileVirementResponseDTO> response = new org.springframework.data.domain.PageImpl<>(
+                filtres, tri, filtres.size()
+        );
+
+        return ResponseEntity.ok(ApiEnvelope.success(response));
     }
 
     @Operation(summary = "Initier un virement", description = "Initie un virement depuis l'application mobile.")

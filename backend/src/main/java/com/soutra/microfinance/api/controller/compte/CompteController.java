@@ -92,6 +92,22 @@ public class CompteController {
 	}
 
 	@Operation(
+			summary = "Lister tous les comptes",
+			description = "Retourne la liste paginee de tous les comptes avec filtres optionnels"
+	)
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Comptes retournes avec succes")
+	})
+	@GetMapping
+	@PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
+	public ResponseEntity<Page<CompteResponseDTO>> listerComptes(
+			@ParameterObject Pageable pageable
+	) {
+		Page<Compte> comptes = compteService.listerTousLesComptes(pageable);
+		return ResponseEntity.ok(comptes.map(this::toCompteResponse));
+	}
+
+	@Operation(
 			summary = "Consulter le solde",
 			description = "Retourne le solde actuel d'un compte"
 	)
