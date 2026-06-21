@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -33,17 +33,24 @@
           <!-- BLOC SOURCE -->
           <div style="background: #F0F6FA; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
             <div style="font-size: 12px; font-weight: 700; color: #084355; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Compte source</div>
-            <div class="form-group" style="margin-bottom: 0;">
-              <input type="text" class="form-control" placeholder="Rechercher un compte..." id="sourceAccount">
-              <div id="sourceInfo" style="margin-top: 8px; display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <div>
-                    <div style="font-weight: 700; font-size: 14px; color: #084355;">Kouamé Aya</div>
-                    <div style="font-size: 11px; color: #4A7A8A;">MFN-2024-001234-A</div>
-                  </div>
-                  <div style="font-weight: 700; color: #084355;">2 100 000 FCFA</div>
+            <div class="form-group" style="margin-bottom: 0; display: flex; gap: 10px;">
+              <input type="text" class="form-control" placeholder="Rechercher un compte..." id="sourceAccount" oninput="onSourceInput()">
+              <button class="btn btn-outline" id="lookupSourceBtn" onclick="lookupSourceAccount()" style="white-space:nowrap;">Rechercher</button>
+            </div>
+            <div id="sourceInfo" style="margin-top: 8px; display: none;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-weight: 700; font-size: 14px; color: #084355;" id="sourceHolder">—</div>
+                  <div style="font-size: 11px; color: #4A7A8A;" id="sourceNum">—</div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 11px; color: #4A7A8A;">Solde disponible</div>
+                  <div style="font-weight: 700; color: #084355;" id="sourceBalance">—</div>
                 </div>
               </div>
+            </div>
+            <div id="sourceError" style="margin-top: 8px; display: none; color: #c62828; font-size: 12px;">
+              ⚠ Compte introuvable.
             </div>
           </div>
 
@@ -55,17 +62,21 @@
           <!-- BLOC DESTINATION -->
           <div style="background: #F0F6FA; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
             <div style="font-size: 12px; font-weight: 700; color: #084355; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Compte destination</div>
-            <div class="form-group" style="margin-bottom: 0;">
-              <input type="text" class="form-control" placeholder="Rechercher un compte bénéficiaire..." id="destAccount">
-              <div id="destInfo" style="margin-top: 8px; display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <div>
-                    <div style="font-weight: 700; font-size: 14px; color: #084355;">Diallo Moussa</div>
-                    <div style="font-size: 11px; color: #4A7A8A;">MFN-2023-005678-A</div>
-                  </div>
-                  <span class="badge badge-active">Actif</span>
+            <div class="form-group" style="margin-bottom: 0; display: flex; gap: 10px;">
+              <input type="text" class="form-control" placeholder="Rechercher un compte bénéficiaire..." id="destAccount" oninput="onDestInput()">
+              <button class="btn btn-outline" id="lookupDestBtn" onclick="lookupDestAccount()" style="white-space:nowrap;">Rechercher</button>
+            </div>
+            <div id="destInfo" style="margin-top: 8px; display: none;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-weight: 700; font-size: 14px; color: #084355;" id="destHolder">—</div>
+                  <div style="font-size: 11px; color: #4A7A8A;" id="destNum">—</div>
                 </div>
+                <span class="badge badge-active" id="destStatusBadge">Actif</span>
               </div>
+            </div>
+            <div id="destError" style="margin-top: 8px; display: none; color: #c62828; font-size: 12px;">
+              ⚠ Compte introuvable.
             </div>
           </div>
 
@@ -105,14 +116,14 @@
           <div style="display: flex; align-items: center; justify-content: center; gap: 16px;">
             <div style="text-align: center;">
               <div style="font-size: 12px; color: #4A7A8A;">De</div>
-              <div style="font-weight: 700; font-size: 14px;">Kouamé A.</div>
-              <div style="font-size: 11px; color: #4A7A8A;">MFN-...1234-A</div>
+              <div style="font-weight: 700; font-size: 14px;" id="confirmSenderName">—</div>
+              <div style="font-size: 11px; color: #4A7A8A;" id="confirmSenderAccount">—</div>
             </div>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fab482" stroke-width="2"><polyline points="5 12 19 12"/><polyline points="12 5 19 12 12 19"/></svg>
             <div style="text-align: center;">
               <div style="font-size: 12px; color: #4A7A8A;">Vers</div>
-              <div style="font-weight: 700; font-size: 14px;">Diallo M.</div>
-              <div style="font-size: 11px; color: #4A7A8A;">MFN-...5678-A</div>
+              <div style="font-weight: 700; font-size: 14px;" id="confirmReceiverName">—</div>
+              <div style="font-size: 11px; color: #4A7A8A;" id="confirmReceiverAccount">—</div>
             </div>
           </div>
         </div>
@@ -122,11 +133,11 @@
         </div>
         <div class="info-row">
           <span class="info-label">Frais</span>
-          <span class="info-value">0 FCFA</span>
+          <span class="info-value" id="confirmFees">0 FCFA</span>
         </div>
         <div class="info-row">
           <span class="info-label">Solde source après</span>
-          <span class="info-value">1 600 000 FCFA</span>
+          <span class="info-value" id="confirmBalanceAfter">1 600 000 FCFA</span>
         </div>
       </div>
       <div class="modal-footer">
@@ -139,34 +150,236 @@
     </div>
   </div>
 
+  <!-- ═══ MODAL : Reçu ═══ -->
+  <div class="modal-overlay" id="receiptModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="receiptTitle">Reçu de virement</div>
+        <button class="modal-close" onclick="closeModal('receiptModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="receiptContent" style="text-align: center; padding: 8px 0;">
+          <!-- Rempli dynamiquement -->
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: center;">
+        <button class="btn btn-outline" onclick="closeModal('receiptModal')">Fermer</button>
+        <button class="btn btn-primary" onclick="window.print()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Imprimer
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
   <script>
-    document.getElementById('sourceAccount').addEventListener('input', function() {
-      document.getElementById('sourceInfo').style.display = this.value.length >= 3 ? 'block' : 'none';
-    });
-    document.getElementById('destAccount').addEventListener('input', function() {
-      document.getElementById('destInfo').style.display = this.value.length >= 3 ? 'block' : 'none';
-    });
+    var _sourceCompte = null;
+    var _destCompte = null;
+
+    function fmt(n) {
+      return Number(n || 0).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function currentUser() {
+      return window.SF ? window.SF.getUser() : null;
+    }
+
+    function onSourceInput() {
+      _sourceCompte = null;
+      document.getElementById('sourceInfo').style.display = 'none';
+      document.getElementById('sourceError').style.display = 'none';
+    }
+
+    function onDestInput() {
+      _destCompte = null;
+      document.getElementById('destInfo').style.display = 'none';
+      document.getElementById('destError').style.display = 'none';
+    }
+
+    async function lookupSourceAccount() {
+      const num = document.getElementById('sourceAccount').value.trim();
+      if (!num) { showToast('Veuillez saisir un numéro de compte source.', 'warning'); return; }
+      
+      const btn = document.getElementById('lookupSourceBtn');
+      btn.disabled = true;
+      btn.textContent = '…';
+      document.getElementById('sourceError').style.display = 'none';
+
+      try {
+        const res = await Comptes.obtenir(num);
+        if (res && res.ok) {
+          const data = await res.json();
+          _sourceCompte = data;
+          document.getElementById('sourceHolder').textContent = (data.prenomClient || '') + ' ' + (data.nomClient || data.titulaire || '—');
+          document.getElementById('sourceNum').textContent = data.numCompte || num;
+          document.getElementById('sourceBalance').textContent = fmt(data.solde);
+          document.getElementById('sourceInfo').style.display = 'block';
+        } else {
+          _sourceCompte = null;
+          document.getElementById('sourceInfo').style.display = 'none';
+          document.getElementById('sourceError').style.display = 'block';
+        }
+      } catch (e) {
+        showToast('Erreur : ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Rechercher';
+      }
+    }
+
+    async function lookupDestAccount() {
+      const num = document.getElementById('destAccount').value.trim();
+      if (!num) { showToast('Veuillez saisir un numéro de compte destination.', 'warning'); return; }
+      
+      const btn = document.getElementById('lookupDestBtn');
+      btn.disabled = true;
+      btn.textContent = '…';
+      document.getElementById('destError').style.display = 'none';
+
+      try {
+        const res = await Comptes.obtenir(num);
+        if (res && res.ok) {
+          const data = await res.json();
+          _destCompte = data;
+          document.getElementById('destHolder').textContent = (data.prenomClient || '') + ' ' + (data.nomClient || data.titulaire || '—');
+          document.getElementById('destNum').textContent = data.numCompte || num;
+          const statusEl = document.getElementById('destStatusBadge');
+          statusEl.textContent = data.statut || 'Actif';
+          statusEl.className = 'badge ' + (data.statut === 'ACTIF' ? 'badge-success' : 'badge-warning');
+          document.getElementById('destInfo').style.display = 'block';
+        } else {
+          _destCompte = null;
+          document.getElementById('destInfo').style.display = 'none';
+          document.getElementById('destError').style.display = 'block';
+        }
+      } catch (e) {
+        showToast('Erreur : ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Rechercher';
+      }
+    }
 
     function openTransferModal() {
-      const amount = document.getElementById('transferAmount').value;
-      if (!amount || amount <= 0) {
-        showToast('Veuillez saisir un montant valide', 'error');
+      if (!_sourceCompte) {
+        showToast('Veuillez sélectionner un compte source valide.', 'warning');
         return;
       }
-      document.getElementById('transferAmountDisplay').textContent = parseInt(amount).toLocaleString('fr-FR') + ' FCFA';
+      if (!_destCompte) {
+        showToast('Veuillez sélectionner un compte destination valide.', 'warning');
+        return;
+      }
+      if (_sourceCompte.numCompte === _destCompte.numCompte) {
+        showToast('Les comptes source et destination doivent être différents.', 'warning');
+        return;
+      }
+
+      const amountVal = document.getElementById('transferAmount').value;
+      const amount = parseFloat(amountVal);
+      if (!amount || amount <= 0) {
+        showToast('Veuillez saisir un montant valide.', 'warning');
+        return;
+      }
+
+      const sourceSolde = parseFloat(_sourceCompte.solde) || 0;
+      if (amount > sourceSolde) {
+        showToast('Le montant dépasse le solde disponible du compte source.', 'warning');
+      }
+
+      document.getElementById('confirmSenderName').textContent = (_sourceCompte.prenomClient || '') + ' ' + (_sourceCompte.nomClient || '—');
+      document.getElementById('confirmSenderAccount').textContent = _sourceCompte.numCompte;
+      document.getElementById('confirmReceiverName').textContent = (_destCompte.prenomClient || '') + ' ' + (_destCompte.nomClient || '—');
+      document.getElementById('confirmReceiverAccount').textContent = _destCompte.numCompte;
+      document.getElementById('transferAmountDisplay').textContent = fmt(amount);
+      document.getElementById('confirmFees').textContent = 'Calculé par le système';
+      document.getElementById('confirmBalanceAfter').textContent = fmt(sourceSolde - amount);
+
       openModal('transferModal');
     }
 
-    function confirmTransfer() {
+    async function confirmTransfer() {
+      const amount = parseFloat(document.getElementById('transferAmount').value);
+      const user = currentUser();
+
+      if (!user || !user.idUser) {
+        showToast('Session expirée. Veuillez vous reconnecter.', 'error');
+        return;
+      }
+
       closeModal('transferModal');
-      showToast('Virement effectué avec succès !', 'success');
+
+      try {
+        const sourceNumComplet = _sourceCompte.numCompteComplet || _sourceCompte.numCompte;
+        const destNumComplet = _destCompte.numCompteComplet || _destCompte.numCompte;
+        const res = await Transactions.virement(sourceNumComplet, destNumComplet, amount, user.idUser);
+        if (res && (res.status === 201 || res.status === 202)) {
+          const recu = await res.json();
+          const enAttente = res.status === 202;
+          showReceipt(recu, enAttente, amount);
+          resetForm();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Erreur lors de l\'exécution du virement.', 'error');
+        }
+      } catch (e) {
+        showToast('Erreur réseau : ' + e.message, 'error');
+      }
+    }
+
+    function showReceipt(recu, enAttente, montantSaisi) {
+      const titre = enAttente ? 'Virement en attente de validation' : 'Virement effectué ✔';
+      document.getElementById('receiptTitle').textContent = titre;
+
+      var html = '';
+      if (enAttente) {
+        html += '<div style="background:#FFF8E1;border:1px solid #F59E0B;border-radius:10px;padding:14px;margin-bottom:18px;font-size:13px;color:#92400E;">'
+              + '⏳ Ce virement dépasse le seuil de validation superviseur.<br>Il sera exécuté après approbation.'
+              + '</div>';
+      }
+
+      html += '<div style="background:linear-gradient(135deg,#084355 0%,#0a5c72 100%);border-radius:14px;padding:24px;margin-bottom:20px;color:#fff;">'
+            + '<div style="font-size:12px;opacity:0.7;margin-bottom:6px;">Montant transféré</div>'
+            + '<div style="font-size:32px;font-weight:800;">' + fmt(montantSaisi) + '</div>'
+            + '</div>';
+
+      html += '<div style="text-align:left;display:flex;flex-direction:column;gap:10px;">'
+            + row('Référence', recu.referenceUnique || '—')
+            + row('Source', _sourceCompte.numCompte)
+            + row('Destination', _destCompte.numCompte)
+            + row('Statut', enAttente ? '⏳ EN ATTENTE' : '✔ EXÉCUTÉ')
+            + row('Date', recu.dateHeure ? new Date(recu.dateHeure).toLocaleString('fr-FR') : new Date().toLocaleString('fr-FR'))
+            + row('Frais', fmt(recu.frais || 0))
+            + '</div>';
+
+      document.getElementById('receiptContent').innerHTML = html;
+      openModal('receiptModal');
+
+      if (!enAttente) {
+        showToast('Virement de ' + fmt(montantSaisi) + ' effectué avec succès.', 'success');
+      } else {
+        showToast('Virement soumis — en attente de validation superviseur.', 'warning');
+      }
+    }
+
+    function row(label, value) {
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #C9DFE8;">'
+           + '<span style="font-size:13px;color:#4A7A8A;">' + label + '</span>'
+           + '<span style="font-size:13px;font-weight:700;color:#084355;">' + value + '</span>'
+           + '</div>';
+    }
+
+    function resetForm() {
+      _sourceCompte = null;
+      _destCompte = null;
       document.getElementById('transferAmount').value = '';
       document.getElementById('sourceAccount').value = '';
       document.getElementById('destAccount').value = '';
       document.getElementById('sourceInfo').style.display = 'none';
       document.getElementById('destInfo').style.display = 'none';
+      document.getElementById('sourceError').style.display = 'none';
+      document.getElementById('destError').style.display = 'none';
     }
   </script>
 </body>

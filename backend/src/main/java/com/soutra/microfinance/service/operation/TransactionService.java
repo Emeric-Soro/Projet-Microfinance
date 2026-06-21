@@ -46,5 +46,8 @@ public interface TransactionService {
     // Liste les transactions d'un utilisateur.
     Page<Transaction> listerTransactionsUtilisateur(Long idUser, Pageable pageable);
 
+    // Liste toutes les transactions.
+    Page<Transaction> listerToutes(Pageable pageable);
+
     String exporterTransactions(String format, LocalDateTime dateDebut, LocalDateTime dateFin);
 }

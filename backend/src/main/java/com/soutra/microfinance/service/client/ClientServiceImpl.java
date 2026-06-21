@@ -9,6 +9,7 @@ import com.soutra.microfinance.entity.StatutClient;
 import com.soutra.microfinance.entity.StatutKycClient;
 import com.soutra.microfinance.repository.client.ClientRepository;
 import com.soutra.microfinance.repository.client.StatutClientRepository;
+import com.soutra.microfinance.repository.client.UtilisateurRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,10 +24,14 @@ public class ClientServiceImpl implements ClientService {
 
     private final ClientRepository clientRepository;
     private final StatutClientRepository statutClientRepository;
+    private final UtilisateurRepository utilisateurRepository;
 
-    public ClientServiceImpl(ClientRepository clientRepository, StatutClientRepository statutClientRepository) {
+    public ClientServiceImpl(ClientRepository clientRepository,
+                             StatutClientRepository statutClientRepository,
+                             UtilisateurRepository utilisateurRepository) {
         this.clientRepository = clientRepository;
         this.statutClientRepository = statutClientRepository;
+        this.utilisateurRepository = utilisateurRepository;
     }
 
     @Override
@@ -53,6 +58,18 @@ public class ClientServiceImpl implements ClientService {
                 .orElseThrow(() -> new IllegalStateException("Erreur critique : Le statut 'NOUVEAU' n'est pas paramétré en base."));
 
         client.setStatutClient(statutParDefaut);
+
+        // Resolve agence from connected user
+        org.springframework.security.core.Authentication auth =
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getName() != null) {
+            utilisateurRepository.findByLogin(auth.getName()).ifPresent(u -> {
+                if (u.getAgence() != null) {
+                    client.setAgence(u.getAgence());
+                }
+            });
+        }
+
         return clientRepository.save(client);
     }
 

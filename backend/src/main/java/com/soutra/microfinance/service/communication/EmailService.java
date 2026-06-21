@@ -86,6 +86,60 @@ public class EmailService {
         }
     }
 
+    /**
+     * Envoie un e-mail contenant le code de sécurité OTP (2FA).
+     *
+     * @param utilisateur l'utilisateur à authentifier
+     * @param codeOtp     le code OTP généré
+     */
+    public void envoyerOtp(Utilisateur utilisateur, String codeOtp) {
+        if (utilisateur == null || utilisateur.getClient() == null) {
+            return;
+        }
+
+        String emailDestinataire = utilisateur.getClient().getEmail();
+        if (emailDestinataire == null || emailDestinataire.isBlank()) {
+            LOGGER.warn("Impossible d'envoyer l'OTP : pas d'email pour l'utilisateur {}", utilisateur.getLogin());
+            return;
+        }
+
+        String sujet = "Votre code de validation OTP - Soutra Core Banking";
+        String contenuHtml = "<!DOCTYPE html>"
+                + "<html><body style='font-family:Arial,sans-serif;color:#1f2937;'>"
+                + "<h2 style='color:#0f766e;'>Votre code de validation OTP</h2>"
+                + "<p>Bonjour " + safePrenom(utilisateur) + ",</p>"
+                + "<p>Pour finaliser votre authentification, veuillez saisir le code de sécurité à 6 chiffres ci-dessous :</p>"
+                + "<p style='margin:24px 0; font-size: 24px; font-weight: bold; letter-spacing: 4px; color: #0f766e;'>"
+                + codeOtp + "</p>"
+                + "<p>Ce code expire dans quelques minutes. Ne le partagez jamais.</p>"
+                + "<hr/><p style='color:#6b7280;font-size:12px;'>L'equipe Soutra Core Banking</p>"
+                + "</body></html>";
+        String contenuTexte = "Bonjour " + safePrenom(utilisateur) + ",\n\n"
+                + "Pour finaliser votre authentification, veuillez saisir le code de sécurité à 6 chiffres ci-dessous :\n\n"
+                + codeOtp + "\n\n"
+                + "Ce code expire dans quelques minutes. Ne le partagez jamais.\n\n"
+                + "L'equipe Soutra Core Banking";
+
+        if (DELIVERY_MODE_LOGGING.equalsIgnoreCase(deliveryMode) || mailSender == null) {
+            LOGGER.info("[EMAIL LOG] To={} | Subject={} | Code OTP={}",
+                    emailDestinataire, sujet, codeOtp);
+            return;
+        }
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
+            helper.setFrom(fromAddress);
+            helper.setTo(emailDestinataire);
+            helper.setSubject(sujet);
+            helper.setText(contenuTexte, contenuHtml);
+            mailSender.send(message);
+            LOGGER.info("Email OTP envoye a {}", emailDestinataire);
+        } catch (MessagingException ex) {
+            LOGGER.error("Echec de l'envoi de l'email OTP a {}", emailDestinataire, ex);
+        }
+    }
+
     private String construireUrlReset(String tokenClair) {
         String url = passwordResetProperties.getFrontendBaseUrl()
                 + passwordResetProperties.getResetPath()

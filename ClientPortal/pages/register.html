@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Devenir Client — Soutra Finance E-Banking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/portal.css">
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="register-container">
+    <div class="register-logo">
+      <div class="logo-symbol">S</div>
+      <h2>Créer mon compte en ligne</h2>
+    </div>
+
+    <div class="register-card">
+      <!-- Stepper Progress -->
+      <div class="stepper">
+        <div class="stepper-step active" id="stepIndicator-1">
+          <div class="step-num">1</div>
+          <span class="step-label">Données civiles</span>
+        </div>
+        <div class="stepper-step" id="stepIndicator-2">
+          <div class="step-num">2</div>
+          <span class="step-label">Sécurité</span>
+        </div>
+        <div class="stepper-step" id="stepIndicator-3">
+          <div class="step-num">3</div>
+          <span class="step-label">KYC (Documents)</span>
+        </div>
+      </div>
+
+      <!-- Step 1: Civil Info Form -->
+      <div class="step-content active" id="stepContent-1">
+        <form id="formCivil">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="nom">Nom *</label>
+              <input type="text" id="nom" class="input-control" required placeholder="ex: SORO">
+            </div>
+            <div class="form-group">
+              <label for="prenom">Prénom(s) *</label>
+              <input type="text" id="prenom" class="input-control" required placeholder="ex: Emeric">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="dateNaissance">Date de naissance *</label>
+              <input type="date" id="dateNaissance" class="input-control" required>
+            </div>
+            <div class="form-group">
+              <label for="telephone">Téléphone *</label>
+              <input type="tel" id="telephone" class="input-control" required placeholder="ex: +2250700000000">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">Adresse e-mail *</label>
+              <input type="email" id="email" class="input-control" required placeholder="ex: client@email.com">
+            </div>
+            <div class="form-group">
+              <label for="adresse">Adresse complète *</label>
+              <input type="text" id="adresse" class="input-control" required placeholder="ex: Abidjan, Cocody">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="profession">Profession</label>
+              <input type="text" id="profession" class="input-control" placeholder="ex: Ingénieur Logiciel">
+            </div>
+            <div class="form-group">
+              <label for="employeur">Employeur</label>
+              <input type="text" id="employeur" class="input-control" placeholder="ex: Entreprise Privée">
+            </div>
+          </div>
+
+          <h3 style="font-size: 16px; margin: 25px 0 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">Pièce d'Identité & Nationalité</h3>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="typePiece">Type de pièce</label>
+              <select id="typePiece" class="input-control">
+                <option value="CNI">Carte Nationale d'Identité (CNI)</option>
+                <option value="PASSEPORT">Passeport</option>
+                <option value="PERMIS">Permis de Conduire</option>
+                <option value="CARTE_CONSULAIRE">Carte Consulaire</option>
+                <option value="NINA">NINA</option>
+                <option value="AUTRE">Autre</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="numeroPiece">Numéro de pièce</label>
+              <input type="text" id="numeroPiece" class="input-control" placeholder="ex: C01234567">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="dateExpirationPiece">Date d'expiration</label>
+              <input type="date" id="dateExpirationPiece" class="input-control">
+            </div>
+            <div class="form-group">
+              <label for="paysNationalite">Nationalité</label>
+              <input type="text" id="paysNationalite" class="input-control" placeholder="ex: Ivoirienne" value="Côte d'Ivoire">
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <a href="login" class="btn btn-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">Suivant ➔</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Step 2: Credentials Form -->
+      <div class="step-content" id="stepContent-2">
+        <p class="subtitle" style="margin-bottom: 25px;">Choisissez un mot de passe sécurisé pour vous connecter ultérieurement à votre portail.</p>
+        <form id="formCredentials">
+          <div class="form-group">
+            <label for="password">Mot de passe *</label>
+            <input type="password" id="password" class="input-control" required placeholder="••••••••" autocomplete="new-password">
+            <small style="color: var(--color-text-muted); font-size: 11px;">Min. 8 caractères, des chiffres et des lettres.</small>
+          </div>
+          <div class="form-group" style="margin-bottom: 25px;">
+            <label for="confirmPassword">Confirmer le mot de passe *</label>
+            <input type="password" id="confirmPassword" class="input-control" required placeholder="••••••••" autocomplete="new-password">
+          </div>
+
+          <div class="btn-row">
+            <button type="button" class="btn btn-secondary" onclick="prevStep(1)">← Précédent</button>
+            <button type="submit" class="btn btn-primary" id="btnCreateAccess">Créer mon accès</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Step 3: KYC Docs Form -->
+      <div class="step-content" id="stepContent-3">
+        <p class="subtitle" style="margin-bottom: 25px;">Pour finaliser l'ouverture de votre compte, veuillez téléverser vos pièces justificatives (fichiers PDF ou images).</p>
+        <div class="kyc-upload-row">
+          
+          <!-- Doc 1: Photo/Identite -->
+          <div class="kyc-item">
+            <div class="kyc-info">
+              <div class="kyc-title">Pièce d'Identité *</div>
+              <div class="kyc-desc">Copie recto/verso claire de votre pièce sélectionnée (CNI, Passeport, etc.)</div>
+            </div>
+            <div class="file-input-wrapper">
+              <button class="btn btn-secondary" type="button" id="btn-label-PHOTO_IDENTITE">Choisir le fichier</button>
+              <input type="file" id="file-PHOTO_IDENTITE" accept="image/*,application/pdf" onchange="handleFileSelected(this, 'PHOTO_IDENTITE')">
+            </div>
+            <div class="upload-indicator" id="status-PHOTO_IDENTITE" style="width: 100%; display: none;">
+              <span class="badge badge-info">Prêt à l'envoi</span> <span class="filename" style="font-size: 12px; color: var(--color-primary)"></span>
+            </div>
+          </div>
+
+          <!-- Doc 2: Domcile -->
+          <div class="kyc-item">
+            <div class="kyc-info">
+              <div class="kyc-title">Justificatif de domicile *</div>
+              <div class="kyc-desc">Facture d'électricité (CIE), d'eau (SODECI), ou certificat de résidence de moins de 3 mois</div>
+            </div>
+            <div class="file-input-wrapper">
+              <button class="btn btn-secondary" type="button" id="btn-label-JUSTIFICATIF_DOMICILE">Choisir le fichier</button>
+              <input type="file" id="file-JUSTIFICATIF_DOMICILE" accept="image/*,application/pdf" onchange="handleFileSelected(this, 'JUSTIFICATIF_DOMICILE')">
+            </div>
+            <div class="upload-indicator" id="status-JUSTIFICATIF_DOMICILE" style="width: 100%; display: none;">
+              <span class="badge badge-info">Prêt à l'envoi</span> <span class="filename" style="font-size: 12px; color: var(--color-primary)"></span>
+            </div>
+          </div>
+
+          <!-- Doc 3: Revenus -->
+          <div class="kyc-item">
+            <div class="kyc-info">
+              <div class="kyc-title">Justificatif de revenus</div>
+              <div class="kyc-desc">Dernier bulletin de salaire, relevé de compte bancaire, ou attestation d'activité</div>
+            </div>
+            <div class="file-input-wrapper">
+              <button class="btn btn-secondary" type="button" id="btn-label-JUSTIFICATIF_REVENUS">Choisir le fichier</button>
+              <input type="file" id="file-JUSTIFICATIF_REVENUS" accept="image/*,application/pdf" onchange="handleFileSelected(this, 'JUSTIFICATIF_REVENUS')">
+            </div>
+            <div class="upload-indicator" id="status-JUSTIFICATIF_REVENUS" style="width: 100%; display: none;">
+              <span class="badge badge-info">Prêt à l'envoi</span> <span class="filename" style="font-size: 12px; color: var(--color-primary)"></span>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="btn-row" style="margin-top: 40px;">
+          <button type="button" class="btn btn-secondary" id="btnSkipKyc" onclick="finishRegistration(true)">Sauter pour l'instant</button>
+          <button type="button" class="btn btn-primary" id="btnSubmitKyc" onclick="uploadAndFinish()">Valider mes documents</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../assets/js/portal-app.js?v=1.0.1"></script>
+  <script>
+    var currentStep = 1;
+    var clientResponse = null; // Stocke les données de l'étape 1
+    var kycFiles = {
+      PHOTO_IDENTITE: null,
+      JUSTIFICATIF_DOMICILE: null,
+      JUSTIFICATIF_REVENUS: null
+    };
+
+    function showStep(stepNum) {
+      document.querySelectorAll('.step-content').forEach(function (content) {
+        content.classList.remove('active');
+      });
+      document.querySelectorAll('.stepper-step').forEach(function (indicator) {
+        indicator.classList.remove('active');
+      });
+
+      document.getElementById('stepContent-' + stepNum).classList.add('active');
+      
+      // Update indicators
+      for (var i = 1; i <= stepNum; i++) {
+        var indicator = document.getElementById('stepIndicator-' + i);
+        if (indicator) {
+          indicator.classList.add('active');
+          if (i < stepNum) {
+            indicator.classList.add('completed');
+          }
+        }
+      }
+      currentStep = stepNum;
+    }
+
+    function prevStep(stepNum) {
+      showStep(stepNum);
+    }
+
+    // Step 1 : Submit Client Registration
+    document.getElementById('formCivil').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      var data = {
+        nom: document.getElementById('nom').value.trim(),
+        prenom: document.getElementById('prenom').value.trim(),
+        dateNaissance: document.getElementById('dateNaissance').value,
+        email: document.getElementById('email').value.trim(),
+        telephone: document.getElementById('telephone').value.trim(),
+        adresse: document.getElementById('adresse').value.trim(),
+        profession: document.getElementById('profession').value.trim() || null,
+        employeur: document.getElementById('employeur').value.trim() || null,
+        typePieceIdentite: document.getElementById('typePiece').value,
+        numeroPieceIdentite: document.getElementById('numeroPiece').value.trim() || null,
+        dateExpirationPieceIdentite: document.getElementById('dateExpirationPiece').value || null,
+        paysNationalite: document.getElementById('paysNationalite').value.trim() || null,
+        paysResidence: document.getElementById('paysNationalite').value.trim() || null,
+        pep: false
+      };
+
+      var submitBtn = e.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Enregistrement...';
+
+      try {
+        var res = await window.ClientAuth.signup(data);
+        if (res.ok) {
+          clientResponse = await res.json();
+          showToast('Informations enregistrées avec succès', 'success');
+          showStep(2);
+        } else {
+          var errorMsg = 'Erreur lors de la création du profil.';
+          try {
+            var errData = await res.json();
+            if (errData && errData.message) errorMsg = errData.message;
+          } catch(ex) {}
+          showToast(errorMsg, 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Erreur de communication avec le serveur', 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Suivant ➔';
+      }
+    });
+
+    // Step 2 : Create Web Account credentials
+    document.getElementById('formCredentials').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      var password = document.getElementById('password').value;
+      var confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (password.length < 8) {
+        showToast('Le mot de passe doit faire au moins 8 caractères', 'warning');
+        return;
+      }
+      if (password !== confirmPassword) {
+        showToast('Les mots de passe ne correspondent pas', 'warning');
+        return;
+      }
+
+      if (!clientResponse) {
+        showToast('Données du client introuvables. Recommencez.', 'error');
+        showStep(1);
+        return;
+      }
+
+      var submitBtn = document.getElementById('btnCreateAccess');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Création du compte...';
+
+      try {
+        var res = await window.ClientAuth.createUserAccess(
+          clientResponse.codeClient,
+          clientResponse.email,
+          clientResponse.dateNaissance,
+          password
+        );
+
+        if (res.ok) {
+          showToast('Compte d\'accès créé ! Connexion en cours...', 'success');
+          
+          // Connexion silencieuse pour obtenir le token JWT
+          var loginRes = await window.ClientAuth.login(clientResponse.email, password);
+          if (loginRes.ok) {
+            var loginData = await loginRes.json();
+            window.SF_Client.setSession(loginData);
+            
+            showStep(3);
+          } else {
+            showToast('Compte créé, mais impossible de se connecter automatiquement. Veuillez vous connecter manuellement.', 'info');
+            setTimeout(function () {
+              window.location.href = 'login';
+            }, 3000);
+          }
+        } else {
+          var errorMsg = 'Erreur lors de la création de l\'accès.';
+          try {
+            var errData = await res.json();
+            if (errData && errData.message) errorMsg = errData.message;
+          } catch(ex) {}
+          showToast(errorMsg, 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Erreur de communication avec le serveur', 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Créer mon accès';
+      }
+    });
+
+    // Handle File Selection and convert to Base64
+    function handleFileSelected(input, typeDoc) {
+      var file = input.files[0];
+      if (!file) return;
+
+      // Limit size to 5MB
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Le fichier est trop volumineux (max 5 Mo)', 'warning');
+        input.value = '';
+        return;
+      }
+
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var base64String = e.target.result.split(',')[1];
+        kycFiles[typeDoc] = {
+          nomFichier: file.name,
+          base64: base64String
+        };
+
+        // UI Feedback
+        document.getElementById('btn-label-' + typeDoc).textContent = 'Changer le fichier';
+        var indicator = document.getElementById('status-' + typeDoc);
+        indicator.querySelector('.filename').textContent = file.name;
+        indicator.style.display = 'flex';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Submit KYC Documents and finish
+    async function uploadAndFinish() {
+      if (!kycFiles.PHOTO_IDENTITE && !kycFiles.JUSTIFICATIF_DOMICILE) {
+        showToast('Veuillez téléverser au moins la pièce d\'identité et le justificatif de domicile.', 'warning');
+        return;
+      }
+
+      var btnSubmit = document.getElementById('btnSubmitKyc');
+      var btnSkip = document.getElementById('btnSkipKyc');
+      btnSubmit.disabled = true;
+      btnSkip.disabled = true;
+      btnSubmit.textContent = 'Téléchargement...';
+
+      try {
+        var token = window.SF_Client.getToken();
+        if (!token) {
+          showToast('Erreur de session. Veuillez vous connecter.', 'error');
+          window.location.href = 'login';
+          return;
+        }
+
+        // Upload provided docs sequentially
+        for (var typeDoc in kycFiles) {
+          var fileData = kycFiles[typeDoc];
+          if (fileData) {
+            var uploadRes = await window.ClientProfil.enregistrerDocumentKyc(
+              typeDoc,
+              fileData.nomFichier,
+              fileData.base64
+            );
+            if (!uploadRes.ok) {
+              console.error('Failed to upload ' + typeDoc);
+            }
+          }
+        }
+
+        showToast('Vos documents ont été transmis pour étude KYC !', 'success');
+        finishRegistration(false);
+
+      } catch (err) {
+        console.error(err);
+        showToast('Erreur technique lors de l\'envoi des pièces.', 'error');
+        btnSubmit.disabled = false;
+        btnSkip.disabled = false;
+        btnSubmit.textContent = 'Valider mes documents';
+      }
+    }
+
+    function finishRegistration(skipped) {
+      if (skipped) {
+        showToast('Inscription complétée. KYC à compléter plus tard.', 'info');
+      }
+      setTimeout(function () {
+        window.location.href = 'dashboard';
+      }, 1500);
+    }
+  </script>
+</body>
+</html>

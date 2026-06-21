@@ -53,4 +53,7 @@ public interface CompteRepository extends JpaRepository<Compte, Long> {
 
 	@Query("SELECT COALESCE(SUM(c.solde), 0) FROM Compte c WHERE c.agence.idAgence = :agenceId")
 	BigDecimal sumSoldeByAgence(@Param("agenceId") Long agenceId);
+
+	@Query("SELECT COUNT(c) FROM Compte c WHERE c.agence.idAgence = :agenceId AND c.typeCompte.libelle = :typeLibelle")
+	long countByAgenceAndTypeLibelle(@Param("agenceId") Long agenceId, @Param("typeLibelle") String typeLibelle);
 }

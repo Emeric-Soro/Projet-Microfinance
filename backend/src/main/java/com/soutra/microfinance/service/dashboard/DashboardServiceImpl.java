@@ -3,6 +3,8 @@ package com.soutra.microfinance.service.dashboard;
 import com.soutra.microfinance.dto.response.statistique.DashboardAgenceResponseDTO;
 import com.soutra.microfinance.dto.response.statistique.DashboardDirectionResponseDTO;
 import com.soutra.microfinance.dto.response.statistique.IndicateurTempsReelResponseDTO;
+import com.soutra.microfinance.dto.response.statistique.DashboardChartsResponseDTO;
+import com.soutra.microfinance.dto.response.statistique.ActiviteJournaliereDTO;
 import com.soutra.microfinance.entity.Caisse;
 import com.soutra.microfinance.entity.StatutOperation;
 import com.soutra.microfinance.repository.client.ClientRepository;
@@ -213,5 +215,56 @@ public class DashboardServiceImpl implements DashboardService {
                 nbSessionsActives,
                 LocalDateTime.now()
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DashboardChartsResponseDTO getGraphiques(Long agenceId) {
+        if (agenceId == null) {
+            org.springframework.security.core.Authentication auth =
+                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getName() != null) {
+                var utilisateurOpt = utilisateurRepository.findByLogin(auth.getName());
+                if (utilisateurOpt.isPresent() && utilisateurOpt.get().getAgence() != null) {
+                    agenceId = utilisateurOpt.get().getAgence().getIdAgence();
+                }
+            }
+            if (agenceId == null) {
+                var allAgences = agenceRepository.findAll();
+                if (!allAgences.isEmpty()) {
+                    agenceId = allAgences.get(0).getIdAgence();
+                } else {
+                    throw new IllegalArgumentException("Aucune agence disponible pour les graphiques");
+                }
+            }
+        }
+
+        // 1. Répartition des comptes
+        java.util.Map<String, Long> repartition = new java.util.HashMap<>();
+        repartition.put("COURANT", compteRepository.countByAgenceAndTypeLibelle(agenceId, "COURANT"));
+        repartition.put("EPARGNE", compteRepository.countByAgenceAndTypeLibelle(agenceId, "EPARGNE"));
+        repartition.put("DAT", compteRepository.countByAgenceAndTypeLibelle(agenceId, "DAT"));
+
+        // 2. Évolution activité (7 derniers jours)
+        java.util.List<ActiviteJournaliereDTO> evolution = new java.util.ArrayList<>();
+        LocalDate today = LocalDate.now();
+        for (int i = 6; i >= 0; i--) {
+            LocalDate d = today.minusDays(i);
+            LocalDateTime start = d.atStartOfDay();
+            LocalDateTime end = d.atTime(LocalTime.MAX);
+
+            BigDecimal depots = transactionRepository.sumMontantByTypeCodeDateBetweenAndStatutAndAgence(
+                    "DEPOT", start, end, StatutOperation.EXECUTEE, agenceId);
+            BigDecimal retraits = transactionRepository.sumMontantByTypeCodeDateBetweenAndStatutAndAgence(
+                    "RETRAIT", start, end, StatutOperation.EXECUTEE, agenceId);
+
+            evolution.add(new ActiviteJournaliereDTO(
+                    d,
+                    depots != null ? depots : BigDecimal.ZERO,
+                    retraits != null ? retraits : BigDecimal.ZERO
+            ));
+        }
+
+        return new DashboardChartsResponseDTO(repartition, evolution);
     }
 }

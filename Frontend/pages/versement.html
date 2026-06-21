@@ -28,6 +28,15 @@
       </header>
 
       <div class="content-area">
+        <!-- ALERTE CAISSE FERMEE -->
+        <div id="caisseClosedAlert" style="display: none; background: #FFEBEE; border: 1px solid #FFCDD2; border-radius: 12px; padding: 16px 20px; color: #c62828; font-size: 14px; font-weight: 600; margin-bottom: 20px; align-items: center; gap: 12px;">
+          <span>🔒</span>
+          <div>
+            <div>Votre caisse est fermée.</div>
+            <div style="font-size: 12px; font-weight: 400; color: #e57373; margin-top: 2px;">Vous devez ouvrir votre caisse depuis le menu <a href="caisse.html" style="color: inherit; text-decoration: underline; font-weight: 600;">Gestion de Caisse</a> avant de pouvoir enregistrer des opérations.</div>
+          </div>
+        </div>
+
         <div style="display: grid; grid-template-columns: 1fr 360px; gap: 24px; align-items: start;">
 
           <!-- ═══ FORMULAIRE PRINCIPAL ═══ -->
@@ -348,7 +357,7 @@
     /* ── Confirmation → appel API ────────────────── */
     async function confirmDeposit() {
       var amount = parseFloat(document.getElementById('amountInput').value);
-      var numCompte = _compte.numCompte;
+      var numCompte = _compte.numCompteComplet || _compte.numCompte;
       var user = currentUser();
 
       if (!user || !user.idUser) {
@@ -442,7 +451,35 @@
       document.getElementById('submitBtn').disabled = true;
       document.getElementById('dailyLimit').textContent = '—';
       renderRecentOps(null);
+      checkCaisse();
     }
+
+    async function checkCaisse() {
+      try {
+        const res = await Caisses.etat();
+        if (res && res.status === 200) {
+          const data = await res.json();
+          if (data && data.statut === 'OUVERTE') {
+            document.getElementById('caisseClosedAlert').style.display = 'none';
+            document.getElementById('accountNumber').disabled = false;
+            document.getElementById('lookupBtn').disabled = false;
+            document.getElementById('amountInput').disabled = false;
+            document.getElementById('libelleInput').disabled = false;
+            return;
+          }
+        }
+      } catch (e) {
+        console.error('Error checking caisse state:', e);
+      }
+      document.getElementById('caisseClosedAlert').style.display = 'flex';
+      document.getElementById('accountNumber').disabled = true;
+      document.getElementById('lookupBtn').disabled = true;
+      document.getElementById('amountInput').disabled = true;
+      document.getElementById('libelleInput').disabled = true;
+      document.getElementById('submitBtn').disabled = true;
+    }
+
+    document.addEventListener('DOMContentLoaded', checkCaisse);
   </script>
 </body>
 </html>
