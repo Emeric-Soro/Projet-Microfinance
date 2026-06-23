@@ -1,5 +1,6 @@
 package com.soutra.microfinance.api.controller.mobile;
 
+import com.soutra.microfinance.api.helper.ApiEnvelope;
 import com.soutra.microfinance.api.helper.SoutraSecurityHelper;
 import com.soutra.microfinance.audit.AuditLog;
 import com.soutra.microfinance.dto.request.mobile.MobileReclamationRequestDTO;
@@ -43,7 +44,7 @@ public class MobileReclamationController {
     @GetMapping
     @PreAuthorize("hasAuthority('CLIENT')")
     @AuditLog(action = "MOBILE_RECLAMATION_LIST", resource = "RECLAMATION")
-    public ResponseEntity<List<MobileReclamationResponseDTO>> listerReclamations(Authentication authentication) {
+    public ResponseEntity<ApiEnvelope<List<MobileReclamationResponseDTO>>> listerReclamations(Authentication authentication) {
         Utilisateur utilisateur = SoutraSecurityHelper.extraireUtilisateurAuthentifie();
         Long idClient = utilisateur.getClient().getIdClient();
 
@@ -52,7 +53,7 @@ public class MobileReclamationController {
                 .map(this::toResponse)
                 .toList();
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiEnvelope.success(response));
     }
 
     @Operation(summary = "Creer une reclamation", description = "Cree une nouvelle reclamation pour le client connecte.")

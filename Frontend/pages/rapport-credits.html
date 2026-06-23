@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rapport Crédits - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left"><div><div class="topbar-title">Rapport Crédits</div><div class="topbar-breadcrumb">Reporting / Rapport Crédits</div></div></div>
+        <div class="topbar-right"></div>
+      </header>
+      <main class="content-area">
+        <div class="page-header">
+          <div><h1 class="page-title">Rapport Crédits</h1><p class="page-subtitle">Encours, décaissements, remboursements et impayés.</p></div>
+          <div class="export-buttons">
+            <button class="export-btn" onclick="exportCSV()">CSV</button>
+            <button class="export-btn" onclick="exportPDF()">PDF</button>
+          </div>
+        </div>
+
+        <section style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+          <div class="card"><div style="padding:20px;text-align:center;"><div style="font-size:12px;color:#888;">Encours total</div><div style="font-size:22px;font-weight:bold;" id="kpiEncours">0 FCFA</div></div></div>
+          <div class="card"><div style="padding:20px;text-align:center;"><div style="font-size:12px;color:#888;">Décaissements mois</div><div style="font-size:22px;font-weight:bold;color:#27ae60;" id="kpiDecaissements">0 FCFA</div></div></div>
+          <div class="card"><div style="padding:20px;text-align:center;"><div style="font-size:12px;color:#888;">Remboursements</div><div style="font-size:22px;font-weight:bold;color:#2980b9;" id="kpiRemboursements">0 FCFA</div></div></div>
+          <div class="card"><div style="padding:20px;text-align:center;"><div style="font-size:12px;color:#888;">Impayés</div><div style="font-size:22px;font-weight:bold;color:#e74c3c;" id="kpiImpayes">0 FCFA</div></div></div>
+        </section>
+
+        <section class="card">
+          <div class="card-header"><div><div class="card-title">Répartition par produit</div></div></div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Produit</th><th>Nb crédits</th><th>Encours</th><th>Décaissés</th><th>Remboursés</th><th>Impayés</th><th>Taux impayés</th></tr>
+            </thead>
+            <tbody id="prodTableBody"><tr><td colspan="7" style="text-align:center;">Chargement...</td></tr></tbody>
+          </table>
+        </section>
+
+        <section class="card" style="margin-top:16px;">
+          <div class="card-header"><div><div class="card-title">Analyse par ancienneté (aging)</div></div></div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Tranche</th><th>Nb crédits</th><th>Montant</th><th>% encours</th></tr>
+            </thead>
+            <tbody id="agingTableBody"><tr><td colspan="4" style="text-align:center;">Chargement...</td></tr></tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    var rapportData = null;
+    function formatCurrency(n) { return (n || 0).toLocaleString('fr-FR'); }
+
+    function renderKpis(d) {
+      document.getElementById('kpiEncours').textContent = formatCurrency(d.encoursTotal) + ' FCFA';
+      document.getElementById('kpiDecaissements').textContent = formatCurrency(d.decaissementsMois) + ' FCFA';
+      document.getElementById('kpiRemboursements').textContent = formatCurrency(d.remboursements) + ' FCFA';
+      document.getElementById('kpiImpayes').textContent = formatCurrency(d.impayes) + ' FCFA';
+    }
+
+    function renderProduits(data) {
+      var tbody = document.getElementById('prodTableBody');
+      if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Aucune donnée.</td></tr>'; return; }
+      tbody.innerHTML = data.map(function(p) { return '<tr>' +
+        '<td>' + (p.produit || '---') + '</td>' +
+        '<td>' + (p.nbCredits || 0) + '</td>' +
+        '<td>' + formatCurrency(p.encours) + ' FCFA</td>' +
+        '<td>' + formatCurrency(p.decaisses) + ' FCFA</td>' +
+        '<td>' + formatCurrency(p.rembourses) + ' FCFA</td>' +
+        '<td>' + formatCurrency(p.impayes) + ' FCFA</td>' +
+        '<td>' + (p.tauxImpayes || 0) + '%</td>' +
+        '</tr>'; }).join('');
+    }
+
+    function renderAging(data) {
+      var tbody = document.getElementById('agingTableBody');
+      if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Aucune donnée.</td></tr>'; return; }
+      tbody.innerHTML = data.map(function(a) { return '<tr>' +
+        '<td>' + (a.tranche || '---') + '</td>' +
+        '<td>' + (a.nbCredits || 0) + '</td>' +
+        '<td>' + formatCurrency(a.montant) + ' FCFA</td>' +
+        '<td>' + (a.pourcentage || 0) + '%</td>' +
+        '</tr>'; }).join('');
+    }
+
+    function exportCSV() {
+      if (!rapportData) { showToast('Aucune donnée.', 'warning'); return; }
+      var headers = ['Produit', 'Nb crédits', 'Encours', 'Décaissés', 'Remboursés', 'Impayés', 'Taux'];
+      var rows = (rapportData.parProduit || []).map(function(p) { return [p.produit, p.nbCredits, p.encours, p.decaisses, p.rembourses, p.impayes, p.tauxImpayes]; });
+      var csv = [headers.join(';')].concat(rows.map(function(r) { return r.join(';'); })).join('\n');
+      var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'rapport-credits.csv'; a.click();
+      showToast('CSV exporté.', 'success');
+    }
+
+    function exportPDF() { window.open(SF.API_BASE + '/api/v1/reporting/credits/export?format=PDF', '_blank'); showToast('Export PDF lancé.', 'success'); }
+
+    document.addEventListener('DOMContentLoaded', async function() {
+      try {
+        var data = await SF.apiFetch('/api/v1/reporting/credits');
+        rapportData = data;
+        renderKpis(data);
+        renderProduits(data.parProduit || []);
+        renderAging(data.aging || []);
+      } catch (e) {
+        showToast('Erreur chargement: ' + e.message, 'error');
+      }
+    });
+  </script>
+</body>
+</html>

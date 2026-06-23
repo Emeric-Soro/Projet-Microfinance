@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sessions actives - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Sessions actives</div>
+            <div class="topbar-breadcrumb">Sécurité / Sessions actives</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Gestion des sessions actives</h1>
+            <p class="page-subtitle">Consultez et révoquez les sessions utilisateurs en cours.</p>
+          </div>
+          <button class="btn btn-danger" onclick="revokeAllSessions()">Révoquer toutes les sessions</button>
+        </div>
+
+        <section class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Sessions actives</div>
+              <div class="kpi-value" id="kpiTotal">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Utilisateurs connectés</div>
+              <div class="kpi-value" id="kpiUsers">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Sessions aujourd'hui</div>
+              <div class="kpi-value" id="kpiToday">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Tentatives bloquées</div>
+              <div class="kpi-value" id="kpiBlocked">-</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Sessions en cours</div>
+              <div class="card-subtitle">Endpoint : /api/v1/auth/sessions</div>
+            </div>
+          </div>
+          <div class="filter-bar">
+            <input class="form-control" placeholder="Rechercher par utilisateur..." id="filterUser" oninput="filterSessions()">
+            <select class="form-control" id="filterStatut" onchange="filterSessions()">
+              <option value="ALL">Tous les statuts</option>
+              <option value="ACTIVE">Active</option>
+              <option value="EXPIREE">Expirée</option>
+              <option value="BLOQUEE">Bloquée</option>
+            </select>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Utilisateur</th>
+                <th>Adresse IP</th>
+                <th>Navigateur</th>
+                <th>Date début</th>
+                <th>Dernière activité</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sessionsTableBody">
+              <tr><td colspan="7" style="text-align:center;color:#4A7A8A;padding:20px;">Chargement des sessions...</td></tr>
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    let allSessions = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSessions();
+      setInterval(loadSessions, 30000);
+    });
+
+    async function loadSessions() {
+      try {
+        const res = await SF.apiFetch('/api/v1/auth/sessions');
+        if (res && res.ok) {
+          const data = await res.json();
+          allSessions = data.content || data || [];
+          filterSessions();
+          updateKpis(allSessions);
+        }
+      } catch (e) {
+        console.error('Erreur chargement sessions:', e);
+      }
+    }
+
+    function filterSessions() {
+      const q = document.getElementById('filterUser').value.toLowerCase();
+      const statut = document.getElementById('filterStatut').value;
+      const filtered = allSessions.filter(s => {
+        const matchUser = !q || (s.utilisateur || s.login || '').toLowerCase().includes(q);
+        const sessionStatut = resolveStatut(s);
+        const matchStatut = statut === 'ALL' || sessionStatut === statut;
+        return matchUser && matchStatut;
+      });
+      renderSessions(filtered);
+    }
+
+    function resolveStatut(s) {
+      if (s.statut) return s.statut.toUpperCase();
+      if (s.courante) return 'ACTIVE';
+      if (s.expiree) return 'EXPIREE';
+      if (s.bloquee) return 'BLOQUEE';
+      return 'ACTIVE';
+    }
+
+    function renderSessions(sessions) {
+      const tbody = document.getElementById('sessionsTableBody');
+      if (!sessions.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#4A7A8A;padding:20px;">Aucune session active.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = sessions.map(s => {
+        const isCurrentUser = s.courante;
+        const statut = resolveStatut(s);
+        const statutBadge = statut === 'ACTIVE' ? 'badge-active' :
+                            statut === 'EXPIREE' ? 'badge-warning' :
+                            statut === 'BLOQUEE' ? 'badge-danger' : 'badge-info';
+        const statutLabel = statut === 'ACTIVE' ? 'Active' :
+                            statut === 'EXPIREE' ? 'Expirée' :
+                            statut === 'BLOQUEE' ? 'Bloquée' : statut;
+        return `<tr>
+          <td><strong>${s.utilisateur || s.login || '-'}</strong>${isCurrentUser ? ' <span class="badge badge-info">Vous</span>' : ''}</td>
+          <td style="font-family:monospace;">${s.adresseIp || s.ip || '-'}</td>
+          <td style="font-size:.85rem;">${s.userAgent || s.navigateur || '-'}</td>
+          <td>${formatDate(s.dateDebut || s.createdAt)}</td>
+          <td>${formatDate(s.derniereActivite || s.updatedAt)}</td>
+          <td><span class="badge ${statutBadge}">${statutLabel}</span></td>
+          <td>${isCurrentUser
+            ? '<span style="color:#4A7A8A;font-size:.85rem;">Session courante</span>'
+            : `<button class="btn btn-danger btn-sm" onclick="revokeSession('${s.id}')">Révoquer</button>`}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function updateKpis(sessions) {
+      const users = new Set(sessions.map(s => s.utilisateur || s.login));
+      document.getElementById('kpiTotal').textContent = sessions.length;
+      document.getElementById('kpiUsers').textContent = users.size;
+      const today = new Date().toISOString().slice(0, 10);
+      const todayCount = sessions.filter(s => {
+        const d = s.dateDebut || s.createdAt;
+        return d && d.slice(0, 10) === today;
+      }).length;
+      document.getElementById('kpiToday').textContent = todayCount || '-';
+      const blocked = sessions.filter(s => resolveStatut(s) === 'BLOQUEE').length;
+      document.getElementById('kpiBlocked').textContent = blocked || '0';
+    }
+
+    async function revokeSession(id) {
+      if (!confirm('Révoquer cette session ? L\'utilisateur sera déconnecté.')) return;
+      try {
+        const res = await SF.apiFetch('/api/v1/auth/sessions/' + id + '/revoguer', { method: 'POST' });
+        if (res && res.ok) {
+          showToast('Session révoquée.', 'success');
+          loadSessions();
+        } else {
+          showToast('Erreur lors de la révocation.', 'error');
+        }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    async function revokeAllSessions() {
+      if (!confirm('Révoquer TOUTES les sessions (sauf la vôtre) ?')) return;
+      try {
+        const res = await SF.apiFetch('/api/v1/auth/sessions/revoguer-toutes', { method: 'POST' });
+        if (res && res.ok) {
+          showToast('Toutes les sessions révoquées.', 'success');
+          loadSessions();
+        } else {
+          showToast('Erreur lors de la révocation globale.', 'error');
+        }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    function formatDate(d) {
+      if (!d) return '-';
+      try {
+        return new Date(d).toLocaleString('fr-FR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      } catch {
+        return d;
+      }
+    }
+  </script>
+</body>
+</html>

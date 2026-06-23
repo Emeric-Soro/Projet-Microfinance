@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Export de rapport - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    /* ── Export-specific styles ─────────────────────── */
+    .export-container { max-width: 820px; }
+
+    .columns-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+    }
+
+    .columns-grid label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--azur-fonce);
+      cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 6px;
+      transition: var(--transition);
+    }
+
+    .columns-grid label:hover { background: rgba(140, 213, 250, 0.12); }
+
+    .columns-grid input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      accent-color: var(--color-primary);
+      cursor: pointer;
+    }
+
+    .columns-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .columns-toolbar button {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--gris-moyen);
+      background: var(--blanc);
+      color: var(--gris-texte);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .columns-toolbar button:hover {
+      border-color: var(--azur-pastel);
+      color: var(--azur-fonce);
+      background: var(--color-secondary-light);
+    }
+
+    .date-range-warning {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      background: rgba(217, 48, 37, 0.08);
+      color: var(--rouge-profond);
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: -10px;
+      margin-bottom: 14px;
+    }
+
+    .date-range-warning.visible { display: flex; }
+
+    .date-range-warning svg {
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+    }
+
+    .date-range-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--gris-texte);
+      margin-top: 4px;
+    }
+
+    .btn-export { min-width: 160px; }
+
+    .report-type-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+    }
+
+    .report-type-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 14px 10px;
+      border: 2px solid var(--gris-moyen);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+      background: var(--blanc);
+      text-align: center;
+      user-select: none;
+    }
+
+    .report-type-card:hover {
+      border-color: var(--azur-pastel);
+      background: var(--color-secondary-light);
+    }
+
+    .report-type-card.selected {
+      border-color: var(--color-primary);
+      background: rgba(8, 67, 85, 0.06);
+    }
+
+    .report-type-card svg {
+      width: 24px;
+      height: 24px;
+      color: var(--gris-texte);
+      transition: var(--transition);
+    }
+
+    .report-type-card.selected svg { color: var(--color-primary); }
+
+    .report-type-card span {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--azur-fonce);
+    }
+
+    /* ── Preview modal styles ──────────────────────── */
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    .preview-table th {
+      background: var(--gris-clair);
+      padding: 8px 10px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--azur-fonce);
+      border-bottom: 2px solid var(--gris-moyen);
+      white-space: nowrap;
+    }
+
+    .preview-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid rgba(201, 223, 232, 0.5);
+      color: var(--azur-fonce);
+      white-space: nowrap;
+    }
+
+    .preview-table tr:hover td { background: rgba(140, 213, 250, 0.08); }
+
+    .preview-scroll {
+      max-height: 360px;
+      overflow-y: auto;
+      border: 1px solid var(--gris-moyen);
+      border-radius: var(--radius-sm);
+    }
+
+    .preview-meta {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      font-size: 12px;
+      color: var(--gris-texte);
+    }
+
+    .preview-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .preview-meta strong { color: var(--azur-fonce); }
+
+    .section-divider {
+      height: 1px;
+      background: var(--gris-moyen);
+      margin: 8px 0 20px;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Export de rapport</div>
+            <div class="topbar-breadcrumb">Reporting / Export</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a href="reporting.html" class="btn btn-ghost btn-sm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+              <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+            Retour
+          </a>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Export configurable de rapports</h1>
+            <p class="page-subtitle">Configurez le type de rapport, la periode, le format et les colonnes pour votre export.</p>
+          </div>
+        </div>
+
+        <div class="export-container">
+
+          <!-- SECTION 1 : TYPE DE RAPPORT -->
+          <section class="card" style="margin-bottom: 20px;">
+            <div class="card-header">
+              <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#084355;">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                Type de rapport
+              </div>
+              <span class="badge badge-info" id="typeBadge">Transactions</span>
+            </div>
+            <div style="padding:0 20px 20px;">
+              <div class="report-type-cards" id="reportTypeCards">
+                <div class="report-type-card selected" data-value="TRANSACTIONS">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                  <span>Transactions</span>
+                </div>
+                <div class="report-type-card" data-value="CREDITS">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                  <span>Credits</span>
+                </div>
+                <div class="report-type-card" data-value="CAISSE">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="12" y1="4" x2="12" y2="10"/></svg>
+                  <span>Caisse</span>
+                </div>
+                <div class="report-type-card" data-value="CLIENTS">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  <span>Clients</span>
+                </div>
+                <div class="report-type-card" data-value="COMPTES">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                  <span>Comptes</span>
+                </div>
+                <div class="report-type-card" data-value="COMMISSIONS">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                  <span>Commissions</span>
+                </div>
+                <div class="report-type-card" data-value="BALANCE">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="3" x2="12" y2="21"/><polyline points="1 6 5 3 9 6"/><polyline points="15 18 19 21 23 18"/><path d="M1 6h22"/><path d="M1 18h22"/></svg>
+                  <span>Balance</span>
+                </div>
+                <div class="report-type-card" data-value="RESULTAT">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                  <span>Resultat</span>
+                </div>
+              </div>
+              <input type="hidden" id="expType" value="TRANSACTIONS">
+            </div>
+          </section>
+
+          <!-- SECTION 2 : PERIODE -->
+          <section class="card" style="margin-bottom: 20px;">
+            <div class="card-header">
+              <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#084355;">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                Periode d'export
+              </div>
+              <span class="badge badge-info" id="dureeBadge">--</span>
+            </div>
+            <div style="padding:0 20px 20px;">
+              <div class="form-row">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Date debut *</label>
+                  <input type="date" class="form-control" id="expDateDeb" required>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Date fin *</label>
+                  <input type="date" class="form-control" id="expDateFin" required>
+                </div>
+              </div>
+              <div class="date-range-warning" id="dateRangeWarning">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span id="dateRangeWarningText">La periode ne peut exceder 365 jours.</span>
+              </div>
+              <div class="date-range-info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/>
+                  <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+                Periode maximale autorisee : 365 jours.
+              </div>
+            </div>
+          </section>
+
+          <!-- SECTION 3 : FORMAT ET AGENCE -->
+          <section class="card" style="margin-bottom: 20px;">
+            <div class="card-header">
+              <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#084355;">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                Format et portee
+              </div>
+            </div>
+            <div style="padding:0 20px 20px;">
+              <div class="form-row">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Format d'export *</label>
+                  <select class="form-control" id="expFormat">
+                    <option value="PDF">PDF (document formate)</option>
+                    <option value="CSV">CSV (separe par des points-virgules)</option>
+                    <option value="EXCEL">Excel (classeur .xlsx)</option>
+                    <option value="HTML">HTML (page web)</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Agence</label>
+                  <select class="form-control" id="expAgence">
+                    <option value="">Toutes les agences</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- SECTION 4 : COLONNES A INCLURE -->
+          <section class="card" style="margin-bottom: 20px;">
+            <div class="card-header">
+              <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#084355;">
+                  <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+                  <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+                  <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                </svg>
+                Colonnes a inclure
+              </div>
+              <span class="badge badge-info" id="colsCount">6 selectionnees</span>
+            </div>
+            <div style="padding:0 20px 20px;">
+              <div class="columns-toolbar">
+                <button type="button" onclick="toggleAllColumns(true)">Tout cocher</button>
+                <button type="button" onclick="toggleAllColumns(false)">Tout decocher</button>
+              </div>
+              <div class="columns-grid" id="columnsGrid">
+                <label><input type="checkbox" checked data-col="date"> Date</label>
+                <label><input type="checkbox" checked data-col="reference"> Reference</label>
+                <label><input type="checkbox" checked data-col="type"> Type</label>
+                <label><input type="checkbox" checked data-col="compte"> Compte</label>
+                <label><input type="checkbox" checked data-col="client"> Client</label>
+                <label><input type="checkbox" checked data-col="montant"> Montant</label>
+                <label><input type="checkbox" data-col="frais"> Frais</label>
+                <label><input type="checkbox" data-col="statut"> Statut</label>
+                <label><input type="checkbox" data-col="agence"> Agence</label>
+                <label><input type="checkbox" data-col="guichetier"> Guichetier</label>
+                <label><input type="checkbox" data-col="ecritures"> Ecritures</label>
+                <label><input type="checkbox" data-col="notes"> Notes</label>
+              </div>
+            </div>
+          </section>
+
+          <!-- BOUTONS D'ACTION -->
+          <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:4px;margin-bottom:40px;">
+            <button class="btn btn-outline" onclick="previewExport()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              Apercu
+            </button>
+            <button class="btn btn-primary btn-export" onclick="lancerExport()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Telecharger
+            </button>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- MODAL APERCU -->
+  <div class="modal-overlay" id="previewModal">
+    <div class="modal" style="max-width:900px;">
+      <div class="modal-header">
+        <div class="modal-title">Apercu du rapport</div>
+        <button class="modal-close" onclick="closeModal('previewModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:20px;">
+        <div class="preview-meta" id="previewMeta"></div>
+        <div class="preview-scroll" id="previewScroll">
+          <table class="preview-table">
+            <thead id="previewHead"></thead>
+            <tbody id="previewBody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px;font-size:11px;color:#4A7A8A;text-align:center;">
+          Apercu des 10 premieres lignes. L'export complet contiendra toutes les donnees correspondantes.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('previewModal')">Fermer</button>
+        <button class="btn btn-primary" onclick="closeModal('previewModal'); lancerExport();">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Confirmer l'export
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ==================================================
+       EXPORT RAPPORT - M11
+       ================================================== */
+
+    var MAX_DAYS = 365;
+
+    var COLUMN_LABELS = {
+      date:       'Date',
+      reference:  'Reference',
+      type:       'Type',
+      compte:     'Compte',
+      client:     'Client',
+      montant:    'Montant',
+      frais:      'Frais',
+      statut:     'Statut',
+      agence:     'Agence',
+      guichetier: 'Guichetier',
+      ecritures:  'Ecritures',
+      notes:      'Notes'
+    };
+
+    var REPORT_TYPE_LABELS = {
+      TRANSACTIONS: 'Transactions',
+      CREDITS:      'Credits',
+      CAISSE:       'Caisse',
+      CLIENTS:      'Clients',
+      COMPTES:      'Comptes',
+      COMMISSIONS:  'Commissions',
+      BALANCE:      'Balance',
+      RESULTAT:     'Compte de resultat'
+    };
+
+    // ── Init on DOM ready ────────────────────────────
+    document.addEventListener('DOMContentLoaded', function() {
+      initDates();
+      initReportTypeCards();
+      initListeners();
+      loadAgences();
+      updateColsCount();
+    });
+
+    function initDates() {
+      var today = new Date();
+      var debut = new Date(today.getFullYear(), today.getMonth(), 1);
+      document.getElementById('expDateDeb').value = toDateInput(debut);
+      document.getElementById('expDateFin').value = toDateInput(today);
+      updateDureeBadge();
+    }
+
+    function toDateInput(d) {
+      return d.toISOString().split('T')[0];
+    }
+
+    // ── Report type card selection ───────────────────
+    function initReportTypeCards() {
+      var cards = document.querySelectorAll('.report-type-card');
+      cards.forEach(function(card) {
+        card.addEventListener('click', function() {
+          cards.forEach(function(c) { c.classList.remove('selected'); });
+          card.classList.add('selected');
+          var val = card.getAttribute('data-value');
+          document.getElementById('expType').value = val;
+          document.getElementById('typeBadge').textContent = REPORT_TYPE_LABELS[val] || val;
+        });
+      });
+    }
+
+    // ── Event listeners ──────────────────────────────
+    function initListeners() {
+      var deb = document.getElementById('expDateDeb');
+      var fin = document.getElementById('expDateFin');
+
+      deb.addEventListener('change', function() {
+        if (!fin.value || fin.value < deb.value) {
+          fin.value = deb.value;
+        }
+        updateDureeBadge();
+      });
+
+      fin.addEventListener('change', updateDureeBadge);
+
+      document.getElementById('columnsGrid').querySelectorAll('input[type="checkbox"]').forEach(function(cb) {
+        cb.addEventListener('change', updateColsCount);
+      });
+    }
+
+    // ── Duration validation ──────────────────────────
+    function getDaysDiff() {
+      var d1 = document.getElementById('expDateDeb').value;
+      var d2 = document.getElementById('expDateFin').value;
+      if (!d1 || !d2) return 0;
+      return Math.round((new Date(d2) - new Date(d1)) / (1000 * 60 * 60 * 24));
+    }
+
+    function updateDureeBadge() {
+      var diff = getDaysDiff();
+      var badge = document.getElementById('dureeBadge');
+      var warning = document.getElementById('dateRangeWarning');
+      var warningText = document.getElementById('dateRangeWarningText');
+
+      if (diff < 0) {
+        badge.textContent = 'Dates invalides';
+        badge.className = 'badge badge-danger';
+        warningText.textContent = 'La date de debut doit preceder la date de fin.';
+        warning.classList.add('visible');
+      } else if (diff > MAX_DAYS) {
+        badge.textContent = diff + ' jours (max 365)';
+        badge.className = 'badge badge-danger';
+        warningText.textContent = 'La periode de ' + diff + ' jours depasse le maximum de 365 jours autorises.';
+        warning.classList.add('visible');
+      } else {
+        badge.textContent = (diff + 1) + ' jour' + (diff > 0 ? 's' : '');
+        badge.className = 'badge badge-info';
+        warning.classList.remove('visible');
+      }
+    }
+
+    // ── Column count & toggle ────────────────────────
+    function updateColsCount() {
+      var checked = document.querySelectorAll('#columnsGrid input[type="checkbox"]:checked');
+      var el = document.getElementById('colsCount');
+      el.textContent = checked.length + ' selectionnee' + (checked.length > 1 ? 's' : '');
+      el.className = checked.length === 0 ? 'badge badge-danger' : 'badge badge-info';
+    }
+
+    function toggleAllColumns(state) {
+      document.querySelectorAll('#columnsGrid input[type="checkbox"]').forEach(function(cb) {
+        cb.checked = state;
+      });
+      updateColsCount();
+    }
+
+    // ── Load agencies ────────────────────────────────
+    async function loadAgences() {
+      try {
+        var res = await SF.apiFetch('/api/v1/agences?page=0&size=100');
+        if (res) {
+          var data = await res.json();
+          var select = document.getElementById('expAgence');
+          var list = data.content || data || [];
+          list.forEach(function(a) {
+            var opt = document.createElement('option');
+            opt.value = a.code || a.id;
+            opt.textContent = a.nom || a.libelle || a.code;
+            select.appendChild(opt);
+          });
+        }
+      } catch (_) {
+        // Keep default "Toutes" option if API unavailable
+      }
+    }
+
+    // ── Gather form data ─────────────────────────────
+    function gatherCriteria() {
+      var dateDeb = document.getElementById('expDateDeb').value;
+      var dateFin = document.getElementById('expDateFin').value;
+      var type    = document.getElementById('expType').value;
+      var format  = document.getElementById('expFormat').value;
+      var agence  = document.getElementById('expAgence').value;
+      var columns = Array.from(document.querySelectorAll('#columnsGrid input[type="checkbox"]:checked'))
+        .map(function(c) { return c.dataset.col; });
+
+      return { dateDeb: dateDeb, dateFin: dateFin, type: type, format: format, agence: agence, columns: columns };
+    }
+
+    // ── Validation ───────────────────────────────────
+    function validate(c) {
+      if (!c.dateDeb || !c.dateFin) {
+        showToast('Veuillez renseigner les dates de debut et de fin.', 'warning');
+        return false;
+      }
+      if (new Date(c.dateFin) < new Date(c.dateDeb)) {
+        showToast('La date de debut doit preceder la date de fin.', 'warning');
+        return false;
+      }
+      var diff = getDaysDiff();
+      if (diff > MAX_DAYS) {
+        showToast('La periode ne peut exceder 365 jours. Periode selectionnee : ' + diff + ' jours.', 'warning');
+        return false;
+      }
+      if (c.columns.length === 0) {
+        showToast('Veuillez selectionner au moins une colonne.', 'warning');
+        return false;
+      }
+      return true;
+    }
+
+    // ── Preview ──────────────────────────────────────
+    async function previewExport() {
+      var c = gatherCriteria();
+      if (!validate(c)) return;
+
+      showToast('Chargement de l\'apercu...', 'info');
+
+      try {
+        var params = new URLSearchParams({
+          dateDebut: c.dateDeb,
+          dateFin: c.dateFin,
+          type: c.type,
+          limit: '10'
+        });
+        if (c.agence) params.set('agence', c.agence);
+        params.set('colonnes', c.columns.join(','));
+
+        var res = await SF.apiFetch('/api/v1/reporting/export?' + params.toString());
+
+        if (res && res.ok) {
+          var data = await res.json();
+          renderPreview(data, c);
+        } else {
+          renderPreviewMock(c);
+        }
+      } catch (_) {
+        renderPreviewMock(c);
+      }
+    }
+
+    function renderPreview(data, c) {
+      var rows = data.content || data || [];
+      var cols = c.columns;
+
+      // Meta
+      var meta = document.getElementById('previewMeta');
+      meta.innerHTML =
+        '<span><strong>Rapport :</strong> ' + (REPORT_TYPE_LABELS[c.type] || c.type) + '</span>' +
+        '<span><strong>Periode :</strong> ' + c.dateDeb + ' au ' + c.dateFin + '</span>' +
+        '<span><strong>Format :</strong> ' + c.format + '</span>' +
+        '<span><strong>Resultats :</strong> ' + (data.totalElements || rows.length) + ' ligne(s)</span>';
+
+      // Head
+      var thead = document.getElementById('previewHead');
+      thead.innerHTML = '<tr>' + cols.map(function(col) {
+        return '<th>' + (COLUMN_LABELS[col] || col) + '</th>';
+      }).join('') + '</tr>';
+
+      // Body
+      var tbody = document.getElementById('previewBody');
+      if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="' + cols.length + '" style="text-align:center;padding:20px;color:#4A7A8A;">Aucune donnee trouvee pour cette periode.</td></tr>';
+      } else {
+        tbody.innerHTML = rows.slice(0, 10).map(function(row) {
+          return '<tr>' + cols.map(function(col) {
+            var val = row[col] || '--';
+            return '<td>' + escapeHtml(String(val)) + '</td>';
+          }).join('') + '</tr>';
+        }).join('');
+      }
+
+      openModal('previewModal');
+    }
+
+    function renderPreviewMock(c) {
+      var cols = c.columns;
+      var meta = document.getElementById('previewMeta');
+      meta.innerHTML =
+        '<span><strong>Rapport :</strong> ' + (REPORT_TYPE_LABELS[c.type] || c.type) + '</span>' +
+        '<span><strong>Periode :</strong> ' + c.dateDeb + ' au ' + c.dateFin + '</span>' +
+        '<span><strong>Format :</strong> ' + c.format + '</span>' +
+        '<span><strong>Resultats :</strong> Apercu non disponible (serveur)</span>';
+
+      var thead = document.getElementById('previewHead');
+      thead.innerHTML = '<tr>' + cols.map(function(col) {
+        return '<th>' + (COLUMN_LABELS[col] || col) + '</th>';
+      }).join('') + '</tr>';
+
+      var tbody = document.getElementById('previewBody');
+      tbody.innerHTML = '<tr><td colspan="' + cols.length + '" style="text-align:center;padding:24px;color:#4A7A8A;">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;margin-bottom:8px;opacity:0.5;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><br>' +
+        'L\'apercu en direct n\'est pas disponible. Vous pouvez lancer l\'export directement.</td></tr>';
+
+      openModal('previewModal');
+    }
+
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // ── Export ───────────────────────────────────────
+    async function lancerExport() {
+      var c = gatherCriteria();
+      if (!validate(c)) return;
+
+      var btn = document.querySelector('.btn-export');
+      var originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="login-spinner" style="width:14px;height:14px;border-width:2px;"></span> Export en cours...';
+
+      showToast('Preparation de l\'export...', 'info');
+
+      try {
+        var params = new URLSearchParams({
+          dateDebut: c.dateDeb,
+          dateFin: c.dateFin,
+          type: c.type,
+          format: c.format
+        });
+        if (c.agence) params.set('agence', c.agence);
+        params.set('colonnes', c.columns.join(','));
+
+        var res = await SF.apiFetch('/api/v1/reporting/export?' + params.toString());
+
+        if (res && res.ok) {
+          var blob = await res.blob();
+          var ext = getFormatExtension(c.format);
+          var mimeType = getFormatMime(c.format);
+
+          if (c.format === 'CSV') {
+            blob = addUtf8Bom(blob);
+          }
+
+          downloadBlob(new Blob([blob], { type: mimeType }), buildFilename(ext));
+          showToast('Export ' + c.format + ' genere avec succes (' + c.columns.length + ' colonnes).', 'success');
+        } else {
+          if (c.format === 'CSV') {
+            generateClientCsv(c);
+          } else {
+            showToast('L\'export ' + c.format + ' necessite le serveur. Verifiez que le backend est demarre.', 'warning');
+          }
+        }
+      } catch (e) {
+        if (c.format === 'CSV') {
+          generateClientCsv(c);
+        } else {
+          showToast('Impossible de joindre le serveur : ' + e.message, 'error');
+        }
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    // ── Client-side CSV fallback ─────────────────────
+    function generateClientCsv(c) {
+      var cols = c.columns;
+      var headers = cols.map(function(col) { return COLUMN_LABELS[col] || col; });
+
+      var lines = [headers.join(';')];
+      var sample = cols.map(function(col) {
+        switch (col) {
+          case 'date':       return '21/06/2026';
+          case 'reference':  return 'REF-20260621-001';
+          case 'type':       return c.type;
+          case 'compte':     return '100-12345678-01';
+          case 'client':     return 'Nom Prenom';
+          case 'montant':    return '150 000';
+          case 'frais':      return '750';
+          case 'statut':     return 'Valide';
+          case 'agence':     return 'Agence Principale';
+          case 'guichetier': return 'Agent';
+          case 'ecritures':  return '';
+          case 'notes':      return '';
+          default:           return '';
+        }
+      });
+      lines.push(sample.join(';'));
+
+      var csvContent = lines.join('\r\n');
+      var blob = addUtf8Bom(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }));
+      downloadBlob(blob, buildFilename('csv'));
+      showToast('Export CSV structure genere cote client (modele). Connectez le backend pour les donnees reelles.', 'info');
+    }
+
+    // ── Helpers ──────────────────────────────────────
+    function getFormatExtension(fmt) {
+      switch (fmt) {
+        case 'PDF':   return 'pdf';
+        case 'CSV':   return 'csv';
+        case 'EXCEL': return 'xlsx';
+        case 'HTML':  return 'html';
+        default:      return 'dat';
+      }
+    }
+
+    function getFormatMime(fmt) {
+      switch (fmt) {
+        case 'PDF':   return 'application/pdf';
+        case 'CSV':   return 'text/csv;charset=utf-8;';
+        case 'EXCEL': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        case 'HTML':  return 'text/html;charset=utf-8;';
+        default:      return 'application/octet-stream';
+      }
+    }
+
+    function addUtf8Bom(blob) {
+      var BOM = new Uint8Array([0xEF, 0xBB, 0xBF]);
+      return new Blob([BOM, blob], { type: 'text/csv;charset=utf-8;' });
+    }
+
+    function downloadBlob(blob, filename) {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+    }
+
+    function buildFilename(ext) {
+      var now = new Date();
+      var ts = now.getFullYear() +
+        String(now.getMonth() + 1).padStart(2, '0') +
+        String(now.getDate()).padStart(2, '0') + '_' +
+        String(now.getHours()).padStart(2, '0') +
+        String(now.getMinutes()).padStart(2, '0');
+      return 'rapport_' + document.getElementById('expType').value.toLowerCase() + '_' + ts + '.' + ext;
+    }
+
+    // ── Modal helpers ────────────────────────────────
+    function openModal(id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.add('active');
+    }
+
+    function closeModal(id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.remove('active');
+    }
+  </script>
+</body>
+</html>

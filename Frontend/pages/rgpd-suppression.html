@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suppression données - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left"><div><div class="topbar-title">Suppression données</div><div class="topbar-breadcrumb">Conformité / RGPD / Suppression</div></div></div>
+        <div class="topbar-right"></div>
+      </header>
+      <main class="content-area">
+        <div class="page-header">
+          <div><h1 class="page-title">Suppression de données personnelles</h1><p class="page-subtitle">Droit à l'effacement — Article 17 RGPD</p></div>
+        </div>
+        <div style="background:#fdf2f2;border:1px solid #e74c3c;border-radius:8px;padding:16px;margin-bottom:20px;display:flex;align-items:flex-start;gap:12px;">
+          <span style="font-size:24px;color:#e74c3c;">&#9888;</span>
+          <div>
+            <strong style="color:#c0392b;">Attention : action irréversible</strong>
+            <p style="margin:4px 0 0;color:#5a3e3e;font-size:0.9em;">La suppression des données personnelles est définitive. Les données supprimées ne pourront pas être récupérées. Assurez-vous que toutes les obligations légales de conservation ont été vérifiées.</p>
+          </div>
+        </div>
+        <div style="max-width:720px;">
+          <section class="card">
+            <div class="card-header"><div class="card-title">Client concerné</div></div>
+            <div style="padding:20px;">
+              <div class="form-group">
+                <label class="form-label">Rechercher le client *</label>
+                <input type="text" class="form-control" id="suppClientSearch" placeholder="Nom, prénom ou numéro..." oninput="searchSuppClient()">
+                <div class="search-results" id="suppClientResults"></div>
+              </div>
+              <div id="suppClientInfo" style="display:none;"></div>
+            </div>
+          </section>
+          <section class="card" style="margin-top:16px;">
+            <div class="card-header"><div class="card-title">Périmètre de suppression</div></div>
+            <div style="padding:20px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                  <input type="checkbox" name="suppScope" value="IDENTITE"> Données d'identité
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                  <input type="checkbox" name="suppScope" value="CONTACT"> Coordonnées personnelles
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                  <input type="checkbox" name="suppScope" value="HISTORIQUE"> Historique de transactions
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                  <input type="checkbox" name="suppScope" value="DOCUMENTS"> Documents KYC
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                  <input type="checkbox" name="suppScope" value="BIOMETRIE"> Données biométriques
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                  <input type="checkbox" name="suppScope" value="PREFERENCES"> Préférences et consentements
+                </label>
+              </div>
+            </div>
+          </section>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
+            <button class="btn btn-primary" onclick="ouvrirConfirmationSupp()" style="background:#c0392b;">Demander la suppression</button>
+          </div>
+        </div>
+        <div id="confirmSuppModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+          <div style="background:#fff;border-radius:12px;padding:24px;width:520px;max-width:90%;">
+            <h3 style="margin-top:0;color:#c0392b;">Confirmer la suppression</h3>
+            <div style="background:#fdf2f2;border:1px solid #e74c3c;border-radius:8px;padding:12px;margin-bottom:16px;">
+              <p style="margin:0;color:#5a3e3e;font-size:0.9em;">Cette action est irréversible. Les données sélectionnées seront définitivement supprimées du système.</p>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Motif de la demande *</label>
+              <textarea class="form-control" id="suppMotif" rows="4" placeholder="Décrivez le motif de la demande de suppression (obligatoire)..."></textarea>
+            </div>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-bottom:16px;">
+              <input type="checkbox" id="suppConfirm"> Je confirme avoir vérifié les obligations légales de conservation
+            </label>
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+              <button class="btn btn-outline" onclick="fermerConfirmationSupp()">Annuler</button>
+              <button class="btn btn-primary" onclick="confirmerSuppression()" style="background:#c0392b;">Supprimer définitivement</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    let suppClientId = null;
+
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+    let suppSearchTimeout;
+    async function searchSuppClient() {
+      const q = document.getElementById('suppClientSearch').value.trim();
+      const div = document.getElementById('suppClientResults');
+      if (q.length < 2) { div.classList.remove('show'); return; }
+      clearTimeout(suppSearchTimeout);
+      suppSearchTimeout = setTimeout(async () => {
+        try {
+          const res = await Clients.lister(0, 10, q);
+          if (res && res.ok) {
+            const data = await res.json();
+            div.innerHTML = (data.content||[]).map(c =>
+              '<div class="search-result-item" onclick="pickSuppClient(' + c.idClient + ',\'' + esc(c.nom + ' ' + c.prenom) + '\',\'' + esc(c.numeroClient||'') + '\')">' + esc(c.nom) + ' ' + esc(c.prenom) + ' &mdash; ' + esc(c.numeroClient||'') + '</div>'
+            ).join('');
+            div.classList.add('show');
+          }
+        } catch(e) {}
+      }, 300);
+    }
+
+    function pickSuppClient(id, name, num) {
+      suppClientId = id;
+      document.getElementById('suppClientSearch').value = name;
+      document.getElementById('suppClientResults').classList.remove('show');
+      document.getElementById('suppClientInfo').style.display = '';
+      document.getElementById('suppClientInfo').innerHTML =
+        '<div style="background:#f0f6fa;border:1px solid #C9DFE8;border-radius:8px;padding:12px;margin-top:8px;">' +
+        '<strong>' + esc(name) + '</strong> &mdash; ' + esc(num) + '</div>';
+    }
+
+    function getSuppScope() { return Array.from(document.querySelectorAll('input[name="suppScope"]:checked')).map(i => i.value); }
+
+    function ouvrirConfirmationSupp() {
+      if (!suppClientId) { showToast('Sélectionnez un client.', 'warning'); return; }
+      const scope = getSuppScope();
+      if (!scope.length) { showToast('Sélectionnez au moins un périmètre.', 'warning'); return; }
+      document.getElementById('confirmSuppModal').style.display = 'flex';
+    }
+
+    function fermerConfirmationSupp() {
+      document.getElementById('confirmSuppModal').style.display = 'none';
+    }
+
+    async function confirmerSuppression() {
+      const motif = document.getElementById('suppMotif').value.trim();
+      const confirmed = document.getElementById('suppConfirm').checked;
+      if (!motif) { showToast('Saisissez un motif.', 'warning'); return; }
+      if (!confirmed) { showToast('Confirmez les obligations légales.', 'warning'); return; }
+      try {
+        const res = await SF.apiFetch('/api/v1/conformite/rgpd/suppression', {
+          method: 'POST',
+          body: JSON.stringify({
+            clientId: suppClientId,
+            perimetre: getSuppScope(),
+            motif: motif
+          })
+        });
+        if (res && (res.ok || res.status === 201)) {
+          showToast('Demande de suppression soumise.', 'success');
+          fermerConfirmationSupp();
+          setTimeout(() => window.location.reload(), 1500);
+        } else {
+          const err = res ? await res.json().catch(()=>({})) : {};
+          showToast(err.message || 'Erreur.', 'error');
+        }
+      } catch(e) { showToast(e.message, 'error'); }
+    }
+  </script>
+</body>
+</html>

@@ -26,4 +26,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     // Liste paginee des notifications creees entre deux dates.
     Page<Notification> findByCreatedAtBetween(LocalDateTime dateDebut, LocalDateTime dateFin, Pageable pageable);
+
+    // Nombre de notifications non lues pour un client (badge compteur sur l'app mobile).
+    long countByClient_IdClientAndLuFalse(Long idClient);
 }

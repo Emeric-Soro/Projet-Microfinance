@@ -1,0 +1,1220 @@
+==============================================================================
+                   CATALOGUE DES ENDPOINTS API
+                   Projet Microfinance - Core Banking
+                   Genere le : 20/06/2026 13:06:08
+==============================================================================
+
+
+==============================================================================
+  [Audit Logs] AuditLogController
+  Base path : /api/v1/audit-logs
+  Description : API de consultation des logs d'audit
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/audit-logs                                      
+
+
+==============================================================================
+  [Authentification] AuthController
+  Base path : /api/v1/auth
+  Description : API d'authentification, 2FA et gestion de sessions
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  POST     /api/v1/auth/login                                      
+  POST     /api/v1/auth/logout                                     
+  POST     /api/v1/auth/refresh                                    
+  POST     /api/v1/auth/2fa/activer                                
+  POST     /api/v1/auth/2fa/verifier                               
+  POST     /api/v1/auth/mot-de-passe                               
+  POST     /api/v1/auth/mot-de-passe/oublie                        
+  POST     /api/v1/auth/mot-de-passe/reinitialiser                 
+  GET      /api/v1/auth/sessions                                   
+  POST     /api/v1/auth/sessions/revoguer                          
+
+
+==============================================================================
+  [Clients] ClientController
+  Base path : /api/v1/clients
+  Description : API de gestion des clients
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  POST     /api/v1/clients                                         
+  GET      /api/v1/clients                                         
+  GET      /api/v1/clients/{idClient}                              
+  GET      /api/v1/clients/{idClient}/confidentiel                 
+  PUT      /api/v1/clients/{idClient}/statut                       
+  PUT      /api/v1/clients/{idClient}/kyc                          
+  PUT      /api/v1/clients/{idClient}/kyc/decision                 
+  POST     /api/v1/clients/{idClient}/documents                    
+
+
+==============================================================================
+  [Utilisateurs] UtilisateurController
+  Base path : /api/v1/utilisateurs
+  Description : API de gestion des acces numeriques
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  POST     /api/v1/utilisateurs                                    
+  POST     /api/v1/utilisateurs/login                              
+  POST     /api/v1/utilisateurs/login/otp                          
+  POST     /api/v1/utilisateurs/logout                             
+
+
+==============================================================================
+  [Notifications] NotificationController
+  Base path : /api/v1/notifications
+  Description : Historique des SMS/Emails envoyes aux clients
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/notifications/client/{idClient}                 
+  PUT      /api/v1/notifications/{id}/lu                           
+  PUT      /api/v1/notifications/preferences                       
+
+
+==============================================================================
+  [BeneficiaireController] BeneficiaireController
+  Base path : /api/v1/beneficiaires
+  Description : Liste des beneficiaires
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/beneficiaires                                   
+  POST     /api/v1/beneficiaires                                   
+  PUT      /api/v1/beneficiaires/{id}                              
+  DELETE   /api/v1/beneficiaires/{id}                              
+
+
+==============================================================================
+  [Cartes Visa] CarteVisaController
+  Base path : /api/v1/cartes-visa
+  Description : API de gestion des cartes bancaires
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  POST     /api/v1/cartes-visa                                     
+  PUT      /api/v1/cartes-visa/{numeroCarte}/opposition            
+  PUT      /api/v1/cartes-visa/id/{idCarte}/opposition             
+  GET      /api/v1/cartes-visa                                     
+  GET      /api/v1/cartes-visa/{numeroCarte}                       
+  PATCH    /api/v1/cartes-visa/{numeroCarte}                       
+
+
+==============================================================================
+  [Comptes] CompteController
+  Base path : /api/v1/comptes
+  Description : API de gestion des comptes bancaires
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  POST     /api/v1/comptes                                         
+  GET      /api/v1/comptes/{numCompte}/solde                       
+  GET      /api/v1/comptes/{numCompte}                             
+  GET      /api/v1/comptes/client/{idClient}                       
+  PUT      /api/v1/comptes/decouvert                               
+  PUT      /api/v1/comptes/{numCompte}/cloture                     
+  PUT      /api/v1/comptes/{numCompte}/blocage                     
+  PUT      /api/v1/comptes/{numCompte}/deblocage                   
+  GET      /api/v1/comptes/{numCompte}/releve                      
+  POST     /api/v1/comptes/{numCompte}/depot-initial               
+
+
+==============================================================================
+  [Conformite] ConformiteController
+  Base path : /api/v1/conformite
+  Description : API de conformite reglementaire (SAR, Reclamations, RGPD, PEP, LCB-FT)
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  POST     /api/v1/conformite/sar                                  
+  GET      /api/v1/conformite/sar                                  
+  GET      /api/v1/conformite/sar/{id}                             
+  PUT      /api/v1/conformite/sar/{id}/statut                      
+  POST     /api/v1/conformite/reclamations                         
+  GET      /api/v1/conformite/reclamations                         
+  GET      /api/v1/conformite/reclamations/{id}                    
+  PUT      /api/v1/conformite/reclamations/{id}                    
+  POST     /api/v1/conformite/rgpd/consentement                    
+  GET      /api/v1/conformite/rgpd/export                          
+  DELETE   /api/v1/conformite/rgpd/donnees                         
+  GET      /api/v1/conformite/kyc/expires                          
+  POST     /api/v1/conformite/pep/verifier                         
+  GET      /api/v1/conformite/pep                                  
+  POST     /api/v1/conformite/alertes-lcbft                        
+  GET      /api/v1/conformite/alertes-lcbft                        
+  PUT      /api/v1/conformite/alertes-lcbft/{id}                   
+
+
+==============================================================================
+  [Credits] CreditController
+  Base path : /api/v1/credits
+  Description : API de gestion des credits et demandes
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/credits/{idCredit}                              
+  POST     /api/v1/credits/{idCredit}/decaissement                 
+  POST     /api/v1/credits/{idCredit}/remboursement                
+  GET      /api/v1/credits/{idCredit}/echeancier                   
+  GET      /api/v1/credits/client/{idClient}                       
+  POST     /api/v1/credits/simulation                              
+  GET      /api/v1/credits                                         
+  POST     /api/v1/credits/{idCredit}/instruire                    
+  POST     /api/v1/credits/{idCredit}/approuver                    
+  POST     /api/v1/credits/{idCredit}/garanties                    
+  POST     /api/v1/credits/{idCredit}/restructurer                 
+  GET      /api/v1/credits/echeances-retard                        
+  POST     /api/v1/credits/{idCredit}/passation                    
+
+
+==============================================================================
+  [Demandes de Credit] DemandeCreditController
+  Base path : /api/v1/credits/demandes
+  Description : API de gestion des demandes de credit
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  POST     /api/v1/credits/demandes                                
+  GET      /api/v1/credits/demandes                                
+  GET      /api/v1/credits/demandes/{idDemande}                    
+  PUT      /api/v1/credits/demandes/{idDemande}/decision           
+
+
+==============================================================================
+  [Dashboards] DashboardController
+  Base path : /api/v1/dashboards
+  Description : API des tableaux de bord agence et direction
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/dashboards/agence                               
+  GET      /api/v1/dashboards/direction                            
+  GET      /api/v1/dashboards/indicateurs                          
+
+
+==============================================================================
+  [Exceptions] ExceptionController
+  Base path : /api/v1/exceptions
+  Description : API de gestion des derogations et escalades
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  POST     /api/v1/exceptions/derogations                          
+  GET      /api/v1/exceptions/derogations                          
+  PUT      /api/v1/exceptions/derogations/{id}/statut              
+  POST     /api/v1/exceptions/escalades                            
+  GET      /api/v1/exceptions/escalades                            
+  GET      /api/v1/exceptions/escalades/{id}                       
+  PUT      /api/v1/exceptions/escalades/{id}/traiter               
+  GET      /api/v1/exceptions/regles                               
+
+
+==============================================================================
+  [Mobile Authentification] MobileAuthController
+  Base path : /api/v1/mobile/auth
+  Description : API d'authentification mobile (login OTP, PIN, biometrie)
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  POST     /api/v1/mobile/auth/login                               
+  POST     /api/v1/mobile/auth/login/otp                           
+  POST     /api/v1/mobile/auth/logout                              
+  POST     /api/v1/mobile/auth/refresh-token                       
+  POST     /api/v1/mobile/auth/mot-de-passe/oublie                 
+  POST     /api/v1/mobile/auth/mot-de-passe/reinitialiser          
+  POST     /api/v1/mobile/auth/pin/creer                           
+  POST     /api/v1/mobile/auth/pin/verifier                        
+  POST     /api/v1/mobile/auth/biometrie/activer                   
+  POST     /api/v1/mobile/auth/biometrie/desactiver                
+
+
+==============================================================================
+  [Mobile Beneficiaires] MobileBeneficiaireController
+  Base path : /api/v1/mobile/beneficiaires
+  Description : API de gestion des beneficiaires pour l'application mobile
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/mobile/beneficiaires                            
+  POST     /api/v1/mobile/beneficiaires                            
+  PUT      /api/v1/mobile/beneficiaires/{idBeneficiaire}           
+  DELETE   /api/v1/mobile/beneficiaires/{idBeneficiaire}           
+
+
+==============================================================================
+  [Mobile Comptes] MobileCompteController
+  Base path : /api/v1/mobile/comptes
+  Description : API de consultation des comptes pour l'application mobile
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/mobile/comptes                                  
+  GET      /api/v1/mobile/comptes/{idCompte}                       
+  GET      /api/v1/mobile/comptes/{idCompte}/solde                 
+  GET      /api/v1/mobile/comptes/{idCompte}/operations            
+  GET      /api/v1/mobile/comptes/{idCompte}/releve                
+
+
+==============================================================================
+  [Mobile Credits] MobileCreditController
+  Base path : /api/v1/mobile/credits
+  Description : API de gestion des credits pour l'application mobile
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/mobile/credits                                  
+  GET      /api/v1/mobile/credits/{idCredit}                       
+  GET      /api/v1/mobile/credits/{idCredit}/echeancier            
+  POST     /api/v1/mobile/credits/simulation                       
+  POST     /api/v1/mobile/credits/demandes                         
+  GET      /api/v1/mobile/credits/demandes                         
+  GET      /api/v1/mobile/credits/demandes/{idDemande}             
+
+
+==============================================================================
+  [Mobile Dashboard] MobileDashboardController
+  Base path : /api/v1/mobile
+  Description : API du tableau de bord mobile
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/mobile/dashboard                                
+
+
+==============================================================================
+  [Mobile Notifications] MobileNotificationController
+  Base path : /api/v1/mobile/notifications
+  Description : API de gestion des notifications pour l'application mobile
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/mobile/notifications                            
+  PUT      /api/v1/mobile/notifications/{idNotification}/lu        
+  PUT      /api/v1/mobile/notifications/preferences                
+
+
+==============================================================================
+  [Mobile Operations] MobileOperationController
+  Base path : /api/v1/mobile/operations
+  Description : API de consultation des operations pour l'application mobile
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/mobile/operations                               
+  GET      /api/v1/mobile/operations/{reference}                   
+  GET      /api/v1/mobile/operations/{reference}/recu              
+
+
+==============================================================================
+  [Mobile Profil] MobileProfilController
+  Base path : /api/v1/mobile/profil
+  Description : API de gestion du profil pour l'application mobile
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/mobile/profil                                   
+  PUT      /api/v1/mobile/profil                                   
+  GET      /api/v1/mobile/profil/kyc                               
+  PUT      /api/v1/mobile/profil/kyc                               
+  POST     /api/v1/mobile/profil/documents                         
+
+
+==============================================================================
+  [Mobile Reclamations] MobileReclamationController
+  Base path : /api/v1/mobile/reclamations
+  Description : API de gestion des reclamations pour l'application mobile
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/mobile/reclamations                             
+  POST     /api/v1/mobile/reclamations                             
+  GET      /api/v1/mobile/reclamations/{idReclamation}             
+
+
+==============================================================================
+  [Mobile Virements] MobileVirementController
+  Base path : /api/v1/mobile/virements
+  Description : API de gestion des virements pour l'application mobile
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  POST     /api/v1/mobile/virements                                
+  GET      /api/v1/mobile/virements/{reference}                    
+  POST     /api/v1/mobile/virements/{reference}/confirmer-otp      
+  POST     /api/v1/mobile/virements/{reference}/annuler            
+
+
+==============================================================================
+  [Caisses] CaisseController
+  Base path : /api/v1/caisses
+  Description : Gestion des tiroirs-caisses guichetier
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  POST     /api/v1/caisses/ouverture                               
+  POST     /api/v1/caisses/fermeture                               
+  GET      /api/v1/caisses/etat                                    
+
+
+==============================================================================
+  [Transactions] TransactionController
+  Base path : /api/v1/transactions
+  Description : API des operations bancaires
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  POST     /api/v1/transactions/depot                              
+  POST     /api/v1/transactions/retrait                            
+  POST     /api/v1/transactions/virement                           
+  PUT      /api/v1/transactions/{referenceUnique}/approbation      
+  PUT      /api/v1/transactions/{referenceUnique}/rejet            
+  POST     /api/v1/transactions/paiement-carte                     
+  GET      /api/v1/transactions/comptes/{numCompte}/historique     
+  GET      /api/v1/transactions/en-attente                         
+  GET      /api/v1/transactions/{referenceUnique}                  
+  POST     /api/v1/transactions/{referenceUnique}/reverser         
+  GET      /api/v1/transactions/{referenceUnique}/recu             
+  GET      /api/v1/transactions/export                             
+  POST     /api/v1/transactions/mobile-money/depot                 
+  POST     /api/v1/transactions/mobile-money/retrait               
+  GET      /api/v1/transactions/mobile-money                       
+
+
+==============================================================================
+  [Parametrage Agence] ParametrageAgenceController
+  Base path : /api/v1/parametrages/agences
+  Description : API de parametrage des agences
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/parametrages/agences                            
+  POST     /api/v1/parametrages/agences                            
+  PUT      /api/v1/parametrages/agences/{id}                       
+  GET      /api/v1/parametrages/agences/{id}                       
+  GET      /api/v1/parametrages/agences/actives                    
+  PUT      /api/v1/parametrages/agences/{id}/desactiver            
+
+
+==============================================================================
+  [Parametrage Credit] ParametrageCreditController
+  Base path : /api/v1/parametrages/produits-credit
+  Description : API de parametrage des produits de credit
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/parametrages/produits-credit                    
+  POST     /api/v1/parametrages/produits-credit                    
+  PUT      /api/v1/parametrages/produits-credit/{id}               
+  DELETE   /api/v1/parametrages/produits-credit/{id}               
+  GET      /api/v1/parametrages/produits-credit/actives            
+
+
+==============================================================================
+  [Parametrage Epargne] ParametrageEpargneController
+  Base path : /api/v1/parametrages/produits-epargne
+  Description : API de parametrage des produits d'epargne
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/parametrages/produits-epargne                   
+  POST     /api/v1/parametrages/produits-epargne                   
+  PUT      /api/v1/parametrages/produits-epargne/{id}              
+  DELETE   /api/v1/parametrages/produits-epargne/{id}              
+  GET      /api/v1/parametrages/produits-epargne/actives           
+
+
+==============================================================================
+  [Parametrage Systeme] ParametrageSystemeController
+  Base path : /api/v1/parametrages
+  Description : API de parametrage systeme (configuration generale, jours feries)
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/parametrages/systeme                            
+  PUT      /api/v1/parametrages/jours-feries                       
+  GET      /api/v1/parametrages/jours-feries                       
+
+
+==============================================================================
+  [Parametrage Tarification] ParametrageTarificationController
+  Base path : /api/v1/parametrages/tarification
+  Description : API de parametrage des tarifications (frais, commissions, seuils)
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/parametrages/tarification                       
+  POST     /api/v1/parametrages/tarification                       
+
+
+==============================================================================
+  [Reporting] ReportingController
+  Base path : /api/v1/reporting
+  Description : API des rapports operationnels, financiers et reglementaires
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/reporting/operationnel                          
+  GET      /api/v1/reporting/financier                             
+  GET      /api/v1/reporting/clients                               
+  GET      /api/v1/reporting/credits                               
+  GET      /api/v1/reporting/caisse                                
+  GET      /api/v1/reporting/bceao                                 
+  GET      /api/v1/reporting/export                                
+  POST     /api/v1/reporting/personnalise                          
+
+
+==============================================================================
+  [Securite Admin] SecurityAdminController
+  Base path : /api/v1/securite
+  Description : API d'administration de la securite (roles, permissions, utilisateurs, sessions)
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/securite/roles                                  
+  POST     /api/v1/securite/roles                                  
+  PUT      /api/v1/securite/roles/{id}                             
+  DELETE   /api/v1/securite/roles/{id}                             
+  GET      /api/v1/securite/permissions                            
+  PUT      /api/v1/securite/permissions                            
+  GET      /api/v1/securite/utilisateurs                           
+  POST     /api/v1/securite/utilisateurs                           
+  PUT      /api/v1/securite/utilisateurs/{id}                      
+  PUT      /api/v1/securite/utilisateurs/{id}/activer-desactiver   
+  GET      /api/v1/securite/sessions                               
+  POST     /api/v1/securite/sessions/revoguer                      
+
+
+==============================================================================
+  [Statistiques] StatistiqueController
+  Base path : /api/v1/statistiques
+  Description : Tableau de bord et KPIs direction
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  GET      /api/v1/statistiques/kpi                                
+
+
+==============================================================================
+  [Agios] AgioController
+  Base path : /api/v1/agios
+  Description : API de calcul et prelevement des frais
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  POST     /api/v1/agios/frais-tenue/mensuel                       
+  POST     /api/v1/agios/penalite-decouvert                        
+  POST     /api/v1/agios/prelevements                              
+
+
+==============================================================================
+  [Parametres tarification] TarificationParametreController
+  Base path : /api/v1/tarification/parametres
+  Description : API de gestion du cache de parametres de tarification
+==============================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------------
+  POST     /api/v1/tarification/parametres/cache/refresh           
+
+==============================================================================
+  TOTAL : 200 endpoints extraits
+  Fichier genere le 20/06/2026 13:06:08
+==============================================================================
+
+
+========================================================================
+  [BeneficiaireController] BeneficiaireController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [CompteController] CompteController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [CarteVisaController] CarteVisaController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ConformiteController] ConformiteController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [CompteController] CompteController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ConformiteController] ConformiteController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [CreditController] CreditController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ConformiteController] ConformiteController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [CreditController] CreditController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [DemandeCreditController] DemandeCreditController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [DashboardController] DashboardController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ExceptionController] ExceptionController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [CreditController] CreditController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [DemandeCreditController] DemandeCreditController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [DashboardController] DashboardController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileAuthController] MobileAuthController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ExceptionController] ExceptionController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [DemandeCreditController] DemandeCreditController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [DashboardController] DashboardController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileAuthController] MobileAuthController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ExceptionController] ExceptionController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileBeneficiaireController] MobileBeneficiaireController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileCompteController] MobileCompteController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileAuthController] MobileAuthController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileBeneficiaireController] MobileBeneficiaireController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileCreditController] MobileCreditController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileCompteController] MobileCompteController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileBeneficiaireController] MobileBeneficiaireController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileCreditController] MobileCreditController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileCompteController] MobileCompteController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileDashboardController] MobileDashboardController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileNotificationController] MobileNotificationController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileCreditController] MobileCreditController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileOperationController] MobileOperationController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileDashboardController] MobileDashboardController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileNotificationController] MobileNotificationController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileProfilController] MobileProfilController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileOperationController] MobileOperationController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileDashboardController] MobileDashboardController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileReclamationController] MobileReclamationController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileProfilController] MobileProfilController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileNotificationController] MobileNotificationController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileVirementController] MobileVirementController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileOperationController] MobileOperationController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileReclamationController] MobileReclamationController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [CaisseController] CaisseController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileProfilController] MobileProfilController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileVirementController] MobileVirementController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [TransactionController] TransactionController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileReclamationController] MobileReclamationController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [CaisseController] CaisseController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [MobileVirementController] MobileVirementController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [TransactionController] TransactionController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [CaisseController] CaisseController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ParametrageAgenceController] ParametrageAgenceController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [TransactionController] TransactionController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ParametrageCreditController] ParametrageCreditController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ParametrageAgenceController] ParametrageAgenceController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ParametrageEpargneController] ParametrageEpargneController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ParametrageCreditController] ParametrageCreditController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ParametrageAgenceController] ParametrageAgenceController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ParametrageSystemeController] ParametrageSystemeController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ParametrageEpargneController] ParametrageEpargneController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ParametrageTarificationController] ParametrageTarificationController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ParametrageCreditController] ParametrageCreditController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ReportingController] ReportingController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ParametrageSystemeController] ParametrageSystemeController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ParametrageTarificationController] ParametrageTarificationController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ParametrageEpargneController] ParametrageEpargneController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [SecurityAdminController] SecurityAdminController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ReportingController] ReportingController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ParametrageSystemeController] ParametrageSystemeController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [ParametrageTarificationController] ParametrageTarificationController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [SecurityAdminController] SecurityAdminController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [StatistiqueController] StatistiqueController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+
+========================================================================
+  [ReportingController] ReportingController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+========================================================================
+  [AgioController] AgioController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [TarificationParametreController] TarificationParametreController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+========================================================================
+  TOTAL : 0 endpoints extraits
+  Fichier genere le 20/06/2026 a 13:37:00
+========================================================================
+
+
+========================================================================
+  [SecurityAdminController] SecurityAdminController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [StatistiqueController] StatistiqueController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [AgioController] AgioController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [TarificationParametreController] TarificationParametreController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+========================================================================
+  TOTAL : 0 endpoints extraits
+  Fichier genere le 20/06/2026 a 13:38:12
+========================================================================
+
+
+========================================================================
+  [StatistiqueController] StatistiqueController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [AgioController] AgioController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+
+========================================================================
+  [TarificationParametreController] TarificationParametreController
+  Base path : 
+========================================================================
+  METHODE  ENDPOINT                                                DESCRIPTION
+  ----------------------------------------------------------------------
+
+========================================================================
+  TOTAL : 0 endpoints extraits
+  Fichier genere le 20/06/2026 a 13:39:35
+========================================================================

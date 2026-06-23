@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Annulation Transaction (Contre-passation) — Soutra Finance Backoffice</title>
+  <meta name="description" content="Annulation et contre-passation d'une transaction avec generation des ecritures comptables inverses.">
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title" id="topbarTitle">Annulation de Transaction</div>
+            <div class="topbar-breadcrumb" id="breadcrumb">Operations / Historique / Annulation</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a href="historique.html" class="btn btn-ghost btn-sm" id="btnRetour">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Retour
+          </a>
+        </div>
+      </header>
+
+      <!-- SKELETON DE CHARGEMENT -->
+      <div class="content-area" id="loadingState">
+        <div style="display:flex; justify-content:center; align-items:center; height:300px; flex-direction:column; gap:16px; color:#4A7A8A;">
+          <div class="login-spinner" style="width:40px;height:40px;"></div>
+          <div>Chargement de la transaction...</div>
+        </div>
+      </div>
+
+      <!-- CONTENU PRINCIPAL -->
+      <div class="content-area" id="mainContent" style="display:none; max-width:800px;">
+
+        <!-- AVERTISSEMENT IMPORTANT -->
+        <div style="background:rgba(217,48,37,0.06); border:1px solid rgba(217,48,37,0.2); border-radius:12px; padding:16px 20px; margin-bottom:20px; display:flex; gap:12px; align-items:flex-start;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2" style="width:22px;height:22px;flex-shrink:0;margin-top:2px;">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <div>
+            <div style="font-weight:700; color:#D93025; font-size:14px; margin-bottom:4px;">Operation irrecversible — Contre-passation (J+0 uniquement)</div>
+            <div style="color:#5D4037; font-size:13px; line-height:1.5;">
+              Cette operation <strong>annule definitivement</strong> la transaction en generant des ecritures comptables inverses (contre-passation).
+              Elle n'est possible que le <strong>jour meme</strong> de la transaction initiale (J+0). Apres cloture de caisse, seule une regularisation comptable pourra etre effectuee.
+              L'annulation est reservee au <strong>superviseur</strong> ou a l'<strong>administrateur</strong>.
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 1 : TRANSACTION ORIGINALE -->
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-header">
+            <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#084355;">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              Transaction a annuler
+            </div>
+            <span class="badge" id="badgeStatut">—</span>
+          </div>
+          <div id="txInfo" style="padding:4px 0;">
+            <div style="color:#4A7A8A;">Chargement...</div>
+          </div>
+        </div>
+
+        <!-- SECTION 2 : ECRITURES ORIGINALES -->
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-header">
+            <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#084355;">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+              </svg>
+              Ecritures comptables originales (seront inversees)
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:40px;">N.</th>
+                  <th>Compte general</th>
+                  <th>Libelle</th>
+                  <th style="text-align:right;">Debit (FCFA)</th>
+                  <th style="text-align:right;">Credit (FCFA)</th>
+                </tr>
+              </thead>
+              <tbody id="ecrituresOriginalesBody">
+                <tr><td colspan="5" style="text-align:center;padding:20px;color:#4A7A8A;">Chargement des ecritures...</td></tr>
+              </tbody>
+              <tfoot id="ecrituresOriginalesFooter" style="display:none;">
+                <tr style="background:rgba(8,67,85,0.04);font-weight:700;">
+                  <td colspan="3" style="text-align:right;padding-right:16px;">Totaux</td>
+                  <td style="text-align:right;" id="totalDebitOriginal">0</td>
+                  <td style="text-align:right;" id="totalCreditOriginal">0</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- SECTION 3 : ECRITURES DE CONTRE-PASSATION (PREVISUALISATION) -->
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-header">
+            <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2" style="width:18px;height:18px;">
+                <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+              <span style="color:#D93025;">Ecritures de contre-passage (generation automatique)</span>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:40px;">N.</th>
+                  <th>Compte general</th>
+                  <th>Libelle</th>
+                  <th style="text-align:right;">Debit (FCFA)</th>
+                  <th style="text-align:right;">Credit (FCFA)</th>
+                </tr>
+              </thead>
+              <tbody id="ecrituresContrepassBody">
+                <tr><td colspan="5" style="text-align:center;padding:20px;color:#4A7A8A;">Les ecritures seront generees automatiquement.</td></tr>
+              </tbody>
+              <tfoot id="ecrituresContrepassFooter" style="display:none;">
+                <tr style="background:rgba(217,48,37,0.04);font-weight:700;">
+                  <td colspan="3" style="text-align:right;padding-right:16px;">Totaux</td>
+                  <td style="text-align:right;" id="totalDebitContrepass">0</td>
+                  <td style="text-align:right;" id="totalCreditContrepass">0</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div id="equilibreContrepass" style="display:none; padding:12px 20px; font-size:12px; font-weight:600;"></div>
+        </div>
+
+        <!-- SECTION 4 : FORMULAIRE D'ANNULATION -->
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-header">
+            <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2" style="width:18px;height:18px;">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              Confirmation de l'annulation
+            </div>
+          </div>
+          <div style="padding:4px 0;">
+            <!-- Motif -->
+            <div class="form-group">
+              <label class="form-label" for="motifAnnulation">Motif de l'annulation * (minimum 20 caracteres)</label>
+              <textarea class="form-control" id="motifAnnulation" rows="4" maxlength="1000"
+                placeholder="Indiquez la raison de l'annulation de cette transaction (ex: erreur de saisie, demande du client, double operation...)..."
+                oninput="updateMotifCount()"></textarea>
+              <div style="display:flex;justify-content:space-between;font-size:.8rem;color:#4A7A8A;margin-top:4px;">
+                <span id="motifError" style="color:#D93025;"></span>
+                <span id="motifCharCount">0/1000</span>
+              </div>
+            </div>
+
+            <!-- Mot de passe superviseur -->
+            <div class="form-group" style="margin-top:16px;">
+              <label class="form-label" for="passwordSuperviseur">Mot de passe superviseur * (re-authentification)</label>
+              <div style="position:relative;">
+                <input type="password" class="form-control" id="passwordSuperviseur"
+                  placeholder="Saisissez votre mot de passe pour confirmer..." style="padding-right:44px;">
+                <button type="button" onclick="togglePasswordVisibility()" id="togglePwdBtn"
+                  style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;color:#4A7A8A;"
+                  title="Afficher/Masquer le mot de passe">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;" id="eyeIcon">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+              </div>
+              <div style="font-size:.75rem;color:#4A7A8A;margin-top:4px;">
+                Votre mot de passe est verifie pour confirmer votre identite avant l'annulation.
+              </div>
+            </div>
+
+            <!-- Checkbox de confirmation -->
+            <div class="form-group" style="margin-top:16px;">
+              <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;line-height:1.5;">
+                <input type="checkbox" id="confirmCheck" style="margin-top:3px;accent-color:#D93025;">
+                <span>Je confirme vouloir <strong style="color:#D93025;">annuler definitivement</strong> cette transaction.
+                  Je comprends que cette action est <strong>irreversible</strong> et qu'elle generera des ecritures de contre-passation
+                  qui impacteront les comptes concernes.</span>
+              </label>
+            </div>
+
+            <!-- Boutons -->
+            <div style="display:flex;gap:12px;margin-top:20px;">
+              <a href="historique.html" class="btn btn-outline" style="flex:1;text-align:center;">Annuler</a>
+              <button class="btn" id="btnAnnuler" style="flex:2;background:#D93025;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:700;cursor:pointer;opacity:0.5;"
+                disabled onclick="executerAnnulation()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;display:inline-block;vertical-align:middle;margin-right:6px;">
+                  <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                </svg>
+                Confirmer l'annulation (contre-passation)
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ETAT D'ERREUR -->
+      <div class="content-area" id="errorState" style="display:none;">
+        <div style="display:flex; justify-content:center; align-items:center; height:300px; flex-direction:column; gap:16px; color:#D93025;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:48px;height:48px;">
+            <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+          <div id="errorMessage">Transaction introuvable.</div>
+          <a href="historique.html" class="btn btn-primary">Retour a l'historique</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal de confirmation finale -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header">
+        <div class="modal-title" style="color:#D93025;">Confirmer l'annulation</div>
+        <button class="modal-close" onclick="closeModal('confirmModal')"></button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align:center;margin-bottom:16px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2" style="width:48px;height:48px;margin-bottom:12px;">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <div style="font-weight:700;font-size:16px;color:#D93025;margin-bottom:8px;">Action irrecversible</div>
+          <div style="font-size:13px;color:#5D4037;line-height:1.5;">
+            Vous etes sur le point d'annuler la transaction <strong id="modalRef" style="font-family:monospace;">—</strong>
+            d'un montant de <strong id="modalMontant">—</strong>.
+          </div>
+          <div style="font-size:13px;color:#5D4037;line-height:1.5;margin-top:8px;">
+            Des ecritures de contre-passage seront generees et la transaction sera marquee comme <strong>ANNULEE</strong>.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('confirmModal')">Retour</button>
+        <button class="btn" id="btnConfirmerFinal" style="background:#D93025;color:#fff;border:none;" onclick="confirmerFinal()">
+          Oui, annuler la transaction
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de resultat -->
+  <div class="modal-overlay" id="resultModal">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header">
+        <div class="modal-title" id="resultModalTitle">Resultat</div>
+        <button class="modal-close" onclick="closeModal('resultModal')"></button>
+      </div>
+      <div class="modal-body" id="resultModalBody">
+        <!-- Rempli dynamiquement -->
+      </div>
+      <div class="modal-footer">
+        <a href="historique.html" class="btn btn-primary" style="text-align:center;">Retour a l'historique</a>
+        <button class="btn btn-outline" onclick="closeModal('resultModal')">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+
+  <script>
+    /* ── Variables d'etat ─────────────────────────────── */
+    var _txRef = null;
+    var _txData = null;
+    var _ecrituresContrepass = [];
+
+    /* ── Helpers ──────────────────────────────────────── */
+    function fmt(n) {
+      return Number(n || 0).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function formatDateFR(dateStr) {
+      if (!dateStr) return '—';
+      try {
+        return new Date(dateStr).toLocaleString('fr-FR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+      } catch (_) {
+        return String(dateStr);
+      }
+    }
+
+    function escHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function currentUser() {
+      return window.SF ? window.SF.getUser() : null;
+    }
+
+    /* ── Badges statut ───────────────────────────────── */
+    var STATUT_MAP = {
+      'EXECUTEE':   { cls: 'badge-active',  label: 'Executee' },
+      'VALIDEE':    { cls: 'badge-active',  label: 'Validee' },
+      'EN_ATTENTE': { cls: 'badge-pending', label: 'En attente' },
+      'REJETEE':    { cls: 'badge-blocked', label: 'Rejetee' },
+      'ANNULEE':    { cls: 'badge-blocked', label: 'Annulee' },
+      'ECHEC':      { cls: 'badge-blocked', label: 'Echouee' }
+    };
+
+    var TYPE_BADGE_MAP = {
+      'DEPOT':     { cls: 'badge-success', label: 'Depot' },
+      'VERSEMENT': { cls: 'badge-success', label: 'Versement' },
+      'RETRAIT':   { cls: 'badge-danger',  label: 'Retrait' },
+      'VIREMENT':  { cls: 'badge-info',    label: 'Virement' }
+    };
+
+    /* ── Verification J+0 ────────────────────────────── */
+    function isJPlusZero(dateStr) {
+      if (!dateStr) return false;
+      try {
+        var txnDate = new Date(dateStr);
+        var today = new Date();
+        return txnDate.getFullYear() === today.getFullYear() &&
+               txnDate.getMonth() === today.getMonth() &&
+               txnDate.getDate() === today.getDate();
+      } catch (_) {
+        return false;
+      }
+    }
+
+    /* ── Peuplement de la fiche transaction ──────────── */
+    function peupler(tx) {
+      _txData = tx;
+
+      var ref = tx.referenceUnique || '—';
+      document.getElementById('topbarTitle').textContent = 'Annulation — ' + ref;
+      document.getElementById('breadcrumb').textContent = 'Operations / Historique / ' + ref + ' / Annulation';
+      document.title = 'Annulation ' + ref + ' — Soutra Finance Backoffice';
+
+      // Verification J+0
+      var dateTx = tx.dateHeure || tx.dateCreation;
+      if (!isJPlusZero(dateTx)) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'none';
+        document.getElementById('errorState').style.display = '';
+        document.getElementById('errorMessage').innerHTML =
+          'Annulation impossible : cette transaction date du <strong>' + formatDateFR(dateTx) + '</strong>. ' +
+          'L\'annulation (contre-passation) n\'est possible que le jour meme (J+0). ' +
+          'Veuillez effectuer une regularisation comptable a la place.';
+        return;
+      }
+
+      // Verification statut
+      var statut = (tx.statutOperation || '').toUpperCase();
+      if (statut === 'ANNULEE') {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'none';
+        document.getElementById('errorState').style.display = '';
+        document.getElementById('errorMessage').textContent = 'Cette transaction a deja ete annulee.';
+        return;
+      }
+      if (statut === 'REJETEE') {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'none';
+        document.getElementById('errorState').style.display = '';
+        document.getElementById('errorMessage').textContent = 'Impossible d\'annuler une transaction rejetee.';
+        return;
+      }
+
+      // Badge statut
+      var sMap = STATUT_MAP[statut] || { cls: 'badge-info', label: statut || 'Inconnu' };
+      var badgeStatut = document.getElementById('badgeStatut');
+      badgeStatut.className = 'badge ' + sMap.cls;
+      badgeStatut.textContent = sMap.label;
+
+      // Infos transaction
+      var typeStr = (tx.typeOperation || '').toUpperCase();
+      var tMap = TYPE_BADGE_MAP[typeStr] || { cls: 'badge-info', label: typeStr || 'Operation' };
+      var montantNum = Number(tx.montant || 0);
+      var fraisNum = Number(tx.frais || 0);
+
+      var client = tx.clientNom || tx.clientSourceNom || '—';
+      var compteSrc = tx.numCompteSource || tx.compteSource || '—';
+      var compteDst = tx.numCompteDestination || tx.compteDestination || '—';
+      var guichetier = tx.agentNom || tx.guichetierNom || tx.demandeurNom || '—';
+
+      document.getElementById('txInfo').innerHTML =
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">' +
+          '<div class="info-row">' +
+            '<span class="info-label">Reference</span>' +
+            '<span class="info-value" style="font-family:monospace;font-weight:700;font-size:14px;color:#084355;">' + escHtml(ref) + '</span>' +
+          '</div>' +
+          '<div class="info-row">' +
+            '<span class="info-label">Date / Heure</span>' +
+            '<span class="info-value">' + formatDateFR(dateTx) + '</span>' +
+          '</div>' +
+          '<div class="info-row">' +
+            '<span class="info-label">Type d\'operation</span>' +
+            '<span class="info-value"><span class="badge ' + tMap.cls + '">' + escHtml(tMap.label) + '</span></span>' +
+          '</div>' +
+          '<div class="info-row">' +
+            '<span class="info-label">Montant</span>' +
+            '<span class="info-value" style="font-size:16px;font-weight:700;color:#084355;">' + fmt(montantNum) + '</span>' +
+          '</div>' +
+          '<div class="info-row">' +
+            '<span class="info-label">Frais</span>' +
+            '<span class="info-value">' + fmt(fraisNum) + '</span>' +
+          '</div>' +
+          '<div class="info-row">' +
+            '<span class="info-label">Montant total</span>' +
+            '<span class="info-value" style="font-size:16px;font-weight:800;color:#2E7D32;">' + fmt(montantNum + fraisNum) + '</span>' +
+          '</div>' +
+          '<div class="info-row">' +
+            '<span class="info-label">Client</span>' +
+            '<span class="info-value">' + escHtml(client) + '</span>' +
+          '</div>' +
+          '<div class="info-row">' +
+            '<span class="info-label">Compte source</span>' +
+            '<span class="info-value" style="font-family:monospace;font-weight:600;">' + escHtml(compteSrc) + '</span>' +
+          '</div>' +
+          '<div class="info-row">' +
+            '<span class="info-label">Compte destination</span>' +
+            '<span class="info-value" style="font-family:monospace;font-weight:600;">' + escHtml(compteDst) + '</span>' +
+          '</div>' +
+          '<div class="info-row">' +
+            '<span class="info-label">Guichetier</span>' +
+            '<span class="info-value">' + escHtml(guichetier) + '</span>' +
+          '</div>' +
+        '</div>';
+
+      // Ecritures originales et generation contre-passation
+      peuplerEcritures(tx);
+
+      // Afficher le contenu
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('mainContent').style.display = '';
+    }
+
+    /* ── Ecritures comptables ─────────────────────────── */
+    function genererEcrituresDefaut(tx) {
+      var type = (tx.typeOperation || '').toUpperCase();
+      var montant = Number(tx.montant || 0);
+      var frais = Number(tx.frais || 0);
+
+      if (montant === 0) return [];
+
+      var ecritures = [];
+
+      if (type === 'DEPOT' || type === 'VERSEMENT') {
+        ecritures.push({ compteGeneral: '521000', libelle: 'Caisse FCFA', debit: montant, credit: 0 });
+        ecritures.push({ compteGeneral: '210000', libelle: 'Depot client', debit: 0, credit: montant });
+        if (frais > 0) {
+          ecritures.push({ compteGeneral: '710000', libelle: 'Frais sur depot', debit: 0, credit: frais });
+        }
+      } else if (type === 'RETRAIT') {
+        ecritures.push({ compteGeneral: '210000', libelle: 'Retrait client', debit: montant, credit: 0 });
+        ecritures.push({ compteGeneral: '521000', libelle: 'Caisse FCFA', debit: 0, credit: montant });
+        if (frais > 0) {
+          ecritures.push({ compteGeneral: '210000', libelle: 'Frais de retrait', debit: frais, credit: 0 });
+          ecritures.push({ compteGeneral: '710000', libelle: 'Produits frais', debit: 0, credit: frais });
+        }
+      } else if (type === 'VIREMENT') {
+        ecritures.push({ compteGeneral: '210000', libelle: 'Compte client source', debit: montant, credit: 0 });
+        ecritures.push({ compteGeneral: '210001', libelle: 'Compte client destinataire', debit: 0, credit: montant });
+        if (frais > 0) {
+          ecritures.push({ compteGeneral: '210000', libelle: 'Frais de virement', debit: frais, credit: 0 });
+          ecritures.push({ compteGeneral: '710000', libelle: 'Produits frais virement', debit: 0, credit: frais });
+        }
+      }
+
+      return ecritures;
+    }
+
+    function peuplerEcritures(tx) {
+      var ecritures = tx.ecritures || tx.ecrituresComptables || [];
+      if (!ecritures.length) {
+        ecritures = genererEcrituresDefaut(tx);
+      }
+
+      // Ecritures originales
+      renderEcrituresTable('ecrituresOriginalesBody', 'ecrituresOriginalesFooter', 'totalDebitOriginal', 'totalCreditOriginal', ecritures, false);
+
+      // Generation des ecritures de contre-passation (inversion debit/credit)
+      _ecrituresContrepass = ecritures.map(function (ec) {
+        return {
+          compteGeneral: ec.compteGeneral || ec.compte || '',
+          libelle: 'Annulation — ' + (ec.libelle || ec.intitule || ''),
+          debit: Number(ec.credit || 0),
+          credit: Number(ec.debit || 0)
+        };
+      });
+
+      renderEcrituresTable('ecrituresContrepassBody', 'ecrituresContrepassFooter', 'totalDebitContrepass', 'totalCreditContrepass', _ecrituresContrepass, true);
+    }
+
+    function renderEcrituresTable(bodyId, footerId, totalDebitId, totalCreditId, ecritures, isContrepass) {
+      var tbody = document.getElementById(bodyId);
+      var tfoot = document.getElementById(footerId);
+
+      if (!ecritures.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#4A7A8A;">Aucune ecriture.</td></tr>';
+        tfoot.style.display = 'none';
+        return;
+      }
+
+      var totalDebit = 0;
+      var totalCredit = 0;
+
+      tbody.innerHTML = ecritures.map(function (ec, idx) {
+        var debit = Number(ec.debit || 0);
+        var credit = Number(ec.credit || 0);
+        totalDebit += debit;
+        totalCredit += credit;
+
+        var rowStyle = isContrepass ? 'background:rgba(217,48,37,0.02);' : '';
+
+        return '<tr style="' + rowStyle + '">' +
+          '<td style="font-weight:700;text-align:center;">' + (idx + 1) + '</td>' +
+          '<td style="font-family:monospace;font-weight:600;color:#084355;">' + escHtml(ec.compteGeneral || '—') + '</td>' +
+          '<td>' + escHtml(ec.libelle || '—') + '</td>' +
+          '<td style="text-align:right;font-weight:600;' + (debit > 0 ? 'color:#D93025;' : 'color:#B0BEC5;') + '">' + (debit > 0 ? fmt(debit) : '—') + '</td>' +
+          '<td style="text-align:right;font-weight:600;' + (credit > 0 ? 'color:#2E7D32;' : 'color:#B0BEC5;') + '">' + (credit > 0 ? fmt(credit) : '—') + '</td>' +
+          '</tr>';
+      }).join('');
+
+      document.getElementById(totalDebitId).textContent = fmt(totalDebit);
+      document.getElementById(totalCreditId).textContent = fmt(totalCredit);
+      tfoot.style.display = '';
+
+      // Indicateur d'equilibre pour la contre-passation
+      if (isContrepass) {
+        var indicator = document.getElementById('equilibreContrepass');
+        indicator.style.display = '';
+        if (Math.abs(totalDebit - totalCredit) < 0.01) {
+          indicator.style.background = 'rgba(46,125,50,0.06)';
+          indicator.style.color = '#2E7D32';
+          indicator.style.borderTop = '1px solid rgba(46,125,50,0.15)';
+          indicator.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px;"><polyline points="20 6 9 17 4 12"/></svg> Ecritures de contre-passage equilibrees — Total debit = Total credit';
+        } else {
+          indicator.style.background = 'rgba(217,48,37,0.06)';
+          indicator.style.color = '#D93025';
+          indicator.style.borderTop = '1px solid rgba(217,48,37,0.15)';
+          indicator.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Attention : ecritures de contre-passage desequilibrees';
+        }
+      }
+    }
+
+    /* ── Gestion du formulaire ────────────────────────── */
+    function updateMotifCount() {
+      var v = document.getElementById('motifAnnulation').value;
+      document.getElementById('motifCharCount').textContent = v.length + '/1000';
+      document.getElementById('motifError').textContent =
+        (v.length > 0 && v.length < 20) ? 'Minimum 20 caracteres requis' : '';
+      validateForm();
+    }
+
+    function togglePasswordVisibility() {
+      var pwdInput = document.getElementById('passwordSuperviseur');
+      var eyeIcon = document.getElementById('eyeIcon');
+      if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+        eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+      } else {
+        pwdInput.type = 'password';
+        eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+      }
+    }
+
+    function validateForm() {
+      var motif = document.getElementById('motifAnnulation').value.trim();
+      var pwd = document.getElementById('passwordSuperviseur').value;
+      var checked = document.getElementById('confirmCheck').checked;
+
+      var isValid = motif.length >= 20 && pwd.length > 0 && checked;
+
+      var btn = document.getElementById('btnAnnuler');
+      btn.disabled = !isValid;
+      btn.style.opacity = isValid ? '1' : '0.5';
+      btn.style.cursor = isValid ? 'pointer' : 'not-allowed';
+    }
+
+    // Ecouter les changements sur les champs du formulaire
+    document.addEventListener('DOMContentLoaded', function () {
+      document.getElementById('passwordSuperviseur').addEventListener('input', validateForm);
+      document.getElementById('confirmCheck').addEventListener('change', validateForm);
+    });
+
+    /* ── Execution de l'annulation ────────────────────── */
+    function executerAnnulation() {
+      var motif = document.getElementById('motifAnnulation').value.trim();
+      var pwd = document.getElementById('passwordSuperviseur').value;
+      var checked = document.getElementById('confirmCheck').checked;
+
+      // Validations cote client
+      if (motif.length < 20) {
+        showToast('Le motif doit contenir au moins 20 caracteres.', 'warning');
+        document.getElementById('motifAnnulation').focus();
+        return;
+      }
+      if (!pwd) {
+        showToast('Veuillez saisir votre mot de passe superviseur.', 'warning');
+        document.getElementById('passwordSuperviseur').focus();
+        return;
+      }
+      if (!checked) {
+        showToast('Veuillez cocher la case de confirmation.', 'warning');
+        return;
+      }
+
+      // Afficher le modal de confirmation finale
+      document.getElementById('modalRef').textContent = _txData ? (_txData.referenceUnique || '—') : '—';
+      document.getElementById('modalMontant').textContent = _txData ? fmt(_txData.montant) : '—';
+      openModal('confirmModal');
+    }
+
+    /* ── Confirmation finale et appel API ─────────────── */
+    async function confirmerFinal() {
+      closeModal('confirmModal');
+
+      var motif = document.getElementById('motifAnnulation').value.trim();
+      var pwd = document.getElementById('passwordSuperviseur').value;
+      var user = currentUser();
+
+      if (!user || !user.idUser) {
+        showToast('Session expiree. Veuillez vous reconnecter.', 'error');
+        return;
+      }
+
+      var btn = document.getElementById('btnAnnuler');
+      btn.disabled = true;
+      btn.innerHTML = '<div class="login-spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px;"></div> Annulation en cours...';
+      btn.style.opacity = '0.7';
+
+      try {
+        // 1. Verifier le mot de passe
+        var verifyRes = await SF.apiFetch('/api/v1/utilisateurs/login', {
+          method: 'POST',
+          body: JSON.stringify({ login: user.login, motDePasse: pwd })
+        });
+
+        if (!verifyRes || !verifyRes.ok) {
+          showToast('Mot de passe incorrect. Veuillez reessayer.', 'error');
+          btn.disabled = false;
+          btn.innerHTML = 'Confirmer l\'annulation (contre-passation)';
+          btn.style.opacity = '1';
+          document.getElementById('passwordSuperviseur').focus();
+          return;
+        }
+
+        // 2. Appeler l'API de reversement
+        var motifComplet = 'CONTRE-PASSATION: ' + motif;
+        var reverserUrl = '/api/v1/transactions/' + encodeURIComponent(_txRef) + '/reverser?motif=' + encodeURIComponent(motifComplet);
+
+        var res = await SF.apiFetch(reverserUrl, { method: 'POST' });
+
+        if (res && res.ok) {
+          var data = await res.json().catch(function () { return null; });
+
+          // Afficher le resultat de succes
+          document.getElementById('resultModalTitle').textContent = 'Annulation reussie';
+          document.getElementById('resultModalTitle').style.color = '#2E7D32';
+          document.getElementById('resultModalBody').innerHTML =
+            '<div style="text-align:center;">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" style="width:48px;height:48px;margin-bottom:12px;">' +
+                '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>' +
+              '</svg>' +
+              '<div style="font-weight:700;font-size:16px;color:#2E7D32;margin-bottom:8px;">Transaction annulee avec succes</div>' +
+              '<div style="font-size:13px;color:#5D4037;line-height:1.5;">' +
+                'La transaction <strong style="font-family:monospace;">' + escHtml(_txRef) + '</strong> a ete annulee par contre-passation.<br>' +
+                'Les ecritures comptables inverses ont ete generees.' +
+              '</div>' +
+              (data && data.referenceUnique
+                ? '<div style="margin-top:12px;font-size:12px;color:#4A7A8A;">Reference de la contre-passation : <strong style="font-family:monospace;">' + escHtml(data.referenceUnique) + '</strong></div>'
+                : '') +
+            '</div>';
+          openModal('resultModal');
+          showToast('Transaction ' + _txRef + ' annulee avec succes.', 'success');
+        } else {
+          var err = {};
+          try { err = await res.json(); } catch (_) {}
+
+          document.getElementById('resultModalTitle').textContent = 'Echec de l\'annulation';
+          document.getElementById('resultModalTitle').style.color = '#D93025';
+          document.getElementById('resultModalBody').innerHTML =
+            '<div style="text-align:center;">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2" style="width:48px;height:48px;margin-bottom:12px;">' +
+                '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>' +
+              '</svg>' +
+              '<div style="font-weight:700;font-size:16px;color:#D93025;margin-bottom:8px;">Impossible d\'annuler la transaction</div>' +
+              '<div style="font-size:13px;color:#5D4037;line-height:1.5;">' +
+                escHtml(err.message || 'Une erreur est survenue lors de l\'annulation. Verifiez que la transaction est bien executable et que la date est J+0.') +
+              '</div>' +
+            '</div>';
+          openModal('resultModal');
+          showToast(err.message || 'Erreur lors de l\'annulation.', 'error');
+
+          btn.disabled = false;
+          btn.innerHTML = 'Confirmer l\'annulation (contre-passation)';
+          btn.style.opacity = '1';
+        }
+      } catch (e) {
+        showToast('Erreur reseau : ' + e.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = 'Confirmer l\'annulation (contre-passation)';
+        btn.style.opacity = '1';
+      }
+    }
+
+    /* ── Chargement de la transaction ─────────────────── */
+    async function chargerTransaction(ref) {
+      document.getElementById('loadingState').style.display = '';
+      document.getElementById('mainContent').style.display = 'none';
+      document.getElementById('errorState').style.display = 'none';
+
+      try {
+        var res = await Transactions.recu(ref);
+        if (!res) return; // 401 -> redirige
+
+        var data = await res.json().catch(function () { return null; });
+
+        if (res.ok && data) {
+          peupler(data);
+        } else if (res.status === 404) {
+          document.getElementById('errorMessage').textContent = 'Transaction introuvable (Ref : ' + ref + ').';
+          document.getElementById('loadingState').style.display = 'none';
+          document.getElementById('errorState').style.display = '';
+          showToast('Transaction introuvable.', 'error');
+        } else {
+          document.getElementById('errorMessage').textContent = (data && data.message) || 'Erreur lors du chargement.';
+          document.getElementById('loadingState').style.display = 'none';
+          document.getElementById('errorState').style.display = '';
+          showToast('Erreur lors du chargement de la transaction.', 'error');
+        }
+      } catch (err) {
+        document.getElementById('errorMessage').textContent = 'Impossible de joindre le serveur.';
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display = '';
+        showToast('Impossible de joindre le serveur.', 'error');
+      }
+    }
+
+    /* ── Initialisation ──────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function () {
+      var params = new URLSearchParams(window.location.search);
+      var ref = params.get('ref');
+
+      if (!ref) {
+        window.location.href = 'historique.html';
+        return;
+      }
+
+      _txRef = ref;
+      chargerTransaction(ref);
+
+      // Bouton retour
+      document.getElementById('btnRetour').addEventListener('click', function (e) {
+        e.preventDefault();
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.href = 'historique.html';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -110,6 +110,15 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional(readOnly = true)
+    public long compterNotificationsNonLues(Long idClient) {
+        if (!clientRepository.existsById(idClient)) {
+            throw new EntityNotFoundException("Client introuvable: " + idClient);
+        }
+        return notificationRepository.countByClient_IdClientAndLuFalse(idClient);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Notification consulterNotificationClient(Long idNotification, Long idClient) {
         Notification notification = notificationRepository.findById(idNotification)
                 .orElseThrow(() -> new EntityNotFoundException("Notification introuvable: " + idNotification));

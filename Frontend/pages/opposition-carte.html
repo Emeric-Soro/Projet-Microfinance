@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opposition carte - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    .warning-banner { background: #FEF3F2; border: 1px solid #D93025; border-radius: 8px; padding: 16px 20px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 20px; }
+    .warning-banner .wb-icon { color: #D93025; font-size: 1.3rem; flex-shrink: 0; }
+    .warning-banner .wb-text { color: #D93025; font-weight: 500; font-size: .9rem; }
+    .motif-radios { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0; }
+    .motif-radio { border: 2px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; cursor: pointer; transition: all .2s; }
+    .motif-radio:hover { border-color: #8cd5fa; }
+    .motif-radio.selected { border-color: #D93025; background: #FEF3F2; }
+    .motif-radio .mr-label { font-weight: 600; color: #084355; }
+    .motif-radio .mr-desc { font-size: .8rem; color: #4A7A8A; }
+    .confirmation-timer { text-align: center; padding: 16px; }
+    .confirmation-timer .ct-text { font-size: .9rem; color: #4A7A8A; margin-bottom: 8px; }
+    .timer-count { font-size: 2rem; font-weight: 700; color: #D93025; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left"><div><div class="topbar-title">Opposition de carte</div><div class="topbar-breadcrumb">Cartes / Opposition</div></div></div>
+        <div class="topbar-right"></div>
+      </header>
+      <main class="content-area">
+        <div class="page-header">
+          <div><h1 class="page-title">Opposition de carte bancaire</h1><p class="page-subtitle">Action irréversible — la carte sera définitivement bloquée.</p></div>
+          <button class="btn btn-outline" onclick="history.back()">← Retour</button>
+        </div>
+
+        <div class="warning-banner">
+          <div class="wb-icon">⚠️</div>
+          <div class="wb-text">ATTENTION : L'opposition est une action <strong>IRRÉVERSIBLE</strong>. Une fois la carte opposée, elle ne pourra plus être utilisée et une nouvelle carte devra être émise.</div>
+        </div>
+
+        <div style="max-width:640px;">
+          <!-- Info carte -->
+          <section class="card" id="cardInfoSection">
+            <div class="card-header"><div class="card-title">Carte concernée</div></div>
+            <div style="padding:16px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div><span style="color:#4A7A8A;font-size:.85rem;">N° Carte</span><br><strong id="oppNum" style="font-family:monospace;">-</strong></div>
+                <div><span style="color:#4A7A8A;font-size:.85rem;">Client</span><br><strong id="oppClient">-</strong></div>
+                <div><span style="color:#4A7A8A;font-size:.85rem;">Compte</span><br><strong id="oppCompte">-</strong></div>
+                <div><span style="color:#4A7A8A;font-size:.85rem;">Type</span><br><strong id="oppType">-</strong></div>
+                <div><span style="color:#4A7A8A;font-size:.85rem;">Statut</span><br><span class="badge badge-active" id="oppStatut">-</span></div>
+                <div><span style="color:#4A7A8A;font-size:.85rem;">Expiration</span><br><strong id="oppExpiration">-</strong></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Motif -->
+          <section class="card" style="margin-top:16px;">
+            <div class="card-header"><div class="card-title">Motif de l'opposition *</div></div>
+            <div style="padding:20px;">
+              <div class="motif-radios">
+                <div class="motif-radio" onclick="selectMotif('VOL')"><div class="mr-label">Vol</div><div class="mr-desc">La carte a été volée</div></div>
+                <div class="motif-radio" onclick="selectMotif('PERTE')"><div class="mr-label">Perte</div><div class="mr-desc">La carte a été perdue</div></div>
+                <div class="motif-radio" onclick="selectMotif('FRAUDE')"><div class="mr-label">Fraude</div><div class="mr-desc">Transactions frauduleuses détectées</div></div>
+                <div class="motif-radio" onclick="selectMotif('AUTRE')"><div class="mr-label">Autre</div><div class="mr-desc">Autre raison (à préciser)</div></div>
+              </div>
+              <div class="form-group" id="commentGroup" style="display:none;margin-top:12px;">
+                <label class="form-label">Commentaire *</label>
+                <textarea class="form-control" id="commentInput" rows="3" maxlength="200" placeholder="Détaillez le motif..." oninput="updateCharCount()"></textarea>
+                <div style="font-size:.8rem;color:#4A7A8A;text-align:right;" id="charCount">0/200</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- OTP Superviseur -->
+          <section class="card" id="otpSection" style="margin-top:16px;display:none;">
+            <div class="card-header"><div><div class="card-title">Validation OTP</div><div class="card-subtitle">Code de validation superviseur requis</div></div></div>
+            <div style="padding:20px;">
+              <div style="font-size:.9rem;color:#4A7A8A;margin-bottom:12px;">Un code OTP a été envoyé au superviseur. Saisissez-le pour valider l'opposition.</div>
+              <div class="form-group">
+                <input type="text" class="form-control" id="otpInput" maxlength="6" placeholder="Code à 6 chiffres" inputmode="numeric" style="text-align:center;font-size:1.3rem;letter-spacing:4px;">
+              </div>
+              <div class="field-error" id="otpError"></div>
+            </div>
+          </section>
+
+          <!-- Confirmation -->
+          <section class="card" style="margin-top:16px;">
+            <div style="padding:20px;">
+              <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="confirmCheck" style="margin-top:3px;" onchange="updateSubmitBtn()">
+                <span style="font-size:.9rem;">Je confirme avoir pris connaissance que cette action est <strong>irréversible</strong> et que la carte sera définitivement bloquée.</span>
+              </label>
+            </div>
+          </section>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
+            <button class="btn btn-outline" onclick="history.back()">Annuler</button>
+            <button class="btn btn-danger" id="btnOpposer" disabled onclick="showConfirmModal()">Opposer la carte</button>
+          </div>
+        </div>
+
+        <!-- Modale confirmation finale -->
+        <div class="modal-overlay" id="confirmModal">
+          <div class="modal" style="max-width:480px;">
+            <div class="modal-header">
+              <div class="modal-title" style="color:#D93025;">Confirmation d'opposition</div>
+              <button class="modal-close" onclick="closeModal('confirmModal')">&#10005;</button>
+            </div>
+            <div class="modal-body">
+              <p style="text-align:center;margin-bottom:16px;">Vous êtes sur le point d'opposer la carte <strong id="modalCardNum"></strong>. Cette action est <strong>IRRÉVERSIBLE</strong>.</p>
+              <div class="confirmation-timer">
+                <div class="ct-text">Confirmer dans</div>
+                <div class="timer-count" id="timerCount">5</div>
+                <div class="ct-text">secondes</div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-outline" onclick="closeModal('confirmModal')">Annuler</button>
+              <button class="btn btn-danger" id="btnConfirmFinal" disabled onclick="executeOpposition()">Confirmer l'opposition</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    let carteId = null;
+    let selectedMotif = '';
+    let timerInterval = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      carteId = params.get('id');
+      if (carteId) loadCarteInfo();
+    });
+
+    async function loadCarteInfo() {
+      try {
+        const res = await Cartes.obtenir(carteId);
+        if (res && res.ok) {
+          const c = await res.json();
+          document.getElementById('oppNum').textContent = c.numeroCarteMasque || '****';
+          document.getElementById('oppClient').textContent = c.titulaire || c.clientNom || '-';
+          document.getElementById('oppCompte').textContent = c.numCompte || '-';
+          document.getElementById('oppType').textContent = c.typeCarte || '-';
+          document.getElementById('oppStatut').textContent = c.statut || '-';
+          document.getElementById('oppExpiration').textContent = formatDate(c.dateExpiration);
+          document.getElementById('modalCardNum').textContent = c.numeroCarteMasque || '****';
+          const user = SF.getUser();
+          if (user && user.roles && user.roles.includes('SUPERVISEUR')) {
+            document.getElementById('otpSection').style.display = '';
+          }
+        }
+      } catch (e) { showToast('Erreur chargement carte', 'error'); }
+    }
+
+    function selectMotif(motif) {
+      selectedMotif = motif;
+      document.querySelectorAll('.motif-radio').forEach(r => r.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+      document.getElementById('commentGroup').style.display = motif === 'AUTRE' ? '' : 'none';
+      updateSubmitBtn();
+    }
+
+    function updateCharCount() {
+      document.getElementById('charCount').textContent = document.getElementById('commentInput').value.length + '/200';
+      updateSubmitBtn();
+    }
+
+    function updateSubmitBtn() {
+      const hasMotif = !!selectedMotif;
+      const commentOk = selectedMotif !== 'AUTRE' || document.getElementById('commentInput').value.trim().length > 0;
+      const checked = document.getElementById('confirmCheck').checked;
+      document.getElementById('btnOpposer').disabled = !(hasMotif && commentOk && checked);
+    }
+
+    function showConfirmModal() {
+      openModal('confirmModal');
+      let count = 5;
+      const btn = document.getElementById('btnConfirmFinal');
+      const el = document.getElementById('timerCount');
+      btn.disabled = true;
+      el.textContent = count;
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        count--;
+        el.textContent = count;
+        if (count <= 0) { clearInterval(timerInterval); btn.disabled = false; el.textContent = '✓'; }
+      }, 1000);
+    }
+
+    async function executeOpposition() {
+      const btn = document.getElementById('btnConfirmFinal');
+      btn.disabled = true; btn.textContent = 'Traitement...';
+      const body = { motif: selectedMotif, commentaire: document.getElementById('commentInput').value.trim() };
+      const otp = document.getElementById('otpInput')?.value;
+      if (otp) body.otp = otp;
+      try {
+        const res = await SF.apiFetch('/api/v1/cartes-visa/' + carteId + '/opposition', {
+          method: 'PUT', body: JSON.stringify(body)
+        });
+        if (res && res.ok) {
+          closeModal('confirmModal');
+          showToast('Carte opposée avec succès !', 'success');
+          setTimeout(() => window.location.href = 'cartes.html', 2000);
+        } else {
+          const err = res ? await res.json().catch(() => ({})) : {};
+          showToast(err.message || 'Erreur lors de l\'opposition.', 'error');
+          btn.disabled = false; btn.textContent = 'Confirmer l\'opposition';
+        }
+      } catch (e) { showToast(e.message, 'error'); btn.disabled = false; btn.textContent = 'Confirmer l\'opposition'; }
+    }
+
+    function formatDate(d) { if (!d) return '-'; try { return new Date(d).toLocaleDateString('fr-FR'); } catch { return d; } }
+  </script>
+</body>
+</html>

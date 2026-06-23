@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendrier jours feriés - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    /* ── Calendar navigation ─────────────────────── */
+    .cal-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 8px;
+    }
+    .cal-nav-center {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .cal-nav-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      min-width: 160px;
+      text-align: center;
+    }
+    .cal-nav-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      color: var(--color-primary);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+    .cal-nav-btn:hover {
+      background: var(--color-bg);
+      border-color: var(--color-primary-light);
+    }
+    .cal-year-select {
+      padding: 6px 10px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: .9rem;
+      font-weight: 600;
+      color: var(--color-primary);
+      background: var(--color-surface);
+      cursor: pointer;
+    }
+
+    /* ── View toggle ────────────────────────────── */
+    .view-toggle {
+      display: inline-flex;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .view-toggle-btn {
+      padding: 7px 14px;
+      font-size: .8rem;
+      font-weight: 600;
+      border: none;
+      background: var(--color-surface);
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .view-toggle-btn:not(:last-child) {
+      border-right: 1px solid var(--color-border);
+    }
+    .view-toggle-btn.active {
+      background: var(--color-primary);
+      color: #fff;
+    }
+    .view-toggle-btn:hover:not(.active) {
+      background: var(--color-bg);
+    }
+
+    /* ── Calendar grid ──────────────────────────── */
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+    .cal-header {
+      text-align: center;
+      font-weight: 700;
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--color-text-secondary);
+      padding: 8px 0;
+    }
+    .cal-day {
+      position: relative;
+      text-align: center;
+      padding: 10px 4px;
+      border-radius: var(--radius-sm);
+      font-size: .85rem;
+      font-weight: 500;
+      color: var(--color-primary);
+      cursor: default;
+      transition: var(--transition);
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cal-day:hover:not(.empty) {
+      background: var(--color-bg);
+    }
+    .cal-day.today {
+      font-weight: 800;
+      color: var(--color-primary);
+      box-shadow: inset 0 0 0 2px var(--color-primary);
+    }
+    .cal-day.ferie {
+      background: #FEF3F2;
+      color: var(--color-danger);
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .cal-day.ferie::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--color-danger);
+    }
+    .cal-day.empty {
+      visibility: hidden;
+    }
+    .cal-day.ferie:hover {
+      background: #FECACA;
+    }
+
+    /* ── Holiday tooltip on calendar ────────────── */
+    .cal-day.ferie[title]:hover::before {
+      content: attr(title);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--color-primary);
+      color: #fff;
+      font-size: .72rem;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 4px;
+      white-space: nowrap;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* ── Stats row ──────────────────────────────── */
+    .stats-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .stat-card {
+      flex: 1;
+      min-width: 120px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--color-primary);
+      line-height: 1.2;
+    }
+    .stat-label {
+      font-size: .72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--color-text-secondary);
+      margin-top: 2px;
+    }
+    .stat-card.danger .stat-value { color: var(--color-danger); }
+    .stat-card.warning .stat-value { color: var(--color-warning); }
+    .stat-card.success .stat-value { color: var(--color-success); }
+
+    /* ── List view table ────────────────────────── */
+    .feries-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .feries-table th {
+      text-align: left;
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--color-text-secondary);
+      padding: 10px 12px;
+      border-bottom: 2px solid var(--color-border);
+    }
+    .feries-table td {
+      padding: 12px;
+      font-size: .88rem;
+      border-bottom: 1px solid #f0f6fa;
+      vertical-align: middle;
+    }
+    .feries-table tr:hover td {
+      background: #f8fbfd;
+    }
+    .feries-table .ferie-date {
+      font-weight: 700;
+      color: var(--color-primary);
+      white-space: nowrap;
+    }
+    .feries-table .ferie-nom {
+      font-weight: 600;
+    }
+    .feries-table .ferie-jour {
+      font-size: .78rem;
+      color: var(--color-text-secondary);
+    }
+
+    /* ── Badges ─────────────────────────────────── */
+    .badge-recurrent {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 700;
+      background: #E8F5E9;
+      color: var(--color-success);
+    }
+    .badge-ponctuel {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 700;
+      background: #FFF3E0;
+      color: var(--color-warning);
+    }
+    .badge-impact {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 700;
+    }
+    .badge-impact-agence {
+      background: #FEF3F2;
+      color: var(--color-danger);
+    }
+    .badge-impact-batch {
+      background: #FFF3E0;
+      color: var(--color-warning);
+    }
+    .badge-impact-rien {
+      background: #F0F6FA;
+      color: var(--color-text-secondary);
+    }
+
+    /* ── Legend ──────────────────────────────────── */
+    .cal-legend {
+      display: flex;
+      gap: 20px;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #f0f6fa;
+      flex-wrap: wrap;
+    }
+    .cal-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .78rem;
+      color: var(--color-text-secondary);
+    }
+    .cal-legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .cal-legend-dot.today { box-shadow: inset 0 0 0 2px var(--color-primary); background: var(--color-surface); }
+    .cal-legend-dot.ferie { background: var(--color-danger); }
+    .cal-legend-dot.recurrent { background: var(--color-success); }
+
+    /* ── Delete confirmation modal ──────────────── */
+    .confirm-delete-info {
+      background: #FEF3F2;
+      border: 1px solid #FECACA;
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+    .confirm-delete-info strong {
+      color: var(--color-danger);
+    }
+
+    /* ── Calendar grid wrapper ──────────────────── */
+    .cal-grid-container {
+      padding: 20px;
+    }
+
+    /* ── Responsive ─────────────────────────────── */
+    @media (max-width: 900px) {
+      .grid-2 { grid-template-columns: 1fr !important; }
+      .stats-row { flex-direction: column; }
+    }
+    @media (max-width: 600px) {
+      .cal-day { padding: 6px 2px; font-size: .78rem; min-height: 34px; }
+      .cal-nav { flex-direction: column; gap: 8px; }
+      .page-header { flex-direction: column; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Calendrier jours feriés</div>
+            <div class="topbar-breadcrumb">Paramétrage / Jours feriés</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+
+      <main class="content-area">
+        <!-- Page header -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Jours feriés</h1>
+            <p class="page-subtitle">Gestion du calendrier institutionnel — impact sur agences, caisse et DAT.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openAddModal()">+ Ajouter un jour ferié</button>
+        </div>
+
+        <!-- Stats row -->
+        <div class="stats-row" id="statsRow">
+          <div class="stat-card">
+            <div class="stat-value" id="statTotal">-</div>
+            <div class="stat-label">Total feriés</div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-value" id="statRecurrents">-</div>
+            <div class="stat-label">Récurrents</div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-value" id="statPonctuels">-</div>
+            <div class="stat-label">Ponctuels</div>
+          </div>
+          <div class="stat-card danger">
+            <div class="stat-value" id="statRestants">-</div>
+            <div class="stat-label">Restants cette année</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Calendar card -->
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Calendrier</div>
+                <div class="card-subtitle" id="calSubtitle">-</div>
+              </div>
+              <div class="view-toggle">
+                <button class="view-toggle-btn active" id="btnCalView" onclick="setView('calendar')">Calendrier</button>
+                <button class="view-toggle-btn" id="btnListView" onclick="setView('list')">Liste</button>
+              </div>
+            </div>
+
+            <!-- Calendar navigation -->
+            <div class="cal-grid-container">
+              <div class="cal-nav">
+                <button class="cal-nav-btn" onclick="changeMonth(-1)" title="Mois précédent">&#9664;</button>
+                <div class="cal-nav-center">
+                  <select class="cal-year-select" id="yearSelect" onchange="changeYear()"></select>
+                  <div class="cal-nav-title" id="calTitle">-</div>
+                </div>
+                <button class="cal-nav-btn" onclick="changeMonth(1)" title="Mois suivant">&#9654;</button>
+              </div>
+
+              <!-- Calendar grid view -->
+              <div id="calendarView">
+                <div class="cal-grid" id="calGrid"></div>
+                <div class="cal-legend">
+                  <div class="cal-legend-item"><div class="cal-legend-dot today"></div> Aujourd'hui</div>
+                  <div class="cal-legend-item"><div class="cal-legend-dot ferie"></div> Jour ferié</div>
+                  <div class="cal-legend-item"><div class="cal-legend-dot recurrent"></div> Récurrent</div>
+                </div>
+              </div>
+
+              <!-- List view -->
+              <div id="listView" style="display:none;">
+                <div id="monthFeriesList"></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- All holidays list card -->
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Jours feriés de l'année</div>
+                <div class="card-subtitle" id="feriesCount">-</div>
+              </div>
+              <select class="form-control" id="filterImpact" style="width:180px;font-size:.82rem;" onchange="renderFeriesList()">
+                <option value="">Tous impacts</option>
+                <option value="AGENCE_FERMEE">Agence fermée</option>
+                <option value="BATCHS_REPORTES">Batchs reportés</option>
+              </select>
+            </div>
+            <div style="padding:0;">
+              <table class="data-table" id="feriesTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Nom</th>
+                    <th>Récurrent</th>
+                    <th>Impact</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="feriesTableBody">
+                  <tr><td colspan="5" style="text-align:center;padding:24px;">Chargement...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Add holiday modal -->
+  <div class="modal-overlay" id="addFerieModal">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header">
+        <div class="modal-title">Ajouter un jour ferié</div>
+        <button class="modal-close" onclick="closeModal('addFerieModal')">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Date *</label>
+          <input type="date" class="form-control" id="ferieDate" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nom *</label>
+          <input type="text" class="form-control" id="ferieNom" placeholder="Ex: Fête nationale" maxlength="150" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pays</label>
+          <select class="form-control" id="feriePays">
+            <option value="">Tous les pays</option>
+            <option value="CI">Côte d'Ivoire</option>
+            <option value="SN">Sénégal</option>
+            <option value="ML">Mali</option>
+            <option value="BF">Burkina Faso</option>
+            <option value="TG">Togo</option>
+            <option value="BJ">Bénin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <input type="checkbox" id="ferieRecurrent" style="width:18px;height:18px;accent-color:var(--color-primary);">
+            <span style="font-weight:500;">Jour ferié récurrent (chaque année)</span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('addFerieModal')">Annuler</button>
+        <button class="btn btn-primary" id="btnAdd" onclick="addFerie()">Ajouter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete confirmation modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width:440px;">
+      <div class="modal-header">
+        <div class="modal-title">Confirmer la suppression</div>
+        <button class="modal-close" onclick="closeModal('deleteModal')">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-delete-info">
+          <p>Êtes-vous sûr de vouloir supprimer ce jour ferié ?</p>
+          <p style="margin-top:8px;"><strong id="deleteTargetName">-</strong></p>
+          <p style="font-size:.85rem;color:var(--color-text-secondary);margin-top:4px;" id="deleteTargetDate">-</p>
+        </div>
+        <p style="font-size:.82rem;color:var(--color-text-secondary);">
+          Cette action est irréversible. Les opérations planifiées à cette date pourront désormais être exécutées.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('deleteModal')">Annuler</button>
+        <button class="btn" id="btnConfirmDelete" style="background:var(--color-danger);color:#fff;" onclick="confirmDelete()">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ── State ─────────────────────────────────────── */
+    let currentYear, currentMonth;
+    let allFeries = [];
+    let currentView = 'calendar';
+    let deleteTargetId = null;
+
+    const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin',
+                    'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    const DAYS_HEADER = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+    /* ── Init ──────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', () => {
+      const now = new Date();
+      currentYear = now.getFullYear();
+      currentMonth = now.getMonth();
+      initYearSelect();
+      loadFeries();
+    });
+
+    function initYearSelect() {
+      const sel = document.getElementById('yearSelect');
+      const startYear = currentYear - 3;
+      const endYear = currentYear + 3;
+      for (let y = startYear; y <= endYear; y++) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        if (y === currentYear) opt.selected = true;
+        sel.appendChild(opt);
+      }
+    }
+
+    /* ── Data loading ──────────────────────────────── */
+    async function loadFeries() {
+      try {
+        const res = await SF.apiFetch('/api/v1/parametrages/jours-feries');
+        if (!res) return;
+        if (res.ok) {
+          const data = await res.json();
+          allFeries = Array.isArray(data) ? data : (data.content || []);
+        } else {
+          showToast('Erreur lors du chargement des jours feriés.', 'error');
+        }
+      } catch (e) {
+        console.error('loadFeries error:', e);
+        showToast('Impossible de charger les jours feriés.', 'error');
+      }
+      renderAll();
+    }
+
+    /* ── Master render ─────────────────────────────── */
+    function renderAll() {
+      renderStats();
+      renderCalendarTitle();
+      renderCalendar();
+      renderFeriesList();
+      renderMonthList();
+    }
+
+    /* ── Stats ─────────────────────────────────────── */
+    function renderStats() {
+      const today = new Date();
+      const todayStr = today.toISOString().slice(0, 10);
+      const yearFeries = allFeries.filter(f => {
+        const d = (f.dateJour || f.date || '');
+        return d.startsWith(String(currentYear));
+      });
+      const recurrents = yearFeries.filter(f => f.recurrent === true);
+      const ponctuels = yearFeries.filter(f => f.recurrent !== true);
+      const restants = yearFeries.filter(f => (f.dateJour || f.date || '') >= todayStr);
+
+      document.getElementById('statTotal').textContent = yearFeries.length;
+      document.getElementById('statRecurrents').textContent = recurrents.length;
+      document.getElementById('statPonctuels').textContent = ponctuels.length;
+      document.getElementById('statRestants').textContent = restants.length;
+    }
+
+    /* ── Calendar title ────────────────────────────── */
+    function renderCalendarTitle() {
+      document.getElementById('calTitle').textContent = MONTHS[currentMonth] + ' ' + currentYear;
+      const yearFeries = allFeries.filter(f => (f.dateJour || f.date || '').startsWith(String(currentYear)));
+      document.getElementById('calSubtitle').textContent = yearFeries.length + ' jour(s) ferié(s) configuré(s) pour ' + currentYear;
+    }
+
+    /* ── Calendar grid ─────────────────────────────── */
+    function renderCalendar() {
+      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      const today = new Date();
+
+      // Build set of holiday dates for fast lookup
+      const ferieMap = {};
+      allFeries.forEach(f => {
+        const d = (f.dateJour || f.date || '');
+        if (d) ferieMap[d] = f;
+      });
+
+      const grid = document.getElementById('calGrid');
+      let html = DAYS_HEADER.map(d => '<div class="cal-header">' + d + '</div>').join('');
+
+      // Monday=0 start: JS getDay() 0=Sun, so shift
+      const startDay = firstDay === 0 ? 6 : firstDay - 1;
+      for (let i = 0; i < startDay; i++) {
+        html += '<div class="cal-day empty"></div>';
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const mm = String(currentMonth + 1).padStart(2, '0');
+        const dd = String(d).padStart(2, '0');
+        const dateStr = currentYear + '-' + mm + '-' + dd;
+        const isToday = today.getFullYear() === currentYear && today.getMonth() === currentMonth && today.getDate() === d;
+        const ferie = ferieMap[dateStr];
+        const classes = ['cal-day'];
+        if (isToday) classes.push('today');
+        if (ferie) classes.push('ferie');
+        const title = ferie ? (ferie.nom || 'Jour ferié') : '';
+        html += '<div class="' + classes.join(' ') + '" title="' + escapeHtml(title) + '">' + d + '</div>';
+      }
+
+      grid.innerHTML = html;
+    }
+
+    /* ── Month list (inside calendar card) ─────────── */
+    function renderMonthList() {
+      const container = document.getElementById('monthFeriesList');
+      const mm = String(currentMonth + 1).padStart(2, '0');
+      const prefix = currentYear + '-' + mm;
+      const monthFeries = allFeries
+        .filter(f => (f.dateJour || f.date || '').startsWith(prefix))
+        .sort((a, b) => (a.dateJour || a.date || '').localeCompare(b.dateJour || b.date || ''));
+
+      if (!monthFeries.length) {
+        container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--color-text-secondary);">Aucun jour ferié en ' + MONTHS[currentMonth] + ' ' + currentYear + '.</div>';
+        return;
+      }
+
+      let html = '<table class="feries-table"><thead><tr><th>Date</th><th>Nom</th><th>Type</th><th>Impact</th></tr></thead><tbody>';
+      monthFeries.forEach(f => {
+        const d = f.dateJour || f.date || '';
+        const dayName = getDayName(d);
+        html += '<tr>';
+        html += '<td class="ferie-date">' + formatDateFr(d) + '</td>';
+        html += '<td class="ferie-nom">' + escapeHtml(f.nom || '-') + '</td>';
+        html += '<td>' + (f.recurrent ? '<span class="badge-recurrent">Récurrent</span>' : '<span class="badge-ponctuel">Ponctuel</span>') + '</td>';
+        html += '<td>' + getImpactBadge(f) + '</td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    /* ── Full year list (right card) ───────────────── */
+    function renderFeriesList() {
+      const tbody = document.getElementById('feriesTableBody');
+      const filterImpact = document.getElementById('filterImpact').value;
+
+      let yearFeries = allFeries
+        .filter(f => (f.dateJour || f.date || '').startsWith(String(currentYear)))
+        .sort((a, b) => (a.dateJour || a.date || '').localeCompare(b.dateJour || b.date || ''));
+
+      if (filterImpact) {
+        yearFeries = yearFeries.filter(f => getImpactType(f) === filterImpact);
+      }
+
+      document.getElementById('feriesCount').textContent = yearFeries.length + ' jour(s) ferié(s)' + (filterImpact ? ' (filtré)' : '');
+
+      if (!yearFeries.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--color-text-secondary);">Aucun jour ferié configuré pour ' + currentYear + '.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = yearFeries.map(f => {
+        const d = f.dateJour || f.date || '';
+        const dayName = getDayName(d);
+        return '<tr>' +
+          '<td><div class="ferie-date">' + formatDateFr(d) + '</div><div class="ferie-jour">' + dayName + '</div></td>' +
+          '<td class="ferie-nom">' + escapeHtml(f.nom || '-') + '</td>' +
+          '<td>' + (f.recurrent ? '<span class="badge-recurrent">Récurrent</span>' : '<span class="badge-ponctuel">Ponctuel</span>') + '</td>' +
+          '<td>' + getImpactBadge(f) + '</td>' +
+          '<td><button class="btn btn-ghost btn-sm" onclick="openDeleteModal(\'' + f.id + '\',\'' + escapeHtml(f.nom || '') + '\',\'' + d + '\')" title="Supprimer">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>' +
+          '</button></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    /* ── View toggle ───────────────────────────────── */
+    function setView(view) {
+      currentView = view;
+      document.getElementById('calendarView').style.display = view === 'calendar' ? 'block' : 'none';
+      document.getElementById('listView').style.display = view === 'list' ? 'block' : 'none';
+      document.getElementById('btnCalView').classList.toggle('active', view === 'calendar');
+      document.getElementById('btnListView').classList.toggle('active', view === 'list');
+    }
+
+    /* ── Navigation ────────────────────────────────── */
+    function changeMonth(delta) {
+      currentMonth += delta;
+      if (currentMonth > 11) { currentMonth = 0; currentYear++; syncYearSelect(); }
+      if (currentMonth < 0) { currentMonth = 11; currentYear--; syncYearSelect(); }
+      renderAll();
+    }
+
+    function changeYear() {
+      currentYear = parseInt(document.getElementById('yearSelect').value, 10);
+      renderAll();
+    }
+
+    function syncYearSelect() {
+      const sel = document.getElementById('yearSelect');
+      // Add option if year is out of range
+      let found = false;
+      for (let i = 0; i < sel.options.length; i++) {
+        if (parseInt(sel.options[i].value) === currentYear) { found = true; break; }
+      }
+      if (!found) {
+        const opt = document.createElement('option');
+        opt.value = currentYear;
+        opt.textContent = currentYear;
+        sel.appendChild(opt);
+        // Sort options
+        const opts = Array.from(sel.options).sort((a, b) => a.value - b.value);
+        sel.innerHTML = '';
+        opts.forEach(o => sel.appendChild(o));
+      }
+      sel.value = currentYear;
+    }
+
+    /* ── Add holiday ───────────────────────────────── */
+    function openAddModal() {
+      document.getElementById('ferieDate').value = '';
+      document.getElementById('ferieNom').value = '';
+      document.getElementById('feriePays').value = '';
+      document.getElementById('ferieRecurrent').checked = false;
+      openModal('addFerieModal');
+    }
+
+    async function addFerie() {
+      const date = document.getElementById('ferieDate').value;
+      const nom = document.getElementById('ferieNom').value.trim();
+      const pays = document.getElementById('feriePays').value;
+      const recurrent = document.getElementById('ferieRecurrent').checked;
+
+      if (!date || !nom) {
+        showToast('Veuillez remplir la date et le nom.', 'warning');
+        return;
+      }
+
+      // Check duplicate
+      const exists = allFeries.some(f => (f.dateJour || f.date || '') === date);
+      if (exists) {
+        showToast('Un jour ferié existe déjà à cette date.', 'warning');
+        return;
+      }
+
+      const btn = document.getElementById('btnAdd');
+      btn.disabled = true;
+      btn.textContent = 'Ajout...';
+
+      try {
+        // Build the full list with the new entry appended
+        const newEntry = { nom: nom, dateJour: date, recurrent: recurrent };
+        if (pays) newEntry.pays = pays;
+        const updatedList = allFeries.map(f => ({
+          nom: f.nom,
+          dateJour: f.dateJour || f.date,
+          recurrent: f.recurrent || false,
+          pays: f.pays || null
+        }));
+        updatedList.push(newEntry);
+
+        const res = await SF.apiFetch('/api/v1/parametrages/jours-feries', {
+          method: 'PUT',
+          body: JSON.stringify(updatedList)
+        });
+
+        if (res && res.ok) {
+          showToast('Jour ferié ajouté avec succès.', 'success');
+          closeModal('addFerieModal');
+          await loadFeries();
+        } else {
+          const errData = res ? await res.json().catch(() => ({})) : {};
+          showToast(errData.message || 'Erreur lors de l\'ajout.', 'error');
+        }
+      } catch (e) {
+        console.error('addFerie error:', e);
+        showToast('Erreur: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Ajouter';
+      }
+    }
+
+    /* ── Delete holiday ────────────────────────────── */
+    function openDeleteModal(id, nom, date) {
+      deleteTargetId = id;
+      document.getElementById('deleteTargetName').textContent = nom || '-';
+      document.getElementById('deleteTargetDate').textContent = date ? formatDateFr(date) : '-';
+      openModal('deleteModal');
+    }
+
+    async function confirmDelete() {
+      if (!deleteTargetId) return;
+
+      const btn = document.getElementById('btnConfirmDelete');
+      btn.disabled = true;
+      btn.textContent = 'Suppression...';
+
+      try {
+        // Rebuild list without the deleted entry
+        const updatedList = allFeries
+          .filter(f => String(f.id) !== String(deleteTargetId))
+          .map(f => ({
+            nom: f.nom,
+            dateJour: f.dateJour || f.date,
+            recurrent: f.recurrent || false,
+            pays: f.pays || null
+          }));
+
+        const res = await SF.apiFetch('/api/v1/parametrages/jours-feries', {
+          method: 'PUT',
+          body: JSON.stringify(updatedList)
+        });
+
+        if (res && res.ok) {
+          showToast('Jour ferié supprimé.', 'success');
+          closeModal('deleteModal');
+          deleteTargetId = null;
+          await loadFeries();
+        } else {
+          showToast('Erreur lors de la suppression.', 'error');
+        }
+      } catch (e) {
+        console.error('confirmDelete error:', e);
+        showToast('Erreur: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Supprimer';
+      }
+    }
+
+    /* ── Helpers ───────────────────────────────────── */
+    function getImpactType(f) {
+      const nom = (f.nom || '').toLowerCase();
+      if (nom.includes('noël') || nom.includes('noel') || nom.includes('fête nationale') ||
+          nom.includes('fete nationale') || nom.includes('indépendance') || nom.includes('independance') ||
+          nom.includes('assomption') || nom.includes('toussaint') || nom.includes('pâques') ||
+          nom.includes('paques') || nom.includes('ascension') || nom.includes('lundi de pentecôte') ||
+          nom.includes('pentecote') || nom.includes('jour de l\'an') || nom.includes('travail')) {
+        return 'AGENCE_FERMEE';
+      }
+      if (f.recurrent) return 'BATCHS_REPORTES';
+      return 'BATCHS_REPORTES';
+    }
+
+    function getImpactBadge(f) {
+      const type = getImpactType(f);
+      if (type === 'AGENCE_FERMEE') {
+        return '<span class="badge-impact badge-impact-agence">Agence fermée</span>';
+      }
+      return '<span class="badge-impact badge-impact-batch">Batchs reportés</span>';
+    }
+
+    function formatDateFr(d) {
+      if (!d) return '-';
+      try {
+        const parts = d.split('-');
+        if (parts.length === 3) {
+          return parts[2] + '/' + parts[1] + '/' + parts[0];
+        }
+        return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      } catch { return d; }
+    }
+
+    function getDayName(d) {
+      if (!d) return '';
+      try {
+        return new Date(d + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long' });
+      } catch { return ''; }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>

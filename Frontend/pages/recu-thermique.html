@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reçu thermique - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    .receipt-container { max-width: 320px; margin: 0 auto; background: #fff; border: 1px dashed #ccc; padding: 16px; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5; }
+    .receipt-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
+    .receipt-header h2 { font-size: 14px; margin: 0; }
+    .receipt-header p { margin: 2px 0; font-size: 10px; }
+    .receipt-row { display: flex; justify-content: space-between; padding: 2px 0; }
+    .receipt-label { color: #555; }
+    .receipt-value { font-weight: bold; text-align: right; }
+    .receipt-divider { border-top: 1px dashed #000; margin: 8px 0; }
+    .receipt-total { font-size: 14px; font-weight: bold; }
+    .receipt-qr { text-align: center; margin: 12px 0; }
+    .qr-placeholder { width: 80px; height: 80px; border: 1px solid #000; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 8px; }
+    .receipt-signature { border-top: 1px solid #000; width: 120px; margin: 16px auto 0; text-align: center; font-size: 9px; padding-top: 4px; }
+    .receipt-footer { text-align: center; font-size: 9px; margin-top: 12px; border-top: 1px dashed #000; padding-top: 8px; }
+    .print-btn-bar { text-align: center; margin-bottom: 20px; }
+    @media print {
+      body * { visibility: hidden; }
+      .receipt-container, .receipt-container * { visibility: visible; }
+      .receipt-container { position: absolute; left: 0; top: 0; width: 80mm; border: none; }
+      .print-btn-bar { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left"><div><div class="topbar-title">Reçu thermique</div><div class="topbar-breadcrumb">Transactions / Reçu</div></div></div>
+        <div class="topbar-right"></div>
+      </header>
+      <main class="content-area">
+        <div class="print-btn-bar">
+          <button class="btn btn-primary" onclick="window.print()">🖨 Imprimer</button>
+          <button class="btn btn-outline" onclick="history.back()">← Retour</button>
+        </div>
+        <div class="receipt-container" id="receiptArea">
+          <div class="receipt-header">
+            <h2>SOUTRA MICROFINANCE</h2>
+            <p id="rcAgence">Agence centrale</p>
+            <p id="rcAdresse">Abidjan, Côte d'Ivoire</p>
+            <p>Tél: +225 27 20 00 00</p>
+          </div>
+          <div style="text-align:center;margin:8px 0;font-weight:bold;" id="rcType">RECU DE TRANSACTION</div>
+          <div class="receipt-divider"></div>
+          <div class="receipt-row"><span class="receipt-label">Référence</span><span class="receipt-value" id="rcRef">---</span></div>
+          <div class="receipt-row"><span class="receipt-label">Date</span><span class="receipt-value" id="rcDate">---</span></div>
+          <div class="receipt-row"><span class="receipt-label">Heure</span><span class="receipt-value" id="rcHeure">---</span></div>
+          <div class="receipt-divider"></div>
+          <div class="receipt-row"><span class="receipt-label">Type</span><span class="receipt-value" id="rcOpType">---</span></div>
+          <div class="receipt-row"><span class="receipt-label">Compte</span><span class="receipt-value" id="rcCompte">---</span></div>
+          <div class="receipt-row"><span class="receipt-label">Client</span><span class="receipt-value" id="rcClient">---</span></div>
+          <div class="receipt-divider"></div>
+          <div class="receipt-row"><span class="receipt-label">Montant</span><span class="receipt-value" id="rcMontant">0 FCFA</span></div>
+          <div class="receipt-row"><span class="receipt-label">Frais</span><span class="receipt-value" id="rcFrais">0 FCFA</span></div>
+          <div class="receipt-divider"></div>
+          <div class="receipt-row receipt-total"><span class="receipt-label">TOTAL</span><span class="receipt-value" id="rcTotal">0 FCFA</span></div>
+          <div class="receipt-qr"><div class="qr-placeholder" id="rcQR">QR CODE</div></div>
+          <div class="receipt-signature">Signature client</div>
+          <div class="receipt-footer">
+            <p>Merci de votre confiance</p>
+            <p>SOUTRA MICROFINANCE SA</p>
+            <p>Conforme BCEAO</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    function formatCurrency(n) { return (n || 0).toLocaleString('fr-FR'); }
+    function formatDate(d) { if (!d) return '---'; var dt = new Date(d); return dt.toLocaleDateString('fr-FR'); }
+    function formatTime(d) { if (!d) return '---'; var dt = new Date(d); return dt.toLocaleTimeString('fr-FR'); }
+
+    document.addEventListener('DOMContentLoaded', async function() {
+      var params = new URLSearchParams(window.location.search);
+      var ref = params.get('ref');
+      if (!ref) { showToast('Aucune référence de transaction.', 'warning'); return; }
+      try {
+        var data = await SF.apiFetch('/api/v1/transactions/' + ref + '/recu');
+        document.getElementById('rcRef').textContent = data.reference || ref;
+        document.getElementById('rcDate').textContent = formatDate(data.dateTransaction);
+        document.getElementById('rcHeure').textContent = formatTime(data.dateTransaction);
+        document.getElementById('rcType').textContent = (data.type || 'RECU').toUpperCase();
+        document.getElementById('rcOpType').textContent = data.typeOperation || '---';
+        document.getElementById('rcCompte').textContent = data.numeroCompte || '---';
+        document.getElementById('rcClient').textContent = data.nomClient || '---';
+        document.getElementById('rcMontant').textContent = formatCurrency(data.montant) + ' FCFA';
+        document.getElementById('rcFrais').textContent = formatCurrency(data.frais) + ' FCFA';
+        document.getElementById('rcTotal').textContent = formatCurrency((data.montant || 0) + (data.frais || 0)) + ' FCFA';
+        if (data.agence) document.getElementById('rcAgence').textContent = data.agence;
+        if (data.adresse) document.getElementById('rcAdresse').textContent = data.adresse;
+      } catch (e) {
+        showToast('Erreur chargement reçu: ' + e.message, 'error');
+      }
+    });
+  </script>
+</body>
+</html>

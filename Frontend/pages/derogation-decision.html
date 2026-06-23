@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Décision dérogation - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    /* ── Decision radio group ──────────────────────────── */
+    .decision-radio-group {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+    .decision-radio-group label {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border: 2px solid #C9DFE8;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 600;
+      font-size: 14px;
+      color: #084355;
+    }
+    .decision-radio-group label:hover {
+      border-color: #4A7A8A;
+      background: #F0F7FA;
+    }
+    .decision-radio-group input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #084355;
+      cursor: pointer;
+    }
+    .decision-radio-group label.radio-approved {
+      border-color: #C9DFE8;
+    }
+    .decision-radio-group label.radio-approved:has(input:checked) {
+      border-color: #2E7D32;
+      background: rgba(46, 125, 50, 0.08);
+      color: #2E7D32;
+    }
+    .decision-radio-group label.radio-rejected {
+      border-color: #C9DFE8;
+    }
+    .decision-radio-group label.radio-rejected:has(input:checked) {
+      border-color: #D93025;
+      background: rgba(217, 48, 37, 0.08);
+      color: #D93025;
+    }
+
+    /* ── Detail rows ──────────────────────────────────── */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+    }
+    .detail-row {
+      display: flex;
+      flex-direction: column;
+      padding: 12px 16px;
+      border-bottom: 1px solid #E8F0F2;
+    }
+    .detail-row:last-child,
+    .detail-row:nth-last-child(2):nth-child(odd) {
+      border-bottom: none;
+    }
+    .detail-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #4A7A8A;
+      margin-bottom: 4px;
+    }
+    .detail-value {
+      font-size: 14px;
+      color: #084355;
+      font-weight: 500;
+    }
+    .detail-full {
+      grid-column: 1 / -1;
+    }
+
+    /* ── Signature canvas ─────────────────────────────── */
+    .signature-container {
+      border: 2px dashed #C9DFE8;
+      border-radius: 8px;
+      background: #FAFCFD;
+      position: relative;
+      overflow: hidden;
+    }
+    .signature-container.is-signed {
+      border-style: solid;
+      border-color: #2E7D32;
+      background: #fff;
+    }
+    .signature-container canvas {
+      display: block;
+      width: 100%;
+      cursor: crosshair;
+      touch-action: none;
+    }
+    .signature-placeholder {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #9CB8C4;
+      font-size: 14px;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .signature-container.is-signed .signature-placeholder {
+      opacity: 0;
+    }
+    .signature-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    /* ── Decision summary preview ─────────────────────── */
+    .decision-preview {
+      display: none;
+      background: #F0F7FA;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+      border-left: 3px solid #4A7A8A;
+    }
+    .decision-preview.is-approved {
+      border-left-color: #2E7D32;
+      background: rgba(46, 125, 50, 0.05);
+    }
+    .decision-preview.is-rejected {
+      border-left-color: #D93025;
+      background: rgba(217, 48, 37, 0.05);
+    }
+
+    /* ── Status timeline ──────────────────────────────── */
+    .status-timeline {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 16px;
+    }
+    .timeline-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      position: relative;
+    }
+    .timeline-step::after {
+      content: '';
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      width: 100%;
+      height: 2px;
+      background: #C9DFE8;
+      z-index: 0;
+    }
+    .timeline-step:last-child::after {
+      display: none;
+    }
+    .timeline-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #C9DFE8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+      margin-bottom: 6px;
+    }
+    .timeline-dot svg {
+      width: 14px;
+      height: 14px;
+      stroke: #fff;
+    }
+    .timeline-step.active .timeline-dot {
+      background: #F4A623;
+    }
+    .timeline-step.done .timeline-dot {
+      background: #2E7D32;
+    }
+    .timeline-step.rejected-step .timeline-dot {
+      background: #D93025;
+    }
+    .timeline-label {
+      font-size: 11px;
+      color: #4A7A8A;
+      text-align: center;
+      font-weight: 600;
+    }
+    .timeline-step.active .timeline-label,
+    .timeline-step.done .timeline-label {
+      color: #084355;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Décision de dérogation</div>
+            <div class="topbar-breadcrumb">Accueil / Pilotage &amp; Audit / Exceptions / Décision</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a href="derogation-liste.html" class="btn btn-ghost btn-sm">← Retour à la liste</a>
+          <button class="topbar-icon-btn" onclick="loadDerogation()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Décision de dérogation</h1>
+            <p class="page-subtitle">Endpoint : PUT /api/v1/exceptions/derogations/{id}/decision</p>
+          </div>
+          <a href="derogation-liste.html" class="btn btn-outline">← Retour à la liste</a>
+        </div>
+
+        <!-- Status timeline -->
+        <section class="card" id="timelineCard" style="display:none; margin-bottom: 24px;">
+          <div class="status-timeline" id="statusTimeline">
+            <div class="timeline-step done">
+              <div class="timeline-dot">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div class="timeline-label">Soumise</div>
+            </div>
+            <div class="timeline-step active">
+              <div class="timeline-dot">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="3"/></svg>
+              </div>
+              <div class="timeline-label">En décision</div>
+            </div>
+            <div class="timeline-step">
+              <div class="timeline-dot"></div>
+              <div class="timeline-label">Traitée</div>
+            </div>
+          </div>
+        </section>
+
+        <div class="grid-2">
+          <!-- Left: Request details -->
+          <div>
+            <!-- Derogation info card -->
+            <section class="card" style="margin-bottom: 24px;">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Détails de la demande</div>
+                  <div class="card-subtitle" id="cardSubtitle">Chargement...</div>
+                </div>
+                <span class="badge" id="statusBadge">-</span>
+              </div>
+              <div class="detail-grid" id="detailGrid">
+                <div class="detail-row">
+                  <div class="detail-label">Référence</div>
+                  <div class="detail-value" id="dReference">-</div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">Type de dérogation</div>
+                  <div class="detail-value" id="dType">-</div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">Date de création</div>
+                  <div class="detail-value" id="dDateCreation">-</div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">Niveau d'urgence</div>
+                  <div class="detail-value" id="dUrgence">-</div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">Montant concerné</div>
+                  <div class="detail-value" id="dMontant">-</div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">Demandeur</div>
+                  <div class="detail-value" id="dDemandeur">-</div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">Client concerné</div>
+                  <div class="detail-value" id="dClient">-</div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">Transaction liée</div>
+                  <div class="detail-value" id="dTransaction">-</div>
+                </div>
+                <div class="detail-row detail-full">
+                  <div class="detail-label">Objet de la dérogation</div>
+                  <div class="detail-value" id="dDescription">-</div>
+                </div>
+                <div class="detail-row detail-full">
+                  <div class="detail-label">Justification</div>
+                  <div class="detail-value" id="dMotif" style="line-height:1.6;">-</div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Previous treatment info (if already processed) -->
+            <section class="card" id="previousDecisionCard" style="display:none; margin-bottom: 24px;">
+              <div class="card-header">
+                <div class="card-title">Décision précédente</div>
+              </div>
+              <div class="detail-grid">
+                <div class="detail-row">
+                  <div class="detail-label">Traité par</div>
+                  <div class="detail-value" id="dTraitePar">-</div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">Date de traitement</div>
+                  <div class="detail-value" id="dDateTraitement">-</div>
+                </div>
+                <div class="detail-row detail-full">
+                  <div class="detail-label">Motif du traitement</div>
+                  <div class="detail-value" id="dMotifTraitement" style="line-height:1.6;">-</div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Right: Decision form -->
+          <div>
+            <section class="card" id="decisionFormCard">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Formulaire de décision</div>
+                  <div class="card-subtitle">Rendre une décision sur cette demande de dérogation</div>
+                </div>
+              </div>
+              <div style="padding: 0 20px 20px;">
+                <form id="decisionForm" novalidate>
+
+                  <!-- Decision radio -->
+                  <div class="form-group">
+                    <label class="form-label">Décision *</label>
+                    <div class="decision-radio-group">
+                      <label class="radio-approved">
+                        <input type="radio" name="decision" value="APPROUVE" required>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        <span>Approuver</span>
+                      </label>
+                      <label class="radio-rejected">
+                        <input type="radio" name="decision" value="REJETE" required>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                        <span>Rejeter</span>
+                      </label>
+                    </div>
+                    <div class="field-error" id="decision-error">Veuillez sélectionner une décision.</div>
+                  </div>
+
+                  <!-- Motif textarea -->
+                  <div class="form-group">
+                    <label class="form-label" for="motifDecision">Motif de la décision *</label>
+                    <textarea class="form-control" id="motifDecision" name="motifDecision" rows="4"
+                              placeholder="Indiquez les raisons de votre décision (obligatoire pour un rejet)…"
+                              required maxlength="500"></textarea>
+                    <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                      <div class="field-error" id="motifDecision-error">Le motif est obligatoire.</div>
+                      <span style="font-size: 12px; color: #4A7A8A;"><span id="motifCount">0</span>/500</span>
+                    </div>
+                  </div>
+
+                  <!-- Digital signature -->
+                  <div class="form-group">
+                    <label class="form-label">Signature numérique *</label>
+                    <div class="signature-container" id="signatureContainer">
+                      <canvas id="signatureCanvas" width="600" height="150"></canvas>
+                      <div class="signature-placeholder" id="signaturePlaceholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:24px;height:24px;display:inline-block;vertical-align:middle;margin-right:6px;"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                        Signez ici avec votre souris ou doigt
+                      </div>
+                    </div>
+                    <div class="signature-actions">
+                      <button type="button" class="btn btn-ghost btn-sm" id="btnClearSignature">Effacer la signature</button>
+                    </div>
+                    <div class="field-error" id="signature-error">La signature numérique est obligatoire.</div>
+                  </div>
+
+                  <!-- Decision preview -->
+                  <div class="decision-preview" id="decisionPreview">
+                    <div style="font-size:13px; font-weight:600; color:#084355; margin-bottom:6px;">Récapitulatif de la décision</div>
+                    <div style="font-size:13px; color:#4A7A8A;">
+                      <span id="previewDecision">-</span> — <span id="previewMotif">-</span>
+                    </div>
+                  </div>
+
+                  <!-- Submit error -->
+                  <div id="submitError" style="display:none; background:#FFF3F3; border-left:3px solid #D93025; padding:10px 14px; border-radius:6px; color:#D93025; font-size:13px; margin-bottom:16px;"></div>
+
+                  <!-- Buttons -->
+                  <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                    <a href="derogation-liste.html" class="btn btn-outline">Annuler</a>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                      <span class="btn-text">Confirmer la décision</span>
+                      <div class="login-spinner" style="display:none; width:18px; height:18px;"></div>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </section>
+
+            <!-- Already processed notice -->
+            <section class="card" id="alreadyProcessedCard" style="display:none;">
+              <div style="padding: 24px; text-align: center;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:48px;height:48px;color:#4A7A8A;margin-bottom:12px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <div style="font-size:15px; font-weight:600; color:#084355; margin-bottom:6px;">Dérogation déjà traitée</div>
+                <div style="font-size:13px; color:#4A7A8A; margin-bottom:16px;">Cette demande a déjà fait l'objet d'une décision. Aucune action supplémentaire n'est requise.</div>
+                <a href="derogation-liste.html" class="btn btn-outline btn-sm">Retour à la liste</a>
+              </div>
+            </section>
+
+            <!-- Info sidebar -->
+            <section class="card" style="margin-top: 24px;">
+              <div class="card-title" style="margin-bottom: 12px;">Rappel</div>
+              <div style="font-size: 13px; color: #4A7A8A; line-height: 1.7;">
+                <p>La décision de dérogation est <strong>irréversible</strong> une fois confirmée.</p>
+                <p>Pour un <strong>rejet</strong>, le motif est obligatoire et sera communiqué au demandeur.</p>
+                <p>La <strong>signature numérique</strong> authentifie votre décision et garantit la traçabilité.</p>
+              </div>
+              <hr style="border:0; border-top:1px solid #C9DFE8; margin:16px 0;">
+              <div class="card-title" style="margin-bottom: 12px;">Statuts possibles</div>
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <span class="badge badge-success" style="width: fit-content;">APPROUVE — Dérogation acceptée</span>
+                <span class="badge badge-danger" style="width: fit-content;">REJETE — Dérogation refusée</span>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ── State ───────────────────────────────────────── */
+    var derogationData = null;
+    var signatureData = null;
+    var isDrawing = false;
+    var signatureCanvas, signatureCtx;
+
+    /* ── Init on DOM ready ───────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function () {
+      initSignatureCanvas();
+      loadDerogation();
+      initFormListeners();
+    });
+
+    /* ── Load derogation from API ────────────────────── */
+    async function loadDerogation() {
+      var params = new URLSearchParams(window.location.search);
+      var id = params.get('id');
+
+      if (!id) {
+        showToast('Aucun identifiant de dérogation fourni.', 'error');
+        showLoadError('Identifiant manquant dans l\'URL.');
+        return;
+      }
+
+      try {
+        var res = await SF.apiFetch('/api/v1/exceptions/derogations/' + id);
+
+        if (!res) return; // 401 redirected
+
+        if (res.ok) {
+          var data = await res.json();
+          derogationData = data;
+          renderDerogation(data);
+        } else if (res.status === 404) {
+          showLoadError('Dérogation introuvable (ID: ' + id + ').');
+        } else {
+          var err = await res.json().catch(function () { return {}; });
+          showLoadError(err.message || 'Erreur lors du chargement (HTTP ' + res.status + ').');
+        }
+      } catch (e) {
+        console.error(e);
+        showLoadError('Impossible de charger la dérogation : ' + e.message);
+      }
+    }
+
+    function showLoadError(msg) {
+      document.getElementById('detailGrid').innerHTML =
+        '<div style="grid-column:1/-1;text-align:center;padding:32px;color:#D93025;">' + msg + '</div>';
+    }
+
+    /* ── Render derogation details ───────────────────── */
+    function renderDerogation(d) {
+      var statut = (d.statut || 'SOUMISE').toUpperCase();
+      var isProcessed = (statut === 'APPROUVE' || statut === 'REJETE' || statut === 'ANNULEE');
+
+      // Subtitle
+      var ref = d.reference || ('DER-' + (d.id || ''));
+      document.getElementById('cardSubtitle').textContent = 'Réf. ' + ref;
+
+      // Status badge
+      var badge = document.getElementById('statusBadge');
+      var statusMap = {
+        'SOUMISE':  { cls: 'badge-pending', label: 'En attente' },
+        'APPROUVE': { cls: 'badge-success', label: 'Approuvée' },
+        'REJETE':   { cls: 'badge-danger',  label: 'Rejetée' },
+        'ANNULEE':  { cls: 'badge-blocked', label: 'Annulée' }
+      };
+      var s = statusMap[statut] || { cls: 'badge-info', label: statut };
+      badge.className = 'badge ' + s.cls;
+      badge.textContent = s.label;
+
+      // Detail fields
+      document.getElementById('dReference').textContent = ref;
+      document.getElementById('dType').textContent = formatType(d.typeDerogation);
+      document.getElementById('dDateCreation').textContent = formatDate(d.dateCreation);
+      document.getElementById('dUrgence').innerHTML = getUrgenceBadge(d.niveauUrgence || d.urgence);
+      document.getElementById('dMontant').textContent = d.montantConcerne ? formatMontant(d.montantConcerne) : '-';
+      document.getElementById('dDemandeur').textContent = d.creePar || '-';
+      document.getElementById('dClient').textContent = d.clientNom || (d.idClient ? 'Client #' + d.idClient : '-');
+      document.getElementById('dTransaction').textContent = d.referenceTransaction || (d.idTransaction ? 'TXN #' + d.idTransaction : '-');
+      document.getElementById('dDescription').textContent = d.description || '-';
+      document.getElementById('dMotif').textContent = d.motif || d.justification || '-';
+
+      // Update timeline
+      updateTimeline(statut);
+
+      // Show/hide decision form based on status
+      if (isProcessed) {
+        document.getElementById('decisionFormCard').style.display = 'none';
+        document.getElementById('alreadyProcessedCard').style.display = 'block';
+        document.getElementById('previousDecisionCard').style.display = 'block';
+
+        document.getElementById('dTraitePar').textContent = d.traitePar || '-';
+        document.getElementById('dDateTraitement').textContent = formatDate(d.dateTraitement);
+        document.getElementById('dMotifTraitement').textContent = d.motifTraitement || '-';
+      } else {
+        document.getElementById('decisionFormCard').style.display = 'block';
+        document.getElementById('alreadyProcessedCard').style.display = 'none';
+        document.getElementById('previousDecisionCard').style.display = 'none';
+      }
+    }
+
+    /* ── Update timeline ─────────────────────────────── */
+    function updateTimeline(statut) {
+      var card = document.getElementById('timelineCard');
+      card.style.display = 'block';
+
+      var steps = document.querySelectorAll('#statusTimeline .timeline-step');
+      // Reset all
+      steps.forEach(function (step) {
+        step.classList.remove('done', 'active', 'rejected-step');
+      });
+
+      if (statut === 'SOUMISE') {
+        steps[0].classList.add('done');
+        steps[1].classList.add('active');
+        steps[2].classList.remove('done', 'active');
+      } else if (statut === 'APPROUVE') {
+        steps[0].classList.add('done');
+        steps[1].classList.add('done');
+        steps[2].classList.add('done');
+        steps[2].querySelector('.timeline-label').textContent = 'Approuvée';
+      } else if (statut === 'REJETE') {
+        steps[0].classList.add('done');
+        steps[1].classList.add('done');
+        steps[2].classList.add('rejected-step');
+        steps[2].querySelector('.timeline-label').textContent = 'Rejetée';
+      } else {
+        steps[0].classList.add('done');
+        steps[1].classList.add('active');
+      }
+    }
+
+    /* ── Signature canvas ────────────────────────────── */
+    function initSignatureCanvas() {
+      signatureCanvas = document.getElementById('signatureCanvas');
+      signatureCtx = signatureCanvas.getContext('2d');
+
+      // Adjust canvas resolution for retina
+      var rect = signatureCanvas.getBoundingClientRect();
+      var dpr = window.devicePixelRatio || 1;
+      signatureCanvas.width = rect.width * dpr;
+      signatureCanvas.height = 150 * dpr;
+      signatureCanvas.style.height = '150px';
+      signatureCtx.scale(dpr, dpr);
+      signatureCtx.strokeStyle = '#084355';
+      signatureCtx.lineWidth = 2;
+      signatureCtx.lineCap = 'round';
+      signatureCtx.lineJoin = 'round';
+
+      // Mouse events
+      signatureCanvas.addEventListener('mousedown', startDraw);
+      signatureCanvas.addEventListener('mousemove', draw);
+      signatureCanvas.addEventListener('mouseup', stopDraw);
+      signatureCanvas.addEventListener('mouseleave', stopDraw);
+
+      // Touch events
+      signatureCanvas.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        startDraw(getTouchPos(e));
+      });
+      signatureCanvas.addEventListener('touchmove', function (e) {
+        e.preventDefault();
+        draw(getTouchPos(e));
+      });
+      signatureCanvas.addEventListener('touchend', stopDraw);
+
+      // Clear button
+      document.getElementById('btnClearSignature').addEventListener('click', clearSignature);
+    }
+
+    function getPos(e) {
+      var rect = signatureCanvas.getBoundingClientRect();
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    }
+
+    function getTouchPos(e) {
+      var rect = signatureCanvas.getBoundingClientRect();
+      var touch = e.touches[0];
+      return {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+      };
+    }
+
+    function startDraw(e) {
+      isDrawing = true;
+      var pos = e.clientX !== undefined ? getPos(e) : e;
+      signatureCtx.beginPath();
+      signatureCtx.moveTo(pos.x, pos.y);
+      document.getElementById('signatureContainer').classList.add('is-signed');
+      // Clear signature error
+      var sigErr = document.getElementById('signature-error');
+      if (sigErr) sigErr.style.display = 'none';
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      var pos = e.clientX !== undefined ? getPos(e) : e;
+      signatureCtx.lineTo(pos.x, pos.y);
+      signatureCtx.stroke();
+    }
+
+    function stopDraw() {
+      if (!isDrawing) return;
+      isDrawing = false;
+      signatureCtx.closePath();
+      // Capture signature as data URL
+      signatureData = signatureCanvas.toDataURL('image/png');
+    }
+
+    function clearSignature() {
+      var dpr = window.devicePixelRatio || 1;
+      signatureCtx.clearRect(0, 0, signatureCanvas.width / dpr, signatureCanvas.height / dpr);
+      signatureData = null;
+      document.getElementById('signatureContainer').classList.remove('is-signed');
+    }
+
+    /* ── Form listeners ──────────────────────────────── */
+    function initFormListeners() {
+      // Character counter for motif
+      document.getElementById('motifDecision').addEventListener('input', function () {
+        document.getElementById('motifCount').textContent = this.value.length;
+        updateDecisionPreview();
+      });
+
+      // Decision radio change
+      var radios = document.querySelectorAll('input[name="decision"]');
+      radios.forEach(function (radio) {
+        radio.addEventListener('change', function () {
+          var err = document.getElementById('decision-error');
+          if (err) err.style.display = 'none';
+          updateDecisionPreview();
+
+          // Update motif label hint
+          var motifLabel = document.querySelector('label[for="motifDecision"]');
+          if (this.value === 'REJETE') {
+            motifLabel.innerHTML = 'Motif de la décision * <span style="font-weight:400;font-size:11px;color:#D93025;">(obligatoire pour un rejet)</span>';
+          } else {
+            motifLabel.innerHTML = 'Motif de la décision *';
+          }
+        });
+      });
+
+      // Form submission
+      document.getElementById('decisionForm').addEventListener('submit', handleSubmit);
+    }
+
+    function updateDecisionPreview() {
+      var decision = document.querySelector('input[name="decision"]:checked');
+      var motif = document.getElementById('motifDecision').value.trim();
+      var preview = document.getElementById('decisionPreview');
+
+      if (decision) {
+        preview.style.display = 'block';
+        preview.className = 'decision-preview' + (decision.value === 'APPROUVE' ? ' is-approved' : ' is-rejected');
+        document.getElementById('previewDecision').textContent = decision.value === 'APPROUVE' ? 'Approuvée' : 'Rejetée';
+        document.getElementById('previewMotif').textContent = motif || '(aucun motif saisi)';
+      } else {
+        preview.style.display = 'none';
+      }
+    }
+
+    /* ── Form submission ─────────────────────────────── */
+    async function handleSubmit(e) {
+      e.preventDefault();
+
+      var btn = document.getElementById('submitBtn');
+      var errBox = document.getElementById('submitError');
+      var spinner = btn.querySelector('.login-spinner');
+      var label = btn.querySelector('.btn-text');
+
+      // Read fields
+      var decisionRadio = document.querySelector('input[name="decision"]:checked');
+      var motif = document.getElementById('motifDecision').value.trim();
+
+      // Validation
+      var valide = true;
+
+      // Decision required
+      if (!decisionRadio) {
+        document.getElementById('decision-error').style.display = 'block';
+        valide = false;
+      } else {
+        document.getElementById('decision-error').style.display = 'none';
+      }
+
+      // Motif required (always, but especially for reject)
+      if (!motif) {
+        document.getElementById('motifDecision').classList.add('is-invalid');
+        document.getElementById('motifDecision-error').style.display = 'block';
+        document.getElementById('motifDecision-error').textContent = 'Le motif est obligatoire.';
+        valide = false;
+      } else if (decisionRadio && decisionRadio.value === 'REJETE' && motif.length < 10) {
+        document.getElementById('motifDecision').classList.add('is-invalid');
+        document.getElementById('motifDecision-error').style.display = 'block';
+        document.getElementById('motifDecision-error').textContent = 'Pour un rejet, le motif doit contenir au moins 10 caractères.';
+        valide = false;
+      } else {
+        document.getElementById('motifDecision').classList.remove('is-invalid');
+        document.getElementById('motifDecision-error').style.display = 'none';
+      }
+
+      // Signature required
+      if (!signatureData) {
+        document.getElementById('signature-error').style.display = 'block';
+        valide = false;
+      } else {
+        document.getElementById('signature-error').style.display = 'none';
+      }
+
+      if (!valide) {
+        showToast('Veuillez compléter tous les champs obligatoires.', 'error');
+        return;
+      }
+
+      // Confirm before submitting
+      var decisionLabel = decisionRadio.value === 'APPROUVE' ? 'approuver' : 'rejeter';
+      if (!confirm('Confirmer la décision de ' + decisionLabel + ' cette dérogation ? Cette action est irréversible.')) {
+        return;
+      }
+
+      // Loading state
+      errBox.style.display = 'none';
+      btn.disabled = true;
+      label.style.display = 'none';
+      spinner.style.display = 'inline-block';
+
+      // Payload
+      var payload = {
+        decision: decisionRadio.value,
+        motifDecision: motif,
+        signature: signatureData,
+        dateTraitement: new Date().toISOString()
+      };
+
+      try {
+        var id = derogationData.id || derogationData.idDerogation;
+        var res = await SF.apiFetch('/api/v1/exceptions/derogations/' + id + '/decision', {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        });
+
+        if (!res) return; // 401 redirected
+
+        var data = await res.json().catch(function () { return {}; });
+
+        if (res.status === 200 || res.status === 201) {
+          var successMsg = decisionRadio.value === 'APPROUVE'
+            ? 'Dérogation approuvée avec succès !'
+            : 'Dérogation rejetée.';
+          showToast(successMsg, decisionRadio.value === 'APPROUVE' ? 'success' : 'warning');
+
+          // Reload the page data to show updated state
+          setTimeout(function () {
+            loadDerogation();
+          }, 1200);
+
+        } else if (res.status === 400) {
+          var msg = data.errors
+            ? data.errors.map(function (er) { return er.defaultMessage || er.message || er; }).join(' · ')
+            : (data.message || 'Données invalides.');
+          errBox.textContent = msg;
+          errBox.style.display = 'block';
+          showToast('Données invalides. Vérifiez le formulaire.', 'error');
+
+        } else if (res.status === 409) {
+          errBox.textContent = data.message || 'Cette dérogation a déjà été traitée.';
+          errBox.style.display = 'block';
+          showToast('Conflit : dérogation déjà traitée.', 'warning');
+
+        } else {
+          var msg2 = data.message || 'Erreur serveur. Réessayez.';
+          errBox.textContent = msg2;
+          errBox.style.display = 'block';
+          showToast(msg2, 'error');
+        }
+
+      } catch (err) {
+        showToast('Impossible de joindre le serveur. Vérifiez que le backend est démarré.', 'error');
+      } finally {
+        btn.disabled = false;
+        label.style.display = 'inline';
+        spinner.style.display = 'none';
+      }
+    }
+
+    /* ── Helpers ─────────────────────────────────────── */
+    function formatType(type) {
+      var map = {
+        'PLAFOND_DECAISSEMENT': 'Plafond décaissement',
+        'TAUX_INTERET': 'Taux d\'intérêt',
+        'FRAIS': 'Frais',
+        'CREDIT': 'Crédit',
+        'COMPTE': 'Compte',
+        'OPERATION': 'Opération'
+      };
+      return map[(type || '').toUpperCase()] || type || '-';
+    }
+
+    function getUrgenceBadge(urgence) {
+      var map = {
+        'BASSE':    '<span class="badge badge-active">Basse — 5 jours</span>',
+        'MOYENNE':  '<span class="badge badge-info">Moyenne — 48h</span>',
+        'HAUTE':    '<span class="badge badge-warning">Haute — 24h</span>',
+        'CRITIQUE': '<span class="badge badge-danger">Critique — Immédiat</span>'
+      };
+      return map[(urgence || '').toUpperCase()] || urgence || '-';
+    }
+
+    function formatDate(d) {
+      if (!d) return '-';
+      try {
+        return new Date(d).toLocaleDateString('fr-FR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      } catch (e) {
+        return d;
+      }
+    }
+
+    function formatMontant(m) {
+      try {
+        return Number(m).toLocaleString('fr-FR') + ' FCFA';
+      } catch (e) {
+        return m + ' FCFA';
+      }
+    }
+  </script>
+</body>
+</html>

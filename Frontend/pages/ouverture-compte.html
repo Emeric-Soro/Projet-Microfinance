@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ouverture de Compte — Soutra Finance Backoffice</title>
+  <meta name="description" content="Wizard d'ouverture d'un nouveau compte bancaire en 3 etapes.">
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Ouverture de Compte</div>
+            <div class="topbar-breadcrumb">Comptes / Ouverture</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a href="comptes.html" class="btn btn-ghost btn-sm">&larr; Retour</a>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <div class="card" style="max-width: 720px; margin: 0 auto;">
+
+          <!-- ═══ STEPPER ═══════════════════════════════════ -->
+          <div class="stepper">
+            <div class="step active" data-step="1">
+              <div class="step-circle">1</div>
+              <span class="step-label">Client</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" data-step="2">
+              <div class="step-circle">2</div>
+              <span class="step-label">Type &amp; Configuration</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" data-step="3">
+              <div class="step-circle">3</div>
+              <span class="step-label">Confirmation</span>
+            </div>
+          </div>
+
+          <form id="ouvertureForm" novalidate>
+
+            <!-- ═══ ETAPE 1 : Selection du client ════════════ -->
+            <div class="step-content" id="step1">
+              <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #084355;">Selection du client</h3>
+
+              <div class="form-group">
+                <label class="form-label">Rechercher un client *</label>
+                <div class="search-predictive">
+                  <input type="text" class="form-control" placeholder="Rechercher par nom, telephone ou code client..." id="clientSearch" autocomplete="off">
+                  <div class="search-results" id="clientResults"></div>
+                </div>
+                <div class="field-error" id="clientSearch-error">Veuillez selectionner un client.</div>
+              </div>
+
+              <div id="selectedClientCard" style="display: none;">
+                <div style="background: #F0F6FA; border-radius: 12px; padding: 16px 20px; margin-top: 16px;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                      <div style="font-weight: 800; font-size: 16px; color: #084355;" id="scName">&#8212;</div>
+                      <div style="font-size: 12px; color: #4A7A8A; margin-top: 2px;" id="scCode">&#8212;</div>
+                    </div>
+                    <span id="scKycBadge"></span>
+                  </div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; font-size: 12px; color: #4A7A8A;">
+                    <div><strong>Telephone :</strong> <span id="scPhone">&#8212;</span></div>
+                    <div><strong>Email :</strong> <span id="scEmail">&#8212;</span></div>
+                  </div>
+                </div>
+                <div id="kycWarning" style="display: none; background: #FFF7ED; border-left: 3px solid #E65100; border-radius: 6px; padding: 10px 14px; margin-top: 12px; font-size: 12px; color: #E65100;">
+                  <strong>KYC non valide :</strong> Le dossier KYC de ce client doit etre valide avant l'ouverture d'un compte.
+                </div>
+              </div>
+
+              <div id="existingAccountsInfo" style="display: none; margin-top: 16px;">
+                <div style="font-size: 13px; font-weight: 600; color: #084355; margin-bottom: 8px;">Comptes existants</div>
+                <div id="existingAccountsList"></div>
+              </div>
+
+              <div style="display: flex; justify-content: flex-end; margin-top: 32px;">
+                <button type="button" class="btn btn-primary btn-next-step" id="next1">
+                  Suivant
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- ═══ ETAPE 2 : Type et Configuration ═══════════ -->
+            <div class="step-content" id="step2" style="display: none;">
+              <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #084355;">Type et configuration du compte</h3>
+
+              <div class="form-group">
+                <label class="form-label">Type de compte (Gabarit) *</label>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                  <label class="gabarit-option" style="border: 2px solid #C9DFE8; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                    <input type="radio" name="gabarit" value="EPARGNE" style="display:none;">
+                    <div style="font-size: 28px; margin-bottom: 8px;">&#128176;</div>
+                    <div style="font-weight: 700; font-size: 14px; color: #084355;">Epargne</div>
+                    <div style="font-size: 11px; color: #4A7A8A;">Min: 5 000 FCFA</div>
+                  </label>
+                  <label class="gabarit-option" style="border: 2px solid #C9DFE8; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                    <input type="radio" name="gabarit" value="COURANT" style="display:none;">
+                    <div style="font-size: 28px; margin-bottom: 8px;">&#127974;</div>
+                    <div style="font-weight: 700; font-size: 14px; color: #084355;">Courant</div>
+                    <div style="font-size: 11px; color: #4A7A8A;">Min: 10 000 FCFA</div>
+                  </label>
+                  <label class="gabarit-option" style="border: 2px solid #C9DFE8; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                    <input type="radio" name="gabarit" value="DAT" style="display:none;">
+                    <div style="font-size: 28px; margin-bottom: 8px;">&#128202;</div>
+                    <div style="font-weight: 700; font-size: 14px; color: #084355;">DAT</div>
+                    <div style="font-size: 11px; color: #4A7A8A;">Min: 50 000 FCFA</div>
+                  </label>
+                </div>
+                <div class="field-error" id="gabarit-error">Veuillez choisir un type de compte.</div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="devise">Devise *</label>
+                <select class="form-control" id="devise">
+                  <option value="XOF" selected>Franc CFA (XOF)</option>
+                  <option value="EUR">Euro (EUR)</option>
+                  <option value="USD">Dollar US (USD)</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="initialDeposit">Versement initial *</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" id="initialDeposit" placeholder="0" min="0" step="500">
+                    <span class="input-addon">FCFA</span>
+                  </div>
+                  <div style="font-size: 11px; color: #4A7A8A; margin-top: 4px;" id="depositHint">Le montant minimum depend du type de compte choisi.</div>
+                  <div class="field-error" id="initialDeposit-error">Le versement initial est obligatoire.</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="decouvertAutorise">Decouvert autorise</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" id="decouvertAutorise" placeholder="0" min="0" step="1000" value="0">
+                    <span class="input-addon">FCFA</span>
+                  </div>
+                  <div style="font-size: 11px; color: #4A7A8A; margin-top: 4px;">Reserve aux comptes courants. Laisser 0 pour les autres types.</div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="agenceOuverture">Agence d'ouverture</label>
+                <select class="form-control" id="agenceOuverture">
+                  <option value="">Selectionner une agence...</option>
+                  <option value="AG-PLT" selected>Agence Plateau - Abidjan</option>
+                  <option value="AG-CCY">Agence Cocody - Abidjan</option>
+                  <option value="AG-YPY">Agence Yopougon - Abidjan</option>
+                  <option value="AG-BKV">Agence Bouake</option>
+                  <option value="AG-YAM">Agence Yamoussoukro</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="commentaire">Commentaire</label>
+                <textarea class="form-control" id="commentaire" rows="3" placeholder="Notes internes sur l'ouverture du compte..."></textarea>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; margin-top: 32px;">
+                <button type="button" class="btn btn-outline btn-prev-step">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="15 18 9 12 15 6"/></svg>
+                  Precedent
+                </button>
+                <button type="button" class="btn btn-primary btn-next-step">
+                  Suivant
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- ═══ ETAPE 3 : Confirmation ═══════════════════ -->
+            <div class="step-content" id="step3" style="display: none;">
+              <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #084355;">Recapitulatif et confirmation</h3>
+
+              <!-- Client summary -->
+              <div style="margin-bottom: 24px;">
+                <div style="font-size: 13px; font-weight: 600; color: #4A7A8A; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Client</div>
+                <div style="background: #F0F6FA; border-radius: 10px; padding: 14px 18px;">
+                  <div style="font-weight: 700; font-size: 15px; color: #084355;" id="rcName">&#8212;</div>
+                  <div style="font-size: 12px; color: #4A7A8A; margin-top: 2px;">
+                    <span id="rcCode">&#8212;</span> &middot; <span id="rcPhone">&#8212;</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Account config summary -->
+              <div style="margin-bottom: 24px;">
+                <div style="font-size: 13px; font-weight: 600; color: #4A7A8A; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Configuration du compte</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                  <div style="background: #F0F6FA; border-radius: 10px; padding: 14px 18px;">
+                    <div style="font-size: 11px; color: #4A7A8A; margin-bottom: 4px;">Type de compte</div>
+                    <div style="font-weight: 700; font-size: 15px; color: #084355;" id="rcType">&#8212;</div>
+                  </div>
+                  <div style="background: #F0F6FA; border-radius: 10px; padding: 14px 18px;">
+                    <div style="font-size: 11px; color: #4A7A8A; margin-bottom: 4px;">Devise</div>
+                    <div style="font-weight: 700; font-size: 15px; color: #084355;" id="rcDevise">&#8212;</div>
+                  </div>
+                  <div style="background: #F0F6FA; border-radius: 10px; padding: 14px 18px;">
+                    <div style="font-size: 11px; color: #4A7A8A; margin-bottom: 4px;">Versement initial</div>
+                    <div style="font-weight: 700; font-size: 15px; color: #2E7D32;" id="rcDeposit">&#8212;</div>
+                  </div>
+                  <div style="background: #F0F6FA; border-radius: 10px; padding: 14px 18px;">
+                    <div style="font-size: 11px; color: #4A7A8A; margin-bottom: 4px;">Decouvert autorise</div>
+                    <div style="font-weight: 700; font-size: 15px; color: #084355;" id="rcDecouvert">&#8212;</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Agency and comment -->
+              <div style="margin-bottom: 24px;">
+                <div style="font-size: 13px; font-weight: 600; color: #4A7A8A; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Divers</div>
+                <div style="background: #F0F6FA; border-radius: 10px; padding: 14px 18px; font-size: 13px; color: #084355;">
+                  <div><strong>Agence :</strong> <span id="rcAgence">&#8212;</span></div>
+                  <div style="margin-top: 4px;" id="rcCommentRow"><strong>Commentaire :</strong> <span id="rcComment">&#8212;</span></div>
+                </div>
+              </div>
+
+              <!-- Info box -->
+              <div style="background: rgba(140,213,250,0.1); border-left: 3px solid #084355; border-radius: 6px; padding: 12px 16px; margin-bottom: 24px; display: flex; align-items: flex-start; gap: 10px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#084355" stroke-width="2" style="flex-shrink:0;margin-top:2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <span style="font-size: 12px; color: #084355; font-weight: 500;">Veuillez verifier attentivement les informations ci-dessus avant de confirmer. Un numero de compte sera genere automatiquement apres la creation.</span>
+              </div>
+
+              <div id="submitError" style="display:none; background:#FFF3F3; border-left:3px solid #D93025; padding:10px 14px; border-radius:6px; color:#D93025; font-size:13px; margin-bottom:16px;"></div>
+
+              <div style="display: flex; justify-content: space-between; margin-top: 32px;">
+                <button type="button" class="btn btn-outline btn-prev-step">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="15 18 9 12 15 6"/></svg>
+                  Precedent
+                </button>
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  <span class="btn-text">Creer le compte</span>
+                  <div class="login-spinner" style="display:none; width:18px; height:18px;"></div>
+                </button>
+              </div>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODAL SUCCES ═══════════════════════════════════ -->
+  <div class="modal-overlay" id="successModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Compte cree avec succes</div>
+        <button class="modal-close" onclick="closeModal('successModal')">&#10005;</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(46,125,50,0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Compte cree avec succes</h3>
+        <p style="color: #4A7A8A; font-size: 13px; margin-bottom: 16px;">Le compte a ete enregistre et le contrat est pret.</p>
+        <div style="background: #F0F6FA; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+          <div style="font-size: 20px; font-weight: 800; color: #084355;" id="modalAccNum">&#8212;</div>
+          <div style="font-size: 12px; color: #4A7A8A;" id="modalAccType">&#8212;</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('successModal')">Fermer</button>
+        <button class="btn btn-primary" id="modalDownloadBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Telecharger le releve
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ============================================================
+       STATE
+       ============================================================ */
+    var selectedClientId = null;
+    var selectedClient   = null;
+    var clientCache      = {};
+    var MIN_DEPOSIT = { EPARGNE: 5000, COURANT: 10000, DAT: 50000 };
+
+    /* ============================================================
+       HELPERS
+       ============================================================ */
+    function escapeHtml(v) {
+      return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function normalizeKycStatus(val) {
+      return String(val || '').replace(/\*/g, '').trim().toUpperCase();
+    }
+
+    function isKycValidated(client) {
+      return normalizeKycStatus(client && client.statutKyc) === 'VALIDE';
+    }
+
+    function kycBadgeHtml(statutKyc) {
+      var s = normalizeKycStatus(statutKyc);
+      var cls = s === 'VALIDE' ? 'badge-active'
+        : s === 'REJETE' ? 'badge-blocked'
+        : s === 'A_REVOIR' ? 'badge-warning'
+        : 'badge-pending';
+      return '<span class="badge ' + cls + '">' + escapeHtml((s || 'NON RENSEIGNE').replace(/_/g, ' ')) + '</span>';
+    }
+
+    function formatMoney(n) {
+      var num = parseFloat(n);
+      if (isNaN(num)) return '0';
+      return num.toLocaleString('fr-FR');
+    }
+
+    /* ============================================================
+       STEPPER NAVIGATION
+       ============================================================ */
+    var currentStep = 1;
+    var totalSteps  = 3;
+
+    function goToStep(n) {
+      if (n < 1 || n > totalSteps) return;
+
+      // When entering step 3, populate the recap
+      if (n === 3) populateRecap();
+
+      // Hide all step contents
+      for (var i = 1; i <= totalSteps; i++) {
+        var el = document.getElementById('step' + i);
+        if (el) el.style.display = (i === n) ? 'block' : 'none';
+      }
+
+      // Update stepper visuals
+      var steps = document.querySelectorAll('.stepper .step');
+      var lines = document.querySelectorAll('.stepper .step-line');
+      steps.forEach(function(step, idx) {
+        var stepNum = idx + 1;
+        step.classList.remove('active', 'completed');
+        if (stepNum === n)      step.classList.add('active');
+        else if (stepNum < n)   step.classList.add('completed');
+      });
+      lines.forEach(function(line, idx) {
+        line.classList.toggle('completed', idx < n - 1);
+      });
+
+      currentStep = n;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Persist step for draft recovery
+      try { localStorage.setItem('ouverture-compte.html:step', n); } catch (_) {}
+    }
+
+    // Next buttons
+    document.querySelectorAll('.btn-next-step').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (!validateStep(currentStep)) return;
+        goToStep(currentStep + 1);
+      });
+    });
+
+    // Previous buttons
+    document.querySelectorAll('.btn-prev-step').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        goToStep(currentStep - 1);
+      });
+    });
+
+    // Restore draft step on load
+    try {
+      var saved = parseInt(localStorage.getItem('ouverture-compte.html:step'), 10);
+      if (saved > 1 && saved <= totalSteps) goToStep(saved);
+    } catch (_) {}
+
+    /* ============================================================
+       VALIDATION per step
+       ============================================================ */
+    function validateStep(step) {
+      clearErrors();
+      if (step === 1) {
+        if (!selectedClientId) {
+          showFieldError('clientSearch', 'clientSearch-error');
+          showToast('Veuillez selectionner un client.', 'error');
+          return false;
+        }
+        if (!isKycValidated(selectedClient)) {
+          showToast('Le KYC du client doit etre valide avant l\'ouverture d\'un compte.', 'warning');
+          return false;
+        }
+        return true;
+      }
+      if (step === 2) {
+        var gabarit = document.querySelector('input[name="gabarit"]:checked');
+        if (!gabarit) {
+          showFieldError(null, 'gabarit-error');
+          showToast('Veuillez choisir un type de compte.', 'error');
+          return false;
+        }
+        var deposit = parseFloat(document.getElementById('initialDeposit').value);
+        var minDep  = MIN_DEPOSIT[gabarit.value] || 0;
+        if (isNaN(deposit) || deposit < minDep) {
+          showFieldError('initialDeposit', 'initialDeposit-error');
+          showToast('Le versement minimum pour un compte ' + gabarit.value.toLowerCase() + ' est de ' + formatMoney(minDep) + ' FCFA.', 'warning');
+          return false;
+        }
+        return true;
+      }
+      return true;
+    }
+
+    function showFieldError(inputId, errorId) {
+      if (inputId) {
+        var input = document.getElementById(inputId);
+        if (input) input.classList.add('is-invalid');
+      }
+      var err = document.getElementById(errorId);
+      if (err) err.style.display = 'block';
+    }
+
+    function clearErrors() {
+      document.querySelectorAll('.is-invalid').forEach(function(el) { el.classList.remove('is-invalid'); });
+      document.querySelectorAll('.field-error').forEach(function(el) { el.style.display = 'none'; });
+      var submitErr = document.getElementById('submitError');
+      if (submitErr) submitErr.style.display = 'none';
+    }
+
+    /* ============================================================
+       ETAPE 1 : CLIENT SEARCH
+       ============================================================ */
+    var clientSearch  = document.getElementById('clientSearch');
+    var clientResults = document.getElementById('clientResults');
+
+    clientSearch.addEventListener('input', async function() {
+      var query = this.value.trim();
+      if (query.length < 2) {
+        clientResults.classList.remove('show');
+        return;
+      }
+      try {
+        var res = await Clients.lister(0, 10, query);
+        if (res && res.ok) {
+          var page    = await res.json();
+          var clients = page.content || [];
+          clientCache = {};
+          var html = clients.map(function(c) {
+            clientCache[c.idClient] = c;
+            var kycOk = isKycValidated(c);
+            return '<div class="search-result-item" onclick="selectClient(\'' + c.idClient + '\')">'
+              + '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;">'
+              + '<span><strong>' + escapeHtml(c.nomComplet) + '</strong> - ' + escapeHtml(c.codeClient) + '</span>'
+              + kycBadgeHtml(c.statutKyc)
+              + '</div>'
+              + '<div style="font-size:11px;color:' + (kycOk ? '#4A7A8A' : '#E65100') + ';margin-top:3px;">'
+              + (kycOk ? 'Eligible a l\'ouverture' : 'KYC a finaliser avant ouverture')
+              + '</div></div>';
+          }).join('');
+          if (!html) html = '<div class="search-result-item">Aucun client trouve</div>';
+          clientResults.innerHTML = html;
+          clientResults.classList.add('show');
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!clientSearch.contains(e.target) && !clientResults.contains(e.target)) {
+        clientResults.classList.remove('show');
+      }
+    });
+
+    function selectClient(id) {
+      var client = clientCache[id];
+      if (!client) return;
+      selectedClientId = id;
+      selectedClient   = client;
+
+      clientSearch.value = (client.nomComplet || 'Client') + ' (' + (client.codeClient || id) + ')';
+      clientResults.classList.remove('show');
+
+      // Show selected client card
+      document.getElementById('scName').textContent  = client.nomComplet || '—';
+      document.getElementById('scCode').textContent  = client.codeClient || '—';
+      document.getElementById('scPhone').textContent = client.telephone || '—';
+      document.getElementById('scEmail').textContent = client.email || '—';
+      document.getElementById('scKycBadge').innerHTML = kycBadgeHtml(client.statutKyc);
+      document.getElementById('selectedClientCard').style.display = 'block';
+
+      // KYC warning
+      document.getElementById('kycWarning').style.display = isKycValidated(client) ? 'none' : 'block';
+
+      // Fetch existing accounts
+      loadExistingAccounts(id);
+    }
+
+    async function loadExistingAccounts(clientId) {
+      var container = document.getElementById('existingAccountsInfo');
+      var list      = document.getElementById('existingAccountsList');
+      container.style.display = 'none';
+      list.innerHTML = '';
+      try {
+        var res = await Comptes.listerClientComptes(clientId);
+        if (res && res.ok) {
+          var page = await res.json();
+          var comptes = page.content || [];
+          if (comptes.length === 0) {
+            list.innerHTML = '<div style="font-size:12px;color:#4A7A8A;padding:8px 0;">Aucun compte existant pour ce client.</div>';
+          } else {
+            list.innerHTML = comptes.map(function(c) {
+              var badgeCls = c.statut === 'ACTIF' ? 'badge-active' : c.statut === 'BLOQUE' ? 'badge-blocked' : 'badge-danger';
+              return '<div style="background:#fff;border:1px solid #E8EFF3;border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">'
+                + '<div><div style="font-weight:700;font-size:13px;color:#084355;">' + escapeHtml(c.numCompte) + '</div>'
+                + '<div style="font-size:11px;color:#4A7A8A;">' + escapeHtml(c.typeCompte) + ' - ' + formatMoney(c.solde) + ' FCFA</div></div>'
+                + '<span class="badge ' + badgeCls + '">' + escapeHtml(c.statut || 'ACTIF') + '</span></div>';
+            }).join('');
+          }
+          container.style.display = 'block';
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    /* ============================================================
+       ETAPE 2 : GABARIT OPTION STYLING
+       ============================================================ */
+    document.querySelectorAll('.gabarit-option').forEach(function(option) {
+      option.addEventListener('click', function() {
+        document.querySelectorAll('.gabarit-option').forEach(function(o) {
+          o.style.borderColor = '#C9DFE8';
+          o.style.background  = 'transparent';
+        });
+        this.style.borderColor = '#8cd5fa';
+        this.style.background  = 'rgba(140, 213, 250, 0.08)';
+        this.querySelector('input').checked = true;
+        updateDepositHint();
+      });
+    });
+
+    function updateDepositHint() {
+      var g = document.querySelector('input[name="gabarit"]:checked');
+      var hint = document.getElementById('depositHint');
+      if (g && MIN_DEPOSIT[g.value]) {
+        hint.textContent = 'Minimum : ' + formatMoney(MIN_DEPOSIT[g.value]) + ' FCFA pour un compte ' + g.value.toLowerCase() + '.';
+      } else {
+        hint.textContent = 'Le montant minimum depend du type de compte choisi.';
+      }
+    }
+
+    document.getElementById('initialDeposit').addEventListener('input', updateDepositHint);
+
+    /* ============================================================
+       ETAPE 3 : POPULATE RECAP
+       ============================================================ */
+    function populateRecap() {
+      if (selectedClient) {
+        document.getElementById('rcName').textContent  = selectedClient.nomComplet || '—';
+        document.getElementById('rcCode').textContent  = selectedClient.codeClient || '—';
+        document.getElementById('rcPhone').textContent = selectedClient.telephone  || '—';
+      }
+
+      var gabarit = document.querySelector('input[name="gabarit"]:checked');
+      var labels  = { EPARGNE: 'Epargne', COURANT: 'Courant', DAT: 'DAT a terme' };
+      document.getElementById('rcType').textContent    = gabarit ? (labels[gabarit.value] || gabarit.value) : '—';
+      document.getElementById('rcDevise').textContent  = document.getElementById('devise').value;
+      document.getElementById('rcDeposit').textContent = formatMoney(document.getElementById('initialDeposit').value) + ' FCFA';
+      document.getElementById('rcDecouvert').textContent = formatMoney(document.getElementById('decouvertAutorise').value || 0) + ' FCFA';
+
+      var agence = document.getElementById('agenceOuverture');
+      var agText = agence.options[agence.selectedIndex] ? agence.options[agence.selectedIndex].text : '—';
+      document.getElementById('rcAgence').textContent = agText;
+
+      var comment = document.getElementById('commentaire').value.trim();
+      var commentRow = document.getElementById('rcCommentRow');
+      if (comment) {
+        commentRow.style.display = 'block';
+        document.getElementById('rcComment').textContent = comment;
+      } else {
+        commentRow.style.display = 'none';
+      }
+    }
+
+    /* ============================================================
+       SUBMIT -> API
+       ============================================================ */
+    document.getElementById('ouvertureForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      if (!validateStep(2)) return;
+
+      var btn     = document.getElementById('submitBtn');
+      var spinner = btn.querySelector('.login-spinner');
+      var label   = btn.querySelector('.btn-text');
+      var errBox  = document.getElementById('submitError');
+
+      btn.disabled = true;
+      label.style.display   = 'none';
+      spinner.style.display = 'inline-block';
+      errBox.style.display  = 'none';
+
+      var gabarit = document.querySelector('input[name="gabarit"]:checked').value;
+      var deposit = parseFloat(document.getElementById('initialDeposit').value);
+
+      try {
+        // Step 1: Create account via API
+        var res = await Comptes.ouvrir(selectedClientId, gabarit, deposit);
+        if (!res || !res.ok) {
+          var err = res ? await res.json().catch(function() { return {}; }) : {};
+          throw new Error(err.message || 'Erreur lors de la creation du compte');
+        }
+        var compte = await res.json();
+
+        // Step 2: Initial deposit if user is logged in
+        var user = SF.getUser ? SF.getUser() : null;
+        var depotRef = null;
+        var depotEnAttente = false;
+        var numCompteOp = compte.numCompteComplet || compte.numCompte;
+        if (user && user.idUser && numCompteOp && deposit > 0) {
+          try {
+            var depotRes = await Transactions.depotInitial(numCompteOp, deposit, user.idUser);
+            if (depotRes) {
+              if (depotRes.ok || depotRes.status === 202) {
+                depotEnAttente = depotRes.status === 202;
+                var recu = await depotRes.json().catch(function() { return {}; });
+                depotRef = recu.referenceUnique || null;
+              } else {
+                var depotErr = await depotRes.json().catch(function() { return {}; });
+                showToast('Compte cree, mais le depot initial a echoue : ' + (depotErr.message || 'Erreur inconnue'), 'warning');
+              }
+            }
+          } catch (_) {
+            showToast('Compte cree, mais le depot initial n\'a pas pu etre enregistre. Effectuez-le manuellement.', 'warning');
+          }
+        }
+
+        // Step 3: Show success modal
+        document.getElementById('modalAccNum').textContent  = compte.numCompte || '—';
+        document.getElementById('modalAccType').textContent = 'Compte ' + gabarit;
+
+        document.getElementById('modalDownloadBtn').onclick = async function() {
+          var numUrl = compte.numCompteComplet || compte.numCompte;
+          var today  = new Date();
+          var todayStr = today.toISOString().split('T')[0];
+          var depuis = new Date(today); depuis.setDate(depuis.getDate() - 30);
+          var depuisStr = depuis.toISOString().split('T')[0];
+          var url = '/api/v1/comptes/' + encodeURIComponent(numUrl) + '/releve?format=PDF&du=' + depuisStr + '&au=' + todayStr;
+          this.disabled    = true;
+          this.textContent = 'Chargement…';
+          try {
+            var pdfRes = await SF.apiFetch(url);
+            if (pdfRes && pdfRes.ok) {
+              var blob    = await pdfRes.blob();
+              var blobUrl = URL.createObjectURL(blob);
+              var a = document.createElement('a');
+              a.href     = blobUrl;
+              a.download = 'releve_' + numUrl + '_' + todayStr + '.pdf';
+              a.click();
+              setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 5000);
+            } else if (pdfRes) {
+              var pdfErr = await pdfRes.json().catch(function() { return {}; });
+              showToast('Impossible de generer le releve : ' + (pdfErr.message || 'Erreur inconnue'), 'warning');
+            }
+          } catch (dlErr) {
+            showToast('Erreur lors du telechargement du releve.', 'error');
+          } finally {
+            this.disabled    = false;
+            this.textContent = 'Telecharger le releve';
+          }
+        };
+
+        openModal('successModal');
+
+        if (depotEnAttente) {
+          showToast('Compte cree. Depot initial en attente de validation superviseur (ref. : ' + (depotRef || '—') + ').', 'warning');
+        } else if (depotRef) {
+          showToast('Compte cree et depot initial de ' + formatMoney(deposit) + ' FCFA enregistre (ref. : ' + depotRef + ').', 'success');
+        } else {
+          showToast('Compte cree avec succes !', 'success');
+        }
+
+        // Reset the wizard
+        resetWizard();
+
+      } catch (err) {
+        errBox.textContent   = err.message || 'Erreur serveur.';
+        errBox.style.display = 'block';
+        showToast(err.message || 'Erreur lors de la creation du compte.', 'error');
+      } finally {
+        btn.disabled = false;
+        label.style.display   = 'inline';
+        spinner.style.display = 'none';
+      }
+    });
+
+    function resetWizard() {
+      selectedClientId = null;
+      selectedClient   = null;
+      clientSearch.value = '';
+      document.getElementById('selectedClientCard').style.display = 'none';
+      document.getElementById('existingAccountsInfo').style.display = 'none';
+      document.getElementById('kycWarning').style.display = 'none';
+      document.getElementById('initialDeposit').value = '';
+      document.getElementById('decouvertAutorise').value = '0';
+      document.getElementById('commentaire').value = '';
+      document.querySelectorAll('.gabarit-option').forEach(function(o) {
+        o.style.borderColor = '#C9DFE8';
+        o.style.background  = 'transparent';
+      });
+      var checked = document.querySelector('input[name="gabarit"]:checked');
+      if (checked) checked.checked = false;
+      try { localStorage.removeItem('ouverture-compte.html:step'); } catch (_) {}
+      goToStep(1);
+    }
+  </script>
+</body>
+</html>

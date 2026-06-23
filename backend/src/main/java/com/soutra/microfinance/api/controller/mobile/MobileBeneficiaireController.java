@@ -1,5 +1,6 @@
 package com.soutra.microfinance.api.controller.mobile;
 
+import com.soutra.microfinance.api.helper.ApiEnvelope;
 import com.soutra.microfinance.api.helper.SoutraSecurityHelper;
 import com.soutra.microfinance.audit.AuditLog;
 import com.soutra.microfinance.dto.request.mobile.MobileBeneficiaireRequestDTO;
@@ -44,10 +45,10 @@ public class MobileBeneficiaireController {
     @GetMapping
     @PreAuthorize("hasAuthority('CLIENT')")
     @AuditLog(action = "MOBILE_BENEFICIAIRE_LIST", resource = "BENEFICIAIRE")
-    public ResponseEntity<List<MobileBeneficiaireResponseDTO>> listerBeneficiaires(Authentication authentication) {
+    public ResponseEntity<ApiEnvelope<List<MobileBeneficiaireResponseDTO>>> listerBeneficiaires(Authentication authentication) {
         Utilisateur utilisateur = SoutraSecurityHelper.extraireUtilisateurAuthentifie();
         Long idClient = utilisateur.getClient().getIdClient();
-        return ResponseEntity.ok(beneficiaireService.listerBeneficiaires(idClient));
+        return ResponseEntity.ok(ApiEnvelope.success(beneficiaireService.listerBeneficiaires(idClient)));
     }
 
     @Operation(summary = "Ajouter un beneficiaire", description = "Ajoute un nouveau beneficiaire pour le client connecte.")

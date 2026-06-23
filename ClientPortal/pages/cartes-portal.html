@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mes Cartes — Soutra Finance E-Banking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/portal.css">
+  <style>
+    /* ── Card Visual ─────────────────────────────── */
+    .carte-visual-wrapper {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .carte-visual {
+      background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary), var(--color-primary-light));
+      color: #ffffff;
+      border-radius: 20px;
+      padding: 28px 30px;
+      width: 380px;
+      min-height: 230px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 15px 40px rgba(8, 67, 85, 0.3);
+      flex-shrink: 0;
+    }
+
+    .carte-visual::before {
+      content: '';
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 160px;
+      height: 160px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 50%;
+    }
+
+    .carte-visual::after {
+      content: '';
+      position: absolute;
+      bottom: -60px;
+      left: -30px;
+      width: 200px;
+      height: 200px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 50%;
+    }
+
+    .carte-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .carte-chip {
+      width: 42px;
+      height: 32px;
+      background: linear-gradient(135deg, #fbbf24, #d97706);
+      border-radius: 6px;
+      opacity: 0.85;
+    }
+
+    .carte-brand {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .carte-number {
+      font-size: 1.35rem;
+      letter-spacing: 0.25em;
+      margin: 1.8rem 0 0.5rem;
+      font-weight: 500;
+      position: relative;
+      z-index: 1;
+      font-family: 'Courier New', monospace;
+    }
+
+    .carte-bottom-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      position: relative;
+      z-index: 1;
+    }
+
+    .carte-holder {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 500;
+    }
+
+    .carte-holder-label {
+      font-size: 0.6rem;
+      opacity: 0.6;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 2px;
+    }
+
+    .carte-expiry-block {
+      text-align: right;
+    }
+
+    .carte-expiry-label {
+      font-size: 0.6rem;
+      opacity: 0.6;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .carte-expiry-value {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    /* ── Card selector ──────────────────────────── */
+    .carte-selector-area {
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .carte-selector-area .form-group {
+      margin-bottom: 15px;
+    }
+
+    .carte-statut-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .carte-statut-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .carte-statut-dot.active {
+      background: var(--color-success);
+      box-shadow: 0 0 6px rgba(46, 125, 50, 0.4);
+    }
+
+    .carte-statut-dot.inactive {
+      background: var(--color-danger);
+      box-shadow: 0 0 6px rgba(217, 48, 37, 0.4);
+    }
+
+    /* ── Limit Gauge ────────────────────────────── */
+    .plafond-section {
+      margin-top: 20px;
+    }
+
+    .plafond-gauge-track {
+      background: rgba(8, 67, 85, 0.08);
+      border-radius: 10px;
+      height: 14px;
+      overflow: hidden;
+      margin: 12px 0 8px;
+    }
+
+    .plafond-gauge-fill {
+      height: 100%;
+      border-radius: 10px;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .plafond-gauge-fill.warn {
+      background: linear-gradient(90deg, var(--color-warning), var(--color-accent));
+    }
+
+    .plafond-gauge-fill.danger {
+      background: linear-gradient(90deg, var(--color-danger), #ef4444);
+    }
+
+    .plafond-info-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--color-text-muted);
+    }
+
+    .plafond-info-row strong {
+      color: var(--color-text);
+    }
+
+    /* ── Transactions Table ─────────────────────── */
+    .tx-table-wrapper {
+      overflow-x: auto;
+    }
+
+    .tx-amount-debit {
+      color: var(--color-danger);
+      font-weight: 700;
+    }
+
+    .tx-amount-credit {
+      color: var(--color-success);
+      font-weight: 700;
+    }
+
+    /* ── Report Button ──────────────────────────── */
+    .btn-opposition {
+      background: rgba(217, 48, 37, 0.08);
+      border: 1px solid rgba(217, 48, 37, 0.2);
+      color: var(--color-danger);
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: var(--font-family);
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .btn-opposition:hover {
+      background: var(--color-danger);
+      color: #ffffff;
+      border-color: var(--color-danger);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(217, 48, 37, 0.25);
+    }
+
+    .btn-opposition:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* ── Opposition Modal ───────────────────────── */
+    .opposition-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(8, 67, 85, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 90;
+    }
+
+    .opposition-overlay.visible {
+      display: block;
+    }
+
+    .opposition-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 460px;
+      z-index: 100;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .opposition-modal.visible {
+      display: block;
+    }
+
+    .opposition-modal .card {
+      text-align: center;
+    }
+
+    .opposition-icon {
+      width: 64px;
+      height: 64px;
+      background: rgba(217, 48, 37, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 20px;
+    }
+
+    .opposition-modal h3 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    .opposition-modal p {
+      color: var(--color-text-muted);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 25px;
+    }
+
+    .opposition-modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .opposition-modal-actions button {
+      min-width: 140px;
+    }
+
+    /* ── Empty / Loading States ─────────────────── */
+    .carte-empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      color: var(--color-text-muted);
+    }
+
+    .carte-empty-state .empty-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+      opacity: 0.4;
+    }
+
+    .carte-loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--color-text-muted);
+    }
+
+    /* ── Responsive ─────────────────────────────── */
+    @media (max-width: 768px) {
+      .carte-visual-wrapper {
+        flex-direction: column;
+      }
+
+      .carte-visual {
+        width: 100%;
+        max-width: 380px;
+      }
+
+      .opposition-modal-actions {
+        flex-direction: column;
+      }
+
+      .opposition-modal-actions button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="portal-layout">
+    <!-- Sidebar -->
+    <aside class="portal-sidebar">
+      <div class="portal-brand">
+        <div class="brand-icon">S</div>
+        <span class="brand-name">Soutra Finance</span>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="dashboard">📊 Tableau de bord</a></li>
+        <li class="nav-item"><a href="comptes">💳 Mes Comptes</a></li>
+        <li class="nav-item active"><a href="cartes-portal">🏧 Mes Cartes</a></li>
+        <li class="nav-item"><a href="virement">💸 Virements</a></li>
+        <li class="nav-item"><a href="credits">📈 Crédits</a></li>
+        <li class="nav-item"><a href="reclamations">✉️ Réclamations</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+          <span class="user-name" id="portalUserName">Chargement...</span>
+          <span class="user-role">Client E-Banking</span>
+        </div>
+        <a href="#" class="logout-btn" id="portalLogoutBtn" title="Se déconnecter">🚪</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="header-title">
+          <h2>Mes Cartes Bancaires</h2>
+          <p>Consultez vos cartes, suivez vos plafonds et gérez les oppositions.</p>
+        </div>
+      </header>
+
+      <!-- Card Visual + Selector -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">💳 Carte active</span>
+        </div>
+
+        <div id="cartesLoading" class="carte-loading">
+          Chargement de vos cartes...
+        </div>
+
+        <div id="cartesContent" style="display: none;">
+          <!-- Card Selector -->
+          <div class="carte-selector-area">
+            <div class="form-group" style="max-width: 400px;">
+              <label for="carteSelector">Sélectionnez une carte</label>
+              <select id="carteSelector" class="input-control">
+                <option value="">Chargement...</option>
+              </select>
+            </div>
+            <div id="carteStatut" class="carte-statut-badge" style="display: none;">
+              <span id="carteStatutDot" class="carte-statut-dot active"></span>
+              <span id="carteStatutText" style="font-size: 13px; font-weight: 600;">Active</span>
+            </div>
+          </div>
+
+          <!-- Card Visual -->
+          <div class="carte-visual-wrapper" id="carteVisualWrapper" style="display: none;">
+            <div class="carte-visual">
+              <div class="carte-top-row">
+                <div class="carte-chip"></div>
+                <div class="carte-brand">VISA</div>
+              </div>
+              <div class="carte-number" id="carteNumber">**** **** **** ****</div>
+              <div class="carte-bottom-row">
+                <div>
+                  <div class="carte-holder-label">Titulaire</div>
+                  <div class="carte-holder" id="carteHolder">—</div>
+                </div>
+                <div class="carte-expiry-block">
+                  <div class="carte-expiry-label">Expire fin</div>
+                  <div class="carte-expiry-value" id="carteExpiry">--/--</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Limit Gauge -->
+            <div style="flex: 1; min-width: 250px;">
+              <div class="plafond-section">
+                <h3 style="font-size: 16px; margin-bottom: 5px;">Plafond journalier</h3>
+                <p style="font-size: 13px; color: var(--color-text-muted); margin-bottom: 0;">
+                  Montant autorisé pour les paiements par carte aujourd'hui.
+                </p>
+                <div class="plafond-gauge-track">
+                  <div id="plafondGaugeFill" class="plafond-gauge-fill" style="width: 0%;"></div>
+                </div>
+                <div class="plafond-info-row">
+                  <span>Dépensé : <strong id="plafondUtilise">0 FCFA</strong></span>
+                  <span>Plafond : <strong id="plafondMax">0 FCFA</strong></span>
+                </div>
+                <p id="plafondPercent" style="text-align: center; font-size: 13px; color: var(--color-text-muted); margin-top: 8px;">
+                  0% utilisé
+                </p>
+              </div>
+
+              <!-- Report Lost/Stolen -->
+              <button id="btnOpposition" class="btn-opposition" style="display: none;">
+                ⚠️ Signaler carte perdue / volée
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty state when no cards -->
+          <div id="cartesEmpty" class="carte-empty-state" style="display: none;">
+            <div class="empty-icon">🏧</div>
+            <h3 style="font-size: 18px; margin-bottom: 8px;">Aucune carte trouvée</h3>
+            <p style="font-size: 14px;">Vous ne disposez pas encore de carte bancaire. Contactez votre agence pour en commander une.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Transactions -->
+      <div class="card" id="transactionsCard" style="display: none;">
+        <div class="card-header">
+          <span class="card-title">📖 Transactions récentes de la carte</span>
+        </div>
+        <div class="tx-table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Lieu</th>
+                <th style="text-align: right;">Montant</th>
+              </tr>
+            </thead>
+            <tbody id="transactionsBody">
+              <tr>
+                <td colspan="4" style="text-align: center; color: var(--color-text-muted); padding: 30px;">
+                  Aucune transaction récente.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Opposition Confirmation Modal -->
+  <div id="oppositionOverlay" class="opposition-overlay"></div>
+  <div id="oppositionModal" class="opposition-modal">
+    <div class="card">
+      <div class="opposition-icon">🚨</div>
+      <h3>Signaler carte perdue ou volée</h3>
+      <p>
+        Cette action est <strong>irréversible</strong>. Votre carte sera immédiatement bloquée et ne pourra plus être utilisée pour aucun paiement ni retrait.
+        Une nouvelle carte vous sera envoyée dans les délais habituels.
+      </p>
+      <div class="opposition-modal-actions">
+        <button class="btn btn-secondary" id="btnCancelOpposition">Annuler</button>
+        <button class="btn btn-danger" id="btnConfirmOpposition">
+          ⚠️ Confirmer l'opposition
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/portal-app.js?v=1.0.2"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      /* ── Helpers ───────────────────────────────── */
+      function formatCurrency(amount) {
+        if (amount === undefined || amount === null) return '0 FCFA';
+        return Number(amount).toLocaleString('fr-FR') + ' FCFA';
+      }
+
+      function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        var d = new Date(dateStr);
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      }
+
+      function formatDateTime(dateStr) {
+        if (!dateStr) return '-';
+        var d = new Date(dateStr);
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+               ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      }
+
+      function maskCardNumber(num) {
+        if (!num) return '**** **** **** ****';
+        var s = String(num).replace(/\s/g, '');
+        if (s.length <= 4) return s;
+        return '**** **** **** ' + s.slice(-4);
+      }
+
+      function formatExpiry(dateStr) {
+        if (!dateStr) return '--/--';
+        var d = new Date(dateStr);
+        var mm = String(d.getMonth() + 1).padStart(2, '0');
+        var yy = String(d.getFullYear()).slice(-2);
+        return mm + '/' + yy;
+      }
+
+      /* ── State ─────────────────────────────────── */
+      var allCartes = [];
+      var selectedCarteId = null;
+      var selectedCarteNumero = null;
+
+      /* ── DOM refs ──────────────────────────────── */
+      var els = {
+        loading: document.getElementById('cartesLoading'),
+        content: document.getElementById('cartesContent'),
+        empty: document.getElementById('cartesEmpty'),
+        selector: document.getElementById('carteSelector'),
+        statut: document.getElementById('carteStatut'),
+        statutDot: document.getElementById('carteStatutDot'),
+        statutText: document.getElementById('carteStatutText'),
+        visualWrapper: document.getElementById('carteVisualWrapper'),
+        number: document.getElementById('carteNumber'),
+        holder: document.getElementById('carteHolder'),
+        expiry: document.getElementById('carteExpiry'),
+        gaugeFill: document.getElementById('plafondGaugeFill'),
+        utilise: document.getElementById('plafondUtilise'),
+        max: document.getElementById('plafondMax'),
+        percent: document.getElementById('plafondPercent'),
+        btnOpposition: document.getElementById('btnOpposition'),
+        txCard: document.getElementById('transactionsCard'),
+        txBody: document.getElementById('transactionsBody'),
+        overlay: document.getElementById('oppositionOverlay'),
+        modal: document.getElementById('oppositionModal'),
+        btnCancel: document.getElementById('btnCancelOpposition'),
+        btnConfirm: document.getElementById('btnConfirmOpposition')
+      };
+
+      /* ── Render card visual ────────────────────── */
+      function renderCarte(carte) {
+        var numero = carte.numeroCarte || carte.numeroCarteMasque || carte.numero || '';
+        var masked = carte.numeroCarteMasque || maskCardNumber(numero);
+        var expiry = carte.dateExpiration || carte.expiration || '';
+        var holder = carte.titulaire || carte.nomTitulaire || '';
+        var statut = carte.statut;
+        var plafond = carte.plafondJournalier || carte.limiteJournaliere || carte.plafond || 0;
+        var utilise = carte.montantUtilise || carte.utilise || 0;
+        var isActive = (statut === true || statut === 'ACTIVE' || statut === 'ACTIF');
+
+        // Card number
+        els.number.textContent = masked;
+
+        // Holder
+        if (holder) {
+          els.holder.textContent = holder.toUpperCase();
+        } else {
+          var user = window.SF_Client.getUser();
+          els.holder.textContent = user ? ((user.prenom || '') + ' ' + (user.nom || '')).toUpperCase() : '—';
+        }
+
+        // Expiry
+        els.expiry.textContent = formatExpiry(expiry);
+
+        // Status badge
+        els.statut.style.display = 'inline-flex';
+        els.statutDot.className = 'carte-statut-dot ' + (isActive ? 'active' : 'inactive');
+        els.statutText.textContent = isActive ? 'Active' : 'Bloquée / Inactive';
+        els.statutText.style.color = isActive ? 'var(--color-success)' : 'var(--color-danger)';
+
+        // Limit gauge
+        var pct = plafond > 0 ? Math.min(100, Math.round((utilise / plafond) * 100)) : 0;
+        els.gaugeFill.style.width = pct + '%';
+        els.gaugeFill.className = 'plafond-gauge-fill' + (pct >= 90 ? ' danger' : pct >= 70 ? ' warn' : '');
+        els.utilise.textContent = formatCurrency(utilise);
+        els.max.textContent = formatCurrency(plafond);
+        els.percent.textContent = pct + '% utilisé';
+
+        // Opposition button
+        if (isActive) {
+          els.btnOpposition.style.display = 'inline-flex';
+          els.btnOpposition.disabled = false;
+          els.btnOpposition.innerHTML = '⚠️ Signaler carte perdue / volée';
+        } else {
+          els.btnOpposition.style.display = 'inline-flex';
+          els.btnOpposition.disabled = true;
+          els.btnOpposition.innerHTML = '🚫 Carte déjà bloquée';
+        }
+
+        // Show visual
+        els.visualWrapper.style.display = 'flex';
+        selectedCarteId = carte.idCarte || carte.id || null;
+        selectedCarteNumero = numero || carte.numeroCarteMasque || '';
+      }
+
+      /* ── Render transactions ───────────────────── */
+      function renderTransactions(transactions) {
+        if (!transactions || transactions.length === 0) {
+          els.txBody.innerHTML =
+            '<tr><td colspan="4" style="text-align: center; color: var(--color-text-muted); padding: 30px;">' +
+            'Aucune transaction récente pour cette carte.</td></tr>';
+          els.txCard.style.display = 'block';
+          return;
+        }
+
+        var html = '';
+        transactions.forEach(function (tx) {
+          var amount = tx.montant || 0;
+          var isDebit = amount < 0 || tx.type === 'DEBIT' || tx.sens === 'DEBIT';
+          html += '<tr>' +
+            '<td>' + formatDateTime(tx.date || tx.dateOperation) + '</td>' +
+            '<td style="font-weight: 600;">' + (tx.description || tx.libelle || '-') + '</td>' +
+            '<td>' + (tx.lieu || tx.marchand || '-') + '</td>' +
+            '<td style="text-align: right;" class="' + (isDebit ? 'tx-amount-debit' : 'tx-amount-credit') + '">' +
+              (isDebit ? '- ' : '+ ') + formatCurrency(Math.abs(amount)) +
+            '</td>' +
+          '</tr>';
+        });
+        els.txBody.innerHTML = html;
+        els.txCard.style.display = 'block';
+      }
+
+      /* ── Load cartes from API ──────────────────── */
+      async function loadCartes() {
+        try {
+          var res = await window.SF_Client.apiFetch('/api/v1/mobile/comptes');
+          if (!res.ok) throw new Error('Erreur serveur ' + res.status);
+
+          var comptes = await res.json();
+          comptes = Array.isArray(comptes) ? comptes : (comptes.data || comptes.content || []);
+
+          // Collect all cards from all accounts
+          allCartes = [];
+          comptes.forEach(function (c) {
+            if (c.cartes && Array.isArray(c.cartes)) {
+              c.cartes.forEach(function (card) {
+                card._compteNum = c.numCompte;
+                allCartes.push(card);
+              });
+            }
+            if (c.carteVisa) {
+              c.carteVisa._compteNum = c.numCompte;
+              allCartes.push(c.carteVisa);
+            }
+          });
+
+          // Fallback: try direct cartes endpoint if no cards found via comptes
+          if (allCartes.length === 0) {
+            try {
+              var cartesRes = await window.SF_Client.apiFetch('/api/v1/cartes-visa?size=50');
+              if (cartesRes.ok) {
+                var cartesData = await cartesRes.json();
+                var list = Array.isArray(cartesData) ? cartesData : (cartesData.content || cartesData.data || []);
+                allCartes = list;
+              }
+            } catch (e) {
+              // Silent fallback failure
+            }
+          }
+
+          els.loading.style.display = 'none';
+
+          if (allCartes.length === 0) {
+            els.content.style.display = 'block';
+            els.empty.style.display = 'block';
+            return;
+          }
+
+          // Populate selector
+          els.selector.innerHTML = '';
+          allCartes.forEach(function (card, idx) {
+            var opt = document.createElement('option');
+            opt.value = idx;
+            var masked = card.numeroCarteMasque || maskCardNumber(card.numeroCarte || card.numero || '');
+            var label = masked;
+            if (card.numCompte || card._compteNum) {
+              label += ' — Compte ' + (card._compteNum || card.numCompte);
+            }
+            opt.textContent = label;
+            els.selector.appendChild(opt);
+          });
+
+          els.content.style.display = 'block';
+          renderCarte(allCartes[0]);
+          loadTransactions(allCartes[0]);
+
+        } catch (err) {
+          console.error('Erreur chargement cartes:', err);
+          els.loading.style.display = 'none';
+          els.content.style.display = 'block';
+          els.empty.style.display = 'block';
+          showToast('Impossible de charger vos cartes.', 'error');
+        }
+      }
+
+      /* ── Load transactions for a card ──────────── */
+      async function loadTransactions(carte) {
+        var numero = carte.numeroCarte || carte.numeroCarteMasque || carte.numero || '';
+        var id = carte.idCarte || carte.id;
+
+        try {
+          var res;
+          if (id) {
+            res = await window.SF_Client.apiFetch('/api/v1/mobile/cartes/' + id + '/transactions?size=20');
+          } else if (numero) {
+            res = await window.SF_Client.apiFetch('/api/v1/mobile/cartes/' + numero + '/transactions?size=20');
+          }
+
+          if (res && res.ok) {
+            var data = await res.json();
+            var txList = Array.isArray(data) ? data : (data.content || data.data || carte.transactions || carte.dernieresTransactions || []);
+            renderTransactions(txList);
+            return;
+          }
+        } catch (e) {
+          // Fallback to embedded transactions
+        }
+
+        // Use embedded transactions if API not available
+        var embedded = carte.transactions || carte.dernieresTransactions || [];
+        renderTransactions(embedded);
+      }
+
+      /* ── Opposition flow ───────────────────────── */
+      function openOppositionModal() {
+        els.overlay.classList.add('visible');
+        els.modal.classList.add('visible');
+      }
+
+      function closeOppositionModal() {
+        els.overlay.classList.remove('visible');
+        els.modal.classList.remove('visible');
+      }
+
+      async function confirmOpposition() {
+        if (!selectedCarteNumero && !selectedCarteId) return;
+
+        els.btnConfirm.disabled = true;
+        els.btnConfirm.textContent = 'Traitement...';
+
+        try {
+          var res;
+          if (selectedCarteId) {
+            res = await window.SF_Client.apiFetch('/api/v1/cartes-visa/id/' + selectedCarteId + '/opposition', {
+              method: 'PUT'
+            });
+          } else {
+            res = await window.SF_Client.apiFetch('/api/v1/cartes-visa/' + selectedCarteNumero + '/opposition', {
+              method: 'PUT'
+            });
+          }
+
+          closeOppositionModal();
+
+          if (res && res.ok) {
+            showToast('Votre carte a été bloquée avec succès. Une nouvelle carte sera envoyée.', 'success');
+            // Reload cartes to reflect new status
+            await loadCartes();
+          } else {
+            var errMsg = 'Erreur lors du signalement.';
+            try {
+              var errData = await res.json();
+              if (errData.message) errMsg = errData.message;
+            } catch (e) {}
+            showToast(errMsg, 'error');
+          }
+        } catch (err) {
+          console.error('Erreur opposition:', err);
+          closeOppositionModal();
+          showToast('Erreur réseau. Veuillez réessayer.', 'error');
+        } finally {
+          els.btnConfirm.disabled = false;
+          els.btnConfirm.textContent = '⚠️ Confirmer l\'opposition';
+        }
+      }
+
+      /* ── Event Listeners ───────────────────────── */
+      els.selector.addEventListener('change', function () {
+        var idx = parseInt(this.value, 10);
+        if (!isNaN(idx) && allCartes[idx]) {
+          renderCarte(allCartes[idx]);
+          loadTransactions(allCartes[idx]);
+        }
+      });
+
+      els.btnOpposition.addEventListener('click', function () {
+        if (!this.disabled) openOppositionModal();
+      });
+
+      els.btnCancel.addEventListener('click', closeOppositionModal);
+      els.overlay.addEventListener('click', closeOppositionModal);
+
+      els.btnConfirm.addEventListener('click', confirmOpposition);
+
+      // Close modal on Escape
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeOppositionModal();
+      });
+
+      /* ── Init ──────────────────────────────────── */
+      document.addEventListener('DOMContentLoaded', function () {
+        loadCartes();
+      });
+
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion notifications - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    /* ── Drawer detail panel ─────────────────────────── */
+    .drawer-overlay {
+      position: fixed; inset: 0; background: rgba(8,67,85,0.35);
+      z-index: 900; opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+
+    .drawer-panel {
+      position: fixed; top: 0; right: -480px; width: 480px; max-width: 90vw;
+      height: 100vh; background: var(--color-surface, #fff);
+      box-shadow: var(--shadow-lg); z-index: 950;
+      transition: right 0.3s cubic-bezier(0.4,0,0.2,1);
+      display: flex; flex-direction: column;
+      border-left: 1px solid var(--color-border, #C9DFE8);
+    }
+    .drawer-panel.open { right: 0; }
+
+    .drawer-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px; border-bottom: 1px solid var(--color-border, #C9DFE8);
+      flex-shrink: 0;
+    }
+    .drawer-header h2 {
+      font-size: 17px; font-weight: 700; color: var(--color-primary, #084355);
+      margin: 0;
+    }
+    .drawer-close {
+      width: 32px; height: 32px; border: none; background: transparent;
+      border-radius: 8px; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      color: var(--color-text-secondary, #4A7A8A);
+      transition: background 0.15s;
+    }
+    .drawer-close:hover { background: var(--color-bg, #F0F6FA); }
+
+    .drawer-body {
+      flex: 1; overflow-y: auto; padding: 24px;
+    }
+
+    .drawer-field { margin-bottom: 20px; }
+    .drawer-field-label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--color-text-muted, #8AABB5);
+      margin-bottom: 4px;
+    }
+    .drawer-field-value {
+      font-size: 14px; color: var(--color-primary, #084355);
+      line-height: 1.5;
+    }
+    .drawer-message-box {
+      background: var(--color-bg, #F0F6FA); border-radius: 8px;
+      padding: 14px 16px; font-size: 14px; line-height: 1.6;
+      color: var(--color-primary, #084355);
+      white-space: pre-wrap; word-break: break-word;
+    }
+
+    .drawer-footer {
+      padding: 16px 24px; border-top: 1px solid var(--color-border, #C9DFE8);
+      display: flex; gap: 10px; flex-shrink: 0;
+    }
+
+    /* ── Unread row highlight ────────────────────────── */
+    .notif-unread { background: #F0F9F7; }
+    .notif-unread td { font-weight: 500; }
+
+    /* ── Clickable row ───────────────────────────────── */
+    .notif-row { cursor: pointer; transition: background 0.15s; }
+    .notif-row:hover { background: #E8F4F8; }
+
+    /* ── Message preview ellipsis ────────────────────── */
+    .msg-preview {
+      max-width: 320px; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; display: block;
+    }
+
+    /* ── Stats summary bar ───────────────────────────── */
+    .stats-bar {
+      display: flex; gap: 24px; align-items: center;
+      font-size: 13px; color: var(--color-text-secondary, #4A7A8A);
+      padding: 0 4px;
+    }
+    .stats-bar .stat-item { display: flex; align-items: center; gap: 6px; }
+    .stats-bar .stat-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+
+    /* ── Pagination ──────────────────────────────────── */
+    .pagination { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; flex-wrap: wrap; gap: 10px; }
+    .pagination-info { font-size: 13px; color: var(--color-text-secondary, #4A7A8A); }
+    .pagination-buttons { display: flex; gap: 4px; }
+    .page-btn {
+      width: 34px; height: 34px; border: 1px solid var(--color-border, #C9DFE8);
+      background: var(--color-surface, #fff); border-radius: 6px;
+      font-size: 13px; font-weight: 600; color: var(--color-primary, #084355);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .page-btn:hover:not(:disabled) { background: #E8F4F8; }
+    .page-btn.active { background: var(--color-primary, #084355); color: #fff; border-color: var(--color-primary, #084355); }
+    .page-btn:disabled { opacity: 0.4; cursor: default; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar"></aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Gestion notifications</div>
+            <div class="topbar-breadcrumb">Notifications / Gestion</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+
+      <main class="content-area">
+        <!-- PAGE HEADER -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Notifications</h1>
+            <p class="page-subtitle">Gestion des notifications envoyees aux clients</p>
+          </div>
+          <button class="btn btn-primary" id="btnMarkAllRead">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px;">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Tout marquer comme lu
+          </button>
+        </div>
+
+        <!-- KPI CARDS -->
+        <section class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Total</div>
+              <div class="kpi-value" id="kpiTotal">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Non lues</div>
+              <div class="kpi-value" id="kpiNonLues">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Push</div>
+              <div class="kpi-value" id="kpiPush">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">SMS</div>
+              <div class="kpi-value" id="kpiSms">-</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- FILTERS + TABLE -->
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Liste des notifications</div>
+              <div class="card-subtitle">Endpoint : /api/v1/notifications</div>
+            </div>
+            <div class="stats-bar" id="statsBar">
+              <span class="stat-item"><span class="stat-dot" style="background:#2E7D32;"></span> <span id="statLu">0</span> lues</span>
+              <span class="stat-item"><span class="stat-dot" style="background:#D93025;"></span> <span id="statNonLu">0</span> non lues</span>
+            </div>
+          </div>
+
+          <!-- FILTER BAR -->
+          <div class="filter-bar">
+            <input class="form-control" placeholder="Rechercher client..." id="filterClient" oninput="applyFilters()">
+            <select class="form-control" id="filterCanal" onchange="applyFilters()">
+              <option value="ALL">Tous canaux</option>
+              <option value="PUSH">Push</option>
+              <option value="SMS">SMS</option>
+              <option value="EMAIL">Email</option>
+            </select>
+            <select class="form-control" id="filterStatut" onchange="applyFilters()">
+              <option value="ALL">Tous statuts</option>
+              <option value="NON_LU">Non lues</option>
+              <option value="LU">Lues</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="resetFilters()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+              </svg>
+              Reinitialiser
+            </button>
+          </div>
+
+          <!-- TABLE -->
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:40px;"><input type="checkbox" id="selectAll" title="Tout selectionner"></th>
+                <th>Date</th>
+                <th>Client</th>
+                <th>Canal</th>
+                <th>Message</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody id="notifBody">
+              <tr>
+                <td colspan="6" style="text-align:center;color:#4A7A8A;padding:40px 0;">
+                  <div class="login-spinner" style="display:inline-block;width:32px;height:32px;margin-bottom:12px;"></div>
+                  <div>Chargement des notifications...</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- PAGINATION -->
+          <div class="pagination" id="paginationArea" style="display:none;">
+            <div class="pagination-info" id="paginationInfo"></div>
+            <div class="pagination-buttons" id="paginationButtons"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- DETAIL DRAWER -->
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <div class="drawer-panel" id="drawerPanel">
+    <div class="drawer-header">
+      <h2>Detail notification</h2>
+      <button class="drawer-close" id="drawerClose" title="Fermer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="drawer-body" id="drawerBody">
+      <!-- Populated dynamically -->
+    </div>
+    <div class="drawer-footer" id="drawerFooter">
+      <button class="btn btn-primary btn-sm" id="drawerMarkRead">Marquer comme lu</button>
+      <button class="btn btn-ghost btn-sm" id="drawerCloseBtn">Fermer</button>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container"></div>
+
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ==================================================
+       STATE
+       ================================================== */
+    let allNotifs = [];
+    let filteredNotifs = [];
+    let currentPage = 0;
+    const pageSize = 20;
+    let totalPages = 0;
+    let totalElements = 0;
+    let selectedDrawerId = null;
+
+    const canalBadgeClass = {
+      PUSH: 'badge-info',
+      SMS:  'badge-warning',
+      EMAIL:'badge-pending'
+    };
+
+    /* ==================================================
+       INIT
+       ================================================== */
+    document.addEventListener('DOMContentLoaded', () => {
+      loadNotifications();
+      initEventListeners();
+    });
+
+    function initEventListeners() {
+      // Select all checkbox
+      document.getElementById('selectAll').addEventListener('change', toggleSelectAll);
+
+      // Mark all read button
+      document.getElementById('btnMarkAllRead').addEventListener('click', markAllRead);
+
+      // Drawer close
+      document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+      document.getElementById('drawerCloseBtn').addEventListener('click', closeDrawer);
+      document.getElementById('drawerOverlay').addEventListener('click', closeDrawer);
+
+      // Drawer mark as read
+      document.getElementById('drawerMarkRead').addEventListener('click', function() {
+        if (selectedDrawerId != null) markRead(selectedDrawerId, true);
+      });
+
+      // Escape to close drawer
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeDrawer();
+      });
+    }
+
+    /* ==================================================
+       DATA LOADING
+       ================================================== */
+    async function loadNotifications() {
+      try {
+        const res = await SF.apiFetch('/api/v1/notifications?page=0&size=200');
+        if (!res) return;
+        if (!res.ok) {
+          showToast('Erreur lors du chargement des notifications.', 'error');
+          renderEmpty();
+          return;
+        }
+        const data = await res.json();
+        allNotifs = data.content || data || [];
+        totalElements = data.totalElements || allNotifs.length;
+        totalPages = data.totalPages || 1;
+        filteredNotifs = [...allNotifs];
+        applyFilters();
+      } catch (e) {
+        console.error(e);
+        showToast('Impossible de joindre le serveur.', 'error');
+        renderEmpty();
+      }
+    }
+
+    /* ==================================================
+       RENDERING
+       ================================================== */
+    function renderNotifs(items) {
+      const tbody = document.getElementById('notifBody');
+
+      if (!items || !items.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#4A7A8A;padding:40px 0;">Aucune notification trouvee.</td></tr>';
+        document.getElementById('paginationArea').style.display = 'none';
+        updateKpis(allNotifs);
+        updateStats(allNotifs);
+        return;
+      }
+
+      // Paginate locally
+      const start = currentPage * pageSize;
+      const pageItems = items.slice(start, start + pageSize);
+      const localTotalPages = Math.ceil(items.length / pageSize);
+
+      tbody.innerHTML = pageItems.map(n => {
+        const isUnread = !n.lu;
+        const dateVal = n.dateEnvoi || n.createdAt || n.dateCreation;
+        return `
+          <tr class="notif-row ${isUnread ? 'notif-unread' : ''}" data-id="${n.id}" onclick="openDrawer(${n.id})">
+            <td onclick="event.stopPropagation();">
+              <input type="checkbox" class="notif-check" data-id="${n.id}"
+                ${n.lu ? 'disabled checked' : ''}
+                onchange="markRead(${n.id}, this.checked)"
+                title="${n.lu ? 'Deja lu' : 'Marquer comme lu'}">
+            </td>
+            <td style="white-space:nowrap;font-size:13px;">${formatDateTime(dateVal)}</td>
+            <td style="font-weight:500;">${escapeHtml(n.clientNom || n.nomClient || '-')}</td>
+            <td><span class="badge ${canalBadgeClass[n.canal] || 'badge-info'}">${escapeHtml(n.canal || '-')}</span></td>
+            <td><span class="msg-preview" title="${escapeHtml(n.message || n.contenu || '')}">${escapeHtml(n.message || n.contenu || '-')}</span></td>
+            <td><span class="badge ${n.lu ? 'badge-success' : 'badge-danger'}">${n.lu ? 'Lu' : 'Non lu'}</span></td>
+          </tr>`;
+      }).join('');
+
+      renderPagination(items.length, localTotalPages);
+      updateKpis(allNotifs);
+      updateStats(allNotifs);
+    }
+
+    function renderEmpty() {
+      document.getElementById('notifBody').innerHTML =
+        '<tr><td colspan="6" style="text-align:center;color:#4A7A8A;padding:40px 0;">Aucune notification trouvee.</td></tr>';
+      document.getElementById('paginationArea').style.display = 'none';
+      updateKpis([]);
+      updateStats([]);
+    }
+
+    function updateKpis(items) {
+      document.getElementById('kpiTotal').textContent = items.length;
+      document.getElementById('kpiNonLues').textContent = items.filter(n => !n.lu).length;
+      document.getElementById('kpiPush').textContent = items.filter(n => n.canal === 'PUSH').length;
+      document.getElementById('kpiSms').textContent = items.filter(n => n.canal === 'SMS').length;
+    }
+
+    function updateStats(items) {
+      document.getElementById('statLu').textContent = items.filter(n => n.lu).length;
+      document.getElementById('statNonLu').textContent = items.filter(n => !n.lu).length;
+    }
+
+    /* ==================================================
+       PAGINATION
+       ================================================== */
+    function renderPagination(totalItems, localTotalPages) {
+      const area = document.getElementById('paginationArea');
+      const info = document.getElementById('paginationInfo');
+      const buttons = document.getElementById('paginationButtons');
+
+      if (totalItems <= pageSize) {
+        area.style.display = 'none';
+        return;
+      }
+
+      const from = currentPage * pageSize + 1;
+      const to = Math.min(from + pageSize - 1, totalItems);
+      info.textContent = `Affichage ${from}-${to} sur ${totalItems} notifications`;
+      area.style.display = 'flex';
+
+      let html = '';
+      html += `<button class="page-btn" ${currentPage === 0 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">&#8249;</button>`;
+
+      const pages = [];
+      if (localTotalPages <= 7) {
+        for (let i = 0; i < localTotalPages; i++) pages.push(i);
+      } else {
+        pages.push(0);
+        if (currentPage > 2) pages.push('...');
+        for (let i = Math.max(1, currentPage - 1); i <= Math.min(localTotalPages - 2, currentPage + 1); i++) pages.push(i);
+        if (currentPage < localTotalPages - 3) pages.push('...');
+        pages.push(localTotalPages - 1);
+      }
+
+      pages.forEach(p => {
+        if (p === '...') {
+          html += '<button class="page-btn" disabled>&hellip;</button>';
+        } else {
+          html += `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">${p + 1}</button>`;
+        }
+      });
+
+      html += `<button class="page-btn" ${currentPage >= localTotalPages - 1 ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">&#8250;</button>`;
+      buttons.innerHTML = html;
+    }
+
+    function goToPage(page) {
+      currentPage = page;
+      renderNotifs(filteredNotifs);
+      // Scroll to top of table
+      document.querySelector('.data-table').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    /* ==================================================
+       FILTERS
+       ================================================== */
+    function applyFilters() {
+      const q = document.getElementById('filterClient').value.toLowerCase().trim();
+      const canal = document.getElementById('filterCanal').value;
+      const statut = document.getElementById('filterStatut').value;
+
+      filteredNotifs = allNotifs.filter(n => {
+        const matchQ = !q ||
+          (n.clientNom || n.nomClient || '').toLowerCase().includes(q) ||
+          (n.message || n.contenu || '').toLowerCase().includes(q);
+        const matchCanal = canal === 'ALL' || n.canal === canal;
+        const matchStatut = statut === 'ALL' || (statut === 'LU' ? n.lu : !n.lu);
+        return matchQ && matchCanal && matchStatut;
+      });
+
+      currentPage = 0;
+      renderNotifs(filteredNotifs);
+    }
+
+    function resetFilters() {
+      document.getElementById('filterClient').value = '';
+      document.getElementById('filterCanal').value = 'ALL';
+      document.getElementById('filterStatut').value = 'ALL';
+      filteredNotifs = [...allNotifs];
+      currentPage = 0;
+      renderNotifs(filteredNotifs);
+    }
+
+    /* ==================================================
+       SELECT ALL / MARK READ
+       ================================================== */
+    function toggleSelectAll() {
+      const checked = document.getElementById('selectAll').checked;
+      const checkboxes = document.querySelectorAll('.notif-check:not(:disabled)');
+      checkboxes.forEach(cb => {
+        if (cb.checked !== checked) {
+          cb.checked = checked;
+          markRead(parseInt(cb.dataset.id), checked);
+        }
+      });
+    }
+
+    async function markRead(id, lu) {
+      try {
+        const res = await SF.apiFetch('/api/v1/notifications/' + id, {
+          method: 'PATCH',
+          body: JSON.stringify({ lu: lu })
+        });
+        if (res && res.ok) {
+          const n = allNotifs.find(x => x.id === id);
+          if (n) n.lu = lu;
+          updateKpis(allNotifs);
+          updateStats(allNotifs);
+          // Re-render to update row styling
+          renderNotifs(filteredNotifs);
+          // Update drawer if open for this notification
+          if (selectedDrawerId === id) populateDrawer(n);
+        }
+      } catch (e) {
+        console.error(e);
+        showToast('Erreur lors de la mise a jour.', 'error');
+      }
+    }
+
+    async function markAllRead() {
+      if (!allNotifs.some(n => !n.lu)) {
+        showToast('Toutes les notifications sont deja lues.', 'info');
+        return;
+      }
+      if (!confirm('Marquer toutes les notifications comme lues ?')) return;
+
+      try {
+        const res = await SF.apiFetch('/api/v1/notifications/lire-tout', { method: 'POST' });
+        if (res && res.ok) {
+          allNotifs.forEach(n => n.lu = true);
+          renderNotifs(filteredNotifs);
+          showToast('Toutes les notifications ont ete marquees comme lues.', 'success');
+        } else {
+          showToast('Erreur lors de la mise a jour.', 'error');
+        }
+      } catch (e) {
+        console.error(e);
+        showToast('Impossible de joindre le serveur.', 'error');
+      }
+    }
+
+    /* ==================================================
+       DETAIL DRAWER
+       ================================================== */
+    function openDrawer(id) {
+      const n = allNotifs.find(x => x.id === id);
+      if (!n) return;
+      selectedDrawerId = id;
+      populateDrawer(n);
+
+      document.getElementById('drawerOverlay').classList.add('open');
+      document.getElementById('drawerPanel').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeDrawer() {
+      selectedDrawerId = null;
+      document.getElementById('drawerOverlay').classList.remove('open');
+      document.getElementById('drawerPanel').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function populateDrawer(n) {
+      const dateVal = n.dateEnvoi || n.createdAt || n.dateCreation;
+      const statusBadge = n.lu
+        ? '<span class="badge badge-success">Lu</span>'
+        : '<span class="badge badge-danger">Non lu</span>';
+      const canalBadge = `<span class="badge ${canalBadgeClass[n.canal] || 'badge-info'}">${escapeHtml(n.canal || '-')}</span>`;
+
+      document.getElementById('drawerBody').innerHTML = `
+        <div class="drawer-field">
+          <div class="drawer-field-label">Statut</div>
+          <div class="drawer-field-value">${statusBadge}</div>
+        </div>
+        <div class="drawer-field">
+          <div class="drawer-field-label">Date d'envoi</div>
+          <div class="drawer-field-value">${formatDateTime(dateVal)}</div>
+        </div>
+        <div class="drawer-field">
+          <div class="drawer-field-label">Client</div>
+          <div class="drawer-field-value">${escapeHtml(n.clientNom || n.nomClient || '-')}</div>
+        </div>
+        <div class="drawer-field">
+          <div class="drawer-field-label">Canal</div>
+          <div class="drawer-field-value">${canalBadge}</div>
+        </div>
+        <div class="drawer-field">
+          <div class="drawer-field-label">Type</div>
+          <div class="drawer-field-value">${escapeHtml(n.type || n.typeNotification || '-')}</div>
+        </div>
+        <div class="drawer-field">
+          <div class="drawer-field-label">Objet</div>
+          <div class="drawer-field-value">${escapeHtml(n.objet || n.sujet || '-')}</div>
+        </div>
+        <div class="drawer-field">
+          <div class="drawer-field-label">Message</div>
+          <div class="drawer-message-box">${escapeHtml(n.message || n.contenu || '-')}</div>
+        </div>
+        ${n.reference ? `
+        <div class="drawer-field">
+          <div class="drawer-field-label">Reference</div>
+          <div class="drawer-field-value" style="font-family:monospace;font-size:12px;">${escapeHtml(n.reference)}</div>
+        </div>` : ''}
+      `;
+
+      // Update footer button state
+      const btn = document.getElementById('drawerMarkRead');
+      if (n.lu) {
+        btn.textContent = 'Deja lu';
+        btn.disabled = true;
+        btn.className = 'btn btn-ghost btn-sm';
+      } else {
+        btn.textContent = 'Marquer comme lu';
+        btn.disabled = false;
+        btn.className = 'btn btn-primary btn-sm';
+      }
+    }
+
+    /* ==================================================
+       HELPERS
+       ================================================== */
+    function formatDateTime(d) {
+      if (!d) return '-';
+      try {
+        return new Date(d).toLocaleString('fr-FR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      } catch (e) {
+        return String(d);
+      }
+    }
+
+    function escapeHtml(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>

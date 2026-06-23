@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Détail Transaction — Soutra Finance Backoffice</title>
+  <meta name="description" content="Détail complet d'une transaction avec écritures comptables SYSCOHADA.">
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title" id="topbarTitle">Détail Transaction</div>
+            <div class="topbar-breadcrumb" id="breadcrumb">Opérations / Historique / Détail</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a href="historique.html" class="btn btn-ghost btn-sm" id="btnRetour">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Retour
+          </a>
+          <button class="btn btn-outline btn-sm" id="btnImprimerRecu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Imprimer Reçu
+          </button>
+          <button class="btn btn-primary btn-sm" id="btnExporterPDF">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exporter PDF
+          </button>
+        </div>
+      </header>
+
+      <!-- SKELETON DE CHARGEMENT -->
+      <div class="content-area" id="loadingState">
+        <div style="display:flex; justify-content:center; align-items:center; height:300px; flex-direction:column; gap:16px; color:#4A7A8A;">
+          <div class="login-spinner" style="width:40px;height:40px;"></div>
+          <div>Chargement du détail de la transaction…</div>
+        </div>
+      </div>
+
+      <!-- CONTENU PRINCIPAL -->
+      <div class="content-area" id="mainContent" style="display:none;">
+
+        <!-- SECTION 1 : IDENTIFICATION -->
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="card-header">
+            <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#084355;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              Identification
+            </div>
+            <span class="badge" id="badgeStatut">—</span>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding-top: 4px;">
+            <div class="info-row">
+              <span class="info-label">ID Transaction</span>
+              <span class="info-value" id="infoRef" style="font-family:monospace;font-weight:700;font-size:14px;color:#084355;">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Date / Heure de création</span>
+              <span class="info-value" id="infoDateCreation">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Date / Heure de traitement</span>
+              <span class="info-value" id="infoDateTraitement">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Statut</span>
+              <span class="info-value" id="infoStatut">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2 : TYPE ET MONTANT -->
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="card-header">
+            <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#084355;"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Type et Montant
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; padding-top: 4px;">
+            <div class="info-row">
+              <span class="info-label">Type d'opération</span>
+              <span class="info-value" id="infoType">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Montant</span>
+              <span class="info-value" id="infoMontant" style="font-size:16px;font-weight:700;color:#084355;">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Frais</span>
+              <span class="info-value" id="infoFrais">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Montant total</span>
+              <span class="info-value" id="infoMontantTotal" style="font-size:16px;font-weight:800;color:#2E7D32;">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Devise</span>
+              <span class="info-value" id="infoDevise" style="font-weight:600;">FCFA</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3 : COMPTES CONCERNES -->
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="card-header">
+            <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#084355;"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+              Comptes concernés
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; padding-top: 4px;">
+            <!-- Compte débit -->
+            <div style="background:rgba(217,48,37,0.04); border:1px solid rgba(217,48,37,0.12); border-radius:12px; padding:16px;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#D93025;letter-spacing:0.5px;margin-bottom:10px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2" style="width:13px;height:13px;display:inline-block;vertical-align:middle;margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+                Compte débité
+              </div>
+              <div class="info-row">
+                <span class="info-label">N° de compte</span>
+                <span class="info-value" id="infoCompteDebit" style="font-family:monospace;font-weight:700;">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Client</span>
+                <span class="info-value" id="infoClientDebit">—</span>
+              </div>
+            </div>
+            <!-- Compte crédit -->
+            <div style="background:rgba(46,125,50,0.04); border:1px solid rgba(46,125,50,0.12); border-radius:12px; padding:16px;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#2E7D32;letter-spacing:0.5px;margin-bottom:10px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" style="width:13px;height:13px;display:inline-block;vertical-align:middle;margin-right:4px;"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                Compte crédité
+              </div>
+              <div class="info-row">
+                <span class="info-label">N° de compte</span>
+                <span class="info-value" id="infoCompteCredit" style="font-family:monospace;font-weight:700;">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Client</span>
+                <span class="info-value" id="infoClientCredit">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 4 : ACTEURS -->
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="card-header">
+            <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#084355;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Acteurs
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; padding-top: 4px;">
+            <div class="info-row">
+              <span class="info-label">Guichetier créateur</span>
+              <span class="info-value" id="infoGuichetier">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Superviseur approbateur</span>
+              <span class="info-value" id="infoSuperviseur">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Date approbation / rejet</span>
+              <span class="info-value" id="infoDateApprobation">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 5 : ECRITURES COMPTABLES SYSCOHADA -->
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="card-header">
+            <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#084355;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Écritures comptables SYSCOHADA
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:50px;">N°</th>
+                  <th>Compte général</th>
+                  <th>Libellé</th>
+                  <th style="text-align:right;">Débit (FCFA)</th>
+                  <th style="text-align:right;">Crédit (FCFA)</th>
+                </tr>
+              </thead>
+              <tbody id="ecrituresBody">
+                <tr>
+                  <td colspan="5" style="text-align:center;padding:24px;color:#4A7A8A;">Aucune écriture comptable enregistrée.</td>
+                </tr>
+              </tbody>
+              <tfoot id="ecrituresFooter" style="display:none;">
+                <tr style="background:rgba(8,67,85,0.04);font-weight:700;">
+                  <td colspan="3" style="text-align:right;padding-right:16px;">Totaux</td>
+                  <td style="text-align:right;" id="totalDebit">0</td>
+                  <td style="text-align:right;" id="totalCredit">0</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <!-- Indicateur d'équilibre -->
+          <div id="equilibreIndicator" style="display:none; padding:12px 20px; font-size:12px; font-weight:600;"></div>
+        </div>
+
+        <!-- SECTION 6 : INFORMATIONS COMPLEMENTAIRES -->
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="card-header">
+            <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#084355;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              Informations complémentaires
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; padding-top: 4px;">
+            <div class="info-row">
+              <span class="info-label">Pièce justificative</span>
+              <span class="info-value" id="infoPieceJustif">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Référence externe</span>
+              <span class="info-value" id="infoRefExterne" style="font-family:monospace;font-size:12px;">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Motif / Objet</span>
+              <span class="info-value" id="infoMotif">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Commentaires</span>
+              <span class="info-value" id="infoCommentaires">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Version</span>
+              <span class="info-value" id="infoVersion" style="font-family:monospace;font-size:12px;">—</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ETAT D'ERREUR -->
+      <div class="content-area" id="errorState" style="display:none;">
+        <div style="display:flex; justify-content:center; align-items:center; height:300px; flex-direction:column; gap:16px; color:#D93025;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:48px;height:48px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <div id="errorMessage">Transaction introuvable.</div>
+          <a href="historique.html" class="btn btn-primary">Retour à l'historique</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+
+  <script>
+    /* ── Variables d'état ─────────────────────────── */
+    let _txnRef = null;
+    let _txnData = null;
+
+    /* ── Helpers ──────────────────────────────────── */
+    function fmt(n) {
+      return Number(n || 0).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function formatDateFR(dateStr) {
+      if (!dateStr) return '—';
+      try {
+        return new Date(dateStr).toLocaleString('fr-FR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+      } catch (_) {
+        return String(dateStr);
+      }
+    }
+
+    function escHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    /* ── Badges statut ───────────────────────────── */
+    const STATUT_MAP = {
+      'EXECUTEE':   { cls: 'badge-active',  label: 'Exécutée' },
+      'VALIDEE':    { cls: 'badge-active',  label: 'Validée' },
+      'EN_ATTENTE': { cls: 'badge-pending', label: 'En attente' },
+      'REJETEE':    { cls: 'badge-blocked', label: 'Rejetée' },
+      'ANNULEE':    { cls: 'badge-blocked', label: 'Annulée' },
+      'ECHEC':      { cls: 'badge-blocked', label: 'Échouée' }
+    };
+
+    /* ── Badges type opération ───────────────────── */
+    const TYPE_BADGE_MAP = {
+      'DEPOT':     { cls: 'badge-success', label: 'Dépôt' },
+      'VERSEMENT': { cls: 'badge-success', label: 'Versement' },
+      'RETRAIT':   { cls: 'badge-danger',  label: 'Retrait' },
+      'VIREMENT':  { cls: 'badge-info',    label: 'Virement' }
+    };
+
+    /* ── Peuplement de la fiche ──────────────────── */
+    function peupler(tx) {
+      _txnData = tx;
+
+      // Mise à jour du titre et breadcrumb
+      var ref = tx.referenceUnique || '—';
+      document.getElementById('topbarTitle').textContent = 'Détail — ' + ref;
+      document.getElementById('breadcrumb').textContent = 'Opérations / Historique / ' + ref;
+      document.title = ref + ' — Soutra Finance Backoffice';
+
+      // ── Section 1 : Identification ──
+      document.getElementById('infoRef').textContent = ref;
+      document.getElementById('infoDateCreation').textContent = formatDateFR(tx.dateHeure);
+      document.getElementById('infoDateTraitement').textContent = formatDateFR(tx.dateTraitement || tx.dateHeure);
+
+      var statutStr = tx.statutOperation || 'EXECUTEE';
+      var sMap = STATUT_MAP[statutStr] || { cls: 'badge-info', label: statutStr };
+      var badgeStatut = document.getElementById('badgeStatut');
+      badgeStatut.className = 'badge ' + sMap.cls;
+      badgeStatut.textContent = sMap.label;
+      document.getElementById('infoStatut').innerHTML = '<span class="badge ' + sMap.cls + '">' + escHtml(sMap.label) + '</span>';
+
+      // ── Section 2 : Type et Montant ──
+      var typeStr = (tx.typeOperation || '').toUpperCase();
+      var tMap = TYPE_BADGE_MAP[typeStr] || { cls: 'badge-info', label: typeStr || 'Opération' };
+      document.getElementById('infoType').innerHTML = '<span class="badge ' + tMap.cls + '">' + escHtml(tMap.label) + '</span>';
+      document.getElementById('infoMontant').textContent = fmt(tx.montant);
+      document.getElementById('infoFrais').textContent = fmt(tx.frais);
+
+      var montantNum = Number(tx.montant || 0);
+      var fraisNum = Number(tx.frais || 0);
+      var total = montantNum + fraisNum;
+      document.getElementById('infoMontantTotal').textContent = fmt(total);
+
+      // ── Section 3 : Comptes concernés ──
+      document.getElementById('infoCompteDebit').textContent = tx.numCompteSource || '—';
+      document.getElementById('infoClientDebit').textContent = tx.clientNom || tx.clientSourceNom || '—';
+      document.getElementById('infoCompteCredit').textContent = tx.numCompteDestination || '—';
+      document.getElementById('infoClientCredit').textContent = tx.clientDestinationNom || tx.clientNom || '—';
+
+      // Pour un dépôt, inverser la logique : le compte client est crédité, la caisse est débitée
+      if (typeStr === 'DEPOT' || typeStr === 'VERSEMENT') {
+        document.getElementById('infoCompteDebit').textContent = '521000 (Caisse FCFA)';
+        document.getElementById('infoClientDebit').textContent = 'Caisse';
+        document.getElementById('infoCompteCredit').textContent = tx.numCompteSource || tx.numCompteDestination || '—';
+        document.getElementById('infoClientCredit').textContent = tx.clientNom || '—';
+      } else if (typeStr === 'RETRAIT') {
+        document.getElementById('infoCompteDebit').textContent = tx.numCompteSource || '—';
+        document.getElementById('infoClientDebit').textContent = tx.clientNom || '—';
+        document.getElementById('infoCompteCredit').textContent = '521000 (Caisse FCFA)';
+        document.getElementById('infoClientCredit').textContent = 'Caisse';
+      }
+
+      // ── Section 4 : Acteurs ──
+      document.getElementById('infoGuichetier').textContent = tx.agentNom || tx.guichetierNom || '—';
+      document.getElementById('infoSuperviseur').textContent = tx.superviseurNom || '—';
+      document.getElementById('infoDateApprobation').textContent = formatDateFR(tx.dateApprobation || tx.dateRejet) || '—';
+
+      // ── Section 5 : Écritures SYSCOHADA ──
+      peuplerEcritures(tx);
+
+      // ── Section 6 : Informations complémentaires ──
+      document.getElementById('infoPieceJustif').textContent = tx.pieceJustificative || '—';
+      document.getElementById('infoRefExterne').textContent = tx.referenceExterne || '—';
+      document.getElementById('infoMotif').textContent = tx.libelleTypeTransaction || tx.motif || tx.objet || '—';
+      document.getElementById('infoCommentaires').textContent = tx.commentaires || '—';
+      document.getElementById('infoVersion').textContent = tx.version != null ? 'v' + tx.version : '—';
+
+      // Afficher le contenu
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('mainContent').style.display = '';
+    }
+
+    /* ── Peuplement du tableau d'écritures SYSCOHADA ── */
+    function peuplerEcritures(tx) {
+      var tbody = document.getElementById('ecrituresBody');
+      var tfoot = document.getElementById('ecrituresFooter');
+      var indicator = document.getElementById('equilibreIndicator');
+
+      var ecritures = tx.ecritures || tx.ecrituresComptables || [];
+
+      // Si pas d'écritures fournies par l'API, générer les écritures par défaut selon le type
+      if (!ecritures.length) {
+        ecritures = genererEcrituresDefaut(tx);
+      }
+
+      if (!ecritures.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#4A7A8A;">Aucune écriture comptable enregistrée.</td></tr>';
+        tfoot.style.display = 'none';
+        indicator.style.display = 'none';
+        return;
+      }
+
+      var totalDebit = 0;
+      var totalCredit = 0;
+
+      tbody.innerHTML = ecritures.map(function (ec, idx) {
+        var debit = Number(ec.debit || 0);
+        var credit = Number(ec.credit || 0);
+        totalDebit += debit;
+        totalCredit += credit;
+
+        return '<tr>' +
+          '<td style="font-weight:700;text-align:center;">' + (idx + 1) + '</td>' +
+          '<td style="font-family:monospace;font-weight:600;color:#084355;">' + escHtml(ec.compteGeneral || ec.compte || '—') + '</td>' +
+          '<td>' + escHtml(ec.libelle || ec.intitule || '—') + '</td>' +
+          '<td style="text-align:right;font-weight:600;' + (debit > 0 ? 'color:#D93025;' : 'color:#B0BEC5;') + '">' + (debit > 0 ? fmt(debit) : '—') + '</td>' +
+          '<td style="text-align:right;font-weight:600;' + (credit > 0 ? 'color:#2E7D32;' : 'color:#B0BEC5;') + '">' + (credit > 0 ? fmt(credit) : '—') + '</td>' +
+          '</tr>';
+      }).join('');
+
+      document.getElementById('totalDebit').textContent = fmt(totalDebit);
+      document.getElementById('totalCredit').textContent = fmt(totalCredit);
+      tfoot.style.display = '';
+
+      // Vérifier l'équilibre comptable
+      indicator.style.display = '';
+      if (Math.abs(totalDebit - totalCredit) < 0.01) {
+        indicator.style.background = 'rgba(46,125,50,0.06)';
+        indicator.style.color = '#2E7D32';
+        indicator.style.borderTop = '1px solid rgba(46,125,50,0.15)';
+        indicator.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px;"><polyline points="20 6 9 17 4 12"/></svg> Écritures équilibrées — Total débit = Total crédit';
+      } else {
+        indicator.style.background = 'rgba(217,48,37,0.06)';
+        indicator.style.color = '#D93025';
+        indicator.style.borderTop = '1px solid rgba(217,48,37,0.15)';
+        indicator.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Attention : écritures déséquilibrées — Vérifier la comptabilité';
+      }
+    }
+
+    /* ── Génération d'écritures par défaut si l'API ne les fournit pas ── */
+    function genererEcrituresDefaut(tx) {
+      var type = (tx.typeOperation || '').toUpperCase();
+      var montant = Number(tx.montant || 0);
+      var frais = Number(tx.frais || 0);
+
+      if (montant === 0) return [];
+
+      var ecritures = [];
+
+      if (type === 'DEPOT' || type === 'VERSEMENT') {
+        ecritures.push({ compteGeneral: '521000', libelle: 'Caisse FCFA', debit: montant, credit: 0 });
+        ecritures.push({ compteGeneral: '210000', libelle: 'Dépôt client', debit: 0, credit: montant });
+        if (frais > 0) {
+          ecritures.push({ compteGeneral: '710000', libelle: 'Frais sur dépôt', debit: 0, credit: frais });
+        }
+      } else if (type === 'RETRAIT') {
+        ecritures.push({ compteGeneral: '210000', libelle: 'Retrait client', debit: montant, credit: 0 });
+        ecritures.push({ compteGeneral: '521000', libelle: 'Caisse FCFA', debit: 0, credit: montant });
+        if (frais > 0) {
+          ecritures.push({ compteGeneral: '210000', libelle: 'Frais de retrait', debit: frais, credit: 0 });
+          ecritures.push({ compteGeneral: '710000', libelle: 'Produits frais', debit: 0, credit: frais });
+        }
+      } else if (type === 'VIREMENT') {
+        ecritures.push({ compteGeneral: '210000', libelle: 'Compte client source', debit: montant, credit: 0 });
+        ecritures.push({ compteGeneral: '210001', libelle: 'Compte client destinataire', debit: 0, credit: montant });
+        if (frais > 0) {
+          ecritures.push({ compteGeneral: '210000', libelle: 'Frais de virement', debit: frais, credit: 0 });
+          ecritures.push({ compteGeneral: '710000', libelle: 'Produits frais virement', debit: 0, credit: frais });
+        }
+      }
+
+      return ecritures;
+    }
+
+    /* ── Impression du reçu ──────────────────────── */
+    function imprimerRecu() {
+      if (!_txnData) return;
+
+      var tx = _txnData;
+      var ref = tx.referenceUnique || '—';
+      var dateStr = formatDateFR(tx.dateHeure);
+      var typeStr = (tx.typeOperation || 'Opération').toUpperCase();
+      var montant = fmt(tx.montant);
+      var frais = fmt(tx.frais);
+      var total = fmt(Number(tx.montant || 0) + Number(tx.frais || 0));
+      var client = tx.clientNom || '—';
+      var caissier = tx.agentNom || '—';
+      var compteSrc = tx.numCompteSource || '—';
+      var compteDst = tx.numCompteDestination || '—';
+      var statut = tx.statutOperation || 'EXECUTEE';
+
+      var receiptHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+        '<title>Reçu ' + ref + '</title>' +
+        '<style>' +
+        'body{font-family:monospace;font-size:12px;padding:20px;max-width:320px;margin:0 auto;}' +
+        'h2{text-align:center;font-size:14px;margin-bottom:4px;}' +
+        '.center{text-align:center;}' +
+        '.line{border-top:1px dashed #000;margin:8px 0;}' +
+        'table{width:100%;font-size:12px;}' +
+        'td{padding:2px 0;}' +
+        'td:last-child{text-align:right;font-weight:bold;}' +
+        '.footer{text-align:center;font-size:10px;margin-top:16px;color:#666;}' +
+        '</style></head><body>' +
+        '<h2>SOUTRA FINANCE</h2>' +
+        '<div class="center" style="font-size:10px;">Reçu de transaction</div>' +
+        '<div class="line"></div>' +
+        '<table>' +
+        '<tr><td>Référence</td><td>' + ref + '</td></tr>' +
+        '<tr><td>Date</td><td>' + dateStr + '</td></tr>' +
+        '<tr><td>Type</td><td>' + typeStr + '</td></tr>' +
+        '<tr><td>Statut</td><td>' + statut + '</td></tr>' +
+        '</table>' +
+        '<div class="line"></div>' +
+        '<table>' +
+        '<tr><td>Client</td><td>' + client + '</td></tr>' +
+        '<tr><td>Compte débité</td><td>' + compteSrc + '</td></tr>' +
+        '<tr><td>Compte crédité</td><td>' + compteDst + '</td></tr>' +
+        '</table>' +
+        '<div class="line"></div>' +
+        '<table>' +
+        '<tr><td>Montant</td><td>' + montant + '</td></tr>' +
+        '<tr><td>Frais</td><td>' + frais + '</td></tr>' +
+        '<tr><td><strong>TOTAL</strong></td><td><strong>' + total + '</strong></td></tr>' +
+        '</table>' +
+        '<div class="line"></div>' +
+        '<table>' +
+        '<tr><td>Guichetier</td><td>' + caissier + '</td></tr>' +
+        '</table>' +
+        '<div class="footer">Merci pour votre confiance.<br>Soutra Finance</div>' +
+        '</body></html>';
+
+      var printWindow = window.open('', '_blank', 'width=400,height=600');
+      if (printWindow) {
+        printWindow.document.write(receiptHtml);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(function () { printWindow.print(); }, 400);
+      }
+    }
+
+    /* ── Export PDF (via impression navigateur) ──── */
+    function exporterPDF() {
+      window.print();
+    }
+
+    /* ── Chargement de la transaction ────────────── */
+    async function chargerTransaction(ref) {
+      document.getElementById('loadingState').style.display = '';
+      document.getElementById('mainContent').style.display = 'none';
+      document.getElementById('errorState').style.display = 'none';
+
+      try {
+        var res = await Transactions.recu(ref);
+        if (!res) return; // 401 -> redirigé
+
+        var data = await res.json().catch(function () { return null; });
+
+        if (res.ok && data) {
+          peupler(data);
+        } else if (res.status === 404) {
+          document.getElementById('errorMessage').textContent = 'Transaction introuvable (Réf : ' + ref + ').';
+          document.getElementById('loadingState').style.display = 'none';
+          document.getElementById('errorState').style.display = '';
+          showToast('Transaction introuvable.', 'error');
+        } else {
+          document.getElementById('errorMessage').textContent = (data && data.message) || 'Erreur lors du chargement.';
+          document.getElementById('loadingState').style.display = 'none';
+          document.getElementById('errorState').style.display = '';
+          showToast('Erreur lors du chargement de la transaction.', 'error');
+        }
+      } catch (err) {
+        document.getElementById('errorMessage').textContent = 'Impossible de joindre le serveur.';
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display = '';
+        showToast('Impossible de joindre le serveur. Vérifiez que le backend est démarré.', 'error');
+      }
+    }
+
+    /* ── Initialisation ──────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function () {
+      var params = new URLSearchParams(window.location.search);
+      var ref = params.get('ref');
+
+      if (!ref) {
+        // Pas de référence : rediriger vers l'historique
+        window.location.href = 'historique.html';
+        return;
+      }
+
+      _txnRef = ref;
+      chargerTransaction(ref);
+
+      // Boutons d'action
+      document.getElementById('btnImprimerRecu').addEventListener('click', imprimerRecu);
+      document.getElementById('btnExporterPDF').addEventListener('click', exporterPDF);
+      document.getElementById('btnRetour').addEventListener('click', function (e) {
+        e.preventDefault();
+        // Retour à la page précédente si disponible, sinon historique
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.href = 'historique.html';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

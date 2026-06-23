@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demande de carte - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    /* Card type radio group */
+    .card-type-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 8px 0; }
+    .card-type-option { position: relative; }
+    .card-type-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    .card-type-label {
+      display: flex; flex-direction: column; align-items: center;
+      border: 2px solid var(--color-border); border-radius: var(--radius-sm);
+      padding: 20px 16px; cursor: pointer; transition: var(--transition);
+      background: var(--color-surface); text-align: center; user-select: none;
+    }
+    .card-type-label:hover { border-color: var(--color-secondary); box-shadow: var(--shadow-sm); }
+    .card-type-option input[type="radio"]:checked + .card-type-label {
+      border-color: var(--color-primary); background: var(--color-bg);
+      box-shadow: 0 0 0 1px var(--color-primary);
+    }
+    .card-type-option input[type="radio"]:focus-visible + .card-type-label {
+      outline: 2px solid var(--color-secondary); outline-offset: 2px;
+    }
+    .ct-icon {
+      width: 40px; height: 28px; border-radius: 4px; margin-bottom: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 800; letter-spacing: 1px; color: #fff;
+    }
+    .ct-icon.classique { background: linear-gradient(135deg, #4a9eca, #2d7a9a); }
+    .ct-icon.gold { background: linear-gradient(135deg, #f0c040, #d4a017); }
+    .ct-icon.platinum { background: linear-gradient(135deg, #6b6b6b, #2a2a2a); }
+    .ct-name { font-weight: 600; color: var(--color-primary); font-size: .95rem; }
+    .ct-desc { font-size: .78rem; color: var(--color-text-secondary); margin-top: 2px; }
+    .ct-bounds { font-size: .72rem; color: var(--color-accent-dark); margin-top: 8px; font-weight: 600; }
+
+    /* Summary card */
+    .resume-card {
+      background: var(--color-bg); border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm); padding: 24px; margin-top: 20px;
+    }
+    .resume-card .rc-title {
+      font-weight: 700; color: var(--color-primary); font-size: 1rem;
+      margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+    }
+    .resume-card .rc-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0; border-bottom: 1px solid var(--color-border);
+    }
+    .resume-card .rc-row:last-child { border-bottom: none; }
+    .resume-card .rc-label { color: var(--color-text-secondary); font-size: .875rem; }
+    .resume-card .rc-value { font-weight: 600; color: var(--color-primary); font-size: .875rem; }
+
+    /* Search results dropdown */
+    .search-results {
+      position: absolute; z-index: 50; width: 100%;
+      background: var(--color-surface); border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm); box-shadow: var(--shadow-md);
+      max-height: 240px; overflow-y: auto; display: none;
+    }
+    .search-results.show { display: block; }
+    .search-result-item {
+      padding: 10px 14px; cursor: pointer; font-size: .875rem;
+      border-bottom: 1px solid var(--color-border); transition: var(--transition);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .search-result-item:last-child { border-bottom: none; }
+    .search-result-item:hover { background: var(--color-bg); }
+    .search-result-item .sr-avatar {
+      width: 32px; height: 32px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 11px;
+      font-weight: 700; color: var(--color-primary); flex-shrink: 0;
+    }
+    .search-result-item .sr-info { flex: 1; min-width: 0; }
+    .search-result-item .sr-name { font-weight: 600; color: var(--color-primary); }
+    .search-result-item .sr-code { font-size: .75rem; color: var(--color-text-secondary); }
+
+    /* Selected client chip */
+    .client-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--color-bg); border: 1px solid var(--color-border);
+      border-radius: 20px; padding: 6px 14px 6px 8px; margin-top: 8px;
+      font-size: .85rem; font-weight: 500; color: var(--color-primary);
+    }
+    .client-chip .chip-avatar {
+      width: 24px; height: 24px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 9px;
+      font-weight: 700; background: var(--color-secondary);
+    }
+    .client-chip .chip-remove {
+      margin-left: 4px; cursor: pointer; color: var(--color-text-secondary);
+      font-size: 1.1rem; line-height: 1; transition: var(--transition);
+    }
+    .client-chip .chip-remove:hover { color: var(--color-danger); }
+
+    /* Plafond range bar */
+    .plafond-bar {
+      display: flex; align-items: center; gap: 12px; margin-top: 6px;
+      font-size: .78rem; color: var(--color-text-secondary);
+    }
+    .plafond-bar .range-track {
+      flex: 1; height: 4px; background: var(--color-border);
+      border-radius: 2px; position: relative;
+    }
+    .plafond-bar .range-fill {
+      height: 100%; border-radius: 2px; background: var(--color-primary);
+      transition: width .2s ease;
+    }
+    .plafond-error { font-size: .8rem; color: var(--color-danger); margin-top: 4px; display: none; }
+    .plafond-error.show { display: block; }
+
+    /* Submit area */
+    .submit-area { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--color-border); }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .card-type-group { grid-template-columns: 1fr; }
+      .submit-area { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Demande de carte</div>
+            <div class="topbar-breadcrumb">Comptes & Cartes / Cartes Visa / Nouvelle demande</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Nouvelle demande de carte Visa</h1>
+            <p class="page-subtitle">Formulaire de création d'une carte bancaire liee a un compte client.</p>
+          </div>
+          <button class="btn btn-outline" onclick="window.location.href='cartes.html'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Retour
+          </button>
+        </div>
+
+        <div style="max-width: 720px;">
+
+          <!-- Section 1 : Client -->
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Informations client</div>
+                <div class="card-subtitle">Recherchez le client puis selectionnez un de ses comptes actifs.</div>
+              </div>
+            </div>
+            <div style="padding: 20px;">
+              <div class="form-group" style="position: relative;">
+                <label class="form-label">Client <span style="color:var(--color-danger);">*</span></label>
+                <input type="text" class="form-control" id="clientSearch"
+                       placeholder="Nom, prenom ou numero client..."
+                       autocomplete="off" oninput="searchClients()">
+                <div class="search-results" id="clientResults"></div>
+                <div id="selectedClientChip" style="display:none;"></div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Compte associe <span style="color:var(--color-danger);">*</span></label>
+                <select class="form-control" id="compteSelect" onchange="onCompteChange()" disabled>
+                  <option value="">Selectionnez d'abord un client</option>
+                </select>
+                <div style="font-size:.78rem;color:var(--color-text-secondary);margin-top:4px;">
+                  Seuls les comptes actifs sont proposes
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Section 2 : Parametres carte -->
+          <section class="card" style="margin-top:16px;">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Parametres de la carte</div>
+                <div class="card-subtitle">Choisissez le type et definissez le plafond quotidien.</div>
+              </div>
+            </div>
+            <div style="padding: 20px;">
+              <div class="form-group">
+                <label class="form-label">Type de carte <span style="color:var(--color-danger);">*</span></label>
+                <div class="card-type-group" role="radiogroup" aria-label="Type de carte">
+                  <div class="card-type-option">
+                    <input type="radio" name="cardType" id="typeClassique" value="CLASSIQUE"
+                           onchange="onCardTypeChange(this)">
+                    <label class="card-type-label" for="typeClassique">
+                      <div class="ct-icon classique">V</div>
+                      <div class="ct-name">Classique</div>
+                      <div class="ct-desc">Carte standard</div>
+                      <div class="ct-bounds">100 000 - 500 000 FCFA/j</div>
+                    </label>
+                  </div>
+                  <div class="card-type-option">
+                    <input type="radio" name="cardType" id="typeGold" value="GOLD"
+                           onchange="onCardTypeChange(this)">
+                    <label class="card-type-label" for="typeGold">
+                      <div class="ct-icon gold">V</div>
+                      <div class="ct-name">Gold</div>
+                      <div class="ct-desc">Carte premium</div>
+                      <div class="ct-bounds">500 000 - 2 000 000 FCFA/j</div>
+                    </label>
+                  </div>
+                  <div class="card-type-option">
+                    <input type="radio" name="cardType" id="typePlatinum" value="PLATINUM"
+                           onchange="onCardTypeChange(this)">
+                    <label class="card-type-label" for="typePlatinum">
+                      <div class="ct-icon platinum">V</div>
+                      <div class="ct-name">Platinum</div>
+                      <div class="ct-desc">Carte prestige</div>
+                      <div class="ct-bounds">2 000 000 - 10 000 000 FCFA/j</div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Plafond quotidien (FCFA) <span style="color:var(--color-danger);">*</span></label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="plafondInput"
+                         placeholder="Selectionnez un type de carte" disabled
+                         oninput="onPlafondInput()">
+                  <span class="input-addon">FCFA</span>
+                </div>
+                <div id="plafondHint" style="font-size:.78rem;color:var(--color-text-secondary);margin-top:4px;">
+                  Selectionnez un type de carte pour definir les bornes
+                </div>
+                <div class="plafond-bar" id="plafondBar" style="display:none;">
+                  <span id="plafondBarMin"></span>
+                  <div class="range-track"><div class="range-fill" id="plafondBarFill"></div></div>
+                  <span id="plafondBarMax"></span>
+                </div>
+                <div class="plafond-error" id="plafondError"></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Section 3 : Recapitulatif -->
+          <div class="resume-card" id="resumeSection" style="display:none;">
+            <div class="rc-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              Recapitulatif de la demande
+            </div>
+            <div class="rc-row"><span class="rc-label">Client</span><span class="rc-value" id="rcClient">-</span></div>
+            <div class="rc-row"><span class="rc-label">Numero client</span><span class="rc-value" id="rcNumClient">-</span></div>
+            <div class="rc-row"><span class="rc-label">Compte</span><span class="rc-value" id="rcCompte">-</span></div>
+            <div class="rc-row"><span class="rc-label">Solde compte</span><span class="rc-value" id="rcSolde">-</span></div>
+            <div class="rc-row"><span class="rc-label">Type de carte</span><span class="rc-value" id="rcType">-</span></div>
+            <div class="rc-row"><span class="rc-label">Plafond quotidien</span><span class="rc-value" id="rcPlafond">-</span></div>
+            <div class="rc-row"><span class="rc-label">Expiration estimee</span><span class="rc-value" id="rcExpiration">-</span></div>
+          </div>
+
+          <!-- Actions -->
+          <div class="submit-area">
+            <button class="btn btn-outline" onclick="window.location.href='cartes.html'">Annuler</button>
+            <button class="btn btn-primary" id="btnSubmit" onclick="submitDemande()" disabled>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Soumettre la demande
+            </button>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ── State ───────────────────────────────────────────── */
+    var selectedClientId = null;
+    var selectedClientNom = '';
+    var selectedClientNum = '';
+    var selectedCardType = '';
+    var plafondMin = 0;
+    var plafondMax = 0;
+
+    /* ── Card type bounds config ─────────────────────────── */
+    var CARD_BOUNDS = {
+      CLASSIQUE: { min: 100000,  max: 500000 },
+      GOLD:      { min: 500000,  max: 2000000 },
+      PLATINUM:  { min: 2000000, max: 10000000 }
+    };
+
+    /* ── Client autocomplete ─────────────────────────────── */
+    var searchTimer;
+
+    function searchClients() {
+      var q = document.getElementById('clientSearch').value.trim();
+      var div = document.getElementById('clientResults');
+      if (q.length < 3) { div.classList.remove('show'); return; }
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(async function () {
+        try {
+          var res = await Clients.lister(0, 10, q);
+          if (res && res.ok) {
+            var data = await res.json();
+            var clients = data.content || [];
+            if (clients.length === 0) {
+              div.innerHTML = '<div class="search-result-item" style="color:var(--color-text-muted);cursor:default;">Aucun client trouve</div>';
+            } else {
+              div.innerHTML = clients.map(function (c) {
+                var initiales = ((c.nom || '?')[0] + (c.prenom || '?')[0]).toUpperCase();
+                var bg = initiales.charCodeAt(0) % 2 === 0 ? '#8cd5fa' : '#fab482';
+                return '<div class="search-result-item" onclick="pickClient(' + c.idClient + ', \'' +
+                  escapeHtml(c.nom || '') + '\', \'' + escapeHtml(c.prenom || '') + '\', \'' +
+                  escapeHtml(c.numeroClient || '') + '\')">' +
+                  '<div class="sr-avatar" style="background:' + bg + ';">' + initiales + '</div>' +
+                  '<div class="sr-info"><div class="sr-name">' + escapeHtml(c.nom) + ' ' + escapeHtml(c.prenom) + '</div>' +
+                  '<div class="sr-code">' + escapeHtml(c.numeroClient || 'N/A') + '</div></div></div>';
+              }).join('');
+            }
+            div.classList.add('show');
+          }
+        } catch (e) { console.error('Recherche clients:', e); }
+      }, 300);
+    }
+
+    function pickClient(id, nom, prenom, numClient) {
+      document.getElementById('clientResults').classList.remove('show');
+      selectedClientId = id;
+      selectedClientNom = nom + ' ' + prenom;
+      selectedClientNum = numClient;
+
+      /* Show chip, hide input */
+      var input = document.getElementById('clientSearch');
+      input.value = '';
+      input.style.display = 'none';
+
+      var initiales = ((nom || '?')[0] + (prenom || '?')[0]).toUpperCase();
+      var chipContainer = document.getElementById('selectedClientChip');
+      chipContainer.style.display = 'block';
+      chipContainer.innerHTML =
+        '<div class="client-chip">' +
+          '<div class="chip-avatar">' + initiales + '</div>' +
+          '<span>' + escapeHtml(selectedClientNom) + ' — ' + escapeHtml(numClient) + '</span>' +
+          '<span class="chip-remove" onclick="clearClient()" title="Retirer">&times;</span>' +
+        '</div>';
+
+      loadComptes(id);
+    }
+
+    function clearClient() {
+      selectedClientId = null;
+      selectedClientNom = '';
+      selectedClientNum = '';
+      document.getElementById('selectedClientChip').style.display = 'none';
+      document.getElementById('selectedClientChip').innerHTML = '';
+      var input = document.getElementById('clientSearch');
+      input.style.display = '';
+      input.value = '';
+      input.disabled = false;
+      input.focus();
+
+      var select = document.getElementById('compteSelect');
+      select.innerHTML = '<option value="">Selectionnez d\'abord un client</option>';
+      select.disabled = true;
+
+      updateResume();
+    }
+
+    async function loadComptes(idClient) {
+      var select = document.getElementById('compteSelect');
+      select.innerHTML = '<option value="">Chargement...</option>';
+      select.disabled = true;
+      try {
+        var res = await Comptes.listerClientComptes(idClient, 0, 20);
+        if (res && res.ok) {
+          var data = await res.json();
+          var comptes = (data.content || data || []).filter(function (c) { return c.statut === 'ACTIF'; });
+          if (comptes.length === 0) {
+            select.innerHTML = '<option value="">Aucun compte actif pour ce client</option>';
+          } else {
+            select.innerHTML = '<option value="">-- Selectionner un compte --</option>' +
+              comptes.map(function (c) {
+                var num = c.numCompte || c.numeroCompte || '';
+                var solde = c.solde || 0;
+                var type = c.typeCompte || '';
+                return '<option value="' + escapeHtml(num) + '" data-solde="' + solde + '">' +
+                  escapeHtml(num) + ' — ' + escapeHtml(type) + ' — ' + formatCurrency(solde) + '</option>';
+              }).join('');
+            select.disabled = false;
+          }
+        }
+      } catch (e) {
+        select.innerHTML = '<option value="">Erreur de chargement</option>';
+        showToast('Erreur lors du chargement des comptes', 'error');
+      }
+    }
+
+    function onCompteChange() {
+      updateResume();
+    }
+
+    /* ── Card type selection (radio) ─────────────────────── */
+    function onCardTypeChange(radio) {
+      selectedCardType = radio.value;
+      var bounds = CARD_BOUNDS[selectedCardType];
+      plafondMin = bounds.min;
+      plafondMax = bounds.max;
+
+      var input = document.getElementById('plafondInput');
+      input.disabled = false;
+      input.min = plafondMin;
+      input.max = plafondMax;
+      input.value = plafondMin;
+      input.placeholder = 'Entre ' + formatCurrency(plafondMin) + ' et ' + formatCurrency(plafondMax);
+
+      document.getElementById('plafondHint').textContent =
+        'Entre ' + formatCurrency(plafondMin) + ' et ' + formatCurrency(plafondMax) + ' FCFA';
+
+      updatePlafondBar(plafondMin);
+      clearPlafondError();
+      updateResume();
+    }
+
+    /* ── Plafond input & validation ──────────────────────── */
+    function onPlafondInput() {
+      var input = document.getElementById('plafondInput');
+      var val = Number(input.value);
+      var bar = document.getElementById('plafondBar');
+
+      if (!input.value) {
+        bar.style.display = 'none';
+        clearPlafondError();
+        updateResume();
+        return;
+      }
+
+      bar.style.display = '';
+
+      if (val < plafondMin) {
+        showPlafondError('Le plafond minimum pour ' + selectedCardType + ' est ' + formatCurrency(plafondMin) + ' FCFA');
+        updatePlafondBar(0);
+      } else if (val > plafondMax) {
+        showPlafondError('Le plafond maximum pour ' + selectedCardType + ' est ' + formatCurrency(plafondMax) + ' FCFA');
+        updatePlafondBar(100);
+      } else {
+        clearPlafondError();
+        var pct = ((val - plafondMin) / (plafondMax - plafondMin)) * 100;
+        updatePlafondBar(pct);
+      }
+
+      updateResume();
+    }
+
+    function updatePlafondBar(pct) {
+      var fill = document.getElementById('plafondBarFill');
+      fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
+      document.getElementById('plafondBarMin').textContent = formatCurrency(plafondMin);
+      document.getElementById('plafondBarMax').textContent = formatCurrency(plafondMax);
+    }
+
+    function showPlafondError(msg) {
+      var el = document.getElementById('plafondError');
+      el.textContent = msg;
+      el.classList.add('show');
+    }
+
+    function clearPlafondError() {
+      var el = document.getElementById('plafondError');
+      el.textContent = '';
+      el.classList.remove('show');
+    }
+
+    /* ── Summary update ──────────────────────────────────── */
+    function updateResume() {
+      var compte = document.getElementById('compteSelect');
+      var opt = compte.options[compte.selectedIndex];
+      var plafondVal = Number(document.getElementById('plafondInput').value);
+      var hasPlafondError = document.getElementById('plafondError').classList.contains('show');
+
+      var isValid = selectedClientId &&
+                    compte.value &&
+                    selectedCardType &&
+                    plafondVal >= plafondMin &&
+                    plafondVal <= plafondMax &&
+                    !hasPlafondError;
+
+      document.getElementById('btnSubmit').disabled = !isValid;
+
+      if (isValid) {
+        document.getElementById('resumeSection').style.display = '';
+        document.getElementById('rcClient').textContent = selectedClientNom;
+        document.getElementById('rcNumClient').textContent = selectedClientNum || '-';
+        document.getElementById('rcCompte').textContent = compte.value;
+        document.getElementById('rcSolde').textContent = formatCurrency(opt ? (opt.dataset.solde || 0) : 0);
+        document.getElementById('rcType').textContent = selectedCardType;
+        document.getElementById('rcPlafond').textContent = formatCurrency(plafondVal) + ' / jour';
+
+        var exp = new Date();
+        exp.setFullYear(exp.getFullYear() + 3);
+        document.getElementById('rcExpiration').textContent = exp.toLocaleDateString('fr-FR');
+      } else {
+        document.getElementById('resumeSection').style.display = 'none';
+      }
+    }
+
+    /* ── Submit ──────────────────────────────────────────── */
+    async function submitDemande() {
+      var btn = document.getElementById('btnSubmit');
+      var origHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin"><circle cx="12" cy="12" r="10"/></svg> Soumission...';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/cartes-visa', {
+          method: 'POST',
+          body: JSON.stringify({
+            clientId: selectedClientId,
+            compteId: document.getElementById('compteSelect').value,
+            typeCarte: selectedCardType,
+            plafondQuotidien: Number(document.getElementById('plafondInput').value)
+          })
+        });
+
+        if (res && (res.ok || res.status === 201)) {
+          showToast('Demande de carte creee avec succes !', 'success');
+          setTimeout(function () { window.location.href = 'cartes.html'; }, 1500);
+        } else {
+          var err = res ? await res.json().catch(function () { return {}; }) : {};
+          showToast(err.message || 'Erreur lors de la demande de carte.', 'error');
+          btn.disabled = false;
+          btn.innerHTML = origHtml;
+        }
+      } catch (e) {
+        showToast(e.message || 'Erreur de connexion au serveur.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+      }
+    }
+
+    /* ── Helpers ─────────────────────────────────────────── */
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.appendChild(document.createTextNode(str || ''));
+      return div.innerHTML;
+    }
+
+    /* Close search dropdown on outside click */
+    document.addEventListener('click', function (e) {
+      var input = document.getElementById('clientSearch');
+      var results = document.getElementById('clientResults');
+      if (!input.contains(e.target) && !results.contains(e.target)) {
+        results.classList.remove('show');
+      }
+    });
+  </script>
+</body>
+</html>

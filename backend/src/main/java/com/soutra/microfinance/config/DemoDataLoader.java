@@ -105,7 +105,7 @@ public class DemoDataLoader implements ApplicationRunner {
             return;
         }
 
-        log.info("DemoDataLoader: seeding Ivorian demo data...");
+        log.info("DemoDataLoader: seeding Ivorian + DRC demo data...");
 
         StatutClient statutActif = statutClientRepository.findByLibelleStatutIgnoreCase("ACTIF")
                 .orElseThrow(() -> new IllegalStateException("StatutClient ACTIF not found in reference data. Did reference-data.sql run?"));

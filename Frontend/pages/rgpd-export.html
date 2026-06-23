@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Export donnees personnelles - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left"><div><div class="topbar-title">Export donnees personnelles</div><div class="topbar-breadcrumb">Conformite / RGPD / Export</div></div></div>
+        <div class="topbar-right"></div>
+      </header>
+      <main class="content-area">
+        <div class="page-header">
+          <div><h1 class="page-title">Export des donnees personnelles</h1><p class="page-subtitle">Droit d'acces et portabilite -- Article 15 & 20 RGPD</p></div>
+        </div>
+        <div style="max-width:720px;">
+          <section class="card">
+            <div class="card-header"><div class="card-title">Client concerne</div></div>
+            <div style="padding:20px;">
+              <div class="form-group">
+                <label class="form-label">Rechercher le client *</label>
+                <input type="text" class="form-control" id="exportClientSearch" placeholder="Nom, prenom ou numero..." oninput="searchExportClient()">
+                <div class="search-results" id="exportClientResults"></div>
+              </div>
+              <div id="exportClientInfo" style="display:none;"></div>
+            </div>
+          </section>
+
+          <section class="card" style="margin-top:16px;">
+            <div class="card-header"><div class="card-title">Categories de donnees a exporter</div></div>
+            <div style="padding:20px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                  <input type="checkbox" name="dataCat" value="IDENTITE" checked> Identite (nom, prenom, CNI, photo)
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                  <input type="checkbox" name="dataCat" value="COMPTES" checked> Comptes (numero, solde, type)
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                  <input type="checkbox" name="dataCat" value="TRANSACTIONS" checked> Transactions (historique, montants)
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                  <input type="checkbox" name="dataCat" value="CREDITS" checked> Credits (demandes, remboursements)
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                  <input type="checkbox" name="dataCat" value="CONTACT"> Coordonnees (adresse, telephone, email)
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                  <input type="checkbox" name="dataCat" value="KYC"> Documents KYC
+                </label>
+              </div>
+              <div style="margin-top:12px;display:flex;gap:8px;">
+                <button class="btn btn-outline btn-sm" onclick="toggleAllCats(true)">Tout cocher</button>
+                <button class="btn btn-outline btn-sm" onclick="toggleAllCats(false)">Tout decocher</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="card" style="margin-top:16px;">
+            <div class="card-header"><div class="card-title">Options d'export</div></div>
+            <div style="padding:20px;">
+              <div class="form-group">
+                <label class="form-label">Format d'export</label>
+                <select class="form-control" id="exportFormat">
+                  <option value="JSON">JSON (donnees structurees)</option>
+                  <option value="PDF">PDF (document lisible)</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
+            <button class="btn btn-primary" id="btnGenerer" onclick="genererExport()">Generer l'export</button>
+          </div>
+
+          <section class="card" id="downloadSection" style="margin-top:16px;display:none;">
+            <div class="card-header"><div class="card-title">Export pret au telechargement</div></div>
+            <div style="padding:20px;">
+              <div style="display:flex;align-items:center;gap:16px;">
+                <div style="width:48px;height:48px;background:#e8f5e9;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;">&#128190;</div>
+                <div style="flex:1;">
+                  <div id="downloadFileName" style="font-weight:600;color:#2c3e50;">export.json</div>
+                  <div id="downloadMeta" style="font-size:0.85em;color:#7f8c8d;margin-top:2px;"></div>
+                </div>
+                <a id="downloadLink" href="#" target="_blank" class="btn btn-primary btn-sm" download>Telecharger</a>
+              </div>
+            </div>
+          </section>
+
+          <section class="card" id="exportHistorySection" style="margin-top:16px;display:none;">
+            <div class="card-header"><div class="card-title">Historique des exports</div></div>
+            <table class="data-table">
+              <thead><tr><th>Date</th><th>Client</th><th>Categories</th><th>Format</th><th>Statut</th><th>Action</th></tr></thead>
+              <tbody id="exportHistoryBody"></tbody>
+            </table>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    let exportClientId = null;
+    let exportClientName = '';
+
+    /* ---------- Client search ---------- */
+    let exportSearchTimeout;
+    async function searchExportClient() {
+      const q = document.getElementById('exportClientSearch').value.trim();
+      const div = document.getElementById('exportClientResults');
+      if (q.length < 2) { div.classList.remove('show'); return; }
+      clearTimeout(exportSearchTimeout);
+      exportSearchTimeout = setTimeout(async () => {
+        try {
+          const res = await Clients.lister(0, 10, q);
+          if (res && res.ok) {
+            const data = await res.json();
+            div.innerHTML = (data.content||[]).map(c =>
+              '<div class="search-result-item" onclick="pickExportClient(' + c.idClient + ',\'' + esc(c.nom + ' ' + c.prenom) + '\',\'' + esc(c.numeroClient||'') + '\')">' + esc(c.nom) + ' ' + esc(c.prenom) + ' -- ' + esc(c.numeroClient||'') + '</div>'
+            ).join('');
+            div.classList.add('show');
+          }
+        } catch(e) {}
+      }, 300);
+    }
+
+    function esc(s) { return String(s).replace(/'/g, "\\'").replace(/</g, '&lt;'); }
+
+    function pickExportClient(id, name, num) {
+      exportClientId = id;
+      exportClientName = name;
+      document.getElementById('exportClientSearch').value = name;
+      document.getElementById('exportClientResults').classList.remove('show');
+      document.getElementById('exportClientInfo').style.display = '';
+      document.getElementById('exportClientInfo').innerHTML =
+        '<div style="background:#f0f6fa;border:1px solid #C9DFE8;border-radius:8px;padding:12px;margin-top:8px;">' +
+        '<strong>' + name + '</strong> -- ' + num + '</div>';
+      document.getElementById('downloadSection').style.display = 'none';
+      loadExportHistory();
+    }
+
+    /* ---------- Category helpers ---------- */
+    function getCategories() {
+      return Array.from(document.querySelectorAll('input[name="dataCat"]:checked')).map(i => i.value);
+    }
+
+    function toggleAllCats(state) {
+      document.querySelectorAll('input[name="dataCat"]').forEach(cb => { cb.checked = state; });
+    }
+
+    /* ---------- Generate export ---------- */
+    async function genererExport() {
+      if (!exportClientId) { showToast('Selectionnez un client.', 'warning'); return; }
+      const cats = getCategories();
+      if (!cats.length) { showToast('Selectionnez au moins une categorie.', 'warning'); return; }
+
+      const btn = document.getElementById('btnGenerer');
+      btn.disabled = true;
+      btn.textContent = 'Generation en cours...';
+
+      try {
+        const res = await SF.apiFetch('/api/v1/conformite/rgpd/export', {
+          method: 'POST',
+          body: JSON.stringify({
+            clientId: exportClientId,
+            categories: cats,
+            format: document.getElementById('exportFormat').value
+          })
+        });
+
+        if (res && (res.ok || res.status === 201)) {
+          const data = await res.json().catch(() => null);
+          showToast('Export genere avec succes.', 'success');
+
+          /* Show download section */
+          if (data) {
+            const section = document.getElementById('downloadSection');
+            const fmt = document.getElementById('exportFormat').value;
+            const fileName = data.fileName || ('export_rgpd_' + exportClientId + '.' + fmt.toLowerCase());
+            document.getElementById('downloadFileName').textContent = fileName;
+            document.getElementById('downloadMeta').textContent =
+              cats.length + ' categorie(s) -- ' + fmt + ' -- ' + new Date().toLocaleString('fr-FR');
+
+            const link = document.getElementById('downloadLink');
+            if (data.downloadUrl) {
+              link.href = data.downloadUrl;
+              link.style.display = '';
+            } else if (data.fileContent || data.data) {
+              /* Inline JSON fallback: build a blob download */
+              const content = typeof data.data === 'string' ? data.data : JSON.stringify(data.data || data, null, 2);
+              const blob = new Blob([content], { type: fmt === 'JSON' ? 'application/json' : 'application/pdf' });
+              link.href = URL.createObjectURL(blob);
+              link.download = fileName;
+              link.style.display = '';
+            } else {
+              link.style.display = 'none';
+            }
+            section.style.display = '';
+          }
+
+          loadExportHistory();
+        } else {
+          const err = res ? await res.json().catch(()=>({})) : {};
+          showToast(err.message || 'Erreur lors de l\'export.', 'error');
+        }
+      } catch(e) {
+        showToast(e.message || 'Erreur reseau.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generer l\'export';
+      }
+    }
+
+    /* ---------- Export history ---------- */
+    async function loadExportHistory() {
+      if (!exportClientId) return;
+      try {
+        const res = await SF.apiFetch('/api/v1/conformite/rgpd/export?clientId=' + exportClientId);
+        if (res && res.ok) {
+          const data = await res.json();
+          const items = data.content || data || [];
+          if (!items.length) {
+            document.getElementById('exportHistorySection').style.display = 'none';
+            return;
+          }
+          const tbody = document.getElementById('exportHistoryBody');
+          tbody.innerHTML = items.map(e => {
+            const statutBadge = { TERMINE:'badge-success', EN_COURS:'badge-pending', ERREUR:'badge-danger' }[e.statut] || 'badge-info';
+            return '<tr>' +
+              '<td>' + formatDate(e.dateExport || e.createdAt) + '</td>' +
+              '<td>' + esc(e.clientNom || exportClientName || '-') + '</td>' +
+              '<td>' + (e.categories || []).join(', ') + '</td>' +
+              '<td>' + (e.format || '-') + '</td>' +
+              '<td><span class="badge ' + statutBadge + '">' + (e.statut || '-') + '</span></td>' +
+              '<td>' + (e.downloadUrl ? '<a href="' + e.downloadUrl + '" target="_blank" class="btn btn-outline btn-sm">Telecharger</a>' : '-') + '</td>' +
+              '</tr>';
+          }).join('');
+          document.getElementById('exportHistorySection').style.display = '';
+        }
+      } catch(e) { console.error(e); }
+    }
+
+    function formatDate(d) {
+      if (!d) return '-';
+      try { return new Date(d).toLocaleDateString('fr-FR'); } catch(e) { return d; }
+    }
+  </script>
+</body>
+</html>

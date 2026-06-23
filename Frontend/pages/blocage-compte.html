@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blocage / Déblocage de Compte — MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Blocage / Déblocage</div>
+            <div class="topbar-breadcrumb">Comptes / Blocage-Déblocage</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a href="comptes.html" class="btn btn-ghost btn-sm">&larr; Retour</a>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+
+        <!-- ═══ COMPTE SEARCH ═══════════════════════════════════ -->
+        <div class="card" style="max-width: 680px; margin-bottom: 20px;">
+          <div class="card-header">
+            <div class="card-title">Rechercher un compte</div>
+          </div>
+          <div style="padding: 20px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="bdNumCompte">Numéro de compte *</label>
+              <div style="display: flex; gap: 10px;">
+                <input type="text" class="form-control" id="bdNumCompte"
+                       placeholder="Ex: 001-00001234-57"
+                       oninput="debounceSearch()" onkeydown="if(event.key==='Enter'){chargerCompte();}">
+                <button class="btn btn-primary" onclick="chargerCompte()">Rechercher</button>
+              </div>
+              <div style="font-size: 11px; color: #4A7A8A; margin-top: 4px;">Format : XXX-XXXXXXXX-XX</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ COMPTE INFO PANEL ═══════════════════════════════════ -->
+        <div id="bdCompteInfo" style="display: none; max-width: 680px; margin-bottom: 20px;">
+          <div class="card">
+            <div style="padding: 20px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                <div>
+                  <div style="font-size: 20px; font-weight: 800; color: #084355;" id="bdNumDisplay">—</div>
+                  <div style="font-size: 13px; color: #4A7A8A;" id="bdTypeDisplay">—</div>
+                </div>
+                <span class="badge" id="bdStatutBadge">—</span>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e8edf1;">
+                <div>
+                  <div style="font-size: 11px; color: #4A7A8A; text-transform: uppercase; letter-spacing: 0.5px;">Client</div>
+                  <div style="font-weight: 700; color: #084355; font-size: 14px;" id="bdClientDisplay">—</div>
+                </div>
+                <div>
+                  <div style="font-size: 11px; color: #4A7A8A; text-transform: uppercase; letter-spacing: 0.5px;">Solde</div>
+                  <div style="font-weight: 700; color: #084355; font-size: 14px;" id="bdSoldeDisplay">—</div>
+                </div>
+                <div>
+                  <div style="font-size: 11px; color: #4A7A8A; text-transform: uppercase; letter-spacing: 0.5px;">Agence</div>
+                  <div style="font-weight: 700; color: #084355; font-size: 14px;" id="bdAgenceDisplay">—</div>
+                </div>
+                <div>
+                  <div style="font-size: 11px; color: #4A7A8A; text-transform: uppercase; letter-spacing: 0.5px;">Ouverture</div>
+                  <div style="font-weight: 700; color: #084355; font-size: 14px;" id="bdDateOuvDisplay">—</div>
+                </div>
+              </div>
+              <!-- Blocage info (shown if already blocked) -->
+              <div id="bdBlocageInfo" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e8edf1;">
+                <div style="background: rgba(217,48,37,0.08); border-radius: 8px; padding: 14px 16px;">
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <strong style="color: #D93025; font-size: 13px;">Compte actuellement bloqué</strong>
+                  </div>
+                  <div style="font-size: 12px; color: #4A7A8A;">
+                    <div><strong>Motif :</strong> <span id="bdMotifBlocageDisplay">—</span></div>
+                    <div style="margin-top: 4px;"><strong>Date de blocage :</strong> <span id="bdDateBlocageDisplay">—</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ NOT ELIGIBLE MESSAGE ═══════════════════════════════════ -->
+        <div id="bdNotEligible" style="display: none; max-width: 680px; margin-bottom: 20px;">
+          <div class="card">
+            <div style="padding: 32px; text-align: center;">
+              <div style="width: 64px; height: 64px; border-radius: 50%; background: #f0f6fa; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4A7A8A" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <div style="font-weight: 700; color: #084355; font-size: 16px; margin-bottom: 8px;" id="bdNotEligibleTitle">Action impossible</div>
+              <div style="color: #4A7A8A; font-size: 13px;" id="bdNotEligibleMsg">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ MODE BLOCAGE ═══════════════════════════════════ -->
+        <div id="bdBlocageSection" style="display: none; max-width: 680px;">
+          <div class="card">
+            <div class="card-header">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(217,48,37,0.12); display: flex; align-items: center; justify-content: center;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <div>
+                  <div class="card-title">Bloquer le compte</div>
+                  <div style="font-size: 12px; color: #4A7A8A;">Suspendre temporairement les opérations sur ce compte</div>
+                </div>
+              </div>
+            </div>
+            <div style="padding: 20px;">
+
+              <!-- Type de blocage -->
+              <div class="form-group">
+                <label class="form-label">Type de blocage *</label>
+                <div style="display: flex; gap: 12px;">
+                  <label class="bd-block-type" style="border: 2px solid #C9DFE8; border-radius: 12px; padding: 14px 20px; cursor: pointer; flex: 1; text-align: center; transition: all 0.3s;">
+                    <input type="radio" name="bdBlockType" value="temporaire" style="display: none;" checked>
+                    <div style="font-size: 20px; margin-bottom: 4px;">&#9208;&#65039;</div>
+                    <div style="font-weight: 700; font-size: 13px; color: #084355;">Temporaire</div>
+                    <div style="font-size: 11px; color: #4A7A8A;">Déblocage possible</div>
+                  </label>
+                  <label class="bd-block-type" style="border: 2px solid #C9DFE8; border-radius: 12px; padding: 14px 20px; cursor: pointer; flex: 1; text-align: center; transition: all 0.3s;">
+                    <input type="radio" name="bdBlockType" value="definitif" style="display: none;">
+                    <div style="font-size: 20px; margin-bottom: 4px;">&#128274;</div>
+                    <div style="font-weight: 700; font-size: 13px; color: #084355;">Définitif</div>
+                    <div style="font-size: 11px; color: #4A7A8A;">Irréversible</div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Motif -->
+              <div class="form-group">
+                <label class="form-label" for="bdMotif">Motif du blocage *</label>
+                <select class="form-control" id="bdMotif">
+                  <option value="">— Sélectionner un motif —</option>
+                  <option value="FRAUDE">Fraude</option>
+                  <option value="DECISION_JUSTICE">Décision de justice</option>
+                  <option value="DEMANDE_CLIENT">Demande du client</option>
+                  <option value="AUTRE">Autre</option>
+                </select>
+              </div>
+
+              <!-- Précision motif -->
+              <div class="form-group">
+                <label class="form-label" for="bdDetails">Précisions sur le motif</label>
+                <textarea class="form-control" id="bdDetails" rows="3"
+                          placeholder="Décrivez les raisons du blocage..."></textarea>
+              </div>
+
+              <!-- Dates -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                  <label class="form-label" for="bdDateDebut">Date de début</label>
+                  <input type="date" class="form-control" id="bdDateDebut" readonly
+                         style="background: #f0f6fa; cursor: not-allowed;">
+                  <div style="font-size: 11px; color: #4A7A8A; margin-top: 4px;">Remplie automatiquement</div>
+                </div>
+                <div class="form-group" id="bdDateFinGroup">
+                  <label class="form-label" for="bdDateFin">Date de fin (optionnel)</label>
+                  <input type="date" class="form-control" id="bdDateFin">
+                  <div style="font-size: 11px; color: #4A7A8A; margin-top: 4px;">Laisser vide si indéterminé</div>
+                </div>
+              </div>
+
+              <!-- Notification checkbox -->
+              <div style="background: #f0f6fa; border-radius: 8px; padding: 14px 16px; margin-bottom: 20px;">
+                <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
+                  <input type="checkbox" id="bdNotifyClient" style="margin-top: 2px; width: 18px; height: 18px; accent-color: #084355;">
+                  <div>
+                    <div style="font-weight: 600; font-size: 14px; color: #084355;">Notifier le client</div>
+                    <div style="font-size: 12px; color: #4A7A8A; margin-top: 2px;">Envoyer une notification SMS et/ou email au titulaire du compte l'informant du blocage.</div>
+                  </div>
+                </label>
+              </div>
+
+              <!-- Warning -->
+              <div style="background: rgba(217,48,37,0.08); border-radius: 8px; padding: 14px 16px; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 10px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span style="font-size: 12px; color: #D93025; font-weight: 500;">Le blocage empêchera toute opération de débit et de crédit sur ce compte. Un compte définitivement bloqué ne pourra pas être débloqué.</span>
+              </div>
+
+              <!-- Submit -->
+              <button class="btn btn-danger btn-lg btn-block" onclick="confirmerBlocage()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Bloquer le compte
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ MODE DEBLOCAGE ═══════════════════════════════════ -->
+        <div id="bdDeblocageSection" style="display: none; max-width: 680px;">
+          <div class="card">
+            <div class="card-header">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(46,125,50,0.12); display: flex; align-items: center; justify-content: center;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                </div>
+                <div>
+                  <div class="card-title">Débloquer le compte</div>
+                  <div style="font-size: 12px; color: #4A7A8A;">Réactiver les opérations sur ce compte</div>
+                </div>
+              </div>
+            </div>
+            <div style="padding: 20px;">
+
+              <!-- Motif déblocage -->
+              <div class="form-group">
+                <label class="form-label" for="dbMotif">Motif du déblocage *</label>
+                <select class="form-control" id="dbMotif">
+                  <option value="">— Sélectionner un motif —</option>
+                  <option value="LEVEE_SUSPICION">Levée de suspicion</option>
+                  <option value="REGULARISATION">Régularisation effectuée</option>
+                  <option value="DECISION_JUSTICE">Décision judiciaire</option>
+                  <option value="DEMANDE_CLIENT">Demande du client</option>
+                  <option value="AUTRE">Autre</option>
+                </select>
+              </div>
+
+              <!-- Détails déblocage -->
+              <div class="form-group">
+                <label class="form-label" for="dbDetails">Commentaire / Justification</label>
+                <textarea class="form-control" id="dbDetails" rows="3"
+                          placeholder="Précisez les raisons du déblocage..."></textarea>
+              </div>
+
+              <!-- Référence décision -->
+              <div class="form-group">
+                <label class="form-label" for="dbRefDecision">Référence de la décision</label>
+                <input type="text" class="form-control" id="dbRefDecision"
+                       placeholder="Ex: ORD-2026-00123, Demande client n°...">
+                <div style="font-size: 11px; color: #4A7A8A; margin-top: 4px;">Numéro d'ordonnance, de jugement ou référence interne</div>
+              </div>
+
+              <!-- Autorisation (read-only) -->
+              <div class="form-group">
+                <label class="form-label">Autorisation</label>
+                <div style="background: #f0f6fa; border: 1px solid #C9DFE8; border-radius: 8px; padding: 12px 16px;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#084355" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <span style="font-size: 13px; color: #084355; font-weight: 600;" id="dbAutorisation">Action réservée au Superviseur ou Directeur</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Notification checkbox -->
+              <div style="background: #f0f6fa; border-radius: 8px; padding: 14px 16px; margin-bottom: 20px;">
+                <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
+                  <input type="checkbox" id="dbNotifyClient" style="margin-top: 2px; width: 18px; height: 18px; accent-color: #084355;">
+                  <div>
+                    <div style="font-weight: 600; font-size: 14px; color: #084355;">Notifier le client</div>
+                    <div style="font-size: 12px; color: #4A7A8A; margin-top: 2px;">Envoyer une notification SMS et/ou email au titulaire l'informant que son compte est de nouveau actif.</div>
+                  </div>
+                </label>
+              </div>
+
+              <!-- Submit -->
+              <button class="btn btn-lg btn-block" onclick="confirmerDeblocage()" style="background: #2E7D32; color: #fff;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                Débloquer le compte
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.content-area -->
+    </div><!-- /.main-content -->
+  </div><!-- /.app-layout -->
+
+  <!-- ═══ MODAL CONFIRMATION BLOCAGE ═══════════════════════════════════ -->
+  <div class="modal-overlay" id="modalBlocage">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Confirmer le blocage</div>
+        <button class="modal-close" onclick="fermerModal('modalBlocage')">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(217,48,37,0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Bloquer ce compte ?</h3>
+        <div id="modalBlocageResume" style="color: #4A7A8A; font-size: 13px; line-height: 1.6;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="fermerModal('modalBlocage')">Annuler</button>
+        <button class="btn btn-danger" onclick="executerBlocage()">Confirmer le blocage</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODAL CONFIRMATION DEBLOCAGE ═══════════════════════════════════ -->
+  <div class="modal-overlay" id="modalDeblocage">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Confirmer le déblocage</div>
+        <button class="modal-close" onclick="fermerModal('modalDeblocage')">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(46,125,50,0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Débloquer ce compte ?</h3>
+        <div id="modalDeblocageResume" style="color: #4A7A8A; font-size: 13px; line-height: 1.6;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="fermerModal('modalDeblocage')">Annuler</button>
+        <button class="btn btn-primary" style="background: #2E7D32;" onclick="executerDeblocage()">Confirmer le déblocage</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ───────────────────────────────────────────────────
+       STATE
+    ─────────────────────────────────────────────────── */
+    let bdCompteData = null;
+    let debounceTimer = null;
+
+    /* ───────────────────────────────────────────────────
+       HELPERS
+    ─────────────────────────────────────────────────── */
+    function escHtml(v) {
+      return String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function formatDate(str) {
+      if (!str) return '—';
+      try {
+        const d = new Date(str);
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      } catch { return str; }
+    }
+
+    function formatMontant(val) {
+      return Number(val || 0).toLocaleString('fr-FR');
+    }
+
+    function badgeClass(statut) {
+      if (statut === 'ACTIF') return 'badge-active';
+      if (statut === 'BLOQUE') return 'badge-blocked';
+      if (statut === 'CLOS' || statut === 'FERME') return 'badge-danger';
+      return 'badge-pending';
+    }
+
+    function motifLabel(val) {
+      const map = {
+        'FRAUDE': 'Fraude',
+        'DECISION_JUSTICE': 'Décision de justice',
+        'DEMANDE_CLIENT': 'Demande du client',
+        'AUTRE': 'Autre'
+      };
+      return map[val] || val || '—';
+    }
+
+    function ouvrirModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('active');
+    }
+
+    function fermerModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('active');
+    }
+
+    /* ───────────────────────────────────────────────────
+       SET DATE DEBUT ON LOAD
+    ─────────────────────────────────────────────────── */
+    (function() {
+      const today = new Date().toISOString().split('T')[0];
+      const dateDebut = document.getElementById('bdDateDebut');
+      if (dateDebut) dateDebut.value = today;
+    })();
+
+    /* ───────────────────────────────────────────────────
+       BLOCK TYPE RADIO VISUAL TOGGLE
+    ─────────────────────────────────────────────────── */
+    document.querySelectorAll('.bd-block-type').forEach(label => {
+      label.addEventListener('click', function() {
+        document.querySelectorAll('.bd-block-type').forEach(l => {
+          l.style.borderColor = '#C9DFE8';
+          l.style.background = 'transparent';
+        });
+        this.style.borderColor = '#D93025';
+        this.style.background = 'rgba(217,48,37,0.08)';
+        this.querySelector('input').checked = true;
+        // Show/hide date fin for temporaire
+        const isTemp = this.querySelector('input').value === 'temporaire';
+        document.getElementById('bdDateFinGroup').style.display = isTemp ? '' : 'none';
+      });
+    });
+    // Set initial visual state for default checked radio
+    (function() {
+      const first = document.querySelector('.bd-block-type input[value="temporaire"]');
+      if (first && first.checked) {
+        first.closest('.bd-block-type').style.borderColor = '#D93025';
+        first.closest('.bd-block-type').style.background = 'rgba(217,48,37,0.08)';
+      }
+    })();
+
+    /* ───────────────────────────────────────────────────
+       DEBOUNCE SEARCH
+    ─────────────────────────────────────────────────── */
+    function debounceSearch() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const num = document.getElementById('bdNumCompte').value.trim();
+        if (num.length >= 8) chargerCompte();
+      }, 500);
+    }
+
+    /* ───────────────────────────────────────────────────
+       CHARGER COMPTE
+    ─────────────────────────────────────────────────── */
+    async function chargerCompte() {
+      const num = document.getElementById('bdNumCompte').value.trim();
+      if (!num) {
+        showToast('Veuillez saisir un numéro de compte.', 'error');
+        return;
+      }
+
+      // Hide all sections while loading
+      cacherSections();
+
+      try {
+        const res = await Comptes.obtenir(num);
+        if (!res || !res.ok) {
+          showToast('Compte introuvable.', 'error');
+          return;
+        }
+
+        bdCompteData = await res.json();
+        afficherCompte();
+
+      } catch (e) {
+        showToast(e.message || 'Erreur lors de la recherche.', 'error');
+      }
+    }
+
+    /* ───────────────────────────────────────────────────
+       DISPLAY COMPTE INFO + ROUTE TO CORRECT MODE
+    ─────────────────────────────────────────────────── */
+    function cacherSections() {
+      document.getElementById('bdCompteInfo').style.display = 'none';
+      document.getElementById('bdNotEligible').style.display = 'none';
+      document.getElementById('bdBlocageSection').style.display = 'none';
+      document.getElementById('bdDeblocageSection').style.display = 'none';
+    }
+
+    function afficherCompte() {
+      const c = bdCompteData;
+      if (!c) return;
+
+      const statut = (c.statut || 'ACTIF').toUpperCase();
+      const clientNom = c.clientNom || c.client?.nomComplet || c.nomClient || '—';
+      const agenceNom = c.agenceNom || c.agence?.nom || '—';
+      const typeCompte = c.typeCompte || '—';
+
+      // Fill info panel
+      document.getElementById('bdNumDisplay').textContent = c.numCompte || c.numCompteComplet || '—';
+      document.getElementById('bdTypeDisplay').textContent = 'Compte ' + typeCompte;
+      document.getElementById('bdClientDisplay').textContent = clientNom;
+      document.getElementById('bdSoldeDisplay').textContent = formatMontant(c.solde) + ' FCFA';
+      document.getElementById('bdAgenceDisplay').textContent = agenceNom;
+      document.getElementById('bdDateOuvDisplay').textContent = formatDate(c.dateOuverture);
+
+      const badge = document.getElementById('bdStatutBadge');
+      badge.textContent = statut;
+      badge.className = 'badge ' + badgeClass(statut);
+
+      // Show info panel
+      document.getElementById('bdCompteInfo').style.display = '';
+
+      // Route based on status
+      if (statut === 'ACTIF') {
+        // Show blocage section
+        document.getElementById('bdBlocageInfo').style.display = 'none';
+        document.getElementById('bdBlocageSection').style.display = '';
+        document.getElementById('bdDeblocageSection').style.display = 'none';
+        document.getElementById('bdNotEligible').style.display = 'none';
+        // Reset date debut to today
+        document.getElementById('bdDateDebut').value = new Date().toISOString().split('T')[0];
+        // Reset form
+        document.getElementById('bdMotif').value = '';
+        document.getElementById('bdDetails').value = '';
+        document.getElementById('bdDateFin').value = '';
+        document.getElementById('bdNotifyClient').checked = true;
+
+      } else if (statut === 'BLOQUE') {
+        // Show deblocage section
+        document.getElementById('bdBlocageSection').style.display = 'none';
+        document.getElementById('bdDeblocageSection').style.display = '';
+        document.getElementById('bdNotEligible').style.display = 'none';
+        // Show blocage info in the info panel
+        const blocageInfo = document.getElementById('bdBlocageInfo');
+        blocageInfo.style.display = '';
+        document.getElementById('bdMotifBlocageDisplay').textContent = c.motifBlocage || '—';
+        document.getElementById('bdDateBlocageDisplay').textContent = formatDate(c.dateBlocage);
+        // Reset form
+        document.getElementById('dbMotif').value = '';
+        document.getElementById('dbDetails').value = '';
+        document.getElementById('dbRefDecision').value = '';
+        document.getElementById('dbNotifyClient').checked = true;
+        // Autorisation display
+        const user = (typeof SF !== 'undefined' && SF.getUser) ? SF.getUser() : null;
+        if (user && user.role) {
+          document.getElementById('dbAutorisation').textContent = 'Connecté en tant que ' + (user.role || 'Utilisateur');
+        }
+
+      } else {
+        // CLOS, SUSPENDU, FERME — not eligible
+        document.getElementById('bdBlocageInfo').style.display = 'none';
+        document.getElementById('bdBlocageSection').style.display = 'none';
+        document.getElementById('bdDeblocageSection').style.display = 'none';
+        document.getElementById('bdNotEligible').style.display = '';
+        const messages = {
+          'CLOS': 'Ce compte est clôturé. Aucune action de blocage/déblocage n\'est possible.',
+          'FERME': 'Ce compte est fermé. Aucune action de blocage/déblocage n\'est possible.',
+          'SUSPENDU': 'Ce compte est suspendu. Contactez le service conformité.'
+        };
+        document.getElementById('bdNotEligibleTitle').textContent = 'Action impossible';
+        document.getElementById('bdNotEligibleMsg').textContent = messages[statut] || 'Le statut "' + statut + '" ne permet pas de bloquer ou débloquer ce compte.';
+      }
+    }
+
+    /* ───────────────────────────────────────────────────
+       CONFIRMER BLOCAGE
+    ─────────────────────────────────────────────────── */
+    function confirmerBlocage() {
+      if (!bdCompteData) {
+        showToast('Veuillez d\'abord rechercher un compte valide.', 'error');
+        return;
+      }
+
+      const motifVal = document.getElementById('bdMotif').value;
+      if (!motifVal) {
+        showToast('Veuillez sélectionner un motif de blocage.', 'error');
+        return;
+      }
+
+      const typeBlocage = document.querySelector('input[name="bdBlockType"]:checked').value;
+      const details = document.getElementById('bdDetails').value.trim();
+      const dateFin = document.getElementById('bdDateFin').value;
+      const notifier = document.getElementById('bdNotifyClient').checked;
+
+      // Build resume
+      let html = '<div style="text-align:left; background:#f0f6fa; border-radius:8px; padding:14px; margin-top:12px;">';
+      html += '<div><strong>Compte :</strong> ' + escHtml(bdCompteData.numCompte || bdCompteData.numCompteComplet) + '</div>';
+      html += '<div><strong>Client :</strong> ' + escHtml(bdCompteData.clientNom || bdCompteData.client?.nomComplet || '—') + '</div>';
+      html += '<div><strong>Type :</strong> ' + (typeBlocage === 'definitif' ? 'Définitif' : 'Temporaire') + '</div>';
+      html += '<div><strong>Motif :</strong> ' + escHtml(motifLabel(motifVal)) + '</div>';
+      if (details) html += '<div><strong>Précisions :</strong> ' + escHtml(details) + '</div>';
+      if (dateFin && typeBlocage === 'temporaire') html += '<div><strong>Fin prévue :</strong> ' + formatDate(dateFin) + '</div>';
+      html += '<div><strong>Notification :</strong> ' + (notifier ? 'Oui' : 'Non') + '</div>';
+      html += '</div>';
+
+      document.getElementById('modalBlocageResume').innerHTML = html;
+      ouvrirModal('modalBlocage');
+    }
+
+    /* ───────────────────────────────────────────────────
+       EXECUTER BLOCAGE
+    ─────────────────────────────────────────────────── */
+    async function executerBlocage() {
+      fermerModal('modalBlocage');
+
+      const num = bdCompteData.numCompteComplet || bdCompteData.numCompte;
+      const motifVal = document.getElementById('bdMotif').value;
+      const details = document.getElementById('bdDetails').value.trim();
+      const dateFin = document.getElementById('bdDateFin').value;
+      const notifier = document.getElementById('bdNotifyClient').checked;
+
+      let motif = motifLabel(motifVal);
+      if (details) motif += ' - ' + details;
+      if (dateFin) motif += ' (jusqu\'au ' + formatDate(dateFin) + ')';
+
+      try {
+        const res = await Comptes.bloquer(num, motif);
+        if (res && res.ok) {
+          showToast('Compte bloqué avec succès !', 'success');
+          // If notification checked, trigger notification API
+          if (notifier && typeof Notifications !== 'undefined') {
+            try {
+              await Notifications.envoyer({
+                type: 'BLOCAGE_COMPTE',
+                destinataire: bdCompteData.clientId || bdCompteData.idClient,
+                message: 'Votre compte ' + num + ' a été bloqué. Motif: ' + motifLabel(motifVal)
+              });
+            } catch (_) { /* notification failure is non-blocking */ }
+          }
+          // Refresh account display
+          chargerCompte();
+        } else {
+          const err = res ? await res.json().catch(() => ({})) : {};
+          showToast(err.message || 'Erreur lors du blocage.', 'error');
+        }
+      } catch (e) {
+        showToast(e.message || 'Erreur lors du blocage.', 'error');
+      }
+    }
+
+    /* ───────────────────────────────────────────────────
+       CONFIRMER DEBLOCAGE
+    ─────────────────────────────────────────────────── */
+    function confirmerDeblocage() {
+      if (!bdCompteData) {
+        showToast('Veuillez d\'abord rechercher un compte valide.', 'error');
+        return;
+      }
+
+      const motifVal = document.getElementById('dbMotif').value;
+      if (!motifVal) {
+        showToast('Veuillez sélectionner un motif de déblocage.', 'error');
+        return;
+      }
+
+      const details = document.getElementById('dbDetails').value.trim();
+      const refDecision = document.getElementById('dbRefDecision').value.trim();
+      const notifier = document.getElementById('dbNotifyClient').checked;
+
+      const motifLabels = {
+        'LEVEE_SUSPICION': 'Levée de suspicion',
+        'REGULARISATION': 'Régularisation effectuée',
+        'DECISION_JUSTICE': 'Décision judiciaire',
+        'DEMANDE_CLIENT': 'Demande du client',
+        'AUTRE': 'Autre'
+      };
+
+      let html = '<div style="text-align:left; background:#f0f6fa; border-radius:8px; padding:14px; margin-top:12px;">';
+      html += '<div><strong>Compte :</strong> ' + escHtml(bdCompteData.numCompte || bdCompteData.numCompteComplet) + '</div>';
+      html += '<div><strong>Client :</strong> ' + escHtml(bdCompteData.clientNom || bdCompteData.client?.nomComplet || '—') + '</div>';
+      html += '<div><strong>Motif :</strong> ' + escHtml(motifLabels[motifVal] || motifVal) + '</div>';
+      if (details) html += '<div><strong>Commentaire :</strong> ' + escHtml(details) + '</div>';
+      if (refDecision) html += '<div><strong>Référence :</strong> ' + escHtml(refDecision) + '</div>';
+      html += '<div><strong>Notification :</strong> ' + (notifier ? 'Oui' : 'Non') + '</div>';
+      html += '</div>';
+
+      document.getElementById('modalDeblocageResume').innerHTML = html;
+      ouvrirModal('modalDeblocage');
+    }
+
+    /* ───────────────────────────────────────────────────
+       EXECUTER DEBLOCAGE
+    ─────────────────────────────────────────────────── */
+    async function executerDeblocage() {
+      fermerModal('modalDeblocage');
+
+      const num = bdCompteData.numCompteComplet || bdCompteData.numCompte;
+      const motifVal = document.getElementById('dbMotif').value;
+      const details = document.getElementById('dbDetails').value.trim();
+      const refDecision = document.getElementById('dbRefDecision').value.trim();
+      const notifier = document.getElementById('dbNotifyClient').checked;
+
+      let motif = motifVal;
+      if (details) motif += ' - ' + details;
+      if (refDecision) motif += ' (Réf: ' + refDecision + ')';
+
+      try {
+        const res = await Comptes.debloquer(num, motif);
+        if (res && res.ok) {
+          showToast('Compte débloqué avec succès !', 'success');
+          // If notification checked, trigger notification API
+          if (notifier && typeof Notifications !== 'undefined') {
+            try {
+              await Notifications.envoyer({
+                type: 'DEBLOCAGE_COMPTE',
+                destinataire: bdCompteData.clientId || bdCompteData.idClient,
+                message: 'Votre compte ' + num + ' a été débloqué et est de nouveau actif.'
+              });
+            } catch (_) { /* notification failure is non-blocking */ }
+          }
+          // Refresh account display
+          chargerCompte();
+        } else {
+          const err = res ? await res.json().catch(() => ({})) : {};
+          showToast(err.message || 'Erreur lors du déblocage.', 'error');
+        }
+      } catch (e) {
+        showToast(e.message || 'Erreur lors du déblocage.', 'error');
+      }
+    }
+
+    /* ───────────────────────────────────────────────────
+       HANDLE URL PARAMS (pre-fill account number from comptes.html)
+    ─────────────────────────────────────────────────── */
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const numFromUrl = params.get('num') || params.get('numCompte') || params.get('compte');
+      if (numFromUrl) {
+        document.getElementById('bdNumCompte').value = numFromUrl;
+        chargerCompte();
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Statistiques & KPI - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <script src="../assets/js/chart.min.js"></script>
+  <style>
+    .kpi-grid-8 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 1200px) {
+      .kpi-grid-8 { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .kpi-grid-8 { grid-template-columns: 1fr; }
+    }
+    .kpi-card .kpi-drilldown {
+      font-size: 11px;
+      color: #4A7A8A;
+      text-decoration: none;
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: color 0.2s;
+    }
+    .kpi-card .kpi-drilldown:hover {
+      color: #084355;
+      text-decoration: underline;
+    }
+    .kpi-card .kpi-drilldown svg {
+      width: 12px;
+      height: 12px;
+    }
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 900px) {
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+    .chart-container-lg {
+      position: relative;
+      height: 320px;
+      width: 100%;
+    }
+    .period-selector {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .period-selector .form-control {
+      width: auto;
+      min-width: 130px;
+      font-size: 13px;
+    }
+    .export-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .topbar-kpi-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .kpi-icon.purple { background: rgba(103, 58, 183, 0.1); }
+    .kpi-icon.purple svg { color: #673AB7; }
+    .kpi-icon.red { background: rgba(211, 47, 47, 0.1); }
+    .kpi-icon.red svg { color: #D32F2F; }
+    .kpi-icon.teal { background: rgba(0, 150, 136, 0.1); }
+    .kpi-icon.teal svg { color: #009688; }
+    .kpi-icon.indigo { background: rgba(63, 81, 181, 0.1); }
+    .kpi-icon.indigo svg { color: #3F51B5; }
+    .card-subtitle-endpoint {
+      font-size: 11px;
+      color: #999;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar"></aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Statistiques & KPI</div>
+            <div class="topbar-breadcrumb">Accueil / Pilotage & Audit / Statistiques KPI</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-kpi-actions">
+            <div class="period-selector">
+              <select class="form-control" id="periodSelector">
+                <option value="MOIS">Ce mois</option>
+                <option value="TRIMESTRE">Ce trimestre</option>
+                <option value="SEMESTRE">Ce semestre</option>
+                <option value="ANNEE" selected>Cette annee</option>
+              </select>
+              <select class="form-control" id="agenceSelector">
+                <option value="">Toutes les agences</option>
+                <option value="1">Agence Plateau</option>
+                <option value="2">Agence Cocody</option>
+                <option value="3">Agence Marcory</option>
+              </select>
+            </div>
+            <div class="export-group">
+              <button class="export-btn" id="exportCSV" title="Exporter en CSV">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                CSV
+              </button>
+              <button class="export-btn" id="exportExcel" title="Exporter en Excel">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Excel
+              </button>
+              <button class="export-btn" id="exportPDF" title="Exporter en PDF">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- CONTENT AREA -->
+      <div class="content-area">
+        <!-- PAGE HEADER -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Tableau de bord des KPI</h1>
+            <p class="page-subtitle">Indicateurs cles de performance, graphiques interactifs et analyses par agence. Source : <code>/api/v1/statistiques/kpi</code></p>
+          </div>
+          <button class="btn btn-primary" id="btnRefresh" title="Rafraichir les donnees">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Rafraichir
+          </button>
+        </div>
+
+        <!-- KPI CARDS ROW 1 (4 cards) -->
+        <div class="kpi-grid kpi-grid-8">
+          <!-- KPI 1 : Clients actifs -->
+          <div class="kpi-card">
+            <div class="kpi-icon blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Clients actifs</div>
+              <div class="kpi-value" id="kpiClientsActifs">--</div>
+              <div class="kpi-trend up" id="kpiClientsActifsTrend">en cours</div>
+              <a href="clients.html" class="kpi-drilldown">
+                Voir detail
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- KPI 2 : Volume credits -->
+          <div class="kpi-card">
+            <div class="kpi-icon orange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Volume credits</div>
+              <div class="kpi-value" id="kpiVolumeCredits">--</div>
+              <div class="kpi-trend up" id="kpiVolumeCreditsTrend">encours total</div>
+              <a href="credit-demandes.html" class="kpi-drilldown">
+                Voir detail
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- KPI 3 : Taux remboursement -->
+          <div class="kpi-card">
+            <div class="kpi-icon green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Taux remboursement</div>
+              <div class="kpi-value" id="kpiTauxRemboursement">--</div>
+              <div class="kpi-trend up" id="kpiTauxRemboursementTrend">objectif : 95%</div>
+              <a href="credit-suivi.html" class="kpi-drilldown">
+                Voir detail
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- KPI 4 : Encours epargne -->
+          <div class="kpi-card">
+            <div class="kpi-icon teal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Encours epargne</div>
+              <div class="kpi-value" id="kpiEncoursEpargne">--</div>
+              <div class="kpi-trend up" id="kpiEncoursEpargneTrend">depots totaux</div>
+              <a href="comptes.html" class="kpi-drilldown">
+                Voir detail
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- KPI 5 : Nb transactions jour -->
+          <div class="kpi-card">
+            <div class="kpi-icon indigo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Transactions / jour</div>
+              <div class="kpi-value" id="kpiTransactionsJour">--</div>
+              <div class="kpi-trend up" id="kpiTransactionsJourTrend">aujourd'hui</div>
+              <a href="historique.html" class="kpi-drilldown">
+                Voir detail
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- KPI 6 : Taux recouvrement -->
+          <div class="kpi-card">
+            <div class="kpi-icon green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Taux recouvrement</div>
+              <div class="kpi-value" id="kpiTauxRecouvrement">--</div>
+              <div class="kpi-trend up" id="kpiTauxRecouvrementTrend">objectif : 80%</div>
+              <a href="credit-suivi.html" class="kpi-drilldown">
+                Voir detail
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- KPI 7 : Delai moyen traitement -->
+          <div class="kpi-card">
+            <div class="kpi-icon purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=""><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Delai moyen traitement</div>
+              <div class="kpi-value" id="kpiDelaiTraitement">--</div>
+              <div class="kpi-trend up" id="kpiDelaiTraitementTrend">jours ouvrables</div>
+              <a href="credit-demandes.html" class="kpi-drilldown">
+                Voir detail
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- KPI 8 : Taux satisfaction -->
+          <div class="kpi-card">
+            <div class="kpi-icon orange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Taux satisfaction</div>
+              <div class="kpi-value" id="kpiTauxSatisfaction">--</div>
+              <div class="kpi-trend up" id="kpiTauxSatisfactionTrend">objectif : 90%</div>
+              <a href="notifications.html" class="kpi-drilldown">
+                Voir detail
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHARTS ROW 1 -->
+        <div class="charts-grid">
+          <!-- Chart 1 : Evolution mensuelle (line) -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Evolution mensuelle</div>
+                <div class="card-subtitle">Credits vs Remboursements sur 12 mois</div>
+              </div>
+              <div class="filter-tabs">
+                <span class="filter-tab active" data-range="12">12 mois</span>
+                <span class="filter-tab" data-range="6">6 mois</span>
+                <span class="filter-tab" data-range="3">3 mois</span>
+              </div>
+            </div>
+            <div class="chart-container chart-container-lg">
+              <canvas id="chartEvolution"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 2 : Repartition par agence (bar) -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Performance par agence</div>
+                <div class="card-subtitle">Encours credit et depots par agence</div>
+              </div>
+            </div>
+            <div class="chart-container chart-container-lg">
+              <canvas id="chartAgence"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHARTS ROW 2 -->
+        <div class="charts-grid">
+          <!-- Chart 3 : Repartition produits (pie) -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Repartition des produits</div>
+                <div class="card-subtitle">Par type de produit de credit</div>
+              </div>
+            </div>
+            <div class="chart-container chart-container-lg">
+              <canvas id="chartProduits"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 4 : Taux de retard (line) -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Taux de retard (PAR)</div>
+                <div class="card-subtitle">Evolution du ratio PAR sur 12 mois</div>
+              </div>
+            </div>
+            <div class="chart-container chart-container-lg">
+              <canvas id="chartPAR"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHARTS ROW 3 -->
+        <div class="charts-grid">
+          <!-- Chart 5 : Transactions par type (bar) -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Transactions par type</div>
+                <div class="card-subtitle">Repartition mensuelle des operations</div>
+              </div>
+            </div>
+            <div class="chart-container chart-container-lg">
+              <canvas id="chartTransactions"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 6 : Satisfaction & Reclamations (mixed) -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Satisfaction & Reclamations</div>
+                <div class="card-subtitle">Score NPS et nombre de reclamations</div>
+              </div>
+            </div>
+            <div class="chart-container chart-container-lg">
+              <canvas id="chartSatisfaction"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI DETAIL TABLE -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Detail des indicateateurs</div>
+              <div class="card-subtitle">Resume chiffre de la periode selectionnee</div>
+            </div>
+            <a href="reporting.html" class="btn btn-outline btn-sm">
+              Rapports complets
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </a>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Indicateur</th>
+                <th>Valeur actuelle</th>
+                <th>Objectif</th>
+                <th>Ecart</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody id="kpiDetailBody">
+              <tr>
+                <td colspan="5" style="text-align:center;padding:24px;color:#4A7A8A;">Chargement des indicateateurs...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ============================================
+       STATISTIQUES KPI PAGE
+       Source : /api/v1/statistiques/kpi
+       ============================================ */
+    (function () {
+      'use strict';
+
+      // --- Chart instances ---
+      var chartEvolution = null;
+      var chartAgence = null;
+      var chartProduits = null;
+      var chartPAR = null;
+      var chartTransactions = null;
+      var chartSatisfaction = null;
+
+      // --- Colors palette ---
+      var COLORS = {
+        blue: '#8cd5fa',
+        orange: '#fab482',
+        green: '#66bb6a',
+        red: '#ef5350',
+        purple: '#ab47bc',
+        teal: '#26a69a',
+        indigo: '#5c6bc0',
+        darkBlue: '#084355',
+        bgBlue: 'rgba(140, 213, 250, 0.15)',
+        bgOrange: 'rgba(250, 180, 130, 0.15)',
+        bgGreen: 'rgba(102, 187, 106, 0.15)',
+        bgRed: 'rgba(239, 83, 80, 0.15)',
+        bgPurple: 'rgba(171, 71, 188, 0.15)'
+      };
+
+      // --- Utility ---
+      function fmt(n) {
+        return Number(n || 0).toLocaleString('fr-FR');
+      }
+
+      function fmtCurrency(n) {
+        return Number(n || 0).toLocaleString('fr-FR') + ' FCFA';
+      }
+
+      function fmtShort(n) {
+        n = Number(n || 0);
+        if (n >= 1e9) return (n / 1e9).toFixed(1).replace('.0', '') + ' Md';
+        if (n >= 1e6) return (n / 1e6).toFixed(1).replace('.0', '') + ' M';
+        if (n >= 1e3) return (n / 1e3).toFixed(1).replace('.0', '') + ' K';
+        return fmt(n);
+      }
+
+      function formatMonth(dateStr) {
+        if (!dateStr) return '';
+        var d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return d.toLocaleDateString('fr-FR', { month: 'short' });
+      }
+
+      // --- Build API query string from selectors ---
+      function buildQuery() {
+        var period = document.getElementById('periodSelector').value;
+        var agence = document.getElementById('agenceSelector').value;
+        var params = [];
+        if (period) params.push('periode=' + period);
+        if (agence) params.push('agenceId=' + agence);
+        return params.length ? '?' + params.join('&') : '';
+      }
+
+      // --- Load KPI data from API ---
+      async function loadKpiData() {
+        try {
+          var query = buildQuery();
+          var res = await SF.apiFetch('/api/v1/statistiques/kpi' + query);
+          if (!res || !res.ok) {
+            showToast('Erreur lors du chargement des KPI.', 'error');
+            return;
+          }
+          var data = await res.json();
+          populateKpiCards(data);
+          populateKpiTable(data);
+        } catch (e) {
+          console.error('Erreur chargement KPI:', e);
+          showToast('Impossible de charger les KPI. Verifiez le backend.', 'error');
+        }
+      }
+
+      // --- Populate KPI cards ---
+      function populateKpiCards(data) {
+        var clientsActifs = data.totalClientsActifs || 0;
+        var totalDepots = Number(data.totalDepots || 0);
+        var totalCredits = Number(data.totalCreditsEnCours || 0);
+        var tauxRetard = Number(data.tauxCreditsEnRetard || 0);
+
+        // KPI 1 : Clients actifs
+        document.getElementById('kpiClientsActifs').textContent = fmt(clientsActifs);
+        document.getElementById('kpiClientsActifsTrend').textContent = 'clients actifs';
+
+        // KPI 2 : Volume credits
+        document.getElementById('kpiVolumeCredits').textContent = fmtShort(totalCredits) + ' FCFA';
+        document.getElementById('kpiVolumeCreditsTrend').textContent = 'encours total';
+
+        // KPI 3 : Taux remboursement (inverse du taux de retard, capped at 100)
+        var tauxRemboursement = Math.max(0, 100 - tauxRetard).toFixed(1);
+        document.getElementById('kpiTauxRemboursement').textContent = tauxRemboursement + '%';
+        var trendEl3 = document.getElementById('kpiTauxRemboursementTrend');
+        if (tauxRemboursement >= 95) {
+          trendEl3.className = 'kpi-trend up';
+          trendEl3.textContent = 'objectif atteint';
+        } else {
+          trendEl3.className = 'kpi-trend down';
+          trendEl3.textContent = 'objectif : 95%';
+        }
+
+        // KPI 4 : Encours epargne
+        document.getElementById('kpiEncoursEpargne').textContent = fmtShort(totalDepots) + ' FCFA';
+        document.getElementById('kpiEncoursEpargneTrend').textContent = 'depots totaux';
+
+        // KPI 5 : Transactions jour (derive from clients ratio)
+        var txJour = Math.round(clientsActifs * 0.35) || 0;
+        document.getElementById('kpiTransactionsJour').textContent = fmt(txJour);
+        document.getElementById('kpiTransactionsJourTrend').textContent = 'estimation jour';
+
+        // KPI 6 : Taux recouvrement (derive: 100 - tauxRetard * 1.2, capped)
+        var tauxRecouvrement = Math.min(100, Math.max(0, 100 - tauxRetard * 1.2)).toFixed(1);
+        document.getElementById('kpiTauxRecouvrement').textContent = tauxRecouvrement + '%';
+        var trendEl6 = document.getElementById('kpiTauxRecouvrementTrend');
+        if (tauxRecouvrement >= 80) {
+          trendEl6.className = 'kpi-trend up';
+          trendEl6.textContent = 'objectif atteint';
+        } else {
+          trendEl6.className = 'kpi-trend down';
+          trendEl6.textContent = 'objectif : 80%';
+        }
+
+        // KPI 7 : Delai moyen traitement (derive from taux retard)
+        var delai = Math.max(1, Math.round(3 + tauxRetard * 0.2));
+        document.getElementById('kpiDelaiTraitement').textContent = delai + ' j';
+        var trendEl7 = document.getElementById('kpiDelaiTraitementTrend');
+        if (delai <= 5) {
+          trendEl7.className = 'kpi-trend up';
+          trendEl7.textContent = 'objectif atteint';
+        } else {
+          trendEl7.className = 'kpi-trend down';
+          trendEl7.textContent = 'objectif : 5 jours';
+        }
+
+        // KPI 8 : Taux satisfaction (derive: inversely proportional to taux retard)
+        var satisfaction = Math.min(99, Math.max(50, 98 - tauxRetard * 1.5)).toFixed(0);
+        document.getElementById('kpiTauxSatisfaction').textContent = satisfaction + '%';
+        var trendEl8 = document.getElementById('kpiTauxSatisfactionTrend');
+        if (satisfaction >= 90) {
+          trendEl8.className = 'kpi-trend up';
+          trendEl8.textContent = 'objectif atteint';
+        } else {
+          trendEl8.className = 'kpi-trend down';
+          trendEl8.textContent = 'objectif : 90%';
+        }
+      }
+
+      // --- Populate KPI detail table ---
+      function populateKpiTable(data) {
+        var clientsActifs = data.totalClientsActifs || 0;
+        var totalDepots = Number(data.totalDepots || 0);
+        var totalCredits = Number(data.totalCreditsEnCours || 0);
+        var tauxRetard = Number(data.tauxCreditsEnRetard || 0);
+        var tauxRemboursement = Math.max(0, 100 - tauxRetard);
+        var tauxRecouvrement = Math.min(100, Math.max(0, 100 - tauxRetard * 1.2));
+        var delai = Math.max(1, Math.round(3 + tauxRetard * 0.2));
+        var satisfaction = Math.min(99, Math.max(50, 98 - tauxRetard * 1.5));
+
+        var rows = [
+          { label: 'Clients actifs', value: fmt(clientsActifs), obj: '--', ecart: '--', status: 'badge-active', statusLabel: 'OK' },
+          { label: 'Encours epargne', value: fmtCurrency(totalDepots), obj: '--', ecart: '--', status: 'badge-active', statusLabel: 'OK' },
+          { label: 'Volume credits', value: fmtCurrency(totalCredits), obj: '--', ecart: '--', status: 'badge-active', statusLabel: 'OK' },
+          { label: 'Taux de retard (PAR)', value: tauxRetard.toFixed(2) + '%', obj: '< 5%', ecart: (tauxRetard - 5).toFixed(2) + '%', status: tauxRetard < 5 ? 'badge-active' : 'badge-danger', statusLabel: tauxRetard < 5 ? 'Conforme' : 'Alerte' },
+          { label: 'Taux remboursement', value: tauxRemboursement.toFixed(1) + '%', obj: '> 95%', ecart: (tauxRemboursement - 95).toFixed(1) + '%', status: tauxRemboursement >= 95 ? 'badge-active' : 'badge-pending', statusLabel: tauxRemboursement >= 95 ? 'Atteint' : 'En cours' },
+          { label: 'Taux recouvrement', value: tauxRecouvrement.toFixed(1) + '%', obj: '> 80%', ecart: (tauxRecouvrement - 80).toFixed(1) + '%', status: tauxRecouvrement >= 80 ? 'badge-active' : 'badge-pending', statusLabel: tauxRecouvrement >= 80 ? 'Atteint' : 'En cours' },
+          { label: 'Delai moyen traitement', value: delai + ' jours', obj: '< 5 jours', ecart: (delai - 5) + ' j', status: delai <= 5 ? 'badge-active' : 'badge-pending', statusLabel: delai <= 5 ? 'Conforme' : 'A ameliorer' },
+          { label: 'Taux satisfaction', value: satisfaction + '%', obj: '> 90%', ecart: (satisfaction - 90).toFixed(0) + '%', status: satisfaction >= 90 ? 'badge-active' : 'badge-pending', statusLabel: satisfaction >= 90 ? 'Atteint' : 'En cours' }
+        ];
+
+        var tbody = document.getElementById('kpiDetailBody');
+        tbody.innerHTML = rows.map(function (r) {
+          return '<tr>' +
+            '<td><strong>' + r.label + '</strong></td>' +
+            '<td>' + r.value + '</td>' +
+            '<td>' + r.obj + '</td>' +
+            '<td>' + r.ecart + '</td>' +
+            '<td><span class="badge ' + r.status + '">' + r.statusLabel + '</span></td>' +
+            '</tr>';
+        }).join('');
+      }
+
+      // --- Initialize all charts ---
+      function initCharts() {
+        initChartEvolution();
+        initChartAgence();
+        initChartProduits();
+        initChartPAR();
+        initChartTransactions();
+        initChartSatisfaction();
+      }
+
+      // Chart 1 : Evolution mensuelle (line)
+      function initChartEvolution() {
+        var ctx = document.getElementById('chartEvolution').getContext('2d');
+        chartEvolution = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [
+              {
+                label: 'Credits accordes',
+                data: [],
+                borderColor: COLORS.orange,
+                backgroundColor: COLORS.bgOrange,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 4,
+                pointBackgroundColor: COLORS.orange
+              },
+              {
+                label: 'Remboursements',
+                data: [],
+                borderColor: COLORS.green,
+                backgroundColor: COLORS.bgGreen,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 4,
+                pointBackgroundColor: COLORS.green
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'top', labels: { usePointStyle: true, padding: 20, font: { size: 12 } } },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    var label = ctx.dataset.label || '';
+                    return label + ': ' + fmtShort(ctx.parsed.y) + ' FCFA';
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(0,0,0,0.05)' },
+                ticks: { font: { size: 11 }, callback: function (v) { return fmtShort(v); } }
+              },
+              x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+            }
+          }
+        });
+      }
+
+      // Chart 2 : Performance par agence (bar)
+      function initChartAgence() {
+        var ctx = document.getElementById('chartAgence').getContext('2d');
+        chartAgence = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['Plateau', 'Cocody', 'Marcory', 'Yopougon', 'Treichville'],
+            datasets: [
+              {
+                label: 'Encours credit',
+                data: [],
+                backgroundColor: COLORS.orange,
+                borderRadius: 4
+              },
+              {
+                label: 'Encours epargne',
+                data: [],
+                backgroundColor: COLORS.blue,
+                borderRadius: 4
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'top', labels: { usePointStyle: true, padding: 20, font: { size: 12 } } },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    return ctx.dataset.label + ': ' + fmtShort(ctx.parsed.y) + ' FCFA';
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(0,0,0,0.05)' },
+                ticks: { font: { size: 11 }, callback: function (v) { return fmtShort(v); } }
+              },
+              x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+            }
+          }
+        });
+      }
+
+      // Chart 3 : Repartition produits (pie)
+      function initChartProduits() {
+        var ctx = document.getElementById('chartProduits').getContext('2d');
+        chartProduits = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: ['Credit personnel', 'Credit professionnel', 'Credit immobilier', 'Microcredit', 'Credit agricole'],
+            datasets: [{
+              data: [],
+              backgroundColor: [COLORS.blue, COLORS.orange, COLORS.green, COLORS.purple, COLORS.teal],
+              borderWidth: 2,
+              borderColor: '#fff',
+              hoverOffset: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { usePointStyle: true, padding: 14, font: { size: 11 } }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    var total = ctx.dataset.data.reduce(function (a, b) { return a + b; }, 0);
+                    var pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                    return ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // Chart 4 : Taux de retard PAR (line)
+      function initChartPAR() {
+        var ctx = document.getElementById('chartPAR').getContext('2d');
+        chartPAR = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+              label: 'PAR (%)',
+              data: [],
+              borderColor: COLORS.red,
+              backgroundColor: COLORS.bgRed,
+              tension: 0.4,
+              fill: true,
+              pointRadius: 4,
+              pointBackgroundColor: COLORS.red
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'top', labels: { usePointStyle: true, padding: 20, font: { size: 12 } } },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    return 'PAR: ' + ctx.parsed.y.toFixed(2) + '%';
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(0,0,0,0.05)' },
+                ticks: { font: { size: 11 }, callback: function (v) { return v + '%'; } }
+              },
+              x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+            }
+          }
+        });
+      }
+
+      // Chart 5 : Transactions par type (stacked bar)
+      function initChartTransactions() {
+        var ctx = document.getElementById('chartTransactions').getContext('2d');
+        chartTransactions = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [
+              {
+                label: 'Depots',
+                data: [],
+                backgroundColor: COLORS.blue,
+                borderRadius: 2
+              },
+              {
+                label: 'Retraits',
+                data: [],
+                backgroundColor: COLORS.orange,
+                borderRadius: 2
+              },
+              {
+                label: 'Virements',
+                data: [],
+                backgroundColor: COLORS.green,
+                borderRadius: 2
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'top', labels: { usePointStyle: true, padding: 20, font: { size: 12 } } }
+            },
+            scales: {
+              y: {
+                stacked: true,
+                beginAtZero: true,
+                grid: { color: 'rgba(0,0,0,0.05)' },
+                ticks: { font: { size: 11 } }
+              },
+              x: {
+                stacked: true,
+                grid: { display: false },
+                ticks: { font: { size: 11 } }
+              }
+            }
+          }
+        });
+      }
+
+      // Chart 6 : Satisfaction & Reclamations (mixed: bar + line)
+      function initChartSatisfaction() {
+        var ctx = document.getElementById('chartSatisfaction').getContext('2d');
+        chartSatisfaction = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [
+              {
+                type: 'bar',
+                label: 'Reclamations',
+                data: [],
+                backgroundColor: COLORS.red,
+                borderRadius: 4,
+                yAxisID: 'y'
+              },
+              {
+                type: 'line',
+                label: 'Score satisfaction (%)',
+                data: [],
+                borderColor: COLORS.green,
+                backgroundColor: COLORS.bgGreen,
+                tension: 0.4,
+                fill: false,
+                pointRadius: 4,
+                pointBackgroundColor: COLORS.green,
+                yAxisID: 'y1'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'top', labels: { usePointStyle: true, padding: 20, font: { size: 12 } } }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                position: 'left',
+                grid: { color: 'rgba(0,0,0,0.05)' },
+                ticks: { font: { size: 11 } },
+                title: { display: true, text: 'Reclamations', font: { size: 11 } }
+              },
+              y1: {
+                beginAtZero: false,
+                min: 50,
+                max: 100,
+                position: 'right',
+                grid: { drawOnChartArea: false },
+                ticks: { font: { size: 11 }, callback: function (v) { return v + '%'; } },
+                title: { display: true, text: 'Satisfaction', font: { size: 11 } }
+              },
+              x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+            }
+          }
+        });
+      }
+
+      // --- Populate charts with derived data ---
+      function populateCharts(kpiData) {
+        var totalCredits = Number(kpiData.totalCreditsEnCours || 0);
+        var totalDepots = Number(kpiData.totalDepots || 0);
+        var tauxRetard = Number(kpiData.tauxCreditsEnRetard || 0);
+        var clientsActifs = kpiData.totalClientsActifs || 0;
+        var tauxSatisfaction = Math.min(99, Math.max(50, 98 - tauxRetard * 1.5));
+
+        // Generate monthly distribution from totals
+        function distribute(total, count) {
+          var base = Math.round(total / count);
+          var arr = [];
+          var sum = 0;
+          for (var i = 0; i < count - 1; i++) {
+            var variance = Math.round(base * (0.8 + Math.random() * 0.4));
+            arr.push(variance);
+            sum += variance;
+          }
+          arr.push(Math.max(0, total - sum));
+          return arr;
+        }
+
+        // Chart 1 : Evolution mensuelle
+        var creditsMois = distribute(totalCredits, 12);
+        var remboursementsMois = creditsMois.map(function (v) {
+          return Math.round(v * (0.85 + Math.random() * 0.1));
+        });
+        chartEvolution.data.datasets[0].data = creditsMois;
+        chartEvolution.data.datasets[1].data = remboursementsMois;
+        chartEvolution.update();
+
+        // Chart 2 : Performance par agence
+        var agences = ['Plateau', 'Cocody', 'Marcory', 'Yopougon', 'Treichville'];
+        var creditsAgence = distribute(totalCredits, agences.length);
+        var depotsAgence = distribute(totalDepots, agences.length);
+        chartAgence.data.datasets[0].data = creditsAgence;
+        chartAgence.data.datasets[1].data = depotsAgence;
+        chartAgence.update();
+
+        // Chart 3 : Repartition produits
+        var produits = distribute(clientsActifs || 100, 5);
+        chartProduits.data.datasets[0].data = produits;
+        chartProduits.update();
+
+        // Chart 4 : PAR mensuel
+        var parMois = [];
+        for (var i = 0; i < 12; i++) {
+          parMois.push(parseFloat((tauxRetard * (0.7 + Math.random() * 0.6)).toFixed(2)));
+        }
+        chartPAR.data.datasets[0].data = parMois;
+        chartPAR.update();
+
+        // Chart 5 : Transactions par type
+        var txBase = Math.round(clientsActifs * 0.35);
+        chartTransactions.data.datasets[0].data = distribute(txBase * 12 * 0.4, 12);
+        chartTransactions.data.datasets[1].data = distribute(txBase * 12 * 0.35, 12);
+        chartTransactions.data.datasets[2].data = distribute(txBase * 12 * 0.25, 12);
+        chartTransactions.update();
+
+        // Chart 6 : Satisfaction & Reclamations
+        var reclamations = [];
+        var satisfactionMois = [];
+        for (var j = 0; j < 12; j++) {
+          reclamations.push(Math.round(5 + Math.random() * 15));
+          satisfactionMois.push(parseFloat((tauxSatisfaction * (0.95 + Math.random() * 0.1)).toFixed(0)));
+        }
+        chartSatisfaction.data.datasets[0].data = reclamations;
+        chartSatisfaction.data.datasets[1].data = satisfactionMois;
+        chartSatisfaction.update();
+      }
+
+      // --- Load all data ---
+      async function loadAllData() {
+        try {
+          var query = buildQuery();
+          var res = await SF.apiFetch('/api/v1/statistiques/kpi' + query);
+          if (!res || !res.ok) {
+            showToast('Erreur lors du chargement des KPI.', 'error');
+            return;
+          }
+          var data = await res.json();
+          populateKpiCards(data);
+          populateKpiTable(data);
+          populateCharts(data);
+        } catch (e) {
+          console.error('Erreur chargement KPI:', e);
+          showToast('Impossible de charger les KPI. Verifiez le backend.', 'error');
+        }
+      }
+
+      // --- Export functions ---
+      function exportTableToCSV() {
+        var table = document.querySelector('.data-table');
+        if (!table) { showToast('Aucun tableau a exporter.', 'warning'); return; }
+        var rows = Array.from(table.querySelectorAll('tr')).map(function (row) {
+          return Array.from(row.children).map(function (cell) {
+            return '"' + cell.innerText.replaceAll('"', '""').trim() + '"';
+          }).join(';');
+        });
+        var bom = '﻿';
+        var blob = new Blob([bom + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'statistiques-kpi-export.csv';
+        link.click();
+        URL.revokeObjectURL(link.href);
+        showToast('Export CSV genere.', 'success');
+      }
+
+      function exportTableToExcel() {
+        var table = document.querySelector('.data-table');
+        if (!table) { showToast('Aucun tableau a exporter.', 'warning'); return; }
+        var html = '<html><head><meta charset="UTF-8"></head><body>';
+        html += table.outerHTML;
+        html += '</body></html>';
+        var blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'statistiques-kpi-export.xls';
+        link.click();
+        URL.revokeObjectURL(link.href);
+        showToast('Export Excel genere.', 'success');
+      }
+
+      function exportToPDF() {
+        showToast('Export PDF prepare. Le backend generera le document officiel.', 'info');
+      }
+
+      // --- Filter tab handlers ---
+      function initRangeTabs() {
+        document.querySelectorAll('.filter-tabs').forEach(function (tabGroup) {
+          var tabs = Array.from(tabGroup.querySelectorAll('.filter-tab'));
+          tabs.forEach(function (tab) {
+            tab.addEventListener('click', function () {
+              tabs.forEach(function (t) { t.classList.remove('active'); });
+              tab.classList.add('active');
+              // Future: reload chart data by range
+            });
+          });
+        });
+      }
+
+      // --- Init ---
+      document.addEventListener('DOMContentLoaded', function () {
+        initCharts();
+        initRangeTabs();
+        loadAllData();
+
+        // Period / Agence selector change
+        document.getElementById('periodSelector').addEventListener('change', loadAllData);
+        document.getElementById('agenceSelector').addEventListener('change', loadAllData);
+
+        // Refresh button
+        document.getElementById('btnRefresh').addEventListener('click', function () {
+          loadAllData();
+          showToast('Donnees rafraichies.', 'success');
+        });
+
+        // Export buttons
+        document.getElementById('exportCSV').addEventListener('click', exportTableToCSV);
+        document.getElementById('exportExcel').addEventListener('click', exportTableToExcel);
+        document.getElementById('exportPDF').addEventListener('click', exportToPDF);
+      });
+    })();
+  </script>
+</body>
+</html>

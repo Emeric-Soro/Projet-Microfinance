@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rapport Caisse - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left"><div><div class="topbar-title">Rapport Caisse</div><div class="topbar-breadcrumb">Reporting / Rapport Caisse</div></div></div>
+        <div class="topbar-right"></div>
+      </header>
+      <main class="content-area">
+        <div class="page-header">
+          <div><h1 class="page-title">Rapport Caisse</h1><p class="page-subtitle">Résumé journalier, mouvements et rapprochement par agence.</p></div>
+          <div class="export-buttons">
+            <button class="export-btn" onclick="exportCSV()">CSV</button>
+            <button class="export-btn" onclick="exportPDF()">PDF</button>
+          </div>
+        </div>
+
+        <section style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+          <div class="card"><div style="padding:20px;text-align:center;"><div style="font-size:12px;color:#888;">Solde ouverture</div><div style="font-size:20px;font-weight:bold;" id="kpiOuverture">0 FCFA</div></div></div>
+          <div class="card"><div style="padding:20px;text-align:center;"><div style="font-size:12px;color:#888;">Entrées</div><div style="font-size:20px;font-weight:bold;color:#27ae60;" id="kpiEntrees">0 FCFA</div></div></div>
+          <div class="card"><div style="padding:20px;text-align:center;"><div style="font-size:12px;color:#888;">Sorties</div><div style="font-size:20px;font-weight:bold;color:#e74c3c;" id="kpiSorties">0 FCFA</div></div></div>
+          <div class="card"><div style="padding:20px;text-align:center;"><div style="font-size:12px;color:#888;">Solde clôture</div><div style="font-size:20px;font-weight:bold;" id="kpiCloture">0 FCFA</div></div></div>
+        </section>
+
+        <section class="card">
+          <div class="card-header"><div><div class="card-title">Résumé par agence</div></div></div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Agence</th><th>Ouverture</th><th>Entrées</th><th>Sorties</th><th>Clôture théorique</th><th>Clôture réel</th><th>Écart</th><th>Statut</th></tr>
+            </thead>
+            <tbody id="agenceTableBody"><tr><td colspan="8" style="text-align:center;">Chargement...</td></tr></tbody>
+          </table>
+        </section>
+
+        <section class="card" style="margin-top:16px;">
+          <div class="card-header"><div><div class="card-title">Détail des mouvements</div></div></div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Type</th><th>Nb opérations</th><th>Total débit</th><th>Total crédit</th><th>Net</th></tr>
+            </thead>
+            <tbody id="mouvementsTableBody"><tr><td colspan="5" style="text-align:center;">Chargement...</td></tr></tbody>
+          </table>
+        </section>
+
+        <section class="card" style="margin-top:16px;">
+          <div class="card-header"><div><div class="card-title">Statut rapprochement</div></div></div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Agence</th><th>Statut</th><th>Écart</th><th>Commentaire</th></tr>
+            </thead>
+            <tbody id="rapprochementTableBody"><tr><td colspan="4" style="text-align:center;">Chargement...</td></tr></tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    var rapportData = null;
+    function formatCurrency(n) { return (n || 0).toLocaleString('fr-FR'); }
+    function badgeEcart(val) {
+      if (val === 0) return '<span class="badge badge-success">0</span>';
+      return '<span class="badge badge-danger">' + formatCurrency(val) + '</span>';
+    }
+    function badgeRapprochement(s) {
+      var map = { 'SOLDE': 'badge-success', 'EN_COURS': 'badge-pending', 'ECART': 'badge-danger' };
+      return '<span class="badge ' + (map[s] || 'badge-default') + '">' + (s || '---') + '</span>';
+    }
+
+    function renderKpis(d) {
+      document.getElementById('kpiOuverture').textContent = formatCurrency(d.soldeOuverture) + ' FCFA';
+      document.getElementById('kpiEntrees').textContent = formatCurrency(d.totalEntrees) + ' FCFA';
+      document.getElementById('kpiSorties').textContent = formatCurrency(d.totalSorties) + ' FCFA';
+      document.getElementById('kpiCloture').textContent = formatCurrency(d.soldeCloture) + ' FCFA';
+    }
+
+    function renderAgences(data) {
+      var tbody = document.getElementById('agenceTableBody');
+      if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Aucune donnée.</td></tr>'; return; }
+      tbody.innerHTML = data.map(function(a) { return '<tr>' +
+        '<td>' + (a.agence || '---') + '</td>' +
+        '<td>' + formatCurrency(a.ouverture) + '</td>' +
+        '<td>' + formatCurrency(a.entrees) + '</td>' +
+        '<td>' + formatCurrency(a.sorties) + '</td>' +
+        '<td>' + formatCurrency(a.clotureTheorique) + '</td>' +
+        '<td>' + formatCurrency(a.clotureReel) + '</td>' +
+        '<td>' + badgeEcart(a.ecart) + '</td>' +
+        '<td>' + badgeRapprochement(a.statut) + '</td>' +
+        '</tr>'; }).join('');
+    }
+
+    function renderMouvements(data) {
+      var tbody = document.getElementById('mouvementsTableBody');
+      if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Aucune donnée.</td></tr>'; return; }
+      tbody.innerHTML = data.map(function(m) { return '<tr>' +
+        '<td>' + (m.type || '---') + '</td>' +
+        '<td>' + (m.nbOperations || 0) + '</td>' +
+        '<td>' + formatCurrency(m.totalDebit) + '</td>' +
+        '<td>' + formatCurrency(m.totalCredit) + '</td>' +
+        '<td>' + formatCurrency(m.net) + '</td>' +
+        '</tr>'; }).join('');
+    }
+
+    function renderRapprochement(data) {
+      var tbody = document.getElementById('rapprochementTableBody');
+      if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Aucune donnée.</td></tr>'; return; }
+      tbody.innerHTML = data.map(function(r) { return '<tr>' +
+        '<td>' + (r.agence || '---') + '</td>' +
+        '<td>' + badgeRapprochement(r.statut) + '</td>' +
+        '<td>' + badgeEcart(r.ecart || 0) + '</td>' +
+        '<td>' + (r.commentaire || '---') + '</td>' +
+        '</tr>'; }).join('');
+    }
+
+    function exportCSV() {
+      if (!rapportData) { showToast('Aucune donnée.', 'warning'); return; }
+      var headers = ['Agence', 'Ouverture', 'Entrées', 'Sorties', 'Clôture théorique', 'Clôture réel', 'Écart'];
+      var rows = (rapportData.parAgence || []).map(function(a) { return [a.agence, a.ouverture, a.entrees, a.sorties, a.clotureTheorique, a.clotureReel, a.ecart]; });
+      var csv = [headers.join(';')].concat(rows.map(function(r) { return r.join(';'); })).join('\n');
+      var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'rapport-caisse.csv'; a.click();
+      showToast('CSV exporté.', 'success');
+    }
+
+    function exportPDF() { window.open(SF.API_BASE + '/api/v1/reporting/caisse/export?format=PDF', '_blank'); showToast('Export PDF lancé.', 'success'); }
+
+    document.addEventListener('DOMContentLoaded', async function() {
+      try {
+        var data = await SF.apiFetch('/api/v1/reporting/caisse');
+        rapportData = data;
+        renderKpis(data);
+        renderAgences(data.parAgence || []);
+        renderMouvements(data.mouvements || []);
+        renderRapprochement(data.rapprochement || []);
+      } catch (e) {
+        showToast('Erreur chargement: ' + e.message, 'error');
+      }
+    });
+  </script>
+</body>
+</html>

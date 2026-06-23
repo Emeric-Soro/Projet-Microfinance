@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documents client - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    /* ── Upload Zone ────────────────────────────────── */
+    .upload-zone {
+      border: 2px dashed var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      background: var(--color-surface);
+      position: relative;
+    }
+    .upload-zone:hover,
+    .upload-zone.dragover {
+      border-color: var(--color-primary);
+      background: #f0f6fa;
+    }
+    .upload-zone.dragover {
+      transform: scale(1.01);
+      box-shadow: var(--shadow-md);
+    }
+    .upload-zone.has-file {
+      border-color: var(--color-success);
+      border-style: solid;
+      background: #f0faf2;
+    }
+    .uz-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: .7; }
+    .uz-text { color: var(--color-text-secondary); font-size: .95rem; line-height: 1.6; }
+    .uz-text small { color: var(--color-text-muted); }
+    .uz-formats {
+      display: flex; gap: 8px; justify-content: center; margin-top: 12px; flex-wrap: wrap;
+    }
+    .uz-format-tag {
+      display: inline-block; padding: 2px 10px; border-radius: 12px;
+      font-size: .72rem; font-weight: 600; text-transform: uppercase;
+      background: var(--color-secondary-light); color: var(--color-primary);
+    }
+
+    /* ── File Preview (after selection) ─────────────── */
+    .file-preview-bar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; margin-top: 12px;
+      background: #f0f6fa; border-radius: var(--radius-sm);
+      border: 1px solid var(--color-border);
+    }
+    .file-preview-bar .fp-icon { font-size: 1.5rem; }
+    .file-preview-bar .fp-info { flex: 1; }
+    .file-preview-bar .fp-name { font-weight: 600; font-size: .9rem; color: var(--color-primary); }
+    .file-preview-bar .fp-size { font-size: .8rem; color: var(--color-text-secondary); }
+    .file-preview-bar .fp-remove {
+      background: none; border: none; cursor: pointer; font-size: 1.2rem;
+      color: var(--color-text-muted); padding: 4px 8px; border-radius: 4px;
+    }
+    .file-preview-bar .fp-remove:hover { color: var(--color-danger); background: #fee; }
+
+    /* ── Upload Button ──────────────────────────────── */
+    .btn-upload {
+      display: inline-flex; align-items: center; gap: 8px;
+      margin-top: 16px; padding: 10px 28px;
+      background: var(--color-primary); color: #fff; border: none;
+      border-radius: var(--radius-sm); font-weight: 600; font-size: .9rem;
+      cursor: pointer; transition: var(--transition);
+    }
+    .btn-upload:hover { background: var(--color-primary-light); }
+    .btn-upload:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── Category Badges ────────────────────────────── */
+    .badge-cat {
+      display: inline-block; padding: 3px 10px; border-radius: 12px;
+      font-size: .7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .4px; white-space: nowrap;
+    }
+    .badge-cni        { background: #dbeafe; color: #1e40af; }
+    .badge-domicile   { background: #dcfce7; color: #166534; }
+    .badge-photo      { background: #fae8ff; color: #86198f; }
+    .badge-revenu     { background: #fef3c7; color: #92400e; }
+    .badge-autre      { background: #f1f5f9; color: #475569; }
+
+    /* ── Documents Grid ─────────────────────────────── */
+    .docs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin: 8px 0;
+    }
+    .doc-card {
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-md);
+      padding: 14px;
+      text-align: center;
+      transition: var(--transition);
+      background: var(--color-surface);
+      position: relative;
+    }
+    .doc-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-2px); }
+
+    .doc-card .dc-thumb {
+      width: 100%; height: 140px;
+      background: #f8fafc; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 10px; overflow: hidden; cursor: pointer;
+      position: relative;
+    }
+    .doc-card .dc-thumb img {
+      max-width: 100%; max-height: 100%; object-fit: contain;
+      transition: transform .3s;
+    }
+    .doc-card:hover .dc-thumb img { transform: scale(1.05); }
+    .doc-card .dc-thumb .dc-icon { font-size: 3rem; color: var(--color-text-secondary); }
+    .doc-card .dc-thumb .dc-zoom {
+      position: absolute; top: 6px; right: 6px;
+      background: rgba(8,67,85,.7); color: #fff; border: none;
+      border-radius: 50%; width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; opacity: 0; transition: opacity .2s;
+    }
+    .doc-card:hover .dc-thumb .dc-zoom { opacity: 1; }
+
+    .doc-card .dc-name {
+      font-weight: 600; font-size: .82rem; color: var(--color-primary);
+      word-break: break-all; margin-bottom: 4px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .doc-card .dc-badge { margin: 6px 0; }
+    .doc-card .dc-meta {
+      font-size: .75rem; color: var(--color-text-secondary);
+      display: flex; justify-content: center; gap: 10px; margin: 6px 0;
+    }
+    .doc-card .dc-meta span { display: flex; align-items: center; gap: 3px; }
+    .doc-card .dc-actions {
+      display: flex; gap: 6px; justify-content: center;
+      margin-top: 10px; padding-top: 10px; border-top: 1px solid #f0f0f0;
+    }
+    .doc-card .dc-actions .btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 12px; font-size: .78rem;
+    }
+
+    /* ── Lightbox ───────────────────────────────────── */
+    .lightbox-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,.85); display: none;
+      align-items: center; justify-content: center;
+      animation: lbFadeIn .2s;
+    }
+    .lightbox-overlay.active { display: flex; }
+    .lightbox-content {
+      position: relative; max-width: 90vw; max-height: 90vh;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .lightbox-content img {
+      max-width: 90vw; max-height: 80vh; object-fit: contain;
+      border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,.4);
+    }
+    .lightbox-content .lb-pdf {
+      width: 80vw; height: 80vh; border: none; border-radius: 8px;
+      background: #fff;
+    }
+    .lightbox-close {
+      position: absolute; top: -40px; right: 0;
+      background: rgba(255,255,255,.15); border: none; color: #fff;
+      font-size: 1.5rem; width: 36px; height: 36px; border-radius: 50%;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .lightbox-close:hover { background: rgba(255,255,255,.3); }
+    .lightbox-caption {
+      color: #ccc; font-size: .85rem; margin-top: 10px;
+      text-align: center; max-width: 80vw;
+    }
+    @keyframes lbFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* ── Empty State ────────────────────────────────── */
+    .empty-state {
+      text-align: center; padding: 40px 20px; color: var(--color-text-muted);
+    }
+    .empty-state .es-icon { font-size: 3rem; margin-bottom: 12px; opacity: .5; }
+    .empty-state .es-text { font-size: .95rem; }
+
+    /* ── Category Filter ────────────────────────────── */
+    .cat-filters {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .cat-filter-btn {
+      padding: 5px 14px; border-radius: 20px; border: 1px solid var(--color-border);
+      background: var(--color-surface); cursor: pointer; font-size: .8rem;
+      font-weight: 500; color: var(--color-text-secondary); transition: var(--transition);
+    }
+    .cat-filter-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .cat-filter-btn.active {
+      background: var(--color-primary); color: #fff; border-color: var(--color-primary);
+    }
+
+    /* ── Loading spinner ────────────────────────────── */
+    .docs-loader { display: flex; justify-content: center; padding: 40px; }
+    .docs-loader .spinner {
+      width: 32px; height: 32px; border: 3px solid var(--color-border);
+      border-top-color: var(--color-primary); border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Progress bar ───────────────────────────────── */
+    .upload-progress {
+      height: 4px; background: var(--color-border); border-radius: 2px;
+      margin-top: 10px; overflow: hidden; display: none;
+    }
+    .upload-progress .bar {
+      height: 100%; background: var(--color-primary); border-radius: 2px;
+      width: 0; transition: width .3s;
+    }
+    .upload-progress.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Documents client</div>
+            <div class="topbar-breadcrumb">Clients / Documents</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a href="clients.html" class="btn btn-ghost btn-sm">Liste clients</a>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <!-- Page Header -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Gestion des documents</h1>
+            <p class="page-subtitle" id="clientInfo">-</p>
+          </div>
+          <button class="btn btn-outline" onclick="history.back()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+            Retour
+          </button>
+        </div>
+
+        <!-- Upload Section -->
+        <section class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="vertical-align:middle;margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Ajouter un document
+            </div>
+          </div>
+          <div style="padding:20px;">
+            <div class="form-row" style="display:flex;gap:16px;flex-wrap:wrap;">
+              <div class="form-group" style="flex:1;min-width:200px;">
+                <label class="form-label" for="docCategorie">Cat&eacute;gorie du document</label>
+                <select class="form-control" id="docCategorie">
+                  <option value="CNI">Carte nationale d'identit&eacute;</option>
+                  <option value="JUSTIFICATIF_DOMICILE">Justificatif de domicile</option>
+                  <option value="PHOTO">Photo d'identit&eacute;</option>
+                  <option value="ATTESTATION_REVENU">Attestation de revenus</option>
+                  <option value="AUTRE">Autre document</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="upload-zone" id="uploadZone">
+              <div class="uz-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              </div>
+              <div class="uz-text">
+                Glissez-d&eacute;posez un fichier ici ou <strong>cliquez pour parcourir</strong><br>
+                <small>S&eacute;lectionnez le document &agrave; uploader pour ce client</small>
+              </div>
+              <div class="uz-formats">
+                <span class="uz-format-tag">JPG</span>
+                <span class="uz-format-tag">JPEG</span>
+                <span class="uz-format-tag">PNG</span>
+                <span class="uz-format-tag">PDF</span>
+                <span class="uz-format-tag" style="background:#fee2e2;color:#991b1b;">Max 5 Mo</span>
+              </div>
+            </div>
+            <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.pdf" style="display:none;">
+
+            <div id="filePreview" style="display:none;"></div>
+
+            <div class="upload-progress" id="uploadProgress">
+              <div class="bar" id="uploadBar"></div>
+            </div>
+
+            <div style="text-align:center;">
+              <button class="btn-upload" id="btnUpload" style="display:none;" onclick="uploadFile()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Uploader le document
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Documents List Section -->
+        <section class="card" style="margin-top:16px;">
+          <div class="card-header">
+            <div class="card-title" id="docsCountTitle">Documents existants</div>
+          </div>
+          <div style="padding:20px;">
+            <!-- Category filters -->
+            <div class="cat-filters" id="catFilters">
+              <button class="cat-filter-btn active" data-filter="all" onclick="filterDocs('all', this)">Tous</button>
+              <button class="cat-filter-btn" data-filter="CNI" onclick="filterDocs('CNI', this)">CNI</button>
+              <button class="cat-filter-btn" data-filter="JUSTIFICATIF_DOMICILE" onclick="filterDocs('JUSTIFICATIF_DOMICILE', this)">Domicile</button>
+              <button class="cat-filter-btn" data-filter="PHOTO" onclick="filterDocs('PHOTO', this)">Photo</button>
+              <button class="cat-filter-btn" data-filter="ATTESTATION_REVENU" onclick="filterDocs('ATTESTATION_REVENU', this)">Revenus</button>
+              <button class="cat-filter-btn" data-filter="AUTRE" onclick="filterDocs('AUTRE', this)">Autre</button>
+            </div>
+
+            <div class="docs-grid" id="docsGrid">
+              <div class="docs-loader"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox-overlay" id="lightbox" onclick="closeLightbox(event)">
+    <div class="lightbox-content">
+      <button class="lightbox-close" onclick="closeLightbox(event, true)">&times;</button>
+      <div id="lightboxBody"></div>
+      <div class="lightbox-caption" id="lightboxCaption"></div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ===================================================
+       Documents Client - M02
+       =================================================== */
+    let clientId = null;
+    let selectedFile = null;
+    let allDocuments = [];
+    let currentFilter = 'all';
+
+    /* ── Allowed types & max size ─────────────────── */
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
+    const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.pdf'];
+    const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+
+    /* ── Category display mapping ─────────────────── */
+    const CAT_MAP = {
+      'CNI':                   { label: 'CNI',                     badge: 'badge-cni' },
+      'PIECE_IDENTITE':        { label: 'Pi&egrave;ce d\'identit&eacute;', badge: 'badge-cni' },
+      'JUSTIFICATIF_DOMICILE': { label: 'Justificatif domicile',   badge: 'badge-domicile' },
+      'PHOTO':                 { label: 'Photo',                   badge: 'badge-photo' },
+      'ATTESTATION_REVENU':    { label: 'Attestation revenus',     badge: 'badge-revenu' },
+      'JUSTIFICATIF_REVENUS':  { label: 'Attestation revenus',     badge: 'badge-revenu' },
+      'AUTRE':                 { label: 'Autre',                   badge: 'badge-autre' }
+    };
+
+    /* ── Init ─────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', () => {
+      clientId = new URLSearchParams(window.location.search).get('id');
+      if (clientId) {
+        loadClient();
+        loadDocuments();
+      } else {
+        document.getElementById('docsGrid').innerHTML =
+          '<div class="empty-state"><div class="es-icon">&#9888;</div><div class="es-text">Aucun client s&eacute;lectionn&eacute;.<br>Ouvrez cette page depuis la fiche client.</div></div>';
+      }
+
+      setupUploadZone();
+    });
+
+    /* ── Load client info ─────────────────────────── */
+    async function loadClient() {
+      try {
+        const res = await Clients.obtenir(clientId);
+        if (res && res.ok) {
+          const c = await res.json();
+          document.getElementById('clientInfo').textContent =
+            `${c.nom || ''} ${c.prenom || ''} — ${c.numeroClient || clientId}`;
+        }
+      } catch (e) { /* silent */ }
+    }
+
+    /* ── Upload Zone setup ────────────────────────── */
+    function setupUploadZone() {
+      const zone = document.getElementById('uploadZone');
+      const input = document.getElementById('fileInput');
+
+      zone.addEventListener('click', () => input.click());
+
+      zone.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        zone.classList.add('dragover');
+      });
+
+      zone.addEventListener('dragleave', e => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+      });
+
+      zone.addEventListener('drop', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        zone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+          handleFile(e.dataTransfer.files[0]);
+        }
+      });
+
+      input.addEventListener('change', e => {
+        if (e.target.files.length) {
+          handleFile(e.target.files[0]);
+        }
+      });
+    }
+
+    /* ── File validation & preview ────────────────── */
+    function handleFile(file) {
+      // Validate type
+      const ext = '.' + file.name.split('.').pop().toLowerCase();
+      if (!ALLOWED_TYPES.includes(file.type) && !ALLOWED_EXTENSIONS.includes(ext)) {
+        showToast('Format non supporté. Formats acceptés : JPG, PNG, PDF.', 'error');
+        return;
+      }
+
+      // Validate size
+      if (file.size > MAX_SIZE) {
+        showToast('Fichier trop volumineux. Taille maximale : 5 Mo.', 'error');
+        return;
+      }
+
+      selectedFile = file;
+      const zone = document.getElementById('uploadZone');
+      zone.classList.add('has-file');
+
+      // File icon
+      const isPdf = file.type === 'application/pdf';
+      const icon = isPdf ? '&#128196;' : '&#128247;';
+
+      // Show preview bar
+      const preview = document.getElementById('filePreview');
+      preview.style.display = '';
+      preview.innerHTML = `
+        <div class="file-preview-bar">
+          <div class="fp-icon">${icon}</div>
+          <div class="fp-info">
+            <div class="fp-name">${escapeHtml(file.name)}</div>
+            <div class="fp-size">${formatFileSize(file.size)} &mdash; ${file.type || ext}</div>
+          </div>
+          <button class="fp-remove" onclick="removeFile()" title="Retirer">&times;</button>
+        </div>
+      `;
+
+      // Show upload button
+      document.getElementById('btnUpload').style.display = '';
+    }
+
+    function removeFile() {
+      selectedFile = null;
+      document.getElementById('uploadZone').classList.remove('has-file');
+      document.getElementById('filePreview').style.display = 'none';
+      document.getElementById('fileInput').value = '';
+      document.getElementById('btnUpload').style.display = 'none';
+      document.getElementById('uploadProgress').classList.remove('active');
+    }
+
+    /* ── Upload via Clients.uploadDocument() ──────── */
+    async function uploadFile() {
+      if (!selectedFile || !clientId) return;
+
+      const btn = document.getElementById('btnUpload');
+      const progress = document.getElementById('uploadProgress');
+      const bar = document.getElementById('uploadBar');
+
+      btn.disabled = true;
+      btn.textContent = 'Upload en cours…';
+      progress.classList.add('active');
+      bar.style.width = '30%';
+
+      try {
+        const categorie = document.getElementById('docCategorie').value;
+        bar.style.width = '60%';
+
+        const res = await Clients.uploadDocument(clientId, selectedFile, categorie);
+        bar.style.width = '100%';
+
+        if (res && (res.ok || res.status === 201)) {
+          showToast('Document uploadé avec succ&egrave;s !', 'success');
+          removeFile();
+          loadDocuments();
+        } else {
+          const body = await res.json().catch(() => ({}));
+          showToast(body.message || 'Erreur lors de l\'upload.', 'error');
+        }
+      } catch (e) {
+        showToast('Erreur réseau : ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Uploader le document';
+        setTimeout(() => progress.classList.remove('active'), 600);
+      }
+    }
+
+    /* ── Load Documents ───────────────────────────── */
+    async function loadDocuments() {
+      const grid = document.getElementById('docsGrid');
+      grid.innerHTML = '<div class="docs-loader"><div class="spinner"></div></div>';
+
+      try {
+        const res = await SF.apiFetch('/api/v1/clients/' + clientId + '/documents');
+        if (res && res.ok) {
+          const data = await res.json();
+          allDocuments = data.content || data || [];
+          renderDocuments();
+        } else {
+          grid.innerHTML = '<div class="empty-state"><div class="es-icon">&#128196;</div><div class="es-text">Impossible de charger les documents.</div></div>';
+        }
+      } catch (e) {
+        grid.innerHTML = '<div class="empty-state"><div class="es-icon">&#9888;</div><div class="es-text" style="color:var(--color-danger);">Erreur de connexion.</div></div>';
+      }
+    }
+
+    /* ── Render Documents (with filter) ───────────── */
+    function renderDocuments() {
+      const grid = document.getElementById('docsGrid');
+      const title = document.getElementById('docsCountTitle');
+
+      const filtered = currentFilter === 'all'
+        ? allDocuments
+        : allDocuments.filter(d => {
+            const cat = (d.categorie || d.typeDocument || '').toUpperCase();
+            return cat === currentFilter || cat.includes(currentFilter);
+          });
+
+      title.textContent = `Documents existants (${filtered.length})`;
+
+      if (!filtered.length) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1;">
+            <div class="es-icon">&#128196;</div>
+            <div class="es-text">${currentFilter === 'all' ? 'Aucun document pour ce client.' : 'Aucun document dans cette cat&eacute;gorie.'}</div>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(d => {
+        const cat = (d.categorie || d.typeDocument || 'AUTRE').toUpperCase();
+        const catInfo = CAT_MAP[cat] || CAT_MAP['AUTRE'];
+        const isImg = (d.typeContenu || d.contentType || '').startsWith('image/');
+        const fileName = d.nomFichier || d.nom || 'Document';
+        const fileSize = d.taille || d.size || null;
+        const dateVal = d.dateUpload || d.createdAt || d.dateCreation || null;
+        const url = d.url || d.chemin || '#';
+
+        return `
+          <div class="doc-card" data-cat="${cat}">
+            <div class="dc-thumb" onclick="openLightbox('${escapeAttr(url)}', '${escapeAttr(fileName)}', ${isImg})">
+              ${isImg
+                ? `<img src="${escapeAttr(url)}" alt="${escapeAttr(fileName)}" loading="lazy">`
+                : `<div class="dc-icon">&#128196;</div>`
+              }
+              <div class="dc-zoom" title="Agrandir">&#128269;</div>
+            </div>
+            <div class="dc-name" title="${escapeAttr(fileName)}">${escapeHtml(fileName)}</div>
+            <div class="dc-badge"><span class="badge-cat ${catInfo.badge}">${catInfo.label}</span></div>
+            <div class="dc-meta">
+              ${fileSize ? `<span>&#128230; ${formatFileSize(fileSize)}</span>` : ''}
+              ${dateVal ? `<span>&#128197; ${formatDate(dateVal)}</span>` : ''}
+            </div>
+            <div class="dc-actions">
+              <button class="btn btn-outline btn-sm" onclick="openLightbox('${escapeAttr(url)}', '${escapeAttr(fileName)}', ${isImg})" title="Visualiser">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                Voir
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="deleteDoc(${d.id})" title="Supprimer" style="color:var(--color-danger);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                Suppr.
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /* ── Category filter ──────────────────────────── */
+    function filterDocs(cat, btn) {
+      currentFilter = cat;
+      document.querySelectorAll('.cat-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderDocuments();
+    }
+
+    /* ── Lightbox ─────────────────────────────────── */
+    function openLightbox(url, name, isImage) {
+      if (!url || url === '#') return;
+      const overlay = document.getElementById('lightbox');
+      const body = document.getElementById('lightboxBody');
+      const caption = document.getElementById('lightboxCaption');
+
+      if (isImage) {
+        body.innerHTML = `<img src="${escapeAttr(url)}" alt="${escapeAttr(name)}">`;
+      } else {
+        // PDF - open in iframe or new tab
+        body.innerHTML = `<iframe src="${escapeAttr(url)}" class="lb-pdf" title="${escapeAttr(name)}"></iframe>`;
+      }
+
+      caption.textContent = name;
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox(e, force) {
+      if (force || e.target.id === 'lightbox') {
+        document.getElementById('lightbox').classList.remove('active');
+        document.getElementById('lightboxBody').innerHTML = '';
+        document.body.style.overflow = '';
+      }
+    }
+
+    // Close lightbox with Escape key
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeLightbox(null, true);
+    });
+
+    /* ── Delete Document ──────────────────────────── */
+    async function deleteDoc(id) {
+      if (!confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) return;
+
+      try {
+        const res = await SF.apiFetch('/api/v1/clients/' + clientId + '/documents/' + id, { method: 'DELETE' });
+        if (res && (res.ok || res.status === 204)) {
+          showToast('Document supprimé.', 'success');
+          allDocuments = allDocuments.filter(d => d.id !== id);
+          renderDocuments();
+        } else {
+          showToast('Erreur lors de la suppression.', 'error');
+        }
+      } catch (e) {
+        showToast('Erreur réseau : ' + e.message, 'error');
+      }
+    }
+
+    /* ── Utility functions ────────────────────────── */
+    function formatFileSize(bytes) {
+      if (!bytes) return '-';
+      bytes = Number(bytes);
+      if (bytes < 1024) return bytes + ' o';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' Ko';
+      return (bytes / (1024 * 1024)).toFixed(2) + ' Mo';
+    }
+
+    function formatDate(d) {
+      if (!d) return '-';
+      try { return new Date(d).toLocaleDateString('fr-FR'); } catch { return d; }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function escapeAttr(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+  </script>
+</body>
+</html>

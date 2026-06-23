@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exécution prélèvements - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Exécution prélèvements</div>
+            <div class="topbar-breadcrumb">Agios & Frais / Exécution batch</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <span style="font-size:12px;color:#4A7A8A;" id="headerStatus">Prêt</span>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <!-- TITRE + BADGE ETAPE -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Exécution des prélèvements</h1>
+            <p class="page-subtitle">Simulation obligatoire avant exécution — Approbation ADMIN_SUP requise</p>
+          </div>
+          <div id="stepBadge" style="display:flex;align-items:center;gap:8px;">
+            <span class="badge badge-pending" id="stepLabel">Etape 1 : Simulation</span>
+          </div>
+        </div>
+
+        <!-- ETAPE 1 : PARAMETRES -->
+        <section class="card" id="cardParams">
+          <div class="card-header">
+            <div class="card-title">Paramètres de prélèvement</div>
+          </div>
+          <div style="padding:20px;">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Type de prélèvement</label>
+                <select class="form-control" id="prelType">
+                  <option value="FRAIS_TENUE">Frais tenue de compte</option>
+                  <option value="PENALITE_DECOUVERT">Pénalité découvert</option>
+                  <option value="AGIOS">Agios</option>
+                  <option value="ASSURANCE">Assurance</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Date d'exécution</label>
+                <input type="date" class="form-control" id="prelDate">
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="simulerPrel()" id="btnSimuler">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;display:inline-block;vertical-align:middle;margin-right:6px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Simuler (obligatoire)
+              </button>
+              <button class="btn btn-outline" id="btnReset" onclick="resetSimulation()" style="display:none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;display:inline-block;vertical-align:middle;margin-right:6px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                Réinitialiser
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ETAPE 2 : RESUME SIMULATION -->
+        <section class="card" id="cardSimSummary" style="margin-top:16px;display:none;">
+          <div class="card-header">
+            <div class="card-title">Résumé de la simulation</div>
+            <span class="badge badge-info" id="simBadge">Simulation</span>
+          </div>
+          <div style="padding:20px;">
+            <!-- KPIs -->
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;" id="simKpis">
+              <div class="kpi-card">
+                <div class="kpi-icon blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                </div>
+                <div class="kpi-info">
+                  <div class="kpi-label">Comptes affectés</div>
+                  <div class="kpi-value" id="kpiComptes">0</div>
+                </div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-icon orange">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </div>
+                <div class="kpi-info">
+                  <div class="kpi-label">Montant total</div>
+                  <div class="kpi-value" id="kpiMontant">0 FCFA</div>
+                </div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-icon green">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <div class="kpi-info">
+                  <div class="kpi-label">Succès attendus</div>
+                  <div class="kpi-value" style="color:#2E7D32;" id="kpiSucces">0</div>
+                </div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-icon" style="background:rgba(217,48,37,0.1);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                </div>
+                <div class="kpi-info">
+                  <div class="kpi-label">Echecs potentiels</div>
+                  <div class="kpi-value" style="color:#D93025;" id="kpiEchecs">0</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Alerte simulation -->
+            <div style="margin-top:20px;background:rgba(140,213,250,0.12);border:1px solid rgba(140,213,250,0.3);border-radius:10px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#084355" stroke-width="2" style="width:18px;height:18px;flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <div style="font-size:13px;color:#084355;">
+                <strong>Mode simulation</strong> — Aucun débit n'a été effectué. Vérifiez les comptes ci-dessous, puis approuvez pour lancer l'exécution réelle.
+              </div>
+            </div>
+
+            <!-- Bouton approbation -->
+            <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:12px;align-items:center;flex-wrap:wrap;">
+              <span style="font-size:12px;color:#4A7A8A;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;display:inline-block;vertical-align:middle;margin-right:4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Réservé au rôle ADMIN_SUP
+              </span>
+              <button class="btn btn-primary" id="btnExecuter" disabled onclick="executerPrel()" style="min-width:200px;background:#2E7D32;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;display:inline-block;vertical-align:middle;margin-right:6px;"><polyline points="20 6 9 17 4 12"/></svg>
+                Approuver et exécuter
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ETAPE 3 : BARRE DE PROGRESSION -->
+        <section class="card" id="cardProgress" style="margin-top:16px;display:none;">
+          <div class="card-header">
+            <div class="card-title">Progression de l'exécution</div>
+            <span class="badge badge-pending" id="progressBadge">En cours</span>
+          </div>
+          <div style="padding:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <span style="font-size:13px;font-weight:600;color:#084355;" id="progressPercentText">0%</span>
+              <span style="font-size:12px;color:#4A7A8A;" id="progressDetail">0 / 0 comptes traités</span>
+            </div>
+            <div style="background:#E8F0F2;border-radius:8px;height:28px;overflow:hidden;position:relative;">
+              <div id="prelProgressBar" style="background:linear-gradient(90deg,#084355,#2E7D6F);height:100%;width:0%;transition:width 0.4s ease;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;min-width:0%;"></div>
+            </div>
+            <div style="margin-top:12px;font-size:13px;color:#4A7A8A;" id="progressText">Initialisation...</div>
+          </div>
+        </section>
+
+        <!-- ETAPE 4 : RAPPORT D'EXECUTION -->
+        <section class="card" id="cardReport" style="margin-top:16px;display:none;">
+          <div class="card-header">
+            <div class="card-title">Rapport d'exécution</div>
+            <span class="badge" id="reportBadge">Terminé</span>
+          </div>
+          <div style="padding:20px;">
+            <!-- KPIs rapport -->
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;" id="reportKpis">
+              <div class="kpi-card">
+                <div class="kpi-icon green">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <div class="kpi-info">
+                  <div class="kpi-label">Succès</div>
+                  <div class="kpi-value" style="color:#2E7D32;" id="reportSucces">0</div>
+                </div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-icon" style="background:rgba(217,48,37,0.1);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                </div>
+                <div class="kpi-info">
+                  <div class="kpi-label">Echecs</div>
+                  <div class="kpi-value" style="color:#D93025;" id="reportEchecs">0</div>
+                </div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-icon blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </div>
+                <div class="kpi-info">
+                  <div class="kpi-label">Montant prélevé</div>
+                  <div class="kpi-value" id="reportMontant">0 FCFA</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Détails des échecs -->
+            <div id="echecsDetail" style="margin-top:16px;display:none;">
+              <div style="font-size:13px;font-weight:700;color:#D93025;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2" style="width:15px;height:15px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Comptes en échec
+              </div>
+              <div style="background:rgba(217,48,37,0.04);border:1px solid rgba(217,48,37,0.12);border-radius:10px;overflow:hidden;">
+                <table class="data-table" style="margin:0;">
+                  <thead>
+                    <tr>
+                      <th>N° Compte</th>
+                      <th>Client</th>
+                      <th>Montant</th>
+                      <th>Motif de l'échec</th>
+                    </tr>
+                  </thead>
+                  <tbody id="echecsBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Bouton relance -->
+            <div id="retryZone" style="margin-top:16px;display:none;">
+              <div style="display:flex;justify-content:flex-end;gap:12px;align-items:center;">
+                <button class="btn btn-outline" onclick="retryFailed()" id="btnRetry" style="border-color:#D93025;color:#D93025;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;display:inline-block;vertical-align:middle;margin-right:6px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                  Relancer les échecs
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TABLEAU : COMPTES AFFECTES -->
+        <section class="card" id="cardComptes" style="margin-top:16px;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Comptes affectés</div>
+              <div class="card-subtitle">Endpoint : /api/v1/agios/execution-prelevements</div>
+            </div>
+            <span class="badge badge-pending" id="comptesCount">0 comptes</span>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>N° Compte</th>
+                <th>Client</th>
+                <th>Type</th>
+                <th>Solde</th>
+                <th>Montant prélevé</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody id="prelBody">
+              <tr><td colspan="6" style="text-align:center;color:#4A7A8A;padding:32px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#4A7A8A" stroke-width="2" style="width:24px;height:24px;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Lancez une simulation pour voir les comptes affectés.
+              </td></tr>
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMATION EXECUTION -->
+  <div class="modal-overlay" id="confirmExecModal">
+    <div class="modal" style="max-width:460px;">
+      <div class="modal-header">
+        <div class="modal-title" style="color:#2E7D32;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" style="width:18px;height:18px;display:inline-block;vertical-align:middle;margin-right:8px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Confirmation d'exécution
+        </div>
+        <button class="modal-close" onclick="closeModal('confirmExecModal')"></button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align:center;margin-bottom:16px;">
+          <div style="font-size:14px;color:#084355;font-weight:700;" id="confirmType">—</div>
+          <div style="font-size:13px;color:#4A7A8A;margin-top:4px;">Date : <strong id="confirmDate">—</strong></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div style="background:#F0F6FA;border-radius:8px;padding:12px;text-align:center;">
+            <div style="font-size:11px;color:#4A7A8A;">Comptes</div>
+            <div style="font-size:20px;font-weight:800;color:#084355;" id="confirmComptes">0</div>
+          </div>
+          <div style="background:#F0F6FA;border-radius:8px;padding:12px;text-align:center;">
+            <div style="font-size:11px;color:#4A7A8A;">Montant total</div>
+            <div style="font-size:20px;font-weight:800;color:#084355;" id="confirmMontant">0 FCFA</div>
+          </div>
+        </div>
+        <div style="background:rgba(46,125,50,0.06);border:1px solid rgba(46,125,50,0.15);border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:13px;color:#2E7D32;font-weight:600;">Êtes-vous sûr de vouloir lancer l'exécution ?</div>
+          <div style="font-size:12px;color:#4A7A8A;margin-top:4px;">Cette action est irréversible et sera enregistrée dans l'audit trail.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('confirmExecModal')">Annuler</button>
+        <button class="btn btn-primary" style="background:#2E7D32;" id="btnConfirmExec" onclick="confirmerExecution()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px;"><polyline points="20 6 9 17 4 12"/></svg>
+          Oui, exécuter
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ============================================
+       ETAT GLOBAL
+       ============================================ */
+    var _simulationDone = false;
+    var _simData = null;
+    var _isExecuting = false;
+    var _reportData = null;
+    var _failedAccounts = [];
+
+    /* ============================================
+       HELPERS
+       ============================================ */
+    function fmt(n) {
+      return Number(n || 0).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function escHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function typeLabel(code) {
+      var map = {
+        'FRAIS_TENUE': 'Frais tenue de compte',
+        'PENALITE_DECOUVERT': 'Pénalité découvert',
+        'AGIOS': 'Agios',
+        'ASSURANCE': 'Assurance'
+      };
+      return map[code] || code;
+    }
+
+    function updateStep(step) {
+      var label = document.getElementById('stepLabel');
+      if (step === 1) {
+        label.className = 'badge badge-pending';
+        label.textContent = 'Etape 1 : Simulation';
+      } else if (step === 2) {
+        label.className = 'badge badge-info';
+        label.textContent = 'Etape 2 : Vérification';
+      } else if (step === 3) {
+        label.className = 'badge badge-warning';
+        label.textContent = 'Etape 3 : Exécution';
+      } else if (step === 4) {
+        label.className = 'badge badge-active';
+        label.textContent = 'Terminé';
+      }
+    }
+
+    /* ============================================
+       SIMULATION
+       ============================================ */
+    async function simulerPrel() {
+      var btnSim = document.getElementById('btnSimuler');
+      var origText = btnSim.innerHTML;
+      btnSim.disabled = true;
+      btnSim.innerHTML = '<div class="login-spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px;"></div> Simulation en cours...';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/agios/execution-prelevements/simuler', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: document.getElementById('prelType').value,
+            dateExecution: document.getElementById('prelDate').value
+          })
+        });
+
+        if (res && res.ok) {
+          _simData = await res.json();
+          _simulationDone = true;
+          afficherSimulation(_simData);
+          showToast('Simulation terminée. Vérifiez les comptes puis approuvez.', 'success');
+          updateStep(2);
+        } else {
+          var err = res ? await res.json().catch(function() { return {}; }) : {};
+          showToast(err.message || 'Erreur lors de la simulation.', 'error');
+        }
+      } catch (e) {
+        showToast(e.message, 'error');
+      } finally {
+        btnSim.disabled = false;
+        btnSim.innerHTML = origText;
+      }
+    }
+
+    function afficherSimulation(data) {
+      // KPIs
+      document.getElementById('kpiComptes').textContent = data.nbComptes || data.totalComptes || 0;
+      document.getElementById('kpiMontant').textContent = fmt(data.montantTotal || 0);
+      document.getElementById('kpiSucces').textContent = data.succesAttendus || data.nbComptes || 0;
+      document.getElementById('kpiEchecs').textContent = data.echecsPotentiels || 0;
+
+      // Afficher les cartes
+      document.getElementById('cardSimSummary').style.display = '';
+      document.getElementById('btnExecuter').disabled = false;
+      document.getElementById('btnReset').style.display = '';
+
+      // Tableau comptes
+      var comptes = data.comptes || data.details || [];
+      renderComptes(comptes);
+
+      // Header status
+      document.getElementById('headerStatus').textContent = comptes.length + ' comptes affectés';
+    }
+
+    function renderComptes(items) {
+      var tbody = document.getElementById('prelBody');
+      var countBadge = document.getElementById('comptesCount');
+      countBadge.textContent = items.length + ' compte' + (items.length > 1 ? 's' : '');
+
+      if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#4A7A8A;padding:32px;">Aucun compte affecté.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = items.map(function(c) {
+        var eligible = c.eligible !== false;
+        var statutClass = eligible ? 'badge-success' : 'badge-danger';
+        var statutText = eligible ? 'Eligible' : 'Non éligible';
+
+        // Si on a un statut d'exécution (post-execution), l'afficher
+        if (c.statutExecution === 'SUCCESS') {
+          statutClass = 'badge-success';
+          statutText = 'Prélevé';
+        } else if (c.statutExecution === 'FAILED') {
+          statutClass = 'badge-danger';
+          statutText = 'Echec';
+        }
+
+        return '<tr>' +
+          '<td style="font-family:monospace;font-size:12px;">' + escHtml(c.numeroCompte || '-') + '</td>' +
+          '<td>' + escHtml(c.clientNom || '-') + '</td>' +
+          '<td><span class="badge badge-info">' + escHtml(c.typeCompte || '-') + '</span></td>' +
+          '<td style="font-weight:600;">' + fmt(c.solde) + '</td>' +
+          '<td style="font-weight:700;color:#084355;">' + fmt(c.montantPreleve || c.montant || 0) + '</td>' +
+          '<td><span class="badge ' + statutClass + '">' + statutText + '</span></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    /* ============================================
+       REINITIALISATION
+       ============================================ */
+    function resetSimulation() {
+      _simulationDone = false;
+      _simData = null;
+      _reportData = null;
+      _failedAccounts = [];
+
+      document.getElementById('cardSimSummary').style.display = 'none';
+      document.getElementById('cardProgress').style.display = 'none';
+      document.getElementById('cardReport').style.display = 'none';
+      document.getElementById('btnExecuter').disabled = true;
+      document.getElementById('btnReset').style.display = 'none';
+
+      document.getElementById('prelBody').innerHTML =
+        '<tr><td colspan="6" style="text-align:center;color:#4A7A8A;padding:32px;">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="#4A7A8A" stroke-width="2" style="width:24px;height:24px;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+        'Lancez une simulation pour voir les comptes affectés.</td></tr>';
+
+      document.getElementById('comptesCount').textContent = '0 comptes';
+      document.getElementById('headerStatus').textContent = 'Prêt';
+      updateStep(1);
+      showToast('Simulation réinitialisée.', 'info');
+    }
+
+    /* ============================================
+       EXECUTION
+       ============================================ */
+    function executerPrel() {
+      if (!_simulationDone) {
+        showToast('Simulation obligatoire avant exécution.', 'warning');
+        return;
+      }
+
+      // Peupler la modale de confirmation
+      document.getElementById('confirmType').textContent = typeLabel(document.getElementById('prelType').value);
+      document.getElementById('confirmDate').textContent = document.getElementById('prelDate').value;
+      document.getElementById('confirmComptes').textContent = _simData.nbComptes || _simData.totalComptes || 0;
+      document.getElementById('confirmMontant').textContent = fmt(_simData.montantTotal || 0);
+      openModal('confirmExecModal');
+    }
+
+    async function confirmerExecution() {
+      if (_isExecuting) return;
+      _isExecuting = true;
+
+      closeModal('confirmExecModal');
+
+      // Afficher la barre de progression
+      var progressCard = document.getElementById('cardProgress');
+      progressCard.style.display = '';
+      var bar = document.getElementById('prelProgressBar');
+      var text = document.getElementById('progressText');
+      var pctText = document.getElementById('progressPercentText');
+      var detail = document.getElementById('progressDetail');
+      var badge = document.getElementById('progressBadge');
+
+      badge.className = 'badge badge-warning';
+      badge.textContent = 'En cours';
+      updateStep(3);
+
+      // Désactiver les boutons pendant l'exécution
+      document.getElementById('btnExecuter').disabled = true;
+      document.getElementById('btnSimuler').disabled = true;
+
+      // Animation progressive de la barre
+      var progressVal = 0;
+      var totalComptes = _simData.nbComptes || _simData.totalComptes || 1;
+      var progressInterval = setInterval(function() {
+        if (progressVal < 85) {
+          progressVal += Math.random() * 8 + 2;
+          if (progressVal > 85) progressVal = 85;
+          bar.style.width = Math.round(progressVal) + '%';
+          bar.textContent = Math.round(progressVal) + '%';
+          pctText.textContent = Math.round(progressVal) + '%';
+          var traites = Math.round(totalComptes * progressVal / 100);
+          detail.textContent = traites + ' / ' + totalComptes + ' comptes traités';
+          text.textContent = 'Prélèvement en cours...';
+        }
+      }, 500);
+
+      document.getElementById('headerStatus').textContent = 'Exécution en cours...';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/agios/execution-prelevements/executer', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: document.getElementById('prelType').value,
+            dateExecution: document.getElementById('prelDate').value,
+            approbation: 'ADMIN_SUP'
+          })
+        });
+
+        clearInterval(progressInterval);
+
+        // Forcer 100%
+        bar.style.width = '100%';
+        bar.textContent = '100%';
+        pctText.textContent = '100%';
+        detail.textContent = totalComptes + ' / ' + totalComptes + ' comptes traités';
+        text.textContent = 'Terminé.';
+        badge.className = 'badge badge-active';
+        badge.textContent = 'Terminé';
+
+        if (res && (res.ok || res.status === 200)) {
+          _reportData = await res.json().catch(function() { return {}; });
+          afficherRapport(_reportData);
+          showToast('Exécution terminée avec succès.', 'success');
+          updateStep(4);
+        } else {
+          var err = res ? await res.json().catch(function() { return {}; }) : {};
+          bar.style.background = 'linear-gradient(90deg,#D93025,#E65100)';
+          text.textContent = err.message || 'Erreur lors de l\'exécution.';
+          badge.className = 'badge badge-danger';
+          badge.textContent = 'Erreur';
+          showToast(err.message || 'Erreur lors de l\'exécution.', 'error');
+        }
+      } catch (e) {
+        clearInterval(progressInterval);
+        bar.style.width = '100%';
+        bar.style.background = 'linear-gradient(90deg,#D93025,#E65100)';
+        pctText.textContent = 'Erreur';
+        text.textContent = e.message;
+        badge.className = 'badge badge-danger';
+        badge.textContent = 'Erreur';
+        showToast(e.message, 'error');
+      } finally {
+        _isExecuting = false;
+        document.getElementById('btnSimuler').disabled = false;
+        document.getElementById('headerStatus').textContent = 'Exécution terminée';
+      }
+    }
+
+    /* ============================================
+       RAPPORT D'EXECUTION
+       ============================================ */
+    function afficherRapport(report) {
+      var cardReport = document.getElementById('cardReport');
+      cardReport.style.display = '';
+
+      var succes = report.succes || report.nbSucces || 0;
+      var echecs = report.echecs || report.nbEchecs || 0;
+      var montant = report.montantTotal || report.montantPreleve || 0;
+
+      document.getElementById('reportSucces').textContent = succes;
+      document.getElementById('reportEchecs').textContent = echecs;
+      document.getElementById('reportMontant').textContent = fmt(montant);
+
+      var reportBadge = document.getElementById('reportBadge');
+      if (echecs === 0) {
+        reportBadge.className = 'badge badge-success';
+        reportBadge.textContent = 'Succès total';
+      } else if (succes === 0) {
+        reportBadge.className = 'badge badge-danger';
+        reportBadge.textContent = 'Echec total';
+      } else {
+        reportBadge.className = 'badge badge-warning';
+        reportBadge.textContent = 'Partiel';
+      }
+
+      // Détails des échecs
+      _failedAccounts = report.comptesEchoues || report.echecsDetails || report.failedAccounts || [];
+      if (_failedAccounts.length > 0) {
+        document.getElementById('echecsDetail').style.display = '';
+        document.getElementById('retryZone').style.display = '';
+
+        var tbody = document.getElementById('echecsBody');
+        tbody.innerHTML = _failedAccounts.map(function(c) {
+          return '<tr>' +
+            '<td style="font-family:monospace;font-size:12px;">' + escHtml(c.numeroCompte || '-') + '</td>' +
+            '<td>' + escHtml(c.clientNom || '-') + '</td>' +
+            '<td style="font-weight:600;">' + fmt(c.montant || 0) + '</td>' +
+            '<td><span class="badge badge-danger">' + escHtml(c.motifEchec || c.message || 'Erreur inconnue') + '</span></td>' +
+            '</tr>';
+        }).join('');
+      }
+
+      // Mettre à jour le tableau principal avec les statuts
+      if (report.comptes || report.details) {
+        renderComptes(report.comptes || report.details);
+      }
+    }
+
+    /* ============================================
+       RELANCE DES ECHECS
+       ============================================ */
+    async function retryFailed() {
+      if (!_failedAccounts.length) {
+        showToast('Aucun compte en échec à relancer.', 'warning');
+        return;
+      }
+
+      if (!confirm('Relancer le prélèvement pour ' + _failedAccounts.length + ' compte(s) en échec ?')) return;
+
+      var btnRetry = document.getElementById('btnRetry');
+      btnRetry.disabled = true;
+      btnRetry.innerHTML = '<div class="login-spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px;"></div> Relance en cours...';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/agios/execution-prelevements/relancer', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: document.getElementById('prelType').value,
+            dateExecution: document.getElementById('prelDate').value,
+            comptes: _failedAccounts.map(function(c) { return c.numeroCompte; })
+          })
+        });
+
+        if (res && res.ok) {
+          var result = await res.json().catch(function() { return {}; });
+          var relanceSucces = result.succes || result.nbSucces || 0;
+          var relanceEchecs = result.echecs || result.nbEchecs || 0;
+          showToast('Relance terminée : ' + relanceSucces + ' succès, ' + relanceEchecs + ' échecs.', relanceEchecs > 0 ? 'warning' : 'success');
+          // Recharger le rapport
+          if (result.succes > 0) {
+            afficherRapport(result);
+          }
+        } else {
+          var err = res ? await res.json().catch(function() { return {}; }) : {};
+          showToast(err.message || 'Erreur lors de la relance.', 'error');
+        }
+      } catch (e) {
+        showToast(e.message, 'error');
+      } finally {
+        btnRetry.disabled = false;
+        btnRetry.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;display:inline-block;vertical-align:middle;margin-right:6px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg> Relancer les échecs';
+      }
+    }
+
+    /* ============================================
+       INITIALISATION
+       ============================================ */
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('prelDate').value = new Date().toISOString().split('T')[0];
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nouvelle declaration SAR - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Nouvelle declaration SAR</div>
+            <div class="topbar-breadcrumb">Conformite / SAR / Creer</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a href="sar-liste.html" class="btn btn-ghost btn-sm">&larr; Retour</a>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Declaration d'Activite Suspecte</h1>
+            <p class="page-subtitle">Obligation reglementaire -- Declaration CENTIF sous 24h</p>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Formulaire -->
+          <div class="card" style="max-width: 720px;">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Formulaire SAR</div>
+                <div class="card-subtitle">Endpoint : POST /api/v1/conformite/sar</div>
+              </div>
+            </div>
+            <div style="padding: 0 20px 20px;">
+              <form id="sarForm" novalidate>
+
+                <!-- Client concerne -->
+                <section class="card" style="margin-bottom:0; box-shadow:none; border:1px solid #C9DFE8;">
+                  <div class="card-header"><div class="card-title">Client concerne</div></div>
+                  <div style="padding:20px;">
+                    <div class="form-group">
+                      <label class="form-label" for="sarClientSearch">Rechercher le client *</label>
+                      <input type="text" class="form-control" id="sarClientSearch" placeholder="Nom, prenom ou numero..." oninput="searchSarClient()" required>
+                      <div class="field-error" id="sarClientSearch-error">La selection d'un client est obligatoire.</div>
+                      <div class="search-results" id="sarClientResults"></div>
+                    </div>
+                    <div id="sarClientInfo" style="display:none;"></div>
+                  </div>
+                </section>
+
+                <!-- Type d'activite suspecte -->
+                <div class="form-group" style="margin-top:20px;">
+                  <label class="form-label">Type d'activite suspecte *</label>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                      <input type="checkbox" name="typeAct" value="BLANCHIMENT"> Blanchiment
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                      <input type="checkbox" name="typeAct" value="FINANCEMENT_TERRORISME"> Financement terrorisme
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                      <input type="checkbox" name="typeAct" value="FRAUDE"> Fraude
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                      <input type="checkbox" name="typeAct" value="TRANSACTION_SUSPECTE"> Transaction suspecte
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                      <input type="checkbox" name="typeAct" value="IDENTITE_SUSPECTE"> Identite suspecte
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                      <input type="checkbox" name="typeAct" value="AUTRE"> Autre
+                    </label>
+                  </div>
+                  <div class="field-error" id="typeAct-error">Selectionnez au moins un type d'activite suspecte.</div>
+                </div>
+
+                <!-- Montant et Date -->
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="sarMontant">Montant concerne (FCFA)</label>
+                    <div class="input-group">
+                      <input type="number" class="form-control" id="sarMontant" min="0" placeholder="0">
+                      <span class="input-addon">FCFA</span>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="sarDate">Date de l'activite</label>
+                    <input type="date" class="form-control" id="sarDate">
+                  </div>
+                </div>
+
+                <!-- Niveau d'urgence -->
+                <div class="form-group">
+                  <label class="form-label" for="sarUrgence">Niveau d'urgence *</label>
+                  <select class="form-control" id="sarUrgence" required>
+                    <option value="">Selectionner un niveau...</option>
+                    <option value="BASSE">Basse -- Traitement standard (5 jours ouvres)</option>
+                    <option value="MOYENNE" selected>Moyenne -- Traitement prioritaire (48h)</option>
+                    <option value="HAUTE">Haute -- Traitement urgent (24h)</option>
+                    <option value="CRITIQUE">Critique -- Traitement immediat</option>
+                  </select>
+                  <div class="field-error" id="sarUrgence-error">Le niveau d'urgence est obligatoire.</div>
+                </div>
+
+                <!-- Description detaillee -->
+                <div class="form-group">
+                  <label class="form-label" for="sarDescription">Description detaillee *</label>
+                  <textarea class="form-control" id="sarDescription" rows="5" required maxlength="5000"
+                            placeholder="Decrivez les faits observes, le contexte, les indices..."></textarea>
+                  <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                    <div class="field-error" id="sarDescription-error">La description est obligatoire.</div>
+                    <span style="font-size: 12px; color: #4A7A8A;"><span id="descCount">0</span>/5000</span>
+                  </div>
+                </div>
+
+                <!-- Pieces justificatives -->
+                <div class="form-group">
+                  <label class="form-label">Pieces justificatives</label>
+                  <div class="upload-zone" id="uploadZoneSar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <p id="sarUploadLabel">Glisser-deposer les justificatifs ici</p>
+                    <p class="upload-hint">ou cliquer pour parcourir (PDF, JPG, PNG -- Max 10 Mo par fichier)</p>
+                    <input type="file" accept="application/pdf,image/*" style="display: none;" id="sarFilesUpload" multiple>
+                  </div>
+                  <div id="sarFileList" style="margin-top: 8px;"></div>
+                </div>
+
+                <!-- Erreur de soumission -->
+                <div id="submitError" style="display:none; background:#FFF3F3; border-left:3px solid #D93025; padding:10px 14px; border-radius:6px; color:#D93025; font-size:13px; margin-bottom:16px;"></div>
+
+                <!-- Boutons -->
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                  <button type="button" class="btn btn-outline" id="btnBrouillon">
+                    <span class="btn-text">Sauvegarder brouillon</span>
+                  </button>
+                  <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <span class="btn-text">Soumettre la declaration</span>
+                    <div class="login-spinner" style="display:none; width:18px; height:18px;"></div>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Panneau lateral -->
+          <aside class="card">
+            <div class="card-title" style="margin-bottom: 16px;">Informations</div>
+            <div class="info-row"><span class="info-label">Statut initial</span><span class="info-value"><span class="badge badge-pending">En attente</span></span></div>
+            <div class="info-row"><span class="info-label">Destinataire</span><span class="info-value">CENTIF</span></div>
+            <div class="info-row"><span class="info-label">Delai reglementaire</span><span class="info-value">24 heures</span></div>
+            <div class="info-row"><span class="info-label">Confidentialite</span><span class="info-value">Strictement confidentiel</span></div>
+            <hr style="border:0; border-top:1px solid #C9DFE8; margin:20px 0;">
+            <div class="card-title" style="margin-bottom: 12px;">Types d'activites suspectes</div>
+            <div style="font-size: 13px; color: #4A7A8A; line-height: 1.7;">
+              <p><strong>Blanchiment</strong> -- Conversion de fonds illicites en actifs legitimes.</p>
+              <p><strong>Financement terrorisme</strong> -- Fourniture de fonds a des fins terroristes.</p>
+              <p><strong>Fraude</strong> -- Tromperie intentionnelle a des fins financieres.</p>
+              <p><strong>Transaction suspecte</strong> -- Operation inhabituelle sans justification apparente.</p>
+              <p><strong>Identite suspecte</strong> -- Documents d'identite douteux ou incoherents.</p>
+            </div>
+            <hr style="border:0; border-top:1px solid #C9DFE8; margin:20px 0;">
+            <div class="card-title" style="margin-bottom: 12px;">Niveaux d'urgence</div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <span class="badge badge-active" style="width: fit-content;">Basse -- 5 jours</span>
+              <span class="badge badge-info" style="width: fit-content;">Moyenne -- 48h</span>
+              <span class="badge badge-warning" style="width: fit-content;">Haute -- 24h</span>
+              <span class="badge badge-danger" style="width: fit-content;">Critique -- Immediat</span>
+            </div>
+            <hr style="border:0; border-top:1px solid #C9DFE8; margin:20px 0;">
+            <div class="card-title" style="margin-bottom: 12px;">Rappels</div>
+            <div style="font-size: 13px; color: #D93025; line-height: 1.7;">
+              <p>La declaration SAR est soumise au secret professionnel. Toute divulgation non autorisee est passible de sanctions penales.</p>
+              <p>Le delai de 24h commence a courir a partir de la detection de l'activite suspecte.</p>
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* -- State ------------------------------------------------ */
+    var sarClientId = null;
+    var sarSearchTimeout;
+    var sarUploadedFiles = [];
+
+    /* -- Set default date to today ---------------------------- */
+    (function () {
+      var today = new Date().toISOString().split('T')[0];
+      document.getElementById('sarDate').value = today;
+    })();
+
+    /* -- Client search ---------------------------------------- */
+    function searchSarClient() {
+      var q = document.getElementById('sarClientSearch').value.trim();
+      var div = document.getElementById('sarClientResults');
+      if (q.length < 2) { div.classList.remove('show'); return; }
+      clearTimeout(sarSearchTimeout);
+      sarSearchTimeout = setTimeout(async function () {
+        try {
+          var res = await Clients.lister(0, 10, q);
+          if (res && res.ok) {
+            var data = await res.json();
+            var items = data.content || [];
+            if (items.length === 0) {
+              div.innerHTML = '<div style="padding:8px 10px;color:#4A7A8A;font-size:13px;">Aucun client trouve.</div>';
+            } else {
+              div.innerHTML = items.map(function (c) {
+                return '<div class="search-result-item" onclick="pickSarClient(' + c.idClient + ',\'' +
+                  (c.nom + ' ' + c.prenom).replace(/'/g, "\\'") + '\',\'' +
+                  (c.numeroClient || '') + '\')">' +
+                  c.nom + ' ' + c.prenom + ' -- ' + (c.numeroClient || '') + '</div>';
+              }).join('');
+            }
+            div.classList.add('show');
+          }
+        } catch (e) { /* silent */ }
+      }, 300);
+    }
+
+    function pickSarClient(id, name, num) {
+      sarClientId = id;
+      document.getElementById('sarClientSearch').value = name;
+      document.getElementById('sarClientResults').classList.remove('show');
+      document.getElementById('sarClientSearch').classList.remove('is-invalid');
+      var errEl = document.getElementById('sarClientSearch-error');
+      if (errEl) errEl.style.display = 'none';
+      var infoDiv = document.getElementById('sarClientInfo');
+      infoDiv.style.display = '';
+      infoDiv.innerHTML = '<div style="background:#f0f6fa;border:1px solid #C9DFE8;border-radius:8px;padding:12px;margin-top:8px;">' +
+        '<strong>' + name + '</strong> -- ' + num + '</div>';
+    }
+
+    /* -- Helpers ---------------------------------------------- */
+    function getCheckedTypes() {
+      return Array.from(document.querySelectorAll('input[name="typeAct"]:checked')).map(function (i) { return i.value; });
+    }
+
+    /* -- Upload zone click & file list ------------------------ */
+    document.getElementById('uploadZoneSar').addEventListener('click', function () {
+      document.getElementById('sarFilesUpload').click();
+    });
+
+    document.getElementById('sarFilesUpload').addEventListener('change', function () {
+      var files = Array.from(this.files);
+      if (!files.length) return;
+      files.forEach(function (f) {
+        if (f.size > 10 * 1024 * 1024) {
+          showToast('Le fichier "' + f.name + '" depasse 10 Mo.', 'error');
+          return;
+        }
+        sarUploadedFiles.push(f);
+      });
+      renderSarFileList();
+      document.getElementById('sarUploadLabel').textContent = sarUploadedFiles.length + ' fichier(s) selectionne(s)';
+    });
+
+    function renderSarFileList() {
+      var container = document.getElementById('sarFileList');
+      if (!sarUploadedFiles.length) { container.innerHTML = ''; return; }
+      container.innerHTML = sarUploadedFiles.map(function (f, i) {
+        return '<div style="display:flex; align-items:center; justify-content:space-between; padding:6px 10px; background:#F0F7FA; border-radius:6px; margin-bottom:4px; font-size:13px;">' +
+          '<span>' + f.name + ' <span style="color:#4A7A8A;">(' + (f.size / 1024).toFixed(0) + ' Ko)</span></span>' +
+          '<button type="button" class="btn btn-ghost btn-sm" onclick="removeSarFile(' + i + ')" style="color:#D93025; padding:2px 6px;">&#10005;</button>' +
+          '</div>';
+      }).join('');
+    }
+
+    function removeSarFile(index) {
+      sarUploadedFiles.splice(index, 1);
+      renderSarFileList();
+      document.getElementById('sarUploadLabel').textContent = sarUploadedFiles.length
+        ? sarUploadedFiles.length + ' fichier(s) selectionne(s)'
+        : 'Glisser-deposer les justificatifs ici';
+    }
+
+    /* -- Character counter for description -------------------- */
+    document.getElementById('sarDescription').addEventListener('input', function () {
+      document.getElementById('descCount').textContent = this.value.length;
+    });
+
+    /* -- Validation ------------------------------------------- */
+    function validateForm() {
+      var valide = true;
+
+      // Client
+      if (!sarClientId) {
+        document.getElementById('sarClientSearch').classList.add('is-invalid');
+        document.getElementById('sarClientSearch-error').style.display = 'block';
+        valide = false;
+      }
+
+      // Types
+      if (!getCheckedTypes().length) {
+        document.getElementById('typeAct-error').style.display = 'block';
+        valide = false;
+      } else {
+        document.getElementById('typeAct-error').style.display = 'none';
+      }
+
+      // Description
+      var desc = document.getElementById('sarDescription');
+      if (!desc.value.trim()) {
+        desc.classList.add('is-invalid');
+        document.getElementById('sarDescription-error').style.display = 'block';
+        valide = false;
+      } else {
+        desc.classList.remove('is-invalid');
+        document.getElementById('sarDescription-error').style.display = 'none';
+      }
+
+      // Urgence
+      var urgence = document.getElementById('sarUrgence');
+      if (!urgence.value) {
+        urgence.classList.add('is-invalid');
+        document.getElementById('sarUrgence-error').style.display = 'block';
+        valide = false;
+      } else {
+        urgence.classList.remove('is-invalid');
+        document.getElementById('sarUrgence-error').style.display = 'none';
+      }
+
+      return valide;
+    }
+
+    /* -- Submit ----------------------------------------------- */
+    async function submitSAR(statut) {
+      var btn = (statut === 'BROUILLON') ? document.getElementById('btnBrouillon') : document.getElementById('submitBtn');
+      var errBox = document.getElementById('submitError');
+      var spinner = btn.querySelector('.login-spinner');
+      var label = btn.querySelector('.btn-text');
+
+      // Hide previous errors
+      errBox.style.display = 'none';
+
+      // Validate for SOUMISE only
+      if (statut === 'SOUMISE' && !validateForm()) {
+        showToast('Veuillez completer tous les champs obligatoires.', 'error');
+        return;
+      }
+
+      // Loading state
+      btn.disabled = true;
+      if (label) label.style.display = 'none';
+      if (spinner) spinner.style.display = 'inline-block';
+
+      var payload = {
+        clientId: sarClientId,
+        typesActivite: getCheckedTypes(),
+        montant: parseFloat(document.getElementById('sarMontant').value) || null,
+        dateActivite: document.getElementById('sarDate').value || null,
+        urgence: document.getElementById('sarUrgence').value,
+        description: document.getElementById('sarDescription').value.trim(),
+        statut: statut
+      };
+
+      try {
+        var res = await SF.apiFetch('/api/v1/conformite/sar', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        if (!res) return; // 401 redirected
+
+        var data = await res.json().catch(function () { return {}; });
+
+        if (res.status === 201 || res.status === 200) {
+          showToast(statut === 'BROUILLON' ? 'Brouillon sauvegarde.' : 'Declaration soumise !', 'success');
+
+          // Upload supporting documents if any
+          if (sarUploadedFiles.length && data.id) {
+            try {
+              for (var i = 0; i < sarUploadedFiles.length; i++) {
+                var formData = new FormData();
+                formData.append('file', sarUploadedFiles[i]);
+                formData.append('typeDocument', 'JUSTIFICATIF_SAR');
+                await SF.apiFetch('/api/v1/conformite/sar/' + data.id + '/documents', {
+                  method: 'POST',
+                  body: formData
+                });
+              }
+              showToast('Pieces justificatives envoyees.', 'success');
+            } catch (uploadErr) {
+              showToast('SAR cree, mais erreur lors de l\'envoi des documents : ' + uploadErr.message, 'warning');
+            }
+          }
+
+          setTimeout(function () {
+            window.location.href = 'sar-liste.html';
+          }, 1500);
+
+        } else if (res.status === 400) {
+          var msg = data.errors
+            ? data.errors.map(function (e) { return e.defaultMessage || e.message || e; }).join(' . ')
+            : (data.message || 'Donnees invalides.');
+          errBox.textContent = msg;
+          errBox.style.display = 'block';
+          showToast('Donnees invalides. Verifiez le formulaire.', 'error');
+
+        } else {
+          var msg2 = data.message || 'Erreur serveur. Reessayez.';
+          errBox.textContent = msg2;
+          errBox.style.display = 'block';
+          showToast(msg2, 'error');
+        }
+
+      } catch (e) {
+        showToast('Impossible de joindre le serveur. Verifiez que le backend est demarre.', 'error');
+      } finally {
+        btn.disabled = false;
+        if (label) label.style.display = 'inline';
+        if (spinner) spinner.style.display = 'none';
+      }
+    }
+
+    /* -- Wire up buttons & form ------------------------------- */
+    document.getElementById('btnBrouillon').addEventListener('click', function () {
+      submitSAR('BROUILLON');
+    });
+
+    document.getElementById('sarForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      submitSAR('SOUMISE');
+    });
+
+    /* -- Close search results on outside click ---------------- */
+    document.addEventListener('click', function (e) {
+      var results = document.getElementById('sarClientResults');
+      var search = document.getElementById('sarClientSearch');
+      if (!search.contains(e.target) && !results.contains(e.target)) {
+        results.classList.remove('show');
+      }
+    });
+  </script>
+</body>
+</html>

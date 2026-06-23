@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recherche client - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    /* ── Search hero ────────────────────────────────── */
+    .search-hero {
+      text-align: center;
+      padding: 24px 0 8px;
+    }
+    .search-hero h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #084355;
+      margin-bottom: 4px;
+    }
+    .search-hero p {
+      color: #4A7A8A;
+      font-size: 14px;
+      margin-bottom: 0;
+    }
+
+    /* ── Quick search bar ───────────────────────────── */
+    .quick-search {
+      max-width: 640px;
+      margin: 20px auto 16px;
+      position: relative;
+    }
+    .quick-search input {
+      width: 100%;
+      padding: 14px 20px 14px 48px;
+      font-size: 1.05rem;
+      border: 2px solid #C9DFE8;
+      border-radius: 12px;
+      background: #fff;
+      transition: border-color .2s;
+    }
+    .quick-search input:focus {
+      border-color: #084355;
+      outline: none;
+    }
+    .quick-search .qs-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #4A7A8A;
+    }
+
+    /* ── Advanced toggle ────────────────────────────── */
+    .advanced-toggle {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .advanced-toggle button {
+      background: none;
+      border: none;
+      color: #084355;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: background .15s;
+    }
+    .advanced-toggle button:hover {
+      background: #e8f0f4;
+    }
+    .advanced-toggle button .arrow {
+      transition: transform .2s;
+      font-size: 11px;
+    }
+    .advanced-toggle button.open .arrow {
+      transform: rotate(180deg);
+    }
+
+    /* ── Advanced filters ───────────────────────────── */
+    .advanced-filters {
+      display: none;
+      margin-bottom: 20px;
+    }
+    .advanced-filters.show {
+      display: block;
+    }
+    .advanced-filters .card {
+      padding: 20px;
+    }
+
+    /* ── Results header ─────────────────────────────── */
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .results-header .rh-count {
+      font-size: 13px;
+      color: #4A7A8A;
+    }
+    .results-header .rh-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .view-toggle {
+      display: flex;
+      border: 1px solid #C9DFE8;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .view-toggle button {
+      background: #fff;
+      border: none;
+      padding: 6px 10px;
+      cursor: pointer;
+      color: #4A7A8A;
+      transition: all .15s;
+    }
+    .view-toggle button.active {
+      background: #084355;
+      color: #fff;
+    }
+    .view-toggle button:hover:not(.active) {
+      background: #e8f0f4;
+    }
+
+    /* ── Results grid (card view) ───────────────────── */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 16px;
+    }
+
+    /* ── Client preview card ────────────────────────── */
+    .client-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 18px;
+      cursor: pointer;
+      transition: all .2s;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .client-card:hover {
+      border-color: #084355;
+      box-shadow: 0 4px 12px rgba(8, 67, 85, .1);
+      transform: translateY(-1px);
+    }
+    .client-card .cc-top {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+    .client-card .cc-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .client-card .cc-identity {
+      flex: 1;
+      min-width: 0;
+    }
+    .client-card .cc-name {
+      font-weight: 700;
+      font-size: 15px;
+      color: #084355;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .client-card .cc-code {
+      font-size: 12px;
+      color: #4A7A8A;
+      font-family: monospace;
+    }
+    .client-card .cc-badges {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .client-card .cc-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 16px;
+      font-size: 13px;
+      color: #333;
+    }
+    .client-card .cc-detail-label {
+      color: #4A7A8A;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+    }
+    .client-card .cc-detail-value {
+      font-weight: 500;
+    }
+    .client-card .cc-footer {
+      display: flex;
+      gap: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #f0f4f8;
+    }
+
+    /* ── Results table (list view) ──────────────────── */
+    .results-table-wrap {
+      display: none;
+    }
+    .results-table-wrap.show {
+      display: block;
+    }
+    .results-grid-wrap.hidden {
+      display: none;
+    }
+
+    /* ── Recent searches ────────────────────────────── */
+    .recent-searches {
+      margin-top: 24px;
+    }
+    .recent-searches .rs-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .recent-searches .rs-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #084355;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .recent-searches .rs-clear {
+      font-size: 12px;
+      color: #4A7A8A;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background .15s;
+    }
+    .recent-searches .rs-clear:hover {
+      background: #fee2e2;
+      color: #D93025;
+    }
+    .rs-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .rs-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: #f0f7fa;
+      border: 1px solid #C9DFE8;
+      border-radius: 20px;
+      font-size: 13px;
+      color: #084355;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .rs-chip:hover {
+      background: #e0eef3;
+      border-color: #084355;
+    }
+    .rs-chip .chip-remove {
+      font-size: 14px;
+      color: #4A7A8A;
+      line-height: 1;
+      cursor: pointer;
+      margin-left: 2px;
+    }
+    .rs-chip .chip-remove:hover {
+      color: #D93025;
+    }
+
+    /* ── Empty & loading states ─────────────────────── */
+    .search-empty {
+      text-align: center;
+      padding: 48px 20px;
+      color: #4A7A8A;
+    }
+    .search-empty .se-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: .4;
+    }
+    .search-empty .se-text {
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .search-empty .se-hint {
+      font-size: 13px;
+      margin-top: 4px;
+    }
+    .search-loading {
+      text-align: center;
+      padding: 40px 0;
+      color: #4A7A8A;
+    }
+
+    /* ── Quick filters chips below search ───────────── */
+    .quick-filters {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 12px 0 0;
+    }
+    .qf-chip {
+      padding: 5px 14px;
+      border: 1px solid #C9DFE8;
+      border-radius: 20px;
+      background: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      color: #084355;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .qf-chip:hover, .qf-chip.active {
+      background: #084355;
+      color: #fff;
+      border-color: #084355;
+    }
+
+    /* ── Match highlight ────────────────────────────── */
+    .match-hl {
+      background: #fef3cd;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+
+    /* ── Responsive ─────────────────────────────────── */
+    @media (max-width: 768px) {
+      .results-grid {
+        grid-template-columns: 1fr;
+      }
+      .advanced-filters .form-row {
+        flex-direction: column;
+      }
+      .advanced-filters .form-group {
+        flex: 1 1 100% !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Recherche client</div>
+            <div class="topbar-breadcrumb">Clients / Recherche avanc&eacute;e</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a href="clients.html" class="btn btn-ghost btn-sm">&larr; Liste clients</a>
+          <a href="client-create.html" class="btn btn-primary btn-sm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nouveau
+          </a>
+        </div>
+      </header>
+
+      <main class="content-area">
+
+        <!-- HERO -->
+        <div class="search-hero">
+          <h1>Recherche avanc&eacute;e de clients</h1>
+          <p>Recherchez par nom, t&eacute;l&eacute;phone, pi&egrave;ce d'identit&eacute; ou NIF</p>
+        </div>
+
+        <!-- QUICK SEARCH BAR -->
+        <div class="quick-search">
+          <span class="qs-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </span>
+          <input type="text" id="mainSearch" placeholder="Nom, pr&eacute;nom, t&eacute;l&eacute;phone, N&deg; pi&egrave;ce, NIF..." autofocus>
+        </div>
+
+        <!-- QUICK FILTER CHIPS -->
+        <div class="quick-filters">
+          <span class="qf-chip active" data-type="ALL" onclick="setQuickFilter(this)">Tous</span>
+          <span class="qf-chip" data-type="PERSONNE_PHYSIQUE" onclick="setQuickFilter(this)">Personne physique</span>
+          <span class="qf-chip" data-type="PERSONNE_MORALE" onclick="setQuickFilter(this)">Personne morale</span>
+        </div>
+
+        <!-- ADVANCED FILTERS TOGGLE -->
+        <div class="advanced-toggle" style="margin-top:16px;">
+          <button id="toggleAdvanced" onclick="toggleAdvancedFilters()">
+            <span class="arrow">&#9660;</span>
+            Filtres avanc&eacute;s
+          </button>
+        </div>
+
+        <!-- ADVANCED FILTERS PANEL -->
+        <div class="advanced-filters" id="advancedFilters">
+          <div class="card">
+            <div class="form-row">
+              <div class="form-group" style="flex:2;">
+                <label class="form-label">Nom / Pr&eacute;nom</label>
+                <input type="text" class="form-control" id="fNom" placeholder="Nom ou pr&eacute;nom...">
+              </div>
+              <div class="form-group">
+                <label class="form-label">T&eacute;l&eacute;phone</label>
+                <input type="text" class="form-control" id="fTelephone" placeholder="Ex: 90 12 34 56">
+              </div>
+              <div class="form-group">
+                <label class="form-label">N&deg; pi&egrave;ce d'identit&eacute;</label>
+                <input type="text" class="form-control" id="fPiece" placeholder="CNI, passeport...">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">NIF</label>
+                <input type="text" class="form-control" id="fNif" placeholder="Num&eacute;ro NIF">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Type de client</label>
+                <select class="form-control" id="fType">
+                  <option value="ALL">Tous les types</option>
+                  <option value="PERSONNE_PHYSIQUE">Personne physique</option>
+                  <option value="PERSONNE_MORALE">Personne morale</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Statut</label>
+                <select class="form-control" id="fStatut">
+                  <option value="ALL">Tous statuts</option>
+                  <option value="ACTIF">Actif</option>
+                  <option value="INACTIF">Inactif</option>
+                  <option value="BLOQUE">Bloqu&eacute;</option>
+                  <option value="SUSPENDU">Suspendu</option>
+                  <option value="CLOTURE">Cl&ocirc;tur&eacute;</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">KYC</label>
+                <select class="form-control" id="fKyc">
+                  <option value="ALL">Tous KYC</option>
+                  <option value="VALIDE">Valid&eacute;</option>
+                  <option value="EN_ATTENTE">En attente</option>
+                  <option value="REVISION">R&eacute;vision</option>
+                  <option value="NON_INITIALISE">Non initialis&eacute;</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
+              <button class="btn btn-ghost btn-sm" onclick="resetFilters()">R&eacute;initialiser</button>
+              <button class="btn btn-primary btn-sm" onclick="doSearch()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Rechercher
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RESULTS AREA -->
+        <div id="resultsArea" style="margin-top:20px;">
+
+          <!-- Results header -->
+          <div class="results-header" id="resultsHeader" style="display:none;">
+            <div class="rh-count" id="resultsCount">-</div>
+            <div class="rh-actions">
+              <div class="view-toggle">
+                <button id="viewGrid" class="active" onclick="setView('grid')" title="Vue cartes">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                </button>
+                <button id="viewList" onclick="setView('list')" title="Vue liste">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grid view (cards) -->
+          <div class="results-grid-wrap" id="gridView">
+            <div class="results-grid" id="resultsGrid"></div>
+          </div>
+
+          <!-- List view (table) -->
+          <div class="results-table-wrap" id="listView">
+            <div class="card" style="overflow-x:auto;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th>Code</th>
+                    <th>Contact</th>
+                    <th>Type</th>
+                    <th>Statut</th>
+                    <th>KYC</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="resultsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Empty / initial state -->
+          <div class="search-empty" id="searchEmpty">
+            <div class="se-icon">
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#4A7A8A" stroke-width="1.5" opacity=".4"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <div class="se-text">Entrez votre recherche pour commencer</div>
+            <div class="se-hint">Tapez au moins 2 caract&egrave;res ou utilisez les filtres avanc&eacute;s</div>
+          </div>
+
+          <!-- Loading state -->
+          <div class="search-loading" id="searchLoading" style="display:none;">
+            <div class="login-spinner" style="display:inline-block;width:32px;height:32px;margin-bottom:12px;"></div>
+            <div>Recherche en cours...</div>
+          </div>
+
+          <!-- No results state -->
+          <div class="search-empty" id="searchNoResults" style="display:none;">
+            <div class="se-icon">
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#4A7A8A" stroke-width="1.5" opacity=".4"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="8" x2="14" y2="14"/><line x1="14" y1="8" x2="8" y2="14"/></svg>
+            </div>
+            <div class="se-text">Aucun client trouv&eacute;</div>
+            <div class="se-hint">Essayez avec d'autres crit&egrave;res de recherche</div>
+          </div>
+
+          <!-- Error state -->
+          <div class="search-empty" id="searchError" style="display:none;">
+            <div class="se-icon">
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="1.5" opacity=".6"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div class="se-text" style="color:#D93025;">Erreur de recherche</div>
+            <div class="se-hint" id="errorMessage">Impossible de contacter le serveur.</div>
+          </div>
+        </div>
+
+        <!-- RECENT SEARCHES -->
+        <div class="recent-searches" id="recentSearches" style="display:none;">
+          <div class="rs-header">
+            <div class="rs-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Recherches r&eacute;centes
+            </div>
+            <button class="rs-clear" onclick="clearRecentSearches()">Tout effacer</button>
+          </div>
+          <div class="rs-chips" id="recentChips"></div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ── State ──────────────────────────────────────── */
+    let searchTimeout;
+    let currentResults = [];
+    let currentView = 'grid';
+    const RECENT_KEY = 'sf_recherche_client_recent';
+    const MAX_RECENT = 10;
+
+    /* ── Avatar helpers ─────────────────────────────── */
+    const avatarColors = ['#8cd5fa','#fab482','#a8e6cf','#ffd3b6','#d4a5d5','#84d4d4'];
+    function avatarColor(id) { return avatarColors[(id || 0) % avatarColors.length]; }
+    function initiales(nom, prenom) {
+      return ((nom || '')[0] || '').toUpperCase() + ((prenom || '')[0] || '').toUpperCase() || '??';
+    }
+
+    /* ── Badge helpers ──────────────────────────────── */
+    function normaliserStatut(raw) {
+      if (!raw) return '';
+      const s = raw.replace(/\*/g, '').toUpperCase();
+      if (s.includes('CTIF'))   return 'ACTIF';
+      if (s.includes('OQUE'))   return 'BLOQUE';
+      if (s.includes('PENDU'))  return 'SUSPENDU';
+      if (s.includes('OTURE'))  return 'CLOTURE';
+      if (s.includes('ATTENTE'))return 'EN_ATTENTE';
+      if (s.includes('VEAU'))   return 'NOUVEAU';
+      return raw.replace(/\*/g, '').trim() || raw;
+    }
+
+    function badgeStatut(rawStatut) {
+      const statut = normaliserStatut(rawStatut);
+      const map = {
+        ACTIF:     'badge-active',
+        SUSPENDU:  'badge-pending',
+        BLOQUE:    'badge-blocked',
+        CLOTURE:   'badge-blocked',
+        EN_ATTENTE:'badge-pending',
+        NOUVEAU:   'badge-info',
+        INACTIF:   'badge-warning'
+      };
+      return '<span class="badge ' + (map[statut] || 'badge-info') + '">' + (statut || rawStatut || '—') + '</span>';
+    }
+
+    function badgeKyc(statut) {
+      const map = {
+        VALIDE:         'badge-active',
+        EN_ATTENTE:     'badge-pending',
+        REVISION:       'badge-pending',
+        REJETE:         'badge-blocked',
+        NON_INITIALISE: 'badge-info'
+      };
+      const label = (statut || 'N/A').replace(/_/g, ' ');
+      return '<span class="badge ' + (map[statut] || 'badge-info') + '">' + label + '</span>';
+    }
+
+    function badgeType(type) {
+      if (!type) return '';
+      const label = type === 'PERSONNE_MORALE' ? 'P. Morale' : 'P. Physique';
+      const cls   = type === 'PERSONNE_MORALE' ? 'badge-info' : 'badge-warning';
+      return '<span class="badge ' + cls + '">' + label + '</span>';
+    }
+
+    function escHtml(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function formatDateFR(dateStr) {
+      if (!dateStr) return '—';
+      const parts = String(dateStr).split('-');
+      if (parts.length === 3) return parts[2] + '/' + parts[1] + '/' + parts[0];
+      return dateStr;
+    }
+
+    function maskPiece(val) {
+      if (!val) return '—';
+      const s = String(val);
+      if (s.length <= 4) return s;
+      return s.substring(0, 2) + '****' + s.substring(s.length - 2);
+    }
+
+    /* ── Highlight search term in text ──────────────── */
+    function hlMatch(text, query) {
+      if (!query || !text) return escHtml(text);
+      const safe = escHtml(text);
+      const re = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+      return safe.replace(re, '<span class="match-hl">$1</span>');
+    }
+
+    /* ── Quick filter chips ─────────────────────────── */
+    function setQuickFilter(el) {
+      document.querySelectorAll('.qf-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      const type = el.dataset.type;
+      document.getElementById('fType').value = type;
+      doSearch();
+    }
+
+    /* ── Advanced filters toggle ────────────────────── */
+    function toggleAdvancedFilters() {
+      const panel  = document.getElementById('advancedFilters');
+      const btn    = document.getElementById('toggleAdvanced');
+      const isOpen = panel.classList.contains('show');
+      if (isOpen) {
+        panel.classList.remove('show');
+        btn.classList.remove('open');
+      } else {
+        panel.classList.add('show');
+        btn.classList.add('open');
+      }
+    }
+
+    /* ── View toggle ────────────────────────────────── */
+    function setView(view) {
+      currentView = view;
+      document.getElementById('viewGrid').classList.toggle('active', view === 'grid');
+      document.getElementById('viewList').classList.toggle('active', view === 'list');
+      document.getElementById('gridView').classList.toggle('hidden', view !== 'grid');
+      document.getElementById('listView').classList.toggle('show', view === 'list');
+      if (currentResults.length) renderResults(currentResults);
+    }
+
+    /* ── Reset filters ──────────────────────────────── */
+    function resetFilters() {
+      document.getElementById('mainSearch').value = '';
+      document.getElementById('fNom').value = '';
+      document.getElementById('fTelephone').value = '';
+      document.getElementById('fPiece').value = '';
+      document.getElementById('fNif').value = '';
+      document.getElementById('fType').value = 'ALL';
+      document.getElementById('fStatut').value = 'ALL';
+      document.getElementById('fKyc').value = 'ALL';
+      document.querySelectorAll('.qf-chip').forEach(c => c.classList.remove('active'));
+      document.querySelector('.qf-chip[data-type="ALL"]').classList.add('active');
+      showState('empty');
+      currentResults = [];
+    }
+
+    /* ── Show/hide states ───────────────────────────── */
+    function showState(state) {
+      document.getElementById('searchEmpty').style.display     = state === 'empty'    ? '' : 'none';
+      document.getElementById('searchLoading').style.display   = state === 'loading'  ? '' : 'none';
+      document.getElementById('searchNoResults').style.display = state === 'noResults' ? '' : 'none';
+      document.getElementById('searchError').style.display     = state === 'error'    ? '' : 'none';
+      document.getElementById('resultsHeader').style.display   = state === 'results'  ? '' : 'none';
+      document.getElementById('gridView').style.display        = state === 'results'  ? '' : 'none';
+      document.getElementById('listView').classList.toggle('show', state === 'results' && currentView === 'list');
+    }
+
+    /* ── Build search query string ──────────────────── */
+    function buildSearchQuery() {
+      const parts = [];
+      const quick = document.getElementById('mainSearch').value.trim();
+      const nom   = document.getElementById('fNom').value.trim();
+      const tel   = document.getElementById('fTelephone').value.trim();
+      const piece = document.getElementById('fPiece').value.trim();
+      const nif   = document.getElementById('fNif').value.trim();
+
+      // If quick search has value, use it as primary query
+      if (quick) parts.push(quick);
+      if (nom && !quick) parts.push(nom);
+      if (tel) parts.push(tel);
+      if (piece) parts.push(piece);
+      if (nif) parts.push(nif);
+
+      return parts.join(' ').trim();
+    }
+
+    /* ── Main search ────────────────────────────────── */
+    async function doSearch() {
+      const query = buildSearchQuery();
+      if (query.length < 2) {
+        showState('empty');
+        currentResults = [];
+        return;
+      }
+
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(async () => {
+        showState('loading');
+
+        try {
+          const res = await Clients.lister(0, 50, query);
+          if (!res) return; // redirected to login
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => null);
+            showState('error');
+            document.getElementById('errorMessage').textContent = errData?.message || 'Erreur serveur (' + res.status + ')';
+            return;
+          }
+
+          const data = await res.json().catch(() => null);
+          let clients = data?.content || [];
+
+          // Client-side filtering for advanced criteria
+          const type   = document.getElementById('fType').value;
+          const statut = document.getElementById('fStatut').value;
+          const kyc    = document.getElementById('fKyc').value;
+          const tel    = document.getElementById('fTelephone').value.trim().toLowerCase();
+          const piece  = document.getElementById('fPiece').value.trim().toLowerCase();
+          const nif    = document.getElementById('fNif').value.trim().toLowerCase();
+
+          if (type !== 'ALL') {
+            clients = clients.filter(c => c.typeClient === type);
+          }
+          if (statut !== 'ALL') {
+            clients = clients.filter(c => normaliserStatut(c.statut) === statut);
+          }
+          if (kyc !== 'ALL') {
+            clients = clients.filter(c => (c.statutKyc || c.niveauKyc) === kyc);
+          }
+          if (tel) {
+            clients = clients.filter(c => (c.telephone || '').toLowerCase().includes(tel));
+          }
+          if (piece) {
+            clients = clients.filter(c =>
+              (c.numeroPieceIdentite || c.numeroPieceIdentiteMasque || '').toLowerCase().includes(piece)
+            );
+          }
+          if (nif) {
+            clients = clients.filter(c => (c.nif || '').toLowerCase().includes(nif));
+          }
+
+          currentResults = clients;
+
+          if (!clients.length) {
+            showState('noResults');
+          } else {
+            showState('results');
+            renderResults(clients);
+            saveRecentSearch(query);
+          }
+        } catch (e) {
+          console.error('Search error:', e);
+          showState('error');
+          document.getElementById('errorMessage').textContent = e.message || 'Impossible de contacter le serveur.';
+        }
+      }, 300);
+    }
+
+    /* ── Render results ─────────────────────────────── */
+    function renderResults(clients) {
+      const q = document.getElementById('mainSearch').value.trim();
+      document.getElementById('resultsCount').textContent = clients.length + ' résultat' + (clients.length > 1 ? 's' : '');
+
+      if (currentView === 'grid') {
+        renderGrid(clients, q);
+      } else {
+        renderTable(clients, q);
+      }
+    }
+
+    /* ── Render grid (cards) ────────────────────────── */
+    function renderGrid(clients, q) {
+      const grid = document.getElementById('resultsGrid');
+      grid.innerHTML = clients.map(function(c) {
+        const nom      = c.nomComplet || (c.nom || '') + ' ' + (c.prenom || '');
+        const ini      = initiales(c.nom, c.prenom);
+        const col      = avatarColor(c.idClient);
+        const dark     = ['#D93025','#084355'].includes(col) ? '#fff' : '#084355';
+        const statut   = normaliserStatut(c.statut);
+        const kyc      = c.statutKyc || c.niveauKyc || null;
+        const type     = c.typeClient || null;
+
+        return '<div class="client-card" onclick="window.location.href=\'client-detail.html?id=' + c.idClient + '\'">'
+          + '<div class="cc-top">'
+          +   '<div class="cc-avatar" style="background:' + col + ';color:' + dark + ';">' + ini + '</div>'
+          +   '<div class="cc-identity">'
+          +     '<div class="cc-name">' + hlMatch(nom, q) + '</div>'
+          +     '<div class="cc-code">' + escHtml(c.codeClient || c.numeroClient || '') + '</div>'
+          +   '</div>'
+          +   '<div class="cc-badges">' + badgeStatut(statut) + '</div>'
+          + '</div>'
+          + '<div class="cc-details">'
+          +   '<div><div class="cc-detail-label">T&eacute;l&eacute;phone</div><div class="cc-detail-value">' + hlMatch(c.telephone || '—', q) + '</div></div>'
+          +   '<div><div class="cc-detail-label">Email</div><div class="cc-detail-value" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(c.email || '—') + '</div></div>'
+          +   '<div><div class="cc-detail-label">Type</div><div class="cc-detail-value">' + badgeType(type) + '</div></div>'
+          +   '<div><div class="cc-detail-label">KYC</div><div class="cc-detail-value">' + badgeKyc(kyc) + '</div></div>'
+          + '</div>'
+          + '<div class="cc-footer">'
+          +   '<a href="client-detail.html?id=' + c.idClient + '" class="btn btn-outline btn-sm" onclick="event.stopPropagation();">Voir fiche</a>'
+          +   '<a href="client-create.html?edit=' + c.idClient + '" class="btn btn-ghost btn-sm" onclick="event.stopPropagation();">Modifier</a>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    /* ── Render table (list view) ───────────────────── */
+    function renderTable(clients, q) {
+      const tbody = document.getElementById('resultsTableBody');
+      tbody.innerHTML = clients.map(function(c) {
+        const nom    = c.nomComplet || (c.nom || '') + ' ' + (c.prenom || '');
+        const ini    = initiales(c.nom, c.prenom);
+        const col    = avatarColor(c.idClient);
+        const dark   = ['#D93025','#084355'].includes(col) ? '#fff' : '#084355';
+        const statut = normaliserStatut(c.statut);
+        const kyc    = c.statutKyc || c.niveauKyc || null;
+        const type   = c.typeClient || null;
+
+        return '<tr style="cursor:pointer;" onclick="window.location.href=\'client-detail.html?id=' + c.idClient + '\'">'
+          + '<td>'
+          +   '<div style="display:flex;align-items:center;gap:10px;">'
+          +     '<div style="width:32px;height:32px;border-radius:50%;background:' + col + ';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:' + dark + ';">' + ini + '</div>'
+          +     '<div><div style="font-weight:600;">' + hlMatch(nom, q) + '</div></div>'
+          +   '</div>'
+          + '</td>'
+          + '<td style="font-family:monospace;font-size:12px;">' + escHtml(c.codeClient || c.numeroClient || '—') + '</td>'
+          + '<td>'
+          +   '<div style="font-weight:500;">' + hlMatch(c.telephone || '—', q) + '</div>'
+          +   '<div style="font-size:11px;color:#4A7A8A;">' + escHtml(c.email || '') + '</div>'
+          + '</td>'
+          + '<td>' + badgeType(type) + '</td>'
+          + '<td>' + badgeStatut(statut) + '</td>'
+          + '<td>' + badgeKyc(kyc) + '</td>'
+          + '<td>'
+          +   '<div style="display:flex;gap:6px;">'
+          +     '<a href="client-detail.html?id=' + c.idClient + '" class="btn btn-outline btn-sm" onclick="event.stopPropagation();">Voir</a>'
+          +     '<a href="client-create.html?edit=' + c.idClient + '" class="btn btn-ghost btn-sm" onclick="event.stopPropagation();">Modifier</a>'
+          +   '</div>'
+          + '</td>'
+          + '</tr>';
+      }).join('');
+    }
+
+    /* ── Recent searches ────────────────────────────── */
+    function getRecentSearches() {
+      try {
+        return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function saveRecentSearch(query) {
+      if (!query || query.length < 2) return;
+      let recent = getRecentSearches();
+      // Remove duplicate
+      recent = recent.filter(function(r) { return r.toLowerCase() !== query.toLowerCase(); });
+      // Prepend
+      recent.unshift(query);
+      // Cap
+      if (recent.length > MAX_RECENT) recent = recent.slice(0, MAX_RECENT);
+      localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
+      renderRecentSearches();
+    }
+
+    function removeRecentSearch(query) {
+      let recent = getRecentSearches();
+      recent = recent.filter(function(r) { return r !== query; });
+      localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
+      renderRecentSearches();
+    }
+
+    function clearRecentSearches() {
+      localStorage.removeItem(RECENT_KEY);
+      renderRecentSearches();
+    }
+
+    function useRecentSearch(query) {
+      document.getElementById('mainSearch').value = query;
+      doSearch();
+    }
+
+    function renderRecentSearches() {
+      const recent = getRecentSearches();
+      const container = document.getElementById('recentSearches');
+      const chips = document.getElementById('recentChips');
+
+      if (!recent.length) {
+        container.style.display = 'none';
+        return;
+      }
+
+      container.style.display = '';
+      chips.innerHTML = recent.map(function(q) {
+        return '<span class="rs-chip" onclick="useRecentSearch(\'' + escHtml(q).replace(/'/g, "\\'") + '\')">'
+          + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'
+          + escHtml(q)
+          + '<span class="chip-remove" onclick="event.stopPropagation();removeRecentSearch(\'' + escHtml(q).replace(/'/g, "\\'") + '\')" title="Supprimer">&times;</span>'
+          + '</span>';
+      }).join('');
+    }
+
+    /* ── Keyboard shortcut ──────────────────────────── */
+    function handleKeydown(e) {
+      // Enter in any filter field triggers search
+      if (e.key === 'Enter') {
+        doSearch();
+      }
+      // Escape clears main search
+      if (e.key === 'Escape') {
+        resetFilters();
+      }
+    }
+
+    /* ── Init ───────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function() {
+      // Attach input listener to main search
+      document.getElementById('mainSearch').addEventListener('input', doSearch);
+
+      // Attach change listeners to advanced filter selects
+      ['fType', 'fStatut', 'fKyc'].forEach(function(id) {
+        document.getElementById(id).addEventListener('change', doSearch);
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', handleKeydown);
+
+      // Render recent searches
+      renderRecentSearches();
+
+      // Restore state from URL hash if present
+      var hash = window.location.hash.replace('#', '');
+      if (hash) {
+        try {
+          var params = JSON.parse(decodeURIComponent(hash));
+          if (params.q) document.getElementById('mainSearch').value = params.q;
+          if (params.nom) document.getElementById('fNom').value = params.nom;
+          if (params.tel) document.getElementById('fTelephone').value = params.tel;
+          if (params.piece) document.getElementById('fPiece').value = params.piece;
+          if (params.nif) document.getElementById('fNif').value = params.nif;
+          if (params.type) document.getElementById('fType').value = params.type;
+          if (params.statut) document.getElementById('fStatut').value = params.statut;
+          if (params.kyc) document.getElementById('fKyc').value = params.kyc;
+          // Sync quick filter chips
+          var activeType = document.getElementById('fType').value;
+          document.querySelectorAll('.qf-chip').forEach(function(c) {
+            c.classList.toggle('active', c.dataset.type === activeType);
+          });
+          doSearch();
+        } catch (_) {}
+      }
+    });
+  </script>
+</body>
+</html>

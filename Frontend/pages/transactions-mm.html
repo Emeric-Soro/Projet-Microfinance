@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transactions Mobile Money - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    /* KPI cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      transition: box-shadow 0.2s;
+    }
+    .kpi-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .kpi-card .kpi-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    .kpi-card .kpi-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+    .kpi-card .kpi-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #4A7A8A;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .kpi-card .kpi-value {
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+    .kpi-card .kpi-sub {
+      font-size: 11px;
+      color: #8aa;
+      margin-top: 4px;
+    }
+    .kpi-total .kpi-icon     { background: rgba(8,67,85,0.08); color: #084355; }
+    .kpi-total .kpi-value    { color: #084355; }
+    .kpi-success .kpi-icon   { background: rgba(46,125,50,0.10); color: #2E7D32; }
+    .kpi-success .kpi-value  { color: #2E7D32; }
+    .kpi-danger .kpi-icon    { background: rgba(217,48,37,0.10); color: #D93025; }
+    .kpi-danger .kpi-value   { color: #D93025; }
+    .kpi-warning .kpi-icon   { background: rgba(243,156,18,0.10); color: #E67E22; }
+    .kpi-warning .kpi-value  { color: #E67E22; }
+
+    /* Filters bar */
+    .filters-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      padding: 16px 20px;
+    }
+    .filters-bar .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .filters-bar .filter-group label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #4A7A8A;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .filters-bar .filter-group select {
+      min-width: 160px;
+    }
+    .filters-bar .filter-actions {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    /* Montant column alignment */
+    .montant-cell {
+      text-align: right;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    /* Row click */
+    #mmTableBody tr {
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    #mmTableBody tr:hover {
+      background: rgba(8,67,85,0.03);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .kpi-grid { grid-template-columns: 1fr; }
+      .filters-bar { flex-direction: column; }
+      .filters-bar .filter-group select { min-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Transactions Mobile Money</div>
+            <div class="topbar-breadcrumb">Caisse &amp; Opérations / Mobile Money</div>
+          </div>
+        </div>
+        <div class="topbar-right"></div>
+      </header>
+
+      <main class="content-area">
+
+        <!-- Page header -->
+        <div class="page-header" style="margin-bottom:20px;">
+          <div>
+            <h1 class="page-title">Transactions Mobile Money</h1>
+            <p class="page-subtitle">Suivi des opérations Orange Money, Wave, MTN, Moov.</p>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-outline btn-sm" onclick="exporterCSV()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export CSV
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="chargerTransactions(_page)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Actualiser
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <section class="kpi-grid">
+          <div class="kpi-card kpi-total">
+            <div class="kpi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            </div>
+            <div class="kpi-label">Total</div>
+            <div class="kpi-value" id="kpiTotal">0</div>
+            <div class="kpi-sub" id="kpiTotalSub">transactions</div>
+          </div>
+          <div class="kpi-card kpi-success">
+            <div class="kpi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div class="kpi-label">Réussites</div>
+            <div class="kpi-value" id="kpiSuccess">0</div>
+            <div class="kpi-sub" id="kpiSuccessPct">0%</div>
+          </div>
+          <div class="kpi-card kpi-danger">
+            <div class="kpi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            </div>
+            <div class="kpi-label">Échecs</div>
+            <div class="kpi-value" id="kpiEchec">0</div>
+            <div class="kpi-sub" id="kpiEchecPct">0%</div>
+          </div>
+          <div class="kpi-card kpi-warning">
+            <div class="kpi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="kpi-label">En attente</div>
+            <div class="kpi-value" id="kpiAttente">0</div>
+            <div class="kpi-sub" id="kpiAttentePct">0%</div>
+          </div>
+        </section>
+
+        <!-- Filters -->
+        <section class="card" style="margin-bottom:16px;">
+          <div class="card-header">
+            <div class="card-title" style="display:flex;align-items:center;gap:8px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:#084355;"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+              Filtres
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="reinitialiserFiltres()" style="font-size:12px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              Réinitialiser
+            </button>
+          </div>
+          <div class="filters-bar">
+            <div class="filter-group">
+              <label for="fOperateur">Opérateur</label>
+              <select class="form-control" id="fOperateur">
+                <option value="">Tous opérateurs</option>
+                <option value="ORANGE">Orange Money</option>
+                <option value="WAVE">Wave</option>
+                <option value="MTN">MTN Money</option>
+                <option value="MOOV">Moov Money</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="fType">Type</label>
+              <select class="form-control" id="fType">
+                <option value="">Tous types</option>
+                <option value="DEPOT">Dépôt</option>
+                <option value="RETRAIT">Retrait</option>
+                <option value="PAIEMENT">Paiement</option>
+                <option value="TRANSFERT">Transfert</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="fStatut">Statut</label>
+              <select class="form-control" id="fStatut">
+                <option value="">Tous statuts</option>
+                <option value="VALIDEE">Réussie</option>
+                <option value="ECHEC">Échec</option>
+                <option value="EN_ATTENTE">En attente</option>
+                <option value="ANNULEE">Annulée</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="fReconciliation">Réconciliation</label>
+              <select class="form-control" id="fReconciliation">
+                <option value="">Tous</option>
+                <option value="OK">Réconcilié</option>
+                <option value="EN_COURS">En cours</option>
+                <option value="ECART">Écart</option>
+              </select>
+            </div>
+            <div class="filter-actions">
+              <button class="btn btn-primary btn-sm" onclick="appliquerFiltres()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Appliquer
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Table -->
+        <section class="card">
+          <div class="card-header">
+            <div class="card-title" style="display:flex;align-items:center;gap:8px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:#084355;"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+              Transactions
+            </div>
+            <span style="font-size:12px;color:#4A7A8A;" id="resultCount"></span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Opérateur</th>
+                  <th>Compte</th>
+                  <th>Client</th>
+                  <th>Téléphone</th>
+                  <th style="text-align:right;">Montant</th>
+                  <th>Réf MM</th>
+                  <th>Statut</th>
+                  <th>Réconciliation</th>
+                </tr>
+              </thead>
+              <tbody id="mmTableBody">
+                <tr><td colspan="11" style="text-align:center;padding:40px;color:#4A7A8A;">
+                  <div class="login-spinner" style="width:28px;height:28px;margin:0 auto 12px;"></div>
+                  Chargement des transactions...
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination">
+            <div class="pagination-info" id="paginationInfo">Affichage 0-0 sur 0 transactions</div>
+            <div class="pagination-buttons" id="paginationButtons"></div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal détail rapide -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">Détail transaction</div>
+        <button class="modal-close" onclick="closeModal('detailModal')">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Rempli dynamiquement -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('detailModal')">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ── State ────────────────────────────────────── */
+    var _allTx = [];
+    var _filteredTx = [];
+    var _page = 0;
+    var _size = 20;
+    var _totalPages = 0;
+    var _totalElements = 0;
+
+    /* ── Helpers ──────────────────────────────────── */
+    function formatCurrency(n) {
+      return Number(n || 0).toLocaleString('fr-FR');
+    }
+
+    function formatDate(d) {
+      if (!d) return '---';
+      try {
+        return new Date(d).toLocaleString('fr-FR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      } catch (_) {
+        return String(d);
+      }
+    }
+
+    function escHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    /* ── Badges ───────────────────────────────────── */
+    function badgeStatut(s) {
+      var map = {
+        'VALIDEE':    { cls: 'badge-success', label: 'Réussie' },
+        'ECHEC':      { cls: 'badge-danger',  label: 'Échec' },
+        'EN_ATTENTE': { cls: 'badge-pending', label: 'En attente' },
+        'ANNULEE':    { cls: 'badge-warning', label: 'Annulée' }
+      };
+      var entry = map[s] || { cls: 'badge-info', label: s || '---' };
+      return '<span class="badge ' + entry.cls + '">' + escHtml(entry.label) + '</span>';
+    }
+
+    function badgeOperateur(op) {
+      var map = {
+        'ORANGE': { bg: '#ff6600', fg: '#fff', label: 'Orange Money' },
+        'WAVE':   { bg: '#1fc5c5', fg: '#fff', label: 'Wave' },
+        'MTN':    { bg: '#ffcc00', fg: '#333', label: 'MTN Money' },
+        'MOOV':   { bg: '#0066cc', fg: '#fff', label: 'Moov Money' }
+      };
+      var entry = map[op] || { bg: '#888', fg: '#fff', label: op || '---' };
+      return '<span class="badge" style="background:' + entry.bg + ';color:' + entry.fg + ';">' + escHtml(entry.label) + '</span>';
+    }
+
+    function badgeReconciliation(r) {
+      if (r === 'OK')        return '<span class="badge badge-success">Réconcilié</span>';
+      if (r === 'ECART')     return '<span class="badge badge-danger">Écart</span>';
+      if (r === 'EN_COURS')  return '<span class="badge badge-pending">En cours</span>';
+      return '<span class="badge badge-info">---</span>';
+    }
+
+    function badgeType(t) {
+      var map = {
+        'DEPOT':     { cls: 'badge-success', label: 'Dépôt' },
+        'RETRAIT':   { cls: 'badge-danger',  label: 'Retrait' },
+        'PAIEMENT':  { cls: 'badge-info',    label: 'Paiement' },
+        'TRANSFERT': { cls: 'badge-warning', label: 'Transfert' }
+      };
+      var entry = map[t] || { cls: 'badge-info', label: t || '---' };
+      return '<span class="badge ' + entry.cls + '">' + escHtml(entry.label) + '</span>';
+    }
+
+    /* ── KPI ──────────────────────────────────────── */
+    function updateKpis(data) {
+      var total = data.length;
+      var success = data.filter(function(t) { return t.statut === 'VALIDEE'; }).length;
+      var echec = data.filter(function(t) { return t.statut === 'ECHEC'; }).length;
+      var attente = data.filter(function(t) { return t.statut === 'EN_ATTENTE'; }).length;
+
+      document.getElementById('kpiTotal').textContent = formatCurrency(total);
+      document.getElementById('kpiTotalSub').textContent = total > 1 ? 'transactions' : 'transaction';
+      document.getElementById('kpiSuccess').textContent = formatCurrency(success);
+      document.getElementById('kpiSuccessPct').textContent = total > 0 ? Math.round(success / total * 100) + '%' : '0%';
+      document.getElementById('kpiEchec').textContent = formatCurrency(echec);
+      document.getElementById('kpiEchecPct').textContent = total > 0 ? Math.round(echec / total * 100) + '%' : '0%';
+      document.getElementById('kpiAttente').textContent = formatCurrency(attente);
+      document.getElementById('kpiAttentePct').textContent = total > 0 ? Math.round(attente / total * 100) + '%' : '0%';
+    }
+
+    /* ── Table rendering ──────────────────────────── */
+    function renderTable(data) {
+      var tbody = document.getElementById('mmTableBody');
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:40px;color:#4A7A8A;">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:32px;height:32px;margin-bottom:8px;opacity:0.4;"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>' +
+          '<br>Aucune transaction trouvée avec les filtres actuels.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(function(t) {
+        var montantColor = '#084355';
+        if (t.statut === 'ECHEC') montantColor = '#D93025';
+        else if (t.statut === 'VALIDEE') montantColor = '#2E7D32';
+
+        return '<tr onclick="voirDetail(' + (t.id || 0) + ')">' +
+          '<td style="font-family:monospace;font-size:12px;color:#084355;font-weight:600;">' + (t.id || '---') + '</td>' +
+          '<td style="font-size:12px;">' + formatDate(t.dateTransaction) + '</td>' +
+          '<td>' + badgeType(t.typeOperation) + '</td>' +
+          '<td>' + badgeOperateur(t.operateur) + '</td>' +
+          '<td style="font-family:monospace;font-size:11px;">' + escHtml(t.numeroCompte || '---') + '</td>' +
+          '<td>' + escHtml(t.nomClient || '---') + '</td>' +
+          '<td style="font-size:12px;">' + escHtml(t.telephone || '---') + '</td>' +
+          '<td class="montant-cell" style="color:' + montantColor + ';">' + formatCurrency(t.montant) + ' FCFA</td>' +
+          '<td style="font-family:monospace;font-size:11px;">' + escHtml(t.referenceMM || '---') + '</td>' +
+          '<td>' + badgeStatut(t.statut) + '</td>' +
+          '<td>' + badgeReconciliation(t.reconciliation) + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    /* ── Filters ──────────────────────────────────── */
+    function appliquerFiltres() {
+      var op = document.getElementById('fOperateur').value;
+      var type = document.getElementById('fType').value;
+      var statut = document.getElementById('fStatut').value;
+      var reco = document.getElementById('fReconciliation').value;
+
+      _filteredTx = _allTx.filter(function(t) {
+        if (op && t.operateur !== op) return false;
+        if (type && t.typeOperation !== type) return false;
+        if (statut && t.statut !== statut) return false;
+        if (reco && t.reconciliation !== reco) return false;
+        return true;
+      });
+
+      _page = 0;
+      _totalElements = _filteredTx.length;
+      _totalPages = Math.ceil(_totalElements / _size) || 1;
+
+      updateKpis(_filteredTx);
+      renderCurrentPage();
+      renderPagination();
+      document.getElementById('resultCount').textContent = _totalElements + ' résultat' + (_totalElements > 1 ? 's' : '');
+    }
+
+    function reinitialiserFiltres() {
+      document.getElementById('fOperateur').value = '';
+      document.getElementById('fType').value = '';
+      document.getElementById('fStatut').value = '';
+      document.getElementById('fReconciliation').value = '';
+      _filteredTx = _allTx.slice();
+      _page = 0;
+      _totalElements = _filteredTx.length;
+      _totalPages = Math.ceil(_totalElements / _size) || 1;
+      updateKpis(_allTx);
+      renderCurrentPage();
+      renderPagination();
+      document.getElementById('resultCount').textContent = _totalElements + ' résultat' + (_totalElements > 1 ? 's' : '');
+    }
+
+    /* ── Pagination ───────────────────────────────── */
+    function renderCurrentPage() {
+      var start = _page * _size;
+      var end = start + _size;
+      var pageData = _filteredTx.slice(start, end);
+      renderTable(pageData);
+    }
+
+    function goToPage(p) {
+      if (p < 0 || p >= _totalPages) return;
+      _page = p;
+      renderCurrentPage();
+      renderPagination();
+    }
+
+    function renderPagination() {
+      var start = _totalElements === 0 ? 0 : _page * _size + 1;
+      var end = Math.min((_page + 1) * _size, _totalElements);
+      document.getElementById('paginationInfo').textContent = 'Affichage ' + start + '-' + end + ' sur ' + _totalElements + ' transactions';
+
+      var buttonsEl = document.getElementById('paginationButtons');
+      if (_totalPages <= 1) {
+        buttonsEl.innerHTML = '';
+        return;
+      }
+
+      var html = '';
+
+      // Previous
+      html += '<button class="page-btn" ' + (_page === 0 ? 'disabled' : '') + ' onclick="goToPage(' + (_page - 1) + ')">&lsaquo;</button>';
+
+      // Page numbers with ellipsis
+      for (var i = 0; i < _totalPages; i++) {
+        if (i === 0 || i === _totalPages - 1 || Math.abs(i - _page) <= 1) {
+          html += '<button class="page-btn ' + (i === _page ? 'active' : '') + '" onclick="goToPage(' + i + ')">' + (i + 1) + '</button>';
+        } else if (i === 1 && _page > 2) {
+          html += '<span style="padding:0 4px;color:#4A7A8A;">...</span>';
+        } else if (i === _totalPages - 2 && _page < _totalPages - 3) {
+          html += '<span style="padding:0 4px;color:#4A7A8A;">...</span>';
+        }
+      }
+
+      // Next
+      html += '<button class="page-btn" ' + (_page >= _totalPages - 1 ? 'disabled' : '') + ' onclick="goToPage(' + (_page + 1) + ')">&rsaquo;</button>';
+
+      buttonsEl.innerHTML = html;
+    }
+
+    /* ── Detail modal ─────────────────────────────── */
+    function voirDetail(id) {
+      var tx = _allTx.find(function(t) { return t.id === id; });
+      if (!tx) return;
+
+      document.getElementById('modalTitle').textContent = 'Transaction #' + (tx.id || '---');
+
+      var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">' +
+        '<div class="info-row"><span class="info-label">ID</span><span class="info-value" style="font-family:monospace;font-weight:700;">' + (tx.id || '---') + '</span></div>' +
+        '<div class="info-row"><span class="info-label">Date</span><span class="info-value">' + formatDate(tx.dateTransaction) + '</span></div>' +
+        '<div class="info-row"><span class="info-label">Type</span><span class="info-value">' + badgeType(tx.typeOperation) + '</span></div>' +
+        '<div class="info-row"><span class="info-label">Opérateur</span><span class="info-value">' + badgeOperateur(tx.operateur) + '</span></div>' +
+        '<div class="info-row"><span class="info-label">Compte</span><span class="info-value" style="font-family:monospace;">' + escHtml(tx.numeroCompte || '---') + '</span></div>' +
+        '<div class="info-row"><span class="info-label">Client</span><span class="info-value">' + escHtml(tx.nomClient || '---') + '</span></div>' +
+        '<div class="info-row"><span class="info-label">Téléphone</span><span class="info-value">' + escHtml(tx.telephone || '---') + '</span></div>' +
+        '<div class="info-row"><span class="info-label">Montant</span><span class="info-value" style="font-size:16px;font-weight:700;color:#084355;">' + formatCurrency(tx.montant) + ' FCFA</span></div>' +
+        '<div class="info-row"><span class="info-label">Référence MM</span><span class="info-value" style="font-family:monospace;">' + escHtml(tx.referenceMM || '---') + '</span></div>' +
+        '<div class="info-row"><span class="info-label">Statut</span><span class="info-value">' + badgeStatut(tx.statut) + '</span></div>' +
+        '<div class="info-row"><span class="info-label">Réconciliation</span><span class="info-value">' + badgeReconciliation(tx.reconciliation) + '</span></div>' +
+        '</div>';
+
+      document.getElementById('modalBody').innerHTML = html;
+      openModal('detailModal');
+    }
+
+    /* ── Export CSV ────────────────────────────────── */
+    function exporterCSV() {
+      var data = _filteredTx.length ? _filteredTx : _allTx;
+      if (!data.length) {
+        showToast('Aucune donnée à exporter.', 'warning');
+        return;
+      }
+
+      var headers = ['ID', 'Date', 'Type', 'Operateur', 'Compte', 'Client', 'Telephone', 'Montant', 'Ref_MM', 'Statut', 'Reconciliation'];
+      var rows = data.map(function(t) {
+        return [
+          t.id || '',
+          t.dateTransaction || '',
+          t.typeOperation || '',
+          t.operateur || '',
+          t.numeroCompte || '',
+          t.nomClient || '',
+          t.telephone || '',
+          t.montant || 0,
+          t.referenceMM || '',
+          t.statut || '',
+          t.reconciliation || ''
+        ].map(function(v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(',');
+      });
+
+      var csv = headers.join(',') + '\n' + rows.join('\n');
+      var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      var link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'transactions-mobile-money-' + new Date().toISOString().slice(0, 10) + '.csv';
+      link.click();
+      URL.revokeObjectURL(link.href);
+      showToast('Export CSV généré (' + data.length + ' lignes).', 'success');
+    }
+
+    /* ── Data loading (client-side pagination) ────── */
+    function chargerTransactions() {
+      var tbody = document.getElementById('mmTableBody');
+      tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:40px;color:#4A7A8A;">' +
+        '<div class="login-spinner" style="width:28px;height:28px;margin:0 auto 12px;"></div>' +
+        'Chargement des transactions...' +
+        '</td></tr>';
+
+      SF.apiFetch('/api/v1/transactions/mobile-money').then(function(res) {
+        if (!res) return; // 401 redirected
+        if (!res.ok) {
+          showToast('Erreur lors du chargement des transactions.', 'error');
+          tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:40px;color:#D93025;">Erreur lors du chargement. Vérifiez le serveur.</td></tr>';
+          return;
+        }
+        return res.json();
+      }).then(function(data) {
+        if (!data) return;
+
+        // Support both array and Spring Page format
+        _allTx = Array.isArray(data) ? data : (data.content || []);
+        _filteredTx = _allTx.slice();
+        _totalElements = _filteredTx.length;
+        _totalPages = Math.ceil(_totalElements / _size) || 1;
+        _page = 0;
+
+        updateKpis(_allTx);
+        renderCurrentPage();
+        renderPagination();
+        document.getElementById('resultCount').textContent = _totalElements + ' résultat' + (_totalElements > 1 ? 's' : '');
+      }).catch(function(e) {
+        showToast('Erreur: ' + e.message, 'error');
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:40px;color:#D93025;">' + escHtml(e.message) + '</td></tr>';
+      });
+    }
+
+    /* ── Init ──────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function() {
+      chargerTransactions();
+    });
+  </script>
+</body>
+</html>

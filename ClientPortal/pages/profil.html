@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon Profil — Soutra Finance E-Banking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/portal.css">
+  <style>
+    /* ── Profile-specific styles ──────────────────────── */
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+    @media (max-width: 1024px) {
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .profile-avatar-section {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 30px;
+      padding-bottom: 25px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: #fff;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .profile-avatar-name {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--color-primary);
+    }
+    .profile-avatar-meta {
+      font-size: 13px;
+      color: var(--color-text-muted);
+      margin-top: 4px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    .info-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .info-value {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-text);
+      text-align: right;
+    }
+    .info-value.muted {
+      color: var(--color-text-muted);
+      font-weight: 400;
+      font-style: italic;
+    }
+
+    .edit-form {
+      display: none;
+      animation: fadeIn 0.3s ease-out;
+    }
+    .edit-form.active {
+      display: block;
+    }
+    .info-display.hidden {
+      display: none;
+    }
+
+    /* Password strength bar */
+    .strength-bar-container {
+      width: 100%;
+      height: 6px;
+      background: var(--border-color);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .strength-bar {
+      height: 100%;
+      width: 0;
+      border-radius: 3px;
+      transition: width 0.3s ease, background 0.3s ease;
+    }
+    .strength-label {
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    /* Toggle switch */
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .toggle-row:last-child {
+      border-bottom: none;
+    }
+    .toggle-info {
+      flex: 1;
+      margin-right: 20px;
+    }
+    .toggle-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-text);
+    }
+    .toggle-desc {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      margin-top: 3px;
+    }
+    .toggle-switch {
+      position: relative;
+      width: 48px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--border-color);
+      border-radius: 26px;
+      transition: background 0.3s;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.3s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--color-primary);
+    }
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(22px);
+    }
+
+    /* Session info */
+    .session-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .session-row:last-child {
+      border-bottom: none;
+    }
+    .session-label {
+      font-size: 13px;
+      color: var(--color-text-muted);
+    }
+    .session-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text);
+    }
+    .session-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-success);
+      margin-right: 8px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+  </style>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="portal-layout">
+    <!-- Sidebar -->
+    <aside class="portal-sidebar">
+      <div class="portal-brand">
+        <div class="brand-icon">S</div>
+        <span class="brand-name">Soutra Finance</span>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="dashboard">📊 Tableau de bord</a></li>
+        <li class="nav-item"><a href="comptes">💳 Mes Comptes</a></li>
+        <li class="nav-item"><a href="virement">💸 Virements</a></li>
+        <li class="nav-item"><a href="credits">📈 Crédits</a></li>
+        <li class="nav-item"><a href="reclamations">✉️ Réclamations</a></li>
+        <li class="nav-item active"><a href="profil">⚙️ Mon Profil</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+          <span class="user-name" id="portalUserName">Chargement...</span>
+          <span class="user-role">Client E-Banking</span>
+        </div>
+        <a href="#" class="logout-btn" id="portalLogoutBtn" title="Se déconnecter">🚪</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="header-title">
+          <h2>Mon Profil</h2>
+          <p>Gérez vos informations personnelles, sécurité et préférences de notification.</p>
+        </div>
+      </header>
+
+      <!-- Profile Grid: Left = Personal Info + Edit, Right = Password + Notifications + Session -->
+      <div class="profile-grid">
+
+        <!-- LEFT COLUMN -->
+        <div style="display: flex; flex-direction: column; gap: 30px;">
+
+          <!-- Personal Information Card -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">👤 Informations personnelles</span>
+              <button class="btn btn-secondary" id="btnEditProfile" style="padding: 8px 18px; font-size: 13px;">
+                ✏️ Modifier
+              </button>
+            </div>
+
+            <!-- Avatar -->
+            <div class="profile-avatar-section">
+              <div class="profile-avatar" id="profileAvatar">--</div>
+              <div>
+                <div class="profile-avatar-name" id="profileFullName">Chargement...</div>
+                <div class="profile-avatar-meta" id="profileProfession">Client</div>
+              </div>
+            </div>
+
+            <!-- Display Mode -->
+            <div class="info-display" id="infoDisplay">
+              <div class="info-row">
+                <span class="info-label">Nom</span>
+                <span class="info-value" id="infoNom">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Prénom</span>
+                <span class="info-value" id="infoPrenom">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value" id="infoEmail">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Téléphone</span>
+                <span class="info-value" id="infoTelephone">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Adresse</span>
+                <span class="info-value" id="infoAdresse">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Profession</span>
+                <span class="info-value" id="infoProfession">—</span>
+              </div>
+            </div>
+
+            <!-- Edit Mode -->
+            <div class="edit-form" id="editForm">
+              <div class="form-group">
+                <label for="editNom">Nom</label>
+                <input type="text" id="editNom" class="input-control" disabled title="Le nom ne peut pas être modifié">
+              </div>
+              <div class="form-group">
+                <label for="editPrenom">Prénom</label>
+                <input type="text" id="editPrenom" class="input-control" disabled title="Le prénom ne peut pas être modifié">
+              </div>
+              <div class="form-group">
+                <label for="editEmail">Email</label>
+                <input type="email" id="editEmail" class="input-control" placeholder="votre@email.com">
+              </div>
+              <div class="form-group">
+                <label for="editTelephone">Téléphone</label>
+                <input type="tel" id="editTelephone" class="input-control" placeholder="+228 XX XX XX XX">
+              </div>
+              <div class="form-group">
+                <label for="editAdresse">Adresse</label>
+                <input type="text" id="editAdresse" class="input-control" placeholder="Votre adresse complète">
+              </div>
+              <div style="display: flex; gap: 12px; margin-top: 10px;">
+                <button class="btn btn-primary" id="btnSaveProfile" style="flex: 1;">💾 Enregistrer</button>
+                <button class="btn btn-secondary" id="btnCancelEdit" style="flex: 1;">Annuler</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notification Preferences Card -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">🔔 Préférences de notification</span>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">Notifications par email</div>
+                <div class="toggle-desc">Recevez les alertes de transaction et résumés mensuels par email.</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="notifEmail" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">Notifications SMS</div>
+                <div class="toggle-desc">Recevez un SMS pour chaque opération sur vos comptes.</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="notifSms" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">Alertes de sécurité</div>
+                <div class="toggle-desc">Notifications en cas de connexion suspecte ou de modification de mot de passe.</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="notifSecurite" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">Alertes de solde</div>
+                <div class="toggle-desc">Être notifié lorsque le solde d'un compte passe sous un seuil défini.</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="notifSolde">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">Rappels d'échéances crédit</div>
+                <div class="toggle-desc">Rappel avant chaque date de remboursement de crédit.</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="notifCredit" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div style="display: flex; flex-direction: column; gap: 30px;">
+
+          <!-- Change Password Card -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">🔒 Changer le mot de passe</span>
+            </div>
+
+            <form id="passwordForm" autocomplete="off">
+              <div class="form-group">
+                <label for="currentPassword">Mot de passe actuel</label>
+                <input type="password" id="currentPassword" class="input-control" placeholder="Entrez votre mot de passe actuel" required autocomplete="current-password">
+              </div>
+
+              <div class="form-group">
+                <label for="newPassword">Nouveau mot de passe</label>
+                <input type="password" id="newPassword" class="input-control" placeholder="Minimum 8 caractères" required autocomplete="new-password">
+                <div class="strength-bar-container">
+                  <div class="strength-bar" id="strengthBar"></div>
+                </div>
+                <div class="strength-label" id="strengthLabel"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="confirmPassword">Confirmer le mot de passe</label>
+                <input type="password" id="confirmPassword" class="input-control" placeholder="Retapez le nouveau mot de passe" required autocomplete="new-password">
+                <div id="passwordMatch" style="font-size: 12px; margin-top: 6px;"></div>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-block" id="btnChangePassword">
+                🔐 Mettre à jour le mot de passe
+              </button>
+            </form>
+          </div>
+
+          <!-- Session Info Card -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">🖥️ Session & Sécurité</span>
+            </div>
+
+            <div class="session-row">
+              <span class="session-label">Statut</span>
+              <span class="session-value"><span class="session-dot"></span>Connecté</span>
+            </div>
+            <div class="session-row">
+              <span class="session-label">Identifiant</span>
+              <span class="session-value" id="sessionLogin">—</span>
+            </div>
+            <div class="session-row">
+              <span class="session-label">Dernière connexion</span>
+              <span class="session-value" id="sessionLastLogin">—</span>
+            </div>
+            <div class="session-row">
+              <span class="session-label">Navigateur</span>
+              <span class="session-value" id="sessionBrowser">—</span>
+            </div>
+            <div class="session-row">
+              <span class="session-label">Adresse IP</span>
+              <span class="session-value" id="sessionIp">—</span>
+            </div>
+            <div class="session-row">
+              <span class="session-label">Token expire le</span>
+              <span class="session-value" id="sessionTokenExpiry">—</span>
+            </div>
+          </div>
+
+          <!-- KYC Status Card -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">📋 Statut KYC</span>
+            </div>
+            <div id="kycStatusContent">
+              <div style="text-align: center; padding: 20px; color: var(--color-text-muted);">
+                Chargement du statut KYC...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../assets/js/portal-app.js?v=1.0.1"></script>
+  <script>
+    /* ============================================
+       PROFILE PAGE LOGIC
+       ============================================ */
+    (function () {
+      'use strict';
+
+      var profileData = null;
+
+      /* ── Load profile on DOM ready ──────────────────── */
+      document.addEventListener('DOMContentLoaded', function () {
+        loadProfile();
+        loadKycStatus();
+        populateSessionInfo();
+        bindEvents();
+      });
+
+      /* ── Fetch & display profile ────────────────────── */
+      async function loadProfile() {
+        try {
+          var res = await window.SF_Client.apiFetch('/api/v1/mobile/profil');
+          if (!res.ok) {
+            showToast('Impossible de charger votre profil.', 'error');
+            return;
+          }
+          profileData = await res.json();
+          renderProfile(profileData);
+        } catch (err) {
+          console.error(err);
+          showToast('Erreur réseau lors du chargement du profil.', 'error');
+        }
+      }
+
+      function renderProfile(p) {
+        var fullName = (p.prenom || '') + ' ' + (p.nom || '');
+        document.getElementById('profileFullName').textContent = fullName.trim() || 'Client';
+        document.getElementById('profileAvatar').textContent = getInitials(p.prenom, p.nom);
+        document.getElementById('profileProfession').textContent = p.profession || 'Client E-Banking';
+
+        document.getElementById('infoNom').textContent = p.nom || '—';
+        document.getElementById('infoPrenom').textContent = p.prenom || '—';
+        document.getElementById('infoEmail').textContent = p.email || '—';
+        document.getElementById('infoTelephone').textContent = p.telephone || '—';
+        document.getElementById('infoAdresse').textContent = p.adresse || '—';
+        document.getElementById('infoProfession').textContent = p.profession || '—';
+
+        // If value is missing, style as muted
+        ['infoEmail', 'infoTelephone', 'infoAdresse', 'infoProfession'].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (!el.textContent || el.textContent === '—') {
+            el.classList.add('muted');
+            el.textContent = 'Non renseigné';
+          } else {
+            el.classList.remove('muted');
+          }
+        });
+
+        // Prefill edit form
+        document.getElementById('editNom').value = p.nom || '';
+        document.getElementById('editPrenom').value = p.prenom || '';
+        document.getElementById('editEmail').value = p.email || '';
+        document.getElementById('editTelephone').value = p.telephone || '';
+        document.getElementById('editAdresse').value = p.adresse || '';
+
+        // Update sidebar user name
+        var nameEl = document.getElementById('portalUserName');
+        if (nameEl) nameEl.textContent = fullName.trim();
+      }
+
+      function getInitials(prenom, nom) {
+        var i1 = prenom ? prenom.charAt(0).toUpperCase() : '';
+        var i2 = nom ? nom.charAt(0).toUpperCase() : '';
+        return (i1 + i2) || '--';
+      }
+
+      /* ── Edit mode toggle ───────────────────────────── */
+      function bindEvents() {
+        document.getElementById('btnEditProfile').addEventListener('click', function () {
+          document.getElementById('infoDisplay').classList.add('hidden');
+          document.getElementById('editForm').classList.add('active');
+          this.style.display = 'none';
+        });
+
+        document.getElementById('btnCancelEdit').addEventListener('click', function () {
+          cancelEdit();
+        });
+
+        document.getElementById('btnSaveProfile').addEventListener('click', function () {
+          saveProfile();
+        });
+
+        // Password strength
+        document.getElementById('newPassword').addEventListener('input', function () {
+          updateStrength(this.value);
+          checkPasswordMatch();
+        });
+
+        document.getElementById('confirmPassword').addEventListener('input', function () {
+          checkPasswordMatch();
+        });
+
+        // Password form submit
+        document.getElementById('passwordForm').addEventListener('submit', function (e) {
+          e.preventDefault();
+          changePassword();
+        });
+      }
+
+      function cancelEdit() {
+        document.getElementById('infoDisplay').classList.remove('hidden');
+        document.getElementById('editForm').classList.remove('active');
+        document.getElementById('btnEditProfile').style.display = '';
+        // Reset form values to current profile data
+        if (profileData) {
+          document.getElementById('editEmail').value = profileData.email || '';
+          document.getElementById('editTelephone').value = profileData.telephone || '';
+          document.getElementById('editAdresse').value = profileData.adresse || '';
+        }
+      }
+
+      /* ── Save profile ───────────────────────────────── */
+      async function saveProfile() {
+        var btn = document.getElementById('btnSaveProfile');
+        var origText = btn.textContent;
+        btn.textContent = 'Enregistrement...';
+        btn.disabled = true;
+
+        var payload = {
+          email: document.getElementById('editEmail').value.trim() || null,
+          telephone: document.getElementById('editTelephone').value.trim() || null,
+          adresse: document.getElementById('editAdresse').value.trim() || null
+        };
+
+        try {
+          var res = await window.SF_Client.apiFetch('/api/v1/mobile/profil', {
+            method: 'PUT',
+            body: JSON.stringify(payload)
+          });
+
+          if (res.ok) {
+            profileData = await res.json();
+            renderProfile(profileData);
+            cancelEdit();
+            showToast('Profil mis à jour avec succès.', 'success');
+          } else {
+            var err = await res.json().catch(function () { return null; });
+            showToast(err && err.message ? err.message : 'Erreur lors de la mise à jour du profil.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Erreur réseau. Veuillez réessayer.', 'error');
+        } finally {
+          btn.textContent = origText;
+          btn.disabled = false;
+        }
+      }
+
+      /* ── Password strength ──────────────────────────── */
+      function updateStrength(pwd) {
+        var bar = document.getElementById('strengthBar');
+        var label = document.getElementById('strengthLabel');
+        var score = 0;
+
+        if (pwd.length === 0) {
+          bar.style.width = '0';
+          bar.style.background = '';
+          label.textContent = '';
+          return;
+        }
+
+        if (pwd.length >= 8) score++;
+        if (pwd.length >= 12) score++;
+        if (/[A-Z]/.test(pwd)) score++;
+        if (/[0-9]/.test(pwd)) score++;
+        if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+        var levels = [
+          { width: '20%', color: 'var(--color-danger)', text: 'Très faible' },
+          { width: '40%', color: '#e65100', text: 'Faible' },
+          { width: '60%', color: 'var(--color-warning)', text: 'Moyen' },
+          { width: '80%', color: '#558b2f', text: 'Fort' },
+          { width: '100%', color: 'var(--color-success)', text: 'Très fort' }
+        ];
+
+        var level = levels[Math.min(score, levels.length) - 1] || levels[0];
+        bar.style.width = level.width;
+        bar.style.background = level.color;
+        label.textContent = level.text;
+        label.style.color = level.color;
+      }
+
+      function checkPasswordMatch() {
+        var newPwd = document.getElementById('newPassword').value;
+        var confirmPwd = document.getElementById('confirmPassword').value;
+        var matchEl = document.getElementById('passwordMatch');
+
+        if (!confirmPwd) {
+          matchEl.textContent = '';
+          return;
+        }
+
+        if (newPwd === confirmPwd) {
+          matchEl.textContent = '✓ Les mots de passe correspondent';
+          matchEl.style.color = 'var(--color-success)';
+        } else {
+          matchEl.textContent = '✕ Les mots de passe ne correspondent pas';
+          matchEl.style.color = 'var(--color-danger)';
+        }
+      }
+
+      /* ── Change password ────────────────────────────── */
+      async function changePassword() {
+        var currentPwd = document.getElementById('currentPassword').value;
+        var newPwd = document.getElementById('newPassword').value;
+        var confirmPwd = document.getElementById('confirmPassword').value;
+
+        if (!currentPwd || !newPwd || !confirmPwd) {
+          showToast('Veuillez remplir tous les champs.', 'warning');
+          return;
+        }
+
+        if (newPwd.length < 8) {
+          showToast('Le nouveau mot de passe doit contenir au moins 8 caractères.', 'warning');
+          return;
+        }
+
+        if (newPwd !== confirmPwd) {
+          showToast('Les mots de passe ne correspondent pas.', 'warning');
+          return;
+        }
+
+        var btn = document.getElementById('btnChangePassword');
+        var origText = btn.textContent;
+        btn.textContent = 'Mise à jour...';
+        btn.disabled = true;
+
+        try {
+          var res = await window.SF_Client.apiFetch('/api/v1/mobile/auth/changer-mot-de-passe', {
+            method: 'POST',
+            body: JSON.stringify({
+              motDePasseActuel: currentPwd,
+              nouveauMotDePasse: newPwd
+            })
+          });
+
+          if (res.ok) {
+            showToast('Mot de passe mis à jour avec succès.', 'success');
+            document.getElementById('passwordForm').reset();
+            document.getElementById('strengthBar').style.width = '0';
+            document.getElementById('strengthLabel').textContent = '';
+            document.getElementById('passwordMatch').textContent = '';
+          } else if (res.status === 404) {
+            showToast('Endpoint non disponible. Contactez le support.', 'warning');
+          } else {
+            var err = await res.json().catch(function () { return null; });
+            showToast(err && err.message ? err.message : 'Mot de passe actuel incorrect ou erreur serveur.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Erreur réseau. Veuillez réessayer.', 'error');
+        } finally {
+          btn.textContent = origText;
+          btn.disabled = false;
+        }
+      }
+
+      /* ── KYC Status ─────────────────────────────────── */
+      async function loadKycStatus() {
+        var container = document.getElementById('kycStatusContent');
+        try {
+          var res = await window.ClientProfil.consulterKyc();
+          if (!res.ok) {
+            container.innerHTML = '<div class="no-data">Impossible de charger le statut KYC.</div>';
+            return;
+          }
+          var kyc = await res.json();
+
+          var statusBadge = '';
+          var statusText = '';
+          switch (kyc.statutKyc) {
+            case 'VALIDE':
+              statusBadge = '<span class="badge badge-success">✓ Validé</span>';
+              statusText = 'Votre dossier KYC est complet et validé.';
+              break;
+            case 'A_VERIFIER':
+              statusBadge = '<span class="badge badge-info">⏳ En cours de vérification</span>';
+              statusText = 'Votre dossier a été transmis et est en cours d\'étude.';
+              break;
+            case 'REJETE':
+              statusBadge = '<span class="badge badge-danger">✕ Rejeté</span>';
+              statusText = 'Votre dossier a été rejeté. Veuillez soumettre de nouveaux documents.';
+              break;
+            default:
+              statusBadge = '<span class="badge badge-warning">⚠ Incomplet</span>';
+              statusText = 'Veuillez finaliser l\'envoi de vos pièces KYC.';
+          }
+
+          var docsHtml = '';
+          if (kyc.documentsFournis && kyc.documentsFournis.length > 0) {
+            docsHtml = '<div style="margin-top: 12px;">';
+            kyc.documentsFournis.forEach(function (doc) {
+              docsHtml += '<div style="font-size: 13px; padding: 4px 0; color: var(--color-success);">✓ ' + doc + '</div>';
+            });
+            docsHtml += '</div>';
+          }
+
+          container.innerHTML =
+            '<div style="margin-bottom: 12px;">' + statusBadge + '</div>' +
+            '<p style="font-size: 14px; color: var(--color-text-muted); margin-bottom: 8px;">' + statusText + '</p>' +
+            (kyc.niveauRisque ? '<div style="font-size: 13px; margin-top: 10px;"><strong>Niveau de risque :</strong> ' + kyc.niveauRisque + '</div>' : '') +
+            (kyc.dateExpirationPieceIdentite ? '<div style="font-size: 13px; margin-top: 4px;"><strong>Pièce expire le :</strong> ' + kyc.dateExpirationPieceIdentite + '</div>' : '') +
+            docsHtml +
+            (kyc.statutKyc !== 'VALIDE' ? '<a href="register#step-3" class="btn btn-accent btn-block mt-15" style="padding: 10px 20px; font-size: 13px;">📄 Transmettre mes pièces</a>' : '');
+
+        } catch (err) {
+          console.error(err);
+          container.innerHTML = '<div class="no-data">Erreur lors du chargement du statut KYC.</div>';
+        }
+      }
+
+      /* ── Session Info ───────────────────────────────── */
+      function populateSessionInfo() {
+        var user = window.SF_Client.getUser();
+        var token = window.SF_Client.getToken();
+
+        if (user) {
+          document.getElementById('sessionLogin').textContent = user.login || user.email || '—';
+        }
+
+        // Last login (from stored user or fallback)
+        var now = new Date();
+        document.getElementById('sessionLastLogin').textContent = now.toLocaleDateString('fr-FR', {
+          day: '2-digit', month: 'long', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+
+        // Browser detection
+        var ua = navigator.userAgent;
+        var browser = 'Inconnu';
+        if (ua.indexOf('Firefox') > -1) browser = 'Mozilla Firefox';
+        else if (ua.indexOf('Edg') > -1) browser = 'Microsoft Edge';
+        else if (ua.indexOf('Chrome') > -1) browser = 'Google Chrome';
+        else if (ua.indexOf('Safari') > -1) browser = 'Apple Safari';
+        document.getElementById('sessionBrowser').textContent = browser;
+
+        // IP (placeholder — would need external API)
+        document.getElementById('sessionIp').textContent = 'Non disponible';
+
+        // Token expiry (decode JWT if possible)
+        if (token) {
+          try {
+            var parts = token.split('.');
+            if (parts.length === 3) {
+              var payload = JSON.parse(atob(parts[1]));
+              if (payload.exp) {
+                var expDate = new Date(payload.exp * 1000);
+                document.getElementById('sessionTokenExpiry').textContent = expDate.toLocaleDateString('fr-FR', {
+                  day: '2-digit', month: 'long', year: 'numeric',
+                  hour: '2-digit', minute: '2-digit'
+                });
+              }
+            }
+          } catch (e) {
+            document.getElementById('sessionTokenExpiry').textContent = 'Non décodable';
+          }
+        }
+      }
+
+    })();
+  </script>
+</body>
+</html>

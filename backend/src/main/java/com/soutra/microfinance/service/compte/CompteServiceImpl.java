@@ -137,6 +137,12 @@ public class CompteServiceImpl implements CompteService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<Compte> listerTousLesComptes(Pageable pageable) {
+        return compteRepository.findAll(pageable);
+    }
+
+    @Override
     @Transactional
     public Compte changerDecouvertAutorise(String numCompte, BigDecimal nouveauPlafond) {
         if (nouveauPlafond == null || nouveauPlafond.compareTo(BigDecimal.ZERO) < 0) {

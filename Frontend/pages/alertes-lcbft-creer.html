@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creer alerte LCB-FT - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    .severity-option {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 20px; cursor: pointer;
+      border: 2px solid #ddd; transition: all 0.2s; font-size: 0.9em;
+    }
+    .severity-option:hover { border-color: #4A7A8A; }
+    .severity-option input { display: none; }
+    .severity-option.active { font-weight: 600; }
+    .severity-option[data-sev="BASSE"].active     { border-color: #27ae60; background: #eafaf1; color: #1e8449; }
+    .severity-option[data-sev="MOYENNE"].active    { border-color: #f39c12; background: #fef9e7; color: #b7950b; }
+    .severity-option[data-sev="HAUTE"].active      { border-color: #e74c3c; background: #fdedec; color: #c0392b; }
+    .severity-option[data-sev="CRITIQUE"].active   { border-color: #8e44ad; background: #f5eef8; color: #6c3483; }
+    .file-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #eef5f9; border: 1px solid #C9DFE8; border-radius: 6px;
+      padding: 4px 10px; margin: 4px 4px 0 0; font-size: 0.85em;
+    }
+    .file-chip .remove-file { cursor: pointer; color: #e74c3c; font-weight: bold; margin-left: 2px; }
+    .file-chip .remove-file:hover { color: #c0392b; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Creer alerte LCB-FT</div>
+            <div class="topbar-breadcrumb">Conformite / LCB-FT / Creer</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a href="alertes-lcbft-traiter.html" class="btn btn-ghost btn-sm">&larr; Voir alertes</a>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Nouvelle alerte LCB-FT</h1>
+            <p class="page-subtitle">Lutte Contre le Blanchiment et le Financement du Terrorisme</p>
+          </div>
+        </div>
+
+        <div style="max-width:720px;">
+          <div id="submitError" style="display:none;background:#fdedec;border:1px solid #e74c3c;border-radius:8px;padding:12px 16px;margin-bottom:16px;color:#c0392b;font-size:0.92em;"></div>
+
+          <!-- Type d'alerte -->
+          <section class="card">
+            <div class="card-header"><div class="card-title">Type d'alerte</div></div>
+            <div style="padding:20px;">
+              <div class="form-group">
+                <label class="form-label" for="alertType">Type d'alerte *</label>
+                <select class="form-control" id="alertType">
+                  <option value="">-- Selectionner --</option>
+                  <option value="TRANSACTION_SUSPECTE">Transaction suspecte</option>
+                  <option value="MONTANT_INHABITUEL">Montant inhabituel</option>
+                  <option value="FREQUENCE_ANORMALE">Frequence anormale</option>
+                  <option value="PROVENANCE_DOUTEUSE">Provenance douteuse</option>
+                  <option value="IDENTITE_IRREGULIERE">Identite irreguliere</option>
+                  <option value="PAYS_RISQUE">Correspondant pays a risque</option>
+                  <option value="COMPTE_DORMANT">Reactivation compte dormant</option>
+                  <option value="AUTRE">Autre</option>
+                </select>
+                <div class="field-error" id="alertType-error">Selectionnez un type d'alerte.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Client ou transaction concerne -->
+          <section class="card" style="margin-top:16px;">
+            <div class="card-header"><div class="card-title">Client ou transaction concerne</div></div>
+            <div style="padding:20px;">
+              <div class="form-group">
+                <label class="form-label" for="alertClientSearch">Rechercher un client</label>
+                <input type="text" class="form-control" id="alertClientSearch" placeholder="Nom, prenom ou numero..." oninput="searchAlertClient()">
+                <div class="search-results" id="alertClientResults"></div>
+              </div>
+              <div id="alertClientInfo" style="display:none;"></div>
+              <div class="form-group" style="margin-top:12px;">
+                <label class="form-label" for="alertTxRef">Reference transaction (optionnel)</label>
+                <input type="text" class="form-control" id="alertTxRef" placeholder="Numero de transaction...">
+              </div>
+            </div>
+          </section>
+
+          <!-- Details de l'alerte -->
+          <section class="card" style="margin-top:16px;">
+            <div class="card-header"><div class="card-title">Details de l'alerte</div></div>
+            <div style="padding:20px;">
+              <div class="form-group">
+                <label class="form-label">Niveau de severite *</label>
+                <div id="severityGroup" style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <label class="severity-option active" data-sev="BASSE"><input type="radio" name="alertSeverity" value="BASSE">Basse</label>
+                  <label class="severity-option" data-sev="MOYENNE"><input type="radio" name="alertSeverity" value="MOYENNE" checked>Moyenne</label>
+                  <label class="severity-option" data-sev="HAUTE"><input type="radio" name="alertSeverity" value="HAUTE">Haute</label>
+                  <label class="severity-option" data-sev="CRITIQUE"><input type="radio" name="alertSeverity" value="CRITIQUE">Critique</label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="alertDescription">Description detaillee *</label>
+                <textarea class="form-control" id="alertDescription" rows="5" placeholder="Decrivez les faits observes, le contexte, les indices..."></textarea>
+                <div class="field-error" id="alertDescription-error">Saisissez une description.</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Pieces justificatives</label>
+                <input type="file" class="form-control" id="alertFiles" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleFileSelect()">
+                <small style="color:#7f8c8d;">PDF, images, documents (max 10 Mo par fichier)</small>
+                <div id="fileChips" style="margin-top:8px;"></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Actions -->
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;margin-bottom:40px;">
+            <button class="btn btn-outline" id="btnBrouillon" onclick="sauvegarderBrouillonAlert()">
+              <span class="btn-text">Sauvegarder brouillon</span>
+              <span class="login-spinner" style="display:none;"></span>
+            </button>
+            <button class="btn btn-primary" id="btnSubmit" onclick="soumettreAlert()">
+              <span class="btn-text">Soumettre l'alerte</span>
+              <span class="login-spinner" style="display:none;"></span>
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    var alertClientId = null;
+    var alertUploadedFiles = [];
+
+    /* -- Severity pill toggle -------------------------------- */
+    (function () {
+      var pills = document.querySelectorAll('.severity-option');
+      pills.forEach(function (pill) {
+        pill.addEventListener('click', function () {
+          pills.forEach(function (p) { p.classList.remove('active'); });
+          pill.classList.add('active');
+          pill.querySelector('input').checked = true;
+        });
+      });
+      // Activate the checked one on load
+      var checked = document.querySelector('.severity-option input:checked');
+      if (checked) { checked.closest('.severity-option').classList.add('active'); }
+    })();
+
+    /* -- File handling --------------------------------------- */
+    function handleFileSelect() {
+      var input = document.getElementById('alertFiles');
+      var maxSize = 10 * 1024 * 1024; // 10 MB
+      for (var i = 0; i < input.files.length; i++) {
+        var f = input.files[i];
+        if (f.size > maxSize) {
+          showToast('Fichier trop volumineux : ' + f.name + ' (max 10 Mo).', 'warning');
+          continue;
+        }
+        // Avoid duplicates by name+size
+        var exists = alertUploadedFiles.some(function (uf) { return uf.name === f.name && uf.size === f.size; });
+        if (!exists) { alertUploadedFiles.push(f); }
+      }
+      input.value = '';
+      renderFileChips();
+    }
+
+    function removeFile(index) {
+      alertUploadedFiles.splice(index, 1);
+      renderFileChips();
+    }
+
+    function renderFileChips() {
+      var container = document.getElementById('fileChips');
+      if (!alertUploadedFiles.length) { container.innerHTML = ''; return; }
+      container.innerHTML = alertUploadedFiles.map(function (f, i) {
+        var sizeKB = (f.size / 1024).toFixed(0);
+        return '<span class="file-chi' + 'p">' + escapeHtml(f.name) + ' (' + sizeKB + ' Ko)' +
+               '<span class="remove-file" onclick="removeFile(' + i + ')">&times;</span></span>';
+      }).join('');
+    }
+
+    function escapeHtml(text) {
+      var div = document.createElement('div');
+      div.appendChild(document.createTextNode(text));
+      return div.innerHTML;
+    }
+
+    /* -- Client search --------------------------------------- */
+    var alertSearchTimeout;
+    async function searchAlertClient() {
+      var q = document.getElementById('alertClientSearch').value.trim();
+      var div = document.getElementById('alertClientResults');
+      if (q.length < 2) { div.classList.remove('show'); return; }
+      clearTimeout(alertSearchTimeout);
+      alertSearchTimeout = setTimeout(async function () {
+        try {
+          var res = await SF.apiFetch('/api/v1/clients?recherche=' + encodeURIComponent(q) + '&page=0&size=10');
+          if (res && res.ok) {
+            var data = await res.json();
+            var items = data.content || data || [];
+            if (!items.length) {
+              div.innerHTML = '<div style="padding:10px;color:#7f8c8d;font-style:italic;">Aucun client trouve.</div>';
+            } else {
+              div.innerHTML = items.map(function (c) {
+                return '<div class="search-result-item" onclick="pickAlertClient(' + c.idClient + ',\'' +
+                       escapeHtml(c.nom + ' ' + c.prenom) + '\',\'' + escapeHtml(c.numeroClient || '') + '\')">' +
+                       escapeHtml(c.nom + ' ' + c.prenom) + ' &mdash; ' + escapeHtml(c.numeroClient || '') + '</div>';
+              }).join('');
+            }
+            div.classList.add('show');
+          }
+        } catch (e) { /* silent */ }
+      }, 300);
+    }
+
+    function pickAlertClient(id, name, num) {
+      alertClientId = id;
+      document.getElementById('alertClientSearch').value = name;
+      document.getElementById('alertClientResults').classList.remove('show');
+      var info = document.getElementById('alertClientInfo');
+      info.style.display = '';
+      info.innerHTML = '<div style="background:#f0f6fa;border:1px solid #C9DFE8;border-radius:8px;padding:12px;margin-top:8px;">' +
+                       '<strong>' + name + '</strong> &mdash; ' + num +
+                       ' <span style="color:#7f8c8d;font-size:0.85em;margin-left:8px;cursor:pointer;" onclick="clearClient()">Changer</span></div>';
+    }
+
+    function clearClient() {
+      alertClientId = null;
+      document.getElementById('alertClientSearch').value = '';
+      document.getElementById('alertClientInfo').style.display = 'none';
+      document.getElementById('alertClientInfo').innerHTML = '';
+    }
+
+    /* -- Validation ------------------------------------------ */
+    function validateForm() {
+      var valide = true;
+
+      var type = document.getElementById('alertType');
+      if (!type.value) {
+        type.classList.add('is-invalid');
+        document.getElementById('alertType-error').style.display = 'block';
+        valide = false;
+      } else {
+        type.classList.remove('is-invalid');
+        document.getElementById('alertType-error').style.display = 'none';
+      }
+
+      var desc = document.getElementById('alertDescription');
+      if (!desc.value.trim()) {
+        desc.classList.add('is-invalid');
+        document.getElementById('alertDescription-error').style.display = 'block';
+        valide = false;
+      } else {
+        desc.classList.remove('is-invalid');
+        document.getElementById('alertDescription-error').style.display = 'none';
+      }
+
+      return valide;
+    }
+
+    /* -- Submit ---------------------------------------------- */
+    function getSelectedSeverity() {
+      var checked = document.querySelector('input[name="alertSeverity"]:checked');
+      return checked ? checked.value : 'MOYENNE';
+    }
+
+    function setBtnLoading(btn, loading) {
+      if (!btn) return;
+      var spinner = btn.querySelector('.login-spinner');
+      var label = btn.querySelector('.btn-text');
+      btn.disabled = loading;
+      if (spinner) spinner.style.display = loading ? 'inline-block' : 'none';
+      if (label) label.style.display = loading ? 'none' : '';
+    }
+
+    async function sauvegarderBrouillonAlert() {
+      await submitAlert('BROUILLON');
+    }
+
+    async function soumettreAlert() {
+      if (!validateForm()) {
+        showToast('Veuillez completer tous les champs obligatoires.', 'error');
+        return;
+      }
+      await submitAlert('OUVERTE');
+    }
+
+    async function submitAlert(statut) {
+      var btn = (statut === 'BROUILLON') ? document.getElementById('btnBrouillon') : document.getElementById('btnSubmit');
+      var errBox = document.getElementById('submitError');
+      errBox.style.display = 'none';
+      setBtnLoading(btn, true);
+
+      var payload = {
+        clientId: alertClientId,
+        transactionRef: document.getElementById('alertTxRef').value.trim() || null,
+        typeAlerte: document.getElementById('alertType').value,
+        severite: getSelectedSeverity(),
+        description: document.getElementById('alertDescription').value.trim(),
+        statut: statut
+      };
+
+      try {
+        var res = await SF.apiFetch('/api/v1/conformite/alertes-lcbft', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        if (!res) { setBtnLoading(btn, false); return; } // 401 redirected
+
+        var data = await res.json().catch(function () { return {}; });
+
+        if (res.status === 201 || res.status === 200) {
+          // Upload supporting documents if any
+          if (alertUploadedFiles.length && data.id) {
+            try {
+              for (var i = 0; i < alertUploadedFiles.length; i++) {
+                var formData = new FormData();
+                formData.append('file', alertUploadedFiles[i]);
+                formData.append('typeDocument', 'JUSTIFICATIF_LCBFT');
+                await SF.apiFetch('/api/v1/conformite/alertes-lcbft/' + data.id + '/documents', {
+                  method: 'POST',
+                  body: formData
+                });
+              }
+              showToast('Pieces justificatives envoyees.', 'success');
+            } catch (uploadErr) {
+              showToast('Alerte creee, mais erreur lors de l\'envoi des documents : ' + uploadErr.message, 'warning');
+            }
+          }
+
+          showToast(statut === 'BROUILLON' ? 'Brouillon sauvegarde.' : 'Alerte soumise !', 'success');
+          if (statut === 'OUVERTE') {
+            setTimeout(function () { window.location.href = 'alertes-lcbft-traiter.html'; }, 1500);
+          } else {
+            setBtnLoading(btn, false);
+          }
+
+        } else if (res.status === 400) {
+          var msg = data.errors
+            ? data.errors.map(function (e) { return e.defaultMessage || e.message || e; }).join('. ')
+            : (data.message || 'Donnees invalides.');
+          errBox.textContent = msg;
+          errBox.style.display = 'block';
+          showToast('Donnees invalides. Verifiez le formulaire.', 'error');
+          setBtnLoading(btn, false);
+
+        } else {
+          var msg2 = data.message || 'Erreur serveur. Reessayez.';
+          errBox.textContent = msg2;
+          errBox.style.display = 'block';
+          showToast(msg2, 'error');
+          setBtnLoading(btn, false);
+        }
+      } catch (e) {
+        errBox.textContent = e.message;
+        errBox.style.display = 'block';
+        showToast(e.message, 'error');
+        setBtnLoading(btn, false);
+      }
+    }
+
+    // Close search dropdown on outside click
+    document.addEventListener('click', function (e) {
+      var results = document.getElementById('alertClientResults');
+      var search = document.getElementById('alertClientSearch');
+      if (!search.contains(e.target) && !results.contains(e.target)) {
+        results.classList.remove('show');
+      }
+    });
+  </script>
+</body>
+</html>

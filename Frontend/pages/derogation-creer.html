@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nouvelle Dérogation - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Nouvelle dérogation</div>
+            <div class="topbar-breadcrumb">Accueil / Pilotage &amp; Audit / Exceptions / Création</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a href="exceptions.html" class="btn btn-ghost btn-sm">← Retour</a>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Demande de dérogation</h1>
+            <p class="page-subtitle">Soumettez une demande de dérogation pour une opération, un compte ou un crédit hors procédure standard.</p>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Formulaire -->
+          <div class="card" style="max-width: 720px;">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Formulaire de dérogation</div>
+                <div class="card-subtitle">Endpoint : POST /api/v1/exceptions/derogations</div>
+              </div>
+            </div>
+            <div style="padding: 0 20px 20px;">
+              <form id="derogationForm" novalidate>
+
+                <!-- Type de dérogation -->
+                <div class="form-group">
+                  <label class="form-label" for="typeDerogation">Type de dérogation *</label>
+                  <select class="form-control" id="typeDerogation" name="typeDerogation" required>
+                    <option value="">Sélectionner un type…</option>
+                    <option value="CREDIT">Crédit</option>
+                    <option value="COMPTE">Compte</option>
+                    <option value="OPERATION">Opération</option>
+                  </select>
+                  <div class="field-error" id="typeDerogation-error">Le type de dérogation est obligatoire.</div>
+                </div>
+
+                <!-- Recherche de référence -->
+                <div class="form-group">
+                  <label class="form-label" for="referenceSearch">Référence *</label>
+                  <div style="display: flex; gap: 8px;">
+                    <input type="text" class="form-control" id="referenceSearch" name="referenceSearch"
+                           placeholder="Rechercher par numéro de compte, dossier ou transaction…"
+                           required maxlength="80" style="flex: 1;">
+                    <button type="button" class="btn btn-outline btn-sm" id="btnSearchRef" title="Rechercher">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      Rechercher
+                    </button>
+                  </div>
+                  <div class="field-error" id="referenceSearch-error">La référence est obligatoire.</div>
+                  <div id="refSearchResult" style="margin-top: 8px; display: none;"></div>
+                  <input type="hidden" id="referenceId" name="referenceId">
+                </div>
+
+                <!-- Description de la dérogation -->
+                <div class="form-group">
+                  <label class="form-label" for="description">Objet de la dérogation *</label>
+                  <input type="text" class="form-control" id="description" name="description"
+                         placeholder="Ex: Dépassement plafond retrait journalier" required maxlength="200">
+                  <div class="field-error" id="description-error">L'objet de la dérogation est obligatoire.</div>
+                </div>
+
+                <!-- Justification -->
+                <div class="form-group">
+                  <label class="form-label" for="justification">Justification détaillée *</label>
+                  <textarea class="form-control" id="justification" name="justification" rows="5"
+                            placeholder="Décrivez les raisons qui motivent cette dérogation, le contexte et les circonstances particulières…"
+                            required maxlength="2000"></textarea>
+                  <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                    <div class="field-error" id="justification-error">La justification est obligatoire.</div>
+                    <span style="font-size: 12px; color: #4A7A8A;"><span id="justifCount">0</span>/2000</span>
+                  </div>
+                </div>
+
+                <!-- Documents justificatifs -->
+                <div class="form-group">
+                  <label class="form-label">Documents justificatifs</label>
+                  <div class="upload-zone" id="uploadZoneDocs">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <p id="docsUploadLabel">Glisser-déposer les justificatifs ici</p>
+                    <p class="upload-hint">ou cliquer pour parcourir (PDF, JPG, PNG — Max 10 Mo par fichier)</p>
+                    <input type="file" accept="application/pdf,image/*" style="display: none;" id="docsUpload" multiple>
+                  </div>
+                  <div id="fileList" style="margin-top: 8px;"></div>
+                </div>
+
+                <!-- Niveau d'urgence -->
+                <div class="form-group">
+                  <label class="form-label" for="urgence">Niveau d'urgence *</label>
+                  <select class="form-control" id="urgence" name="urgence" required>
+                    <option value="">Sélectionner un niveau…</option>
+                    <option value="BASSE">Basse — Traitement standard (5 jours ouvrés)</option>
+                    <option value="MOYENNE" selected>Moyenne — Traitement prioritaire (48h)</option>
+                    <option value="HAUTE">Haute — Traitement urgent (24h)</option>
+                    <option value="CRITIQUE">Critique — Traitement immédiat</option>
+                  </select>
+                  <div class="field-error" id="urgence-error">Le niveau d'urgence est obligatoire.</div>
+                </div>
+
+                <!-- Erreur de soumission -->
+                <div id="submitError" style="display:none; background:#FFF3F3; border-left:3px solid #D93025; padding:10px 14px; border-radius:6px; color:#D93025; font-size:13px; margin-bottom:16px;"></div>
+
+                <!-- Boutons -->
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                  <a href="exceptions.html" class="btn btn-outline">Annuler</a>
+                  <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <span class="btn-text">Soumettre la dérogation</span>
+                    <div class="login-spinner" style="display:none; width:18px; height:18px;"></div>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Panneau latéral -->
+          <aside class="card">
+            <div class="card-title" style="margin-bottom: 16px;">Informations</div>
+            <div class="info-row"><span class="info-label">Statut initial</span><span class="info-value"><span class="badge badge-pending">En attente</span></span></div>
+            <div class="info-row"><span class="info-label">Validateur</span><span class="info-value">Superviseur agence</span></div>
+            <div class="info-row"><span class="info-label">Escalade auto</span><span class="info-value">Si critique → N2</span></div>
+            <div class="info-row"><span class="info-label">SLA moyen</span><span class="info-value">3h12</span></div>
+            <hr style="border:0; border-top:1px solid #C9DFE8; margin:20px 0;">
+            <div class="card-title" style="margin-bottom: 12px;">Types de dérogation</div>
+            <div style="font-size: 13px; color: #4A7A8A; line-height: 1.7;">
+              <p><strong>Crédit</strong> — Dépassement de plafond, taux exceptionnel, délai de grâce, restructuration.</p>
+              <p><strong>Compte</strong> — Ouverture hors critères, déblocage exceptionnel, modification plafond.</p>
+              <p><strong>Opération</strong> — Retrait hors plafond, virement exceptionnel, rachat anticipé.</p>
+            </div>
+            <hr style="border:0; border-top:1px solid #C9DFE8; margin:20px 0;">
+            <div class="card-title" style="margin-bottom: 12px;">Niveaux d'urgence</div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <span class="badge badge-active" style="width: fit-content;">Basse — 5 jours</span>
+              <span class="badge badge-info" style="width: fit-content;">Moyenne — 48h</span>
+              <span class="badge badge-warning" style="width: fit-content;">Haute — 24h</span>
+              <span class="badge badge-danger" style="width: fit-content;">Critique — Immédiat</span>
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ── Upload zone click & file list ──────────────────── */
+    var uploadedFiles = [];
+
+    document.getElementById('uploadZoneDocs').addEventListener('click', function () {
+      document.getElementById('docsUpload').click();
+    });
+
+    document.getElementById('docsUpload').addEventListener('change', function () {
+      var files = Array.from(this.files);
+      if (!files.length) return;
+
+      files.forEach(function (f) {
+        if (f.size > 10 * 1024 * 1024) {
+          showToast('Le fichier "' + f.name + '" dépasse 10 Mo.', 'error');
+          return;
+        }
+        uploadedFiles.push(f);
+      });
+
+      renderFileList();
+      document.getElementById('docsUploadLabel').textContent = uploadedFiles.length + ' fichier(s) sélectionné(s)';
+    });
+
+    function renderFileList() {
+      var container = document.getElementById('fileList');
+      if (!uploadedFiles.length) {
+        container.innerHTML = '';
+        return;
+      }
+      container.innerHTML = uploadedFiles.map(function (f, i) {
+        return '<div style="display:flex; align-items:center; justify-content:space-between; padding:6px 10px; background:#F0F7FA; border-radius:6px; margin-bottom:4px; font-size:13px;">' +
+          '<span>📄 ' + f.name + ' <span style="color:#4A7A8A;">(' + (f.size / 1024).toFixed(0) + ' Ko)</span></span>' +
+          '<button type="button" class="btn btn-ghost btn-sm" onclick="removeFile(' + i + ')" style="color:#D93025; padding:2px 6px;">✕</button>' +
+          '</div>';
+      }).join('');
+    }
+
+    function removeFile(index) {
+      uploadedFiles.splice(index, 1);
+      renderFileList();
+      document.getElementById('docsUploadLabel').textContent = uploadedFiles.length ? uploadedFiles.length + ' fichier(s) sélectionné(s)' : 'Glisser-déposer les justificatifs ici';
+    }
+
+    /* ── Character counter for justification ───────────── */
+    document.getElementById('justification').addEventListener('input', function () {
+      document.getElementById('justifCount').textContent = this.value.length;
+    });
+
+    /* ── Reference search ──────────────────────────────── */
+    document.getElementById('btnSearchRef').addEventListener('click', async function () {
+      var query = document.getElementById('referenceSearch').value.trim();
+      var type = document.getElementById('typeDerogation').value;
+      var resultBox = document.getElementById('refSearchResult');
+
+      if (!query) {
+        showToast('Veuillez saisir une référence à rechercher.', 'warning');
+        return;
+      }
+      if (!type) {
+        showToast('Veuillez d\'abord sélectionner un type de dérogation.', 'warning');
+        return;
+      }
+
+      resultBox.style.display = 'block';
+      resultBox.innerHTML = '<div style="color:#4A7A8A; font-size:13px;">Recherche en cours…</div>';
+
+      var endpoint = '';
+      if (type === 'CREDIT') endpoint = '/api/v1/credits?recherche=' + encodeURIComponent(query);
+      else if (type === 'COMPTE') endpoint = '/api/v1/comptes?recherche=' + encodeURIComponent(query);
+      else if (type === 'OPERATION') endpoint = '/api/v1/transactions?recherche=' + encodeURIComponent(query);
+
+      try {
+        var res = await SF.apiFetch(endpoint);
+        if (res && res.ok) {
+          var data = await res.json();
+          var items = Array.isArray(data) ? data : (data.content || []);
+          if (items.length === 0) {
+            resultBox.innerHTML = '<div style="color:#D93025; font-size:13px;">Aucun résultat trouvé.</div>';
+          } else {
+            resultBox.innerHTML = items.slice(0, 5).map(function (item) {
+              var label = item.numeroContrat || item.numCompte || item.referenceUnique || item.reference || item.id || '-';
+              var detail = item.clientNom || item.typeCompte || item.typeOperation || '';
+              return '<div style="padding:8px 10px; background:#F0F7FA; border-radius:6px; margin-bottom:4px; cursor:pointer; font-size:13px;" ' +
+                'onclick="selectRef(\'' + label + '\', \'' + (item.id || '') + '\')">' +
+                '<strong>' + label + '</strong>' + (detail ? ' — ' + detail : '') +
+                '</div>';
+            }).join('');
+          }
+        } else {
+          resultBox.innerHTML = '<div style="color:#D93025; font-size:13px;">Erreur lors de la recherche.</div>';
+        }
+      } catch (e) {
+        resultBox.innerHTML = '<div style="color:#D93025; font-size:13px;">' + e.message + '</div>';
+      }
+    });
+
+    function selectRef(label, id) {
+      document.getElementById('referenceSearch').value = label;
+      document.getElementById('referenceId').value = id;
+      document.getElementById('refSearchResult').style.display = 'none';
+      showToast('Référence "' + label + '" sélectionnée.', 'success');
+    }
+
+    /* ── Form submission → API ─────────────────────────── */
+    document.getElementById('derogationForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      var btn = document.getElementById('submitBtn');
+      var errBox = document.getElementById('submitError');
+      var spinner = btn.querySelector('.login-spinner');
+      var label = btn.querySelector('.btn-text');
+
+      // Read fields
+      var typeDerogation = document.getElementById('typeDerogation').value;
+      var reference = document.getElementById('referenceSearch').value.trim();
+      var referenceId = document.getElementById('referenceId').value;
+      var description = document.getElementById('description').value.trim();
+      var justification = document.getElementById('justification').value.trim();
+      var urgence = document.getElementById('urgence').value;
+
+      // Validation
+      var valide = true;
+      var champs = [
+        { id: 'typeDerogation', valeur: typeDerogation, errId: 'typeDerogation-error' },
+        { id: 'referenceSearch', valeur: reference, errId: 'referenceSearch-error' },
+        { id: 'description', valeur: description, errId: 'description-error' },
+        { id: 'justification', valeur: justification, errId: 'justification-error' },
+        { id: 'urgence', valeur: urgence, errId: 'urgence-error' }
+      ];
+
+      champs.forEach(function (ch) {
+        var input = document.getElementById(ch.id);
+        var err = document.getElementById(ch.errId);
+        if (!ch.valeur) {
+          input.classList.add('is-invalid');
+          if (err) err.style.display = 'block';
+          valide = false;
+        } else {
+          input.classList.remove('is-invalid');
+          if (err) err.style.display = 'none';
+        }
+      });
+
+      if (!valide) {
+        showToast('Veuillez compléter tous les champs obligatoires.', 'error');
+        return;
+      }
+
+      // Loading state
+      errBox.style.display = 'none';
+      btn.disabled = true;
+      label.style.display = 'none';
+      spinner.style.display = 'inline-block';
+
+      // Payload
+      var payload = {
+        type: typeDerogation,
+        reference: reference,
+        referenceId: referenceId || null,
+        description: description,
+        justification: justification,
+        niveauUrgence: urgence,
+        dateCreation: new Date().toISOString()
+      };
+
+      try {
+        var res = await SF.apiFetch('/api/v1/exceptions/derogations', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        if (!res) return; // 401 redirected
+
+        var data = await res.json().catch(function () { return {}; });
+
+        if (res.status === 201 || res.status === 200) {
+          showToast('Dérogation soumise avec succès !', 'success');
+
+          // Upload supporting documents if any
+          if (uploadedFiles.length && data.idDerogation) {
+            try {
+              for (var i = 0; i < uploadedFiles.length; i++) {
+                var formData = new FormData();
+                formData.append('file', uploadedFiles[i]);
+                formData.append('typeDocument', 'JUSTIFICATIF_DEROGATION');
+
+                await SF.apiFetch('/api/v1/exceptions/derogations/' + data.idDerogation + '/documents', {
+                  method: 'POST',
+                  headers: { 'Authorization': 'Bearer ' + SF.getToken() },
+                  body: formData
+                });
+              }
+              showToast('Documents justificatifs envoyés.', 'success');
+            } catch (uploadErr) {
+              showToast('Dérogation créée, mais erreur lors de l\'envoi des documents : ' + uploadErr.message, 'warning');
+            }
+          }
+
+          setTimeout(function () {
+            window.location.href = 'exceptions.html';
+          }, 1500);
+
+        } else if (res.status === 400) {
+          var msg = data.errors ? data.errors.map(function (e) { return e.defaultMessage || e.message || e; }).join(' · ') : (data.message || 'Données invalides.');
+          errBox.textContent = msg;
+          errBox.style.display = 'block';
+          showToast('Données invalides. Vérifiez le formulaire.', 'error');
+
+        } else {
+          var msg2 = data.message || 'Erreur serveur. Réessayez.';
+          errBox.textContent = msg2;
+          errBox.style.display = 'block';
+          showToast(msg2, 'error');
+        }
+
+      } catch (err) {
+        showToast('Impossible de joindre le serveur. Vérifiez que le backend est démarré.', 'error');
+      } finally {
+        btn.disabled = false;
+        label.style.display = 'inline';
+        spinner.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

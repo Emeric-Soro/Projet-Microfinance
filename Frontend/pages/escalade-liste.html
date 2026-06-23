@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liste des escalades - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Escalades</div>
+            <div class="topbar-breadcrumb">Accueil / Pilotage &amp; Audit / Exceptions / Escalades</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a href="escalade-creer.html" class="btn btn-primary btn-sm">+ Nouvelle escalade</a>
+          <button class="topbar-icon-btn" onclick="loadEscalades()" title="Rafraîchir">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Escalades</h1>
+            <p class="page-subtitle">Incidents signalés et leur suivi — Endpoint : GET /api/v1/exceptions/escalades</p>
+          </div>
+          <a href="escalade-creer.html" class="btn btn-primary">+ Nouvelle escalade</a>
+        </div>
+
+        <!-- KPI Cards -->
+        <section class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Total escalades</div>
+              <div class="kpi-value" id="kpiTotal">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">En cours</div>
+              <div class="kpi-value" id="kpiEnCours">-</div>
+              <div class="kpi-trend down" id="kpiEnCoursTrend"></div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Résolues</div>
+              <div class="kpi-value" id="kpiResolues">-</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-info">
+              <div class="kpi-label">Critiques (N4)</div>
+              <div class="kpi-value" id="kpiCritiques">-</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Table -->
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Liste des escalades</div>
+              <div class="card-subtitle">Endpoint : /api/v1/exceptions/escalades</div>
+            </div>
+          </div>
+
+          <div class="filter-bar">
+            <input class="form-control" placeholder="Rechercher par description, type, responsable..." id="escSearch" oninput="filterEsc()">
+            <select class="form-control" id="escNiveau" onchange="filterEsc()">
+              <option value="ALL">Tous niveaux</option>
+              <option value="N1">N1 - Faible</option>
+              <option value="N2">N2 - Moyen</option>
+              <option value="N3">N3 - Élevé</option>
+              <option value="N4">N4 - Critique</option>
+            </select>
+            <select class="form-control" id="escStatut" onchange="filterEsc()">
+              <option value="ALL">Tous statuts</option>
+              <option value="OUVERTE">Ouverte</option>
+              <option value="EN_COURS">En cours</option>
+              <option value="RESOLUE">Résolue</option>
+              <option value="FERMEE">Fermée</option>
+            </select>
+            <select class="form-control" id="escType" onchange="filterEsc()">
+              <option value="ALL">Tous types</option>
+              <option value="TECHNIQUE">Technique</option>
+              <option value="FONCTIONNEL">Fonctionnel</option>
+              <option value="SECURITE">Sécurité</option>
+              <option value="REGLEMENTAIRE">Réglementaire</option>
+              <option value="OPERATIONNEL">Opérationnel</option>
+            </select>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Niveau</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th>Responsable</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="escBody">
+              <tr><td colspan="7" style="text-align:center;color:#4A7A8A;padding:20px;">Chargement...</td></tr>
+            </tbody>
+          </table>
+
+          <!-- Pagination -->
+          <div class="pagination" id="paginationBar" style="display:none;">
+            <div class="pagination-info" id="paginationInfo"></div>
+            <div class="pagination-buttons" id="paginationButtons"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    var allEsc = [];
+    var currentPage = 0;
+    var pageSize = 20;
+    var totalElements = 0;
+    var totalPages = 0;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      loadEscalades();
+    });
+
+    /* -- Load escalades from API ---------------------------------- */
+    async function loadEscalades(page) {
+      if (typeof page === 'number') {
+        currentPage = page;
+      }
+
+      var tbody = document.getElementById('escBody');
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#4A7A8A;padding:20px;">Chargement...</td></tr>';
+
+      try {
+        var res = await SF.apiFetch('/api/v1/exceptions/escalades?page=' + currentPage + '&size=' + pageSize + '&sort=dateCreation,desc');
+
+        if (!res) return; // 401 redirected
+
+        if (res.ok) {
+          var data = await res.json();
+
+          // Paginated response
+          if (data.content !== undefined) {
+            allEsc = data.content || [];
+            totalElements = data.totalElements || 0;
+            totalPages = data.totalPages || 0;
+          } else {
+            // Non-paginated fallback
+            allEsc = Array.isArray(data) ? data : [];
+            totalElements = allEsc.length;
+            totalPages = 1;
+          }
+
+          renderEsc(allEsc);
+          updateKPIs(allEsc);
+          renderPagination();
+        } else {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#D93025;padding:20px;">Erreur lors du chargement (HTTP ' + res.status + ')</td></tr>';
+        }
+      } catch (e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#D93025;padding:20px;">Impossible de charger les escalades.</td></tr>';
+      }
+    }
+
+    /* -- Render table rows ---------------------------------------- */
+    function renderEsc(items) {
+      var tbody = document.getElementById('escBody');
+
+      if (!items || !items.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#4A7A8A;padding:20px;">Aucune escalade trouvée.</td></tr>';
+        document.getElementById('paginationBar').style.display = 'none';
+        return;
+      }
+
+      tbody.innerHTML = items.map(function (e) {
+        var niveauBadge = getNiveauBadge(e.niveau);
+        var statutBadge = getStatutBadge(e.statut);
+        var typeLabel = formatType(e.typeIncident);
+        var dateStr = formatDate(e.dateCreation || e.createdAt);
+
+        return '<tr>' +
+          '<td style="font-family:monospace;">' + (e.id || '-') + '</td>' +
+          '<td>' + typeLabel + '</td>' +
+          '<td><span class="badge ' + niveauBadge.cls + '">' + niveauBadge.label + '</span></td>' +
+          '<td><span class="badge ' + statutBadge.cls + '">' + statutBadge.label + '</span></td>' +
+          '<td>' + dateStr + '</td>' +
+          '<td>' + (e.responsable || '-') + '</td>' +
+          '<td>' +
+            '<a href="escalade-detail.html?id=' + e.id + '" class="btn btn-outline btn-sm">Voir</a>' +
+            (e.statut !== 'RESOLUE' && e.statut !== 'FERMEE'
+              ? ' <a href="escalade-traiter.html?id=' + e.id + '" class="btn btn-primary btn-sm">Traiter</a>'
+              : '') +
+          '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    /* -- Update KPI cards ----------------------------------------- */
+    function updateKPIs(items) {
+      var total = totalElements || items.length;
+      var enCours = 0;
+      var resolues = 0;
+      var critiques = 0;
+
+      items.forEach(function (e) {
+        var s = (e.statut || '').toUpperCase();
+        var n = (e.niveau || '').toUpperCase();
+        if (s === 'EN_COURS') enCours++;
+        if (s === 'RESOLUE') resolues++;
+        if (n === 'N4') critiques++;
+      });
+
+      document.getElementById('kpiTotal').textContent = total;
+      document.getElementById('kpiEnCours').textContent = enCours;
+      document.getElementById('kpiEnCoursTrend').textContent = enCours > 0 ? enCours + ' en cours de traitement' : 'Aucune en cours';
+      document.getElementById('kpiResolues').textContent = resolues;
+      document.getElementById('kpiCritiques').textContent = critiques;
+    }
+
+    /* -- Pagination ----------------------------------------------- */
+    function renderPagination() {
+      var bar = document.getElementById('paginationBar');
+      var info = document.getElementById('paginationInfo');
+      var buttons = document.getElementById('paginationButtons');
+
+      if (totalPages <= 1) {
+        bar.style.display = 'none';
+        return;
+      }
+
+      bar.style.display = 'flex';
+
+      var start = currentPage * pageSize + 1;
+      var end = Math.min((currentPage + 1) * pageSize, totalElements);
+      info.textContent = 'Affichage ' + start + '-' + end + ' sur ' + totalElements;
+
+      var html = '';
+
+      // Previous button
+      html += '<button class="page-btn' + (currentPage === 0 ? ' disabled' : '') + '"' +
+        (currentPage === 0 ? ' disabled' : ' onclick="loadEscalades(' + (currentPage - 1) + ')"') +
+        '>&laquo;</button>';
+
+      // Page buttons (show max 5 pages around current)
+      var startPage = Math.max(0, currentPage - 2);
+      var endPage = Math.min(totalPages, startPage + 5);
+      if (endPage - startPage < 5) {
+        startPage = Math.max(0, endPage - 5);
+      }
+
+      for (var i = startPage; i < endPage; i++) {
+        html += '<button class="page-btn' + (i === currentPage ? ' active' : '') + '"' +
+          ' onclick="loadEscalades(' + i + ')">' + (i + 1) + '</button>';
+      }
+
+      // Next button
+      html += '<button class="page-btn' + (currentPage >= totalPages - 1 ? ' disabled' : '') + '"' +
+        (currentPage >= totalPages - 1 ? ' disabled' : ' onclick="loadEscalades(' + (currentPage + 1) + ')"') +
+        '>&raquo;</button>';
+
+      buttons.innerHTML = html;
+    }
+
+    /* -- Filters -------------------------------------------------- */
+    function filterEsc() {
+      var q = document.getElementById('escSearch').value.toLowerCase();
+      var niveau = document.getElementById('escNiveau').value;
+      var statut = document.getElementById('escStatut').value;
+      var type = document.getElementById('escType').value;
+
+      var filtered = allEsc.filter(function (e) {
+        var matchQ = !q ||
+          (e.description || '').toLowerCase().includes(q) ||
+          (e.typeIncident || '').toLowerCase().includes(q) ||
+          (e.responsable || '').toLowerCase().includes(q);
+        var matchN = niveau === 'ALL' || (e.niveau || '').toUpperCase() === niveau;
+        var matchS = statut === 'ALL' || (e.statut || '').toUpperCase() === statut;
+        var matchT = type === 'ALL' || (e.typeIncident || '').toUpperCase() === type;
+        return matchQ && matchN && matchS && matchT;
+      });
+
+      renderEsc(filtered);
+      updateKPIs(filtered);
+      renderPagination();
+    }
+
+    /* -- Badge mappings ------------------------------------------- */
+    function getNiveauBadge(niveau) {
+      var map = {
+        'N1': { cls: 'badge-info',    label: 'N1 - Faible' },
+        'N2': { cls: 'badge-warning',  label: 'N2 - Moyen' },
+        'N3': { cls: 'badge-pending',  label: 'N3 - Élevé' },
+        'N4': { cls: 'badge-danger',   label: 'N4 - Critique' }
+      };
+      return map[(niveau || '').toUpperCase()] || { cls: 'badge-info', label: niveau || '-' };
+    }
+
+    function getStatutBadge(statut) {
+      var map = {
+        'OUVERTE':   { cls: 'badge-info',     label: 'Ouverte' },
+        'EN_COURS':  { cls: 'badge-pending',   label: 'En cours' },
+        'RESOLUE':   { cls: 'badge-success',   label: 'Résolue' },
+        'FERMEE':    { cls: 'badge-secondary', label: 'Fermée' }
+      };
+      return map[(statut || '').toUpperCase()] || { cls: 'badge-info', label: statut || '-' };
+    }
+
+    /* -- Type label mapping --------------------------------------- */
+    function formatType(type) {
+      var map = {
+        'TECHNIQUE':      'Technique',
+        'FONCTIONNEL':    'Fonctionnel',
+        'SECURITE':       'Sécurité',
+        'REGLEMENTAIRE':  'Réglementaire',
+        'OPERATIONNEL':   'Opérationnel'
+      };
+      return map[(type || '').toUpperCase()] || type || '-';
+    }
+
+    /* -- Helpers -------------------------------------------------- */
+    function formatDate(d) {
+      if (!d) return '-';
+      try {
+        return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      } catch (e) {
+        return d;
+      }
+    }
+  </script>
+</body>
+</html>
