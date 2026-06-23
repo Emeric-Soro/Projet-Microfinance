@@ -15,12 +15,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Base64;
 
 import java.time.LocalDate;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 public class ClientServiceImpl implements ClientService {
+
+    @Value("${app.file.storage-path:./uploads/documents}")
+    private String storagePath;
 
     private final ClientRepository clientRepository;
     private final StatutClientRepository statutClientRepository;
@@ -175,8 +184,21 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     @Transactional
-    public Client enregistrerDocumentKycMobile(Long idClient, String typeDocument, String nomFichier) {
+    public Client enregistrerDocumentKycMobile(Long idClient, String typeDocument, String nomFichier, String contenuBase64) {
         Client client = chargerClient(idClient);
+
+        if (contenuBase64 != null && !contenuBase64.isBlank()) {
+            try {
+                byte[] fileBytes = Base64.getDecoder().decode(contenuBase64.trim());
+                Path dossierStockage = Paths.get(storagePath).toAbsolutePath().normalize();
+                Files.createDirectories(dossierStockage);
+                Path cheminFichier = dossierStockage.resolve(nomFichier);
+                Files.write(cheminFichier, fileBytes);
+            } catch (IOException | IllegalArgumentException e) {
+                throw new IllegalStateException("Erreur lors de l'enregistrement physique du document KYC : " + e.getMessage(), e);
+            }
+        }
+
         String documentUrl = "upload/" + nomFichier;
         switch (typeDocument.toUpperCase()) {
             case "PIECE_IDENTITE" -> client.setPhotoIdentiteUrl(documentUrl);

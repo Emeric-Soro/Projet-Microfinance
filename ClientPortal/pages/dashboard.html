@@ -8,30 +8,80 @@
   <link rel="stylesheet" href="../assets/css/portal.css">
 </head>
 <body>
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
+  <button type="button" class="mobile-sidebar-toggle" aria-label="Ouvrir le menu" aria-controls="portalSidebar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M4 6h16M4 12h16M4 18h16"></path>
+    </svg>
+  </button>
 
   <div class="portal-layout">
     <!-- Sidebar -->
-    <aside class="portal-sidebar">
-      <div class="portal-brand">
-        <div class="brand-icon">S</div>
-        <span class="brand-name">Soutra Finance</span>
+    <aside class="portal-sidebar" id="portalSidebar">
+      <div class="sidebar-header">
+        <img class="sidebar-logo" src="../assets/images/logo.png" alt="Logo">
+        <div class="sidebar-brand">SOUTRA FINANCE</div>
+        <div class="sidebar-subtitle">Espace client</div>
       </div>
-      <ul class="nav-menu">
-        <li class="nav-item active"><a href="dashboard">📊 Tableau de bord</a></li>
-        <li class="nav-item"><a href="comptes">💳 Mes Comptes</a></li>
-        <li class="nav-item"><a href="virement">💸 Virements</a></li>
-        <li class="nav-item"><a href="credits">📈 Crédits</a></li>
-        <li class="nav-item"><a href="reclamations">✉️ Réclamations</a></li>
-      </ul>
+      <nav class="sidebar-nav" aria-label="Navigation client">
+        <div class="nav-section-title">Services</div>
+        <a class="nav-item active" href="dashboard" aria-current="page">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+          </svg>
+          <span>Tableau de bord</span>
+        </a>
+        <a class="nav-item" href="comptes">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+            <path d="M2 10h20"></path>
+          </svg>
+          <span>Mes Comptes</span>
+        </a>
+        <a class="nav-item" href="virement">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M7 17h10"></path>
+            <path d="M7 7h10"></path>
+            <path d="m14 4 3 3-3 3"></path>
+            <path d="m10 14-3 3 3 3"></path>
+          </svg>
+          <span>Virements</span>
+        </a>
+        <a class="nav-item" href="credits">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M3 3v18h18"></path>
+            <path d="m19 9-5 5-4-4-3 3"></path>
+          </svg>
+          <span>Crédits</span>
+        </a>
+        <a class="nav-item" href="reclamations">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M4 4h16v16H4z"></path>
+            <path d="m22 6-10 7L2 6"></path>
+          </svg>
+          <span>Réclamations</span>
+        </a>
+      </nav>
       <div class="sidebar-user">
-        <div class="user-avatar">👤</div>
+        <div class="user-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M20 21a8 8 0 0 0-16 0"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
         <div class="user-info">
           <span class="user-name" id="portalUserName">Chargement...</span>
           <span class="user-role">Client E-Banking</span>
         </div>
-        <a href="#" class="logout-btn" id="portalLogoutBtn" title="Se déconnecter">🚪</a>
+        <a href="#" class="logout-btn" id="portalLogoutBtn" title="Se déconnecter" aria-label="Se déconnecter">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <path d="m16 17 5-5-5-5"></path>
+            <path d="M21 12H9"></path>
+          </svg>
+        </a>
       </div>
     </aside>
 
@@ -47,35 +97,64 @@
       <!-- KYC Alert Banner (dynamic) -->
       <div class="kyc-alert-banner" id="kycBanner" style="display: none;">
         <div>
-          <div class="kyc-alert-title">⚠️ Dossier KYC incomplet ou en cours d'étude</div>
+          <div class="kyc-alert-title">
+            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+              <path d="M12 9v4"></path>
+              <path d="M12 17h.01"></path>
+            </svg>
+            <span>Dossier KYC incomplet ou en cours d'étude</span>
+          </div>
           <p style="font-size: 13px; color: var(--color-text-muted)">Certaines opérations comme les virements ou crédits peuvent être restreintes tant que votre compte n'est pas validé.</p>
         </div>
         <div id="kycBannerAction">
-          <a href="register#step-3" class="btn btn-accent btn-sm" style="padding: 8px 16px; font-size: 13px;">Transmettre les pièces</a>
+          <button onclick="openKycModal()" class="btn btn-accent btn-sm" style="padding: 8px 16px; font-size: 13px;">Transmettre les pièces</button>
         </div>
       </div>
 
       <!-- Quick Stats / Metrics -->
       <div class="grid-3">
-        <div class="card metric-card">
-          <span class="metric-icon">💰</span>
-          <div class="metric-label">Avoir total consolidé</div>
-          <div class="metric-value" id="soldeTotal">0 FCFA</div>
-          <span style="font-size: 11px; color: var(--color-success)">● Actif en temps réel</span>
+        <div class="kpi-card metric-card">
+          <div class="kpi-icon metric-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M12 2v20"></path>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <div class="kpi-label metric-label">Avoir total consolidé</div>
+            <div class="kpi-value metric-value" id="soldeTotal">0 FCFA</div>
+            <span class="kpi-trend up">Actif en temps réel</span>
+          </div>
         </div>
 
-        <div class="card metric-card">
-          <span class="metric-icon">💳</span>
-          <div class="metric-label">Comptes ouverts</div>
-          <div class="metric-value" id="nbComptes">0</div>
-          <span style="font-size: 11px; color: var(--color-text-muted)">Courants, épargnes et DAT</span>
+        <div class="kpi-card metric-card">
+          <div class="kpi-icon metric-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+              <path d="M2 10h20"></path>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <div class="kpi-label metric-label">Comptes ouverts</div>
+            <div class="kpi-value metric-value" id="nbComptes">0</div>
+            <span class="kpi-trend">Courants, épargnes et DAT</span>
+          </div>
         </div>
 
-        <div class="card metric-card">
-          <span class="metric-icon">✉️</span>
-          <div class="metric-label">Alertes actives</div>
-          <div class="metric-value" id="nbAlertes">0</div>
-          <span style="font-size: 11px; color: var(--color-text-muted)" id="alertesSub">Aucun incident de paiement</span>
+        <div class="kpi-card metric-card">
+          <div class="kpi-icon metric-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"></path>
+              <path d="M12 9v4"></path>
+              <path d="M12 17h.01"></path>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <div class="kpi-label metric-label">Alertes actives</div>
+            <div class="kpi-value metric-value" id="nbAlertes">0</div>
+            <span class="kpi-trend" id="alertesSub">Aucun incident de paiement</span>
+          </div>
         </div>
       </div>
 
@@ -84,7 +163,13 @@
         <!-- Accounts List -->
         <div class="card">
           <div class="card-header">
-            <span class="card-title">💳 Mes comptes bancaires</span>
+            <span class="card-title">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                <path d="M2 10h20"></path>
+              </svg>
+              Mes comptes bancaires
+            </span>
             <a href="comptes" style="font-size: 13px;">Gérer mes comptes ➔</a>
           </div>
           <div class="list-container" id="accountsList">
@@ -97,7 +182,15 @@
         <!-- Recent Operations -->
         <div class="card">
           <div class="card-header">
-            <span class="card-title">🔄 Dernières opérations</span>
+            <span class="card-title">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                <path d="M3 21v-5h5"></path>
+                <path d="M3 12a9 9 0 0 1 15.74-6.26L21 8"></path>
+                <path d="M16 8h5V3"></path>
+              </svg>
+              Dernières opérations
+            </span>
             <a href="comptes" style="font-size: 13px;">Voir tout l'historique</a>
           </div>
           <div class="list-container" id="operationsList">
@@ -111,17 +204,85 @@
       <!-- System alerts log panel (if any) -->
       <div class="card" id="alertsPanel" style="display: none;">
         <div class="card-header" style="border-bottom: none; margin-bottom: 0;">
-          <span class="card-title" style="color: var(--color-danger)">⚠️ Vigilance & Découverts</span>
+          <span class="card-title" style="color: var(--color-danger)">
+            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+              <path d="M12 9v4"></path>
+              <path d="M12 17h.01"></path>
+            </svg>
+            Vigilance & Découverts
+          </span>
         </div>
         <div class="list-container" id="alertsList" style="margin-top: 15px;">
         </div>
       </div>
+      <!-- KYC Upload Modal -->
+      <div id="kycModal" class="card ticket-modal">
+        <div class="card-header">
+          <span class="card-title">Transmettre mes pièces justificatives</span>
+          <button class="btn btn-outline btn-sm modal-close-btn" onclick="closeKycModal()" style="color: var(--color-danger); border-color: var(--color-danger);">Fermer</button>
+        </div>
+        <div style="padding: 20px;">
+          <p class="subtitle mb-20" style="font-size: 13px; color: var(--color-text-muted);">
+            Pour finaliser l'étude de votre dossier, veuillez téléverser vos pièces justificatives (fichiers PDF ou images &lt; 5Mo).
+          </p>
+          
+          <div id="kycNoFieldsMsg" style="display: none; text-align: center; padding: 20px 10px; color: var(--color-text-secondary); font-size: 14px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.1); margin-bottom: 20px;">
+            Toutes vos pièces justificatives ont déjà été transmises.
+          </div>
+
+          <div class="form-group mb-20" id="group-PHOTO_IDENTITE">
+            <label class="form-label" style="font-weight: 600;">Pièce d'Identité *</label>
+            <div style="font-size: 12px; color: var(--color-text-muted); margin-bottom: 8px;">Copie recto/verso claire (CNI, Passeport, etc.)</div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <input type="file" id="file-PHOTO_IDENTITE" accept="image/*,application/pdf" style="display: none;" onchange="handleKycFileSelected(this, 'PHOTO_IDENTITE')">
+              <button class="btn btn-secondary btn-sm" type="button" onclick="document.getElementById('file-PHOTO_IDENTITE').click()" id="btn-label-PHOTO_IDENTITE">Choisir le fichier</button>
+              <span id="filename-PHOTO_IDENTITE" style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Aucun fichier choisi</span>
+            </div>
+          </div>
+
+          <div class="form-group mb-20" id="group-JUSTIFICATIF_DOMICILE">
+            <label class="form-label" style="font-weight: 600;">Justificatif de domicile *</label>
+            <div style="font-size: 12px; color: var(--color-text-muted); margin-bottom: 8px;">Facture d'électricité (CIE), d'eau (SODECI), ou certificat de résidence &lt; 3 mois</div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <input type="file" id="file-JUSTIFICATIF_DOMICILE" accept="image/*,application/pdf" style="display: none;" onchange="handleKycFileSelected(this, 'JUSTIFICATIF_DOMICILE')">
+              <button class="btn btn-secondary btn-sm" type="button" onclick="document.getElementById('file-JUSTIFICATIF_DOMICILE').click()" id="btn-label-JUSTIFICATIF_DOMICILE">Choisir le fichier</button>
+              <span id="filename-JUSTIFICATIF_DOMICILE" style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Aucun fichier choisi</span>
+            </div>
+          </div>
+
+          <div class="form-group mb-20" id="group-JUSTIFICATIF_REVENUS">
+            <label class="form-label" style="font-weight: 600;">Justificatif de revenus</label>
+            <div style="font-size: 12px; color: var(--color-text-muted); margin-bottom: 8px;">Dernier bulletin de salaire ou attestation d'activité</div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <input type="file" id="file-JUSTIFICATIF_REVENUS" accept="image/*,application/pdf" style="display: none;" onchange="handleKycFileSelected(this, 'JUSTIFICATIF_REVENUS')">
+              <button class="btn btn-secondary btn-sm" type="button" onclick="document.getElementById('file-JUSTIFICATIF_REVENUS').click()" id="btn-label-JUSTIFICATIF_REVENUS">Choisir le fichier</button>
+              <span id="filename-JUSTIFICATIF_REVENUS" style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Aucun fichier choisi</span>
+            </div>
+          </div>
+
+          <div class="btn-row" style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn btn-outline" onclick="closeKycModal()">Annuler</button>
+            <button type="button" class="btn btn-primary" id="btnSubmitKycModal" onclick="uploadKycModalDocs()">Transmettre mes pièces</button>
+          </div>
+        </div>
+      </div>
+      <div id="kycModalOverlay" class="modal-overlay" onclick="closeKycModal()"></div>
     </main>
   </div>
 
   <script src="../assets/js/portal-app.js?v=1.0.1"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      var sidebarToggle = document.querySelector('.mobile-sidebar-toggle');
+      var sidebar = document.getElementById('portalSidebar');
+      if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', function () {
+          var isOpen = sidebar.classList.toggle('is-open');
+          sidebarToggle.setAttribute('aria-expanded', String(isOpen));
+        });
+      }
+
       loadDashboardData();
     });
 
@@ -149,7 +310,7 @@
               var item = document.createElement('div');
               item.className = 'list-item';
               item.style.borderColor = 'rgba(255, 90, 95, 0.2)';
-              item.innerHTML = '<span style="color: var(--color-danger)">⚠️ ' + alert + '</span>';
+              item.innerHTML = '<span class="section-title" style="color: var(--color-danger)">' + iconSvg('alert') + alert + '</span>';
               alertsList.appendChild(item);
             });
             alertsPanel.style.display = 'block';
@@ -165,7 +326,7 @@
               var item = document.createElement('div');
               item.className = 'operation-item';
               item.innerHTML = `
-                <div class="operation-icon">${isDebit ? '💸' : '💰'}</div>
+                <div class="operation-icon">${iconSvg(isDebit ? 'transfer' : 'wallet')}</div>
                 <div class="operation-details">
                   <div class="operation-text">${opString.split(' - ')[0]}</div>
                   <div class="operation-date">Opération récente</div>
@@ -226,6 +387,8 @@
         var kycRes = await window.ClientProfil.consulterKyc();
         if (kycRes.ok) {
           var kyc = await kycRes.json();
+          window.kycDocumentsFournis = kyc.documentsFournis || [];
+          window.kycStatut = kyc.statutKyc;
           
           if (kyc.statutKyc !== 'VALIDE') {
             var banner = document.getElementById('kycBanner');
@@ -233,14 +396,14 @@
             var titleEl = banner.querySelector('.kyc-alert-title');
             
             if (kyc.statutKyc === 'A_VERIFIER') {
-              titleEl.textContent = '⏳ Dossier KYC transmis en attente de vérification';
+              titleEl.innerHTML = iconSvg('clock') + '<span>Dossier KYC transmis en attente de vérification</span>';
               actionDiv.innerHTML = '<span class="badge badge-info">Étude en cours</span>';
             } else if (kyc.statutKyc === 'REJETE') {
-              titleEl.textContent = '❌ Dossier KYC rejeté par le service de conformité';
-              actionDiv.innerHTML = '<a href="register#step-3" class="btn btn-danger btn-sm">Ré-envoyer mes documents</a>';
+              titleEl.innerHTML = iconSvg('x-circle') + '<span>Dossier KYC rejeté par le service de conformité</span>';
+              actionDiv.innerHTML = '<button onclick="openKycModal()" class="btn btn-danger btn-sm">Ré-envoyer mes documents</button>';
             } else {
-              titleEl.textContent = '⚠️ Veuillez finaliser l\'envoi de vos pièces KYC';
-              actionDiv.innerHTML = '<a href="register#step-3" class="btn btn-accent btn-sm">Transmettre mes pièces</a>';
+              titleEl.innerHTML = iconSvg('alert') + '<span>Veuillez finaliser l\'envoi de vos pièces KYC</span>';
+              actionDiv.innerHTML = '<button onclick="openKycModal()" class="btn btn-accent btn-sm">Transmettre mes pièces</button>';
             }
             banner.style.display = 'flex';
           }
@@ -255,6 +418,168 @@
     function formatCurrency(amount) {
       if (amount === undefined || amount === null) return '0 FCFA';
       return Number(amount).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function iconSvg(name) {
+      var icons = {
+        alert: '<svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>',
+        clock: '<svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>',
+        transfer: '<svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17h10"></path><path d="M7 7h10"></path><path d="m14 4 3 3-3 3"></path><path d="m10 14-3 3 3 3"></path></svg>',
+        wallet: '<svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"></path><path d="M4 6v14h16v-4"></path><path d="M18 12h4v4h-4a2 2 0 0 1 0-4Z"></path></svg>',
+        'x-circle': '<svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m15 9-6 6"></path><path d="m9 9 6 6"></path></svg>'
+      };
+      return icons[name] || icons.alert;
+    }
+
+    /* ── Gestionnaire de Modale KYC ───────────────── */
+    var kycFiles = {};
+
+    function openKycModal() {
+      var docs = window.kycDocumentsFournis || [];
+      var isRejected = window.kycStatut === 'REJETE';
+      
+      var showPhoto = isRejected || !docs.includes("Photo d'identite");
+      var showDomicile = isRejected || !docs.includes("Justificatif de domicile");
+      var showRevenus = isRejected || !docs.includes("Justificatif de revenus");
+
+      document.getElementById('group-PHOTO_IDENTITE').style.display = showPhoto ? 'block' : 'none';
+      document.getElementById('group-JUSTIFICATIF_DOMICILE').style.display = showDomicile ? 'block' : 'none';
+      document.getElementById('group-JUSTIFICATIF_REVENUS').style.display = showRevenus ? 'block' : 'none';
+
+      var hasAnyField = showPhoto || showDomicile || showRevenus;
+      var noFieldsMsg = document.getElementById('kycNoFieldsMsg');
+      if (noFieldsMsg) {
+        noFieldsMsg.style.display = hasAnyField ? 'none' : 'block';
+      }
+      var btnSubmit = document.getElementById('btnSubmitKycModal');
+      if (btnSubmit) {
+        btnSubmit.style.display = hasAnyField ? 'block' : 'none';
+      }
+
+      document.getElementById('kycModal').style.display = 'block';
+      document.getElementById('kycModalOverlay').style.display = 'block';
+    }
+
+    function closeKycModal() {
+      document.getElementById('kycModal').style.display = 'none';
+      document.getElementById('kycModalOverlay').style.display = 'none';
+      kycFiles = {};
+      ['PHOTO_IDENTITE', 'JUSTIFICATIF_DOMICILE', 'JUSTIFICATIF_REVENUS'].forEach(function(typeDoc) {
+        var input = document.getElementById('file-' + typeDoc);
+        if (input) input.value = '';
+        var filenameLabel = document.getElementById('filename-' + typeDoc);
+        if (filenameLabel) filenameLabel.textContent = 'Aucun fichier choisi';
+        var btnLabel = document.getElementById('btn-label-' + typeDoc);
+        if (btnLabel) btnLabel.textContent = 'Choisir le fichier';
+      });
+    }
+
+    function handleKycFileSelected(input, typeDoc) {
+      var file = input.files[0];
+      if (!file) return;
+
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Le fichier est trop volumineux (max 5 Mo)', 'warning');
+        input.value = '';
+        return;
+      }
+
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var base64String = e.target.result.split(',')[1];
+        kycFiles[typeDoc] = {
+          nomFichier: file.name,
+          base64: base64String
+        };
+
+        document.getElementById('btn-label-' + typeDoc).textContent = 'Changer le fichier';
+        document.getElementById('filename-' + typeDoc).textContent = file.name;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function uploadKycModalDocs() {
+      var docs = window.kycDocumentsFournis || [];
+      var missingPhoto = !docs.includes("Photo d'identite") && !kycFiles.PHOTO_IDENTITE;
+      var missingDomicile = !docs.includes("Justificatif de domicile") && !kycFiles.JUSTIFICATIF_DOMICILE;
+
+      if (missingPhoto || missingDomicile) {
+        var msg = "Veuillez téléverser les pièces manquantes obligatoires :";
+        if (missingPhoto) msg += " pièce d'identité";
+        if (missingDomicile) msg += (missingPhoto ? " et" : "") + " justificatif de domicile";
+        showToast(msg, 'warning');
+        return;
+      }
+
+      var btnSubmit = document.getElementById('btnSubmitKycModal');
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'Envoi en cours...';
+
+      try {
+        var token = window.SF_Client.getToken();
+        if (!token) {
+          showToast('Erreur de session. Veuillez vous reconnecter.', 'error');
+          window.location.href = 'login';
+          return;
+        }
+
+        var hasFailures = false;
+        for (var typeDoc in kycFiles) {
+          var fileData = kycFiles[typeDoc];
+          if (fileData) {
+            var apiType = typeDoc;
+            if (typeDoc === 'PHOTO_IDENTITE') {
+              apiType = 'PIECE_IDENTITE';
+            }
+            var uploadRes = await window.ClientProfil.enregistrerDocumentKyc(
+              apiType,
+              fileData.nomFichier,
+              fileData.base64
+            );
+            if (!uploadRes.ok) {
+              console.error('Failed to upload ' + typeDoc);
+              hasFailures = true;
+            } else if (typeDoc === 'PHOTO_IDENTITE') {
+              var user = window.SF_Client.getUser();
+              if (user) {
+                user.photoIdentiteUrl = 'upload/' + fileData.nomFichier;
+                localStorage.setItem('sf_client_user', JSON.stringify(user));
+                var avatarEl = document.querySelector('.sidebar-user .user-avatar');
+                if (avatarEl) {
+                  var img = avatarEl.querySelector('img');
+                  if (!img) {
+                    img = document.createElement('img');
+                    img.alt = 'Avatar';
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'cover';
+                    img.style.borderRadius = '50%';
+                    img.style.display = 'block';
+                    avatarEl.innerHTML = '';
+                    avatarEl.appendChild(img);
+                  }
+                  img.src = window.SF_Client.API_BASE + '/' + user.photoIdentiteUrl;
+                }
+              }
+            }
+          }
+        }
+
+        if (hasFailures) {
+          showToast('Certains documents n\'ont pas pu être transmis. Veuillez réessayer.', 'warning');
+        } else {
+          showToast('Vos documents ont été transmis avec succès !', 'success');
+          closeKycModal();
+        }
+        loadDashboardData();
+
+      } catch (err) {
+        console.error(err);
+        showToast('Erreur lors de la transmission des pièces.', 'error');
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Transmettre mes pièces';
+      }
     }
   </script>
 </body>

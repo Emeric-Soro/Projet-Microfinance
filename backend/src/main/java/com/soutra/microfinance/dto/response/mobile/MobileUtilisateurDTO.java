@@ -6,5 +6,6 @@ public record MobileUtilisateurDTO(
         String nom,
         String prenom,
         String telephone,
-        String email
+        String email,
+        String photoIdentiteUrl
 ) {}

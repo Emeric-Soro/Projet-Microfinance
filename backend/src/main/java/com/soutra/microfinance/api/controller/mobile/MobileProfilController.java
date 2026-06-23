@@ -138,7 +138,8 @@ public class MobileProfilController {
         clientService.enregistrerDocumentKycMobile(
                 utilisateur.getClient().getIdClient(),
                 requestDTO.getTypeDocument(),
-                requestDTO.getNomFichier()
+                requestDTO.getNomFichier(),
+                requestDTO.getContenuBase64()
         );
 
         return ResponseEntity.noContent().build();
@@ -152,7 +153,8 @@ public class MobileProfilController {
                 client.getTelephone(),
                 client.getEmail(),
                 client.getAdresse(),
-                client.getProfession()
+                client.getProfession(),
+                client.getPhotoIdentiteUrl()
         );
     }
 

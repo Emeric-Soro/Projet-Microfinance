@@ -237,12 +237,20 @@ public class CompteController {
             @ApiResponse(responseCode = "404", description = "Compte introuvable")
     })
     @GetMapping("/{numCompte}/releve")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR','CLIENT')")
     @AuditLog(action = "ACCOUNT_STATEMENT", resource = "COMPTE")
     public ResponseEntity<byte[]> genererReleve(
             @PathVariable String numCompte,
             @Valid ReleveRequestDTO requestDTO
     ) {
+        Utilisateur connectedUser = SoutraSecurityHelper.extraireUtilisateurAuthentifie();
+        if (connectedUser.getClient() != null) {
+            Compte compte = compteService.obtenirCompteParNumero(numCompte);
+            if (compte == null || !compte.getClient().getIdClient().equals(connectedUser.getClient().getIdClient())) {
+                throw new org.springframework.security.access.AccessDeniedException("Vous n'etes pas autorise a acceder au releve de ce compte.");
+            }
+        }
+
         byte[] content = releveService.genererReleve(
                 numCompte,
                 requestDTO.getDu(),

@@ -42,7 +42,11 @@
     options.headers = options.headers || {};
 
     var token = getToken();
-    if (token) {
+    var isPublic = path.includes('/auth/login') || 
+                   path.includes('/clients') || 
+                   path.includes('/utilisateurs') || 
+                   path.includes('/auth/mot-de-passe/');
+    if (token && !isPublic) {
       options.headers['Authorization'] = 'Bearer ' + token;
     }
 
@@ -226,6 +230,9 @@
   };
 
   var ClientProfil = {
+    consulterProfil: async function () {
+      return await apiFetch('/api/v1/mobile/profil');
+    },
     consulterKyc: async function () {
       return await apiFetch('/api/v1/mobile/profil/kyc');
     },
@@ -305,6 +312,43 @@
     var nameEl = document.getElementById('portalUserName');
     if (nameEl && user) {
       nameEl.textContent = (user.prenom || '') + ' ' + (user.nom || '');
+      
+      // Update avatar if photo is present
+      var avatarEl = document.querySelector('.sidebar-user .user-avatar');
+      if (avatarEl) {
+        var setAvatarImg = function (url) {
+          var img = document.createElement('img');
+          img.src = window.SF_Client.API_BASE + '/' + url;
+          img.alt = 'Avatar';
+          img.style.width = '100%';
+          img.style.height = '100%';
+          img.style.objectFit = 'cover';
+          img.style.borderRadius = '50%';
+          img.style.display = 'block';
+          
+          var originalSvg = avatarEl.innerHTML;
+          img.onerror = function() {
+            avatarEl.innerHTML = originalSvg;
+          };
+          avatarEl.innerHTML = '';
+          avatarEl.appendChild(img);
+        };
+
+        if (user.photoIdentiteUrl) {
+          setAvatarImg(user.photoIdentiteUrl);
+        } else {
+          window.ClientProfil.consulterProfil().then(async function (res) {
+            if (res.ok) {
+              var prof = await res.json();
+              if (prof.photoIdentiteUrl) {
+                user.photoIdentiteUrl = prof.photoIdentiteUrl;
+                localStorage.setItem('sf_client_user', JSON.stringify(user));
+                setAvatarImg(prof.photoIdentiteUrl);
+              }
+            }
+          }).catch(console.error);
+        }
+      }
     }
   });
 

@@ -8,60 +8,40 @@
   <link rel="stylesheet" href="../assets/css/portal.css">
 </head>
 <body>
-  <div class="login-wrapper">
-    <div class="login-container">
-      <section class="login-left" aria-label="Présentation Soutra Finance">
-        <div class="login-left-bg"></div>
-        <div class="left-top">
-          <div class="left-brand">SOUTRA FINANCE</div>
-        </div>
-        <div class="left-center">
-          <div class="left-tagline">Espace client sécurisé</div>
-          <h1 class="left-headline">Vos comptes, <span>vos opérations</span>, au même endroit.</h1>
-          <p class="left-desc">Consultez vos soldes, initiez vos virements et suivez vos demandes avec une expérience claire et fiable.</p>
-        </div>
-        <div class="left-bottom">
-          <span>Authentification renforcée</span>
-          <span>Soutra Finance E-Banking</span>
-        </div>
-      </section>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
 
-      <section class="login-right" aria-label="Connexion client">
-        <div class="right-topbar">
-          <a class="right-logo" href="../index" aria-label="Retour à l'accueil Soutra Finance">
-            <img class="right-logo-img" src="../assets/images/logo.png" alt="Soutra Finance Logo" style="width: 38px; height: 38px; border-radius: 50%; object-fit: contain; background: var(--color-surface); padding: 2px;">
-            <span class="right-logo-text">Soutra <span>Finance</span></span>
-          </a>
-          <span class="right-lang">FR</span>
+  <div class="auth-container">
+    <div class="auth-logo">
+      <div class="logo-symbol">S</div>
+      <h2>Soutra Finance</h2>
+    </div>
+
+    <div class="auth-card">
+      <h2 class="text-gradient">Connexion Client</h2>
+      <p class="subtitle">Entrez vos identifiants pour accéder à votre espace sécurisé.</p>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="username">Identifiant (Email / Login)</label>
+          <input type="text" id="username" class="input-control" placeholder="ex: client@email.com" required autocomplete="username">
         </div>
 
-        <div class="login-form-area">
-          <h2 class="login-greeting">Bienvenue<span>.</span></h2>
-          <p class="login-subtitle">Entrez vos identifiants pour accéder à votre espace sécurisé.</p>
-
-          <form id="loginForm">
-            <div class="form-group">
-              <label for="username" class="form-label">Identifiant (Email / Login)</label>
-              <input type="text" id="username" class="form-control" placeholder="ex: client@email.com" required autocomplete="username">
-            </div>
-
-            <div class="form-group">
-              <label for="password" class="form-label">Mot de passe</label>
-              <input type="password" id="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
-            </div>
-
-            <button type="submit" class="btn-login btn-login-primary" id="submitBtn">
-              <span class="btn-text">Se connecter</span>
-              <span class="login-spinner" aria-hidden="true"></span>
-            </button>
-          </form>
-
-          <div class="login-signup">
-            <p>Pas encore de compte ? <a href="register">S'inscrire en ligne</a></p>
-            <p style="margin-top: 10px;"><a href="../index">Retour à l'accueil</a></p>
-          </div>
+        <div class="form-group" style="margin-bottom: 25px;">
+          <label for="password">Mot de passe</label>
+          <input type="password" id="password" class="input-control" placeholder="••••••••" required autocomplete="current-password">
         </div>
-      </section>
+
+        <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+          <span>Se connecter</span>
+          <span class="btn-spinner" style="display: none;">⌛</span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <p>Pas encore de compte ? <a href="register">S'inscrire en ligne</a></p>
+        <p style="margin-top: 10px;"><a href="../index">Retour à l'accueil</a></p>
+      </div>
     </div>
   </div>
 

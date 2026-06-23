@@ -22,7 +22,7 @@ public interface ClientService {
 
     Client mettreAJourKycMobile(Long idClient, String profession, String secteurActivite, java.math.BigDecimal revenuMensuel);
 
-    Client enregistrerDocumentKycMobile(Long idClient, String typeDocument, String nomFichier);
+    Client enregistrerDocumentKycMobile(Long idClient, String typeDocument, String nomFichier, String contenuBase64);
 
     Page<Client> listerClients(Pageable pageable);
 

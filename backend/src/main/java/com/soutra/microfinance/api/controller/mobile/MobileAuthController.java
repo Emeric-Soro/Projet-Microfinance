@@ -268,7 +268,8 @@ public class MobileAuthController {
                 utilisateur.getClient() != null ? utilisateur.getClient().getNom() : null,
                 utilisateur.getClient() != null ? utilisateur.getClient().getPrenom() : null,
                 utilisateur.getClient() != null ? utilisateur.getClient().getTelephone() : null,
-                utilisateur.getClient() != null ? utilisateur.getClient().getEmail() : null
+                utilisateur.getClient() != null ? utilisateur.getClient().getEmail() : null,
+                utilisateur.getClient() != null ? utilisateur.getClient().getPhotoIdentiteUrl() : null
         );
     }
 }

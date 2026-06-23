@@ -7,5 +7,6 @@ public record MobileProfilResponseDTO(
         String telephone,
         String email,
         String adresse,
-        String profession
+        String profession,
+        String photoIdentiteUrl
 ) {}

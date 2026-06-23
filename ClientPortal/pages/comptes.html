@@ -8,30 +8,80 @@
   <link rel="stylesheet" href="../assets/css/portal.css">
 </head>
 <body>
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
+  <button type="button" class="mobile-sidebar-toggle" aria-label="Ouvrir le menu" aria-controls="portalSidebar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M4 6h16M4 12h16M4 18h16"></path>
+    </svg>
+  </button>
 
   <div class="portal-layout">
     <!-- Sidebar -->
-    <aside class="portal-sidebar">
-      <div class="portal-brand">
-        <div class="brand-icon">S</div>
-        <span class="brand-name">Soutra Finance</span>
+    <aside class="portal-sidebar" id="portalSidebar">
+      <div class="sidebar-header">
+        <img class="sidebar-logo" src="../assets/images/logo.png" alt="Logo">
+        <div class="sidebar-brand">SOUTRA FINANCE</div>
+        <div class="sidebar-subtitle">Espace client</div>
       </div>
-      <ul class="nav-menu">
-        <li class="nav-item"><a href="dashboard">📊 Tableau de bord</a></li>
-        <li class="nav-item active"><a href="comptes">💳 Mes Comptes</a></li>
-        <li class="nav-item"><a href="virement">💸 Virements</a></li>
-        <li class="nav-item"><a href="credits">📈 Crédits</a></li>
-        <li class="nav-item"><a href="reclamations">✉️ Réclamations</a></li>
-      </ul>
+      <nav class="sidebar-nav" aria-label="Navigation client">
+        <div class="nav-section-title">Services</div>
+        <a class="nav-item" href="dashboard">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+          </svg>
+          <span>Tableau de bord</span>
+        </a>
+        <a class="nav-item active" href="comptes" aria-current="page">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+            <path d="M2 10h20"></path>
+          </svg>
+          <span>Mes Comptes</span>
+        </a>
+        <a class="nav-item" href="virement">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M7 17h10"></path>
+            <path d="M7 7h10"></path>
+            <path d="m14 4 3 3-3 3"></path>
+            <path d="m10 14-3 3 3 3"></path>
+          </svg>
+          <span>Virements</span>
+        </a>
+        <a class="nav-item" href="credits">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M3 3v18h18"></path>
+            <path d="m19 9-5 5-4-4-3 3"></path>
+          </svg>
+          <span>Crédits</span>
+        </a>
+        <a class="nav-item" href="reclamations">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M4 4h16v16H4z"></path>
+            <path d="m22 6-10 7L2 6"></path>
+          </svg>
+          <span>Réclamations</span>
+        </a>
+      </nav>
       <div class="sidebar-user">
-        <div class="user-avatar">👤</div>
+        <div class="user-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M20 21a8 8 0 0 0-16 0"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
         <div class="user-info">
           <span class="user-name" id="portalUserName">Chargement...</span>
           <span class="user-role">Client E-Banking</span>
         </div>
-        <a href="#" class="logout-btn" id="portalLogoutBtn">🚪</a>
+        <a href="#" class="logout-btn" id="portalLogoutBtn" title="Se déconnecter" aria-label="Se déconnecter">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <path d="m16 17 5-5-5-5"></path>
+            <path d="M21 12H9"></path>
+          </svg>
+        </a>
       </div>
     </aside>
 
@@ -45,10 +95,10 @@
       </header>
 
       <!-- Account Selection & Detail Container -->
-      <div class="card" style="margin-bottom: 30px;">
-        <div class="form-group" style="max-width: 400px; margin-bottom: 25px;">
-          <label for="accountSelector">Sélectionnez un compte</label>
-          <select id="accountSelector" class="input-control">
+      <div class="card mb-30">
+        <div class="form-group max-w-400 mb-25">
+          <label for="accountSelector" class="form-label">Sélectionnez un compte</label>
+          <select id="accountSelector" class="form-control">
             <option value="">Chargement des comptes...</option>
           </select>
         </div>
@@ -56,29 +106,34 @@
         <div id="accountDetailsSection" style="display: none;">
           <div class="account-details-grid">
             <div>
-              <h3 id="accountTypeDisplay" style="font-size: 22px; margin-bottom: 5px;">Compte de Dépôt</h3>
-              <p style="font-size: 14px; color: var(--color-text-muted);">
+              <h3 id="accountTypeDisplay" class="account-type-title">Compte de Dépôt</h3>
+              <p class="account-status-text">
                 Statut : <span id="accountStatusBadge" class="badge">ACTIF</span>
               </p>
 
               <div class="rib-box">
                 <div>
-                  <span style="color: var(--color-text-muted); font-size: 11px; display: block; margin-bottom: 2px;">RIB / NUMÉRO DE COMPTE</span>
-                  <span id="accountNumDisplay" style="font-weight: 700;">000000000000000000000</span>
+                  <span class="rib-label">RIB / NUMÉRO DE COMPTE</span>
+                  <span id="accountNumDisplay" class="rib-number">000000000000000000000</span>
                 </div>
                 <button class="rib-copy-btn" onclick="copyRib()">Copier le RIB</button>
               </div>
             </div>
 
-            <div style="text-align: right; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end;">
+            <div class="account-details-right">
               <div>
-                <div style="font-size: 12px; color: var(--color-text-muted); text-transform: uppercase;">Solde disponible</div>
-                <div id="accountSoldeDisplay" style="font-size: 32px; font-weight: 800; color: var(--color-primary); margin-top: 5px;">0 FCFA</div>
+                <div class="solde-label">Solde disponible</div>
+                <div id="accountSoldeDisplay" class="solde-value">0 FCFA</div>
               </div>
 
-              <a href="#" target="_blank" id="btnDownloadReleve" class="btn btn-primary" style="margin-top: 15px;">
-                <span>📥 Télécharger Relevé / RIB</span>
-              </a>
+              <button type="button" id="btnDownloadReleve" class="btn btn-primary mt-15" onclick="downloadReleve()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 8px;">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Télécharger Relevé / RIB</span>
+              </button>
             </div>
           </div>
         </div>
@@ -87,22 +142,28 @@
       <!-- History of Operations List -->
       <div class="card" id="historyCard" style="display: none;">
         <div class="card-header">
-          <span class="card-title">📖 Historique des mouvements</span>
+          <span class="card-title">
+            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M12 8v4l3 3"></path>
+              <circle cx="12" cy="12" r="10"></circle>
+            </svg>
+            Historique des mouvements
+          </span>
         </div>
         
-        <div style="overflow-x: auto;">
-          <table>
+        <div class="overflow-x-auto">
+          <table class="data-table">
             <thead>
               <tr>
                 <th>Date & Heure</th>
                 <th>Type / Description</th>
-                <th style="text-align: right;">Débit</th>
-                <th style="text-align: right;">Crédit</th>
+                <th class="text-right">Débit</th>
+                <th class="text-right">Crédit</th>
               </tr>
             </thead>
             <tbody id="operationsTableBody">
               <tr>
-                <td colspan="4" style="text-align: center; color: var(--color-text-muted); padding: 30px;">
+                <td colspan="4" class="no-data-lg">
                   Aucun mouvement enregistré pour ce compte.
                 </td>
               </tr>
@@ -111,9 +172,19 @@
         </div>
 
         <div class="pagination-bar">
-          <button id="btnPrevPage" class="btn btn-secondary btn-sm" disabled>← Précédent</button>
+          <button id="btnPrevPage" class="btn btn-secondary btn-sm" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; margin-right: 6px;">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span>Précédent</span>
+          </button>
           <span class="page-indicator" id="pageIndicator">Page 1 sur 1</span>
-          <button id="btnNextPage" class="btn btn-secondary btn-sm" disabled>Suivant ➔</button>
+          <button id="btnNextPage" class="btn btn-secondary btn-sm" disabled>
+            <span>Suivant</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; margin-left: 6px;">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
         </div>
       </div>
     </main>
@@ -128,6 +199,15 @@
     var totalPages = 1;
 
     document.addEventListener('DOMContentLoaded', function () {
+      var sidebarToggle = document.querySelector('.mobile-sidebar-toggle');
+      var sidebar = document.getElementById('portalSidebar');
+      if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', function () {
+          var isOpen = sidebar.classList.toggle('is-open');
+          sidebarToggle.setAttribute('aria-expanded', String(isOpen));
+        });
+      }
+
       initComptesPage();
       
       document.getElementById('accountSelector').addEventListener('change', function (e) {
@@ -211,13 +291,7 @@
           badge.textContent = details.statut;
           badge.className = 'badge ' + (details.statut === 'ACTIF' ? 'badge-success' : 'badge-danger');
 
-          // Download link
-          var releveRes = await window.ClientComptes.releve(idCompte);
-          if (releveRes.ok) {
-            var relData = await releveRes.json();
-            var dlBtn = document.getElementById('btnDownloadReleve');
-            dlBtn.href = window.SF_Client.API_BASE + relData.urlReleve;
-          }
+
 
           document.getElementById('accountDetailsSection').style.display = 'block';
           
@@ -245,7 +319,7 @@
           if (list.length === 0) {
             tbody.innerHTML = `
               <tr>
-                <td colspan="4" style="text-align: center; color: var(--color-text-muted); padding: 30px;">
+                <td colspan="4" class="no-data-lg">
                   Aucune transaction enregistrée sur ce compte.
                 </td>
               </tr>`;
@@ -257,12 +331,12 @@
               row.innerHTML = `
                 <td>${formatDate(op.dateOperation)}</td>
                 <td>
-                  <div style="font-weight: 600; color: var(--color-text);">${op.libelle}</div>
+                  <div class="operation-description">${op.libelle}</div>
                 </td>
-                <td style="text-align: right; font-weight: 600; color: var(--color-danger)">
+                <td class="text-right debit-amount">
                   ${isDebit ? formatCurrency(op.montant) : '-'}
                 </td>
-                <td style="text-align: right; font-weight: 600; color: var(--color-success)">
+                <td class="text-right credit-amount">
                   ${!isDebit ? formatCurrency(op.montant) : '-'}
                 </td>
               `;
@@ -295,6 +369,48 @@
       }).catch(function () {
         showToast('Impossible de copier automatiquement.', 'warning');
       });
+    }
+
+    async function downloadReleve() {
+      if (!selectedAccountId) {
+        showToast('Aucun compte sélectionné.', 'warning');
+        return;
+      }
+      var btn = document.getElementById('btnDownloadReleve');
+      var originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span>Génération...</span>';
+
+      try {
+        var releveRes = await window.ClientComptes.releve(selectedAccountId);
+        if (releveRes.ok) {
+          var relData = await releveRes.json();
+          var fileRes = await window.SF_Client.apiFetch(relData.urlReleve);
+          if (fileRes.ok) {
+            var blob = await fileRes.blob();
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            var numCompte = document.getElementById('accountNumDisplay').textContent;
+            a.download = 'releve_compte_' + numCompte + '.pdf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            showToast('Téléchargement du relevé démarré.', 'success');
+          } else {
+            showToast('Impossible de télécharger le fichier du relevé.', 'error');
+          }
+        } else {
+          showToast('Erreur lors de la génération du relevé.', 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Erreur technique lors du téléchargement.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
     }
 
     function formatCurrency(amount) {

@@ -8,30 +8,80 @@
   <link rel="stylesheet" href="../assets/css/portal.css">
 </head>
 <body>
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
+  <button type="button" class="mobile-sidebar-toggle" aria-label="Ouvrir le menu" aria-controls="portalSidebar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M4 6h16M4 12h16M4 18h16"></path>
+    </svg>
+  </button>
 
   <div class="portal-layout">
     <!-- Sidebar -->
-    <aside class="portal-sidebar">
-      <div class="portal-brand">
-        <div class="brand-icon">S</div>
-        <span class="brand-name">Soutra Finance</span>
+    <aside class="portal-sidebar" id="portalSidebar">
+      <div class="sidebar-header">
+        <img class="sidebar-logo" src="../assets/images/logo.png" alt="Logo">
+        <div class="sidebar-brand">SOUTRA FINANCE</div>
+        <div class="sidebar-subtitle">Espace client</div>
       </div>
-      <ul class="nav-menu">
-        <li class="nav-item"><a href="dashboard">📊 Tableau de bord</a></li>
-        <li class="nav-item"><a href="comptes">💳 Mes Comptes</a></li>
-        <li class="nav-item"><a href="virement">💸 Virements</a></li>
-        <li class="nav-item active"><a href="credits">📈 Crédits</a></li>
-        <li class="nav-item"><a href="reclamations">✉️ Réclamations</a></li>
-      </ul>
+      <nav class="sidebar-nav" aria-label="Navigation client">
+        <div class="nav-section-title">Services</div>
+        <a class="nav-item" href="dashboard">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+          </svg>
+          <span>Tableau de bord</span>
+        </a>
+        <a class="nav-item" href="comptes">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+            <path d="M2 10h20"></path>
+          </svg>
+          <span>Mes Comptes</span>
+        </a>
+        <a class="nav-item" href="virement">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M7 17h10"></path>
+            <path d="M7 7h10"></path>
+            <path d="m14 4 3 3-3 3"></path>
+            <path d="m10 14-3 3 3 3"></path>
+          </svg>
+          <span>Virements</span>
+        </a>
+        <a class="nav-item active" href="credits" aria-current="page">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M3 3v18h18"></path>
+            <path d="m19 9-5 5-4-4-3 3"></path>
+          </svg>
+          <span>Crédits</span>
+        </a>
+        <a class="nav-item" href="reclamations">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M4 4h16v16H4z"></path>
+            <path d="m22 6-10 7L2 6"></path>
+          </svg>
+          <span>Réclamations</span>
+        </a>
+      </nav>
       <div class="sidebar-user">
-        <div class="user-avatar">👤</div>
+        <div class="user-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M20 21a8 8 0 0 0-16 0"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
         <div class="user-info">
           <span class="user-name" id="portalUserName">Chargement...</span>
           <span class="user-role">Client E-Banking</span>
         </div>
-        <a href="#" class="logout-btn" id="portalLogoutBtn">🚪</a>
+        <a href="#" class="logout-btn" id="portalLogoutBtn" title="Se déconnecter" aria-label="Se déconnecter">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <path d="m16 17 5-5-5-5"></path>
+            <path d="M21 12H9"></path>
+          </svg>
+        </a>
       </div>
     </aside>
 
@@ -46,9 +96,38 @@
 
       <!-- Tabs Navigation -->
       <div class="tabs-nav">
-        <button class="tab-btn active" onclick="switchTab('simulate')">🧮 Simulateur de Crédit</button>
-        <button class="tab-btn" onclick="switchTab('apply')">📝 Demande de Prêt</button>
-        <button class="tab-btn" onclick="switchTab('list')">📈 Mes Crédits & Suivi</button>
+        <button class="tab-btn active" onclick="switchTab('simulate')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 8px; display: inline-block; vertical-align: middle;">
+            <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+            <line x1="8" y1="6" x2="16" y2="6"></line>
+            <line x1="16" y1="14" x2="16" y2="18"></line>
+            <line x1="16" y1="10" x2="16" y2="10"></line>
+            <line x1="12" y1="10" x2="12" y2="10"></line>
+            <line x1="8" y1="10" x2="8" y2="10"></line>
+            <line x1="12" y1="14" x2="12" y2="14"></line>
+            <line x1="8" y1="14" x2="8" y2="14"></line>
+            <line x1="12" y1="18" x2="12" y2="18"></line>
+            <line x1="8" y1="18" x2="8" y2="18"></line>
+          </svg>
+          <span>Simulateur de Crédit</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('apply')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 8px; display: inline-block; vertical-align: middle;">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>Demande de Prêt</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('list')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 8px; display: inline-block; vertical-align: middle;">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+            <polyline points="17 6 23 6 23 12"></polyline>
+          </svg>
+          <span>Mes Crédits & Suivi</span>
+        </button>
       </div>
 
       <!-- Tab 1: Simulator -->
@@ -57,23 +136,23 @@
           <form id="simulationForm" class="mb-30">
             <div class="form-row">
               <div class="form-group">
-                <label for="simMontant">Montant souhaité (FCFA) *</label>
-                <input type="number" id="simMontant" class="input-control" required placeholder="ex: 1000000" min="50000" value="1000000">
+                <label for="simMontant" class="form-label">Montant souhaité (FCFA) *</label>
+                <input type="number" id="simMontant" class="form-control" required placeholder="ex: 1000000" min="50000" value="1000000">
               </div>
               <div class="form-group">
-                <label for="simTaux">Taux d'intérêt annuel (%) *</label>
-                <input type="number" id="simTaux" class="input-control" required placeholder="ex: 12" min="1" step="0.1" value="12">
+                <label for="simTaux" class="form-label">Taux d'intérêt annuel (%) *</label>
+                <input type="number" id="simTaux" class="form-control" required placeholder="ex: 12" min="1" step="0.1" value="12">
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label for="simDuree">Durée du remboursement (Mois) *</label>
-                <input type="number" id="simDuree" class="input-control" required placeholder="ex: 12" min="1" value="12">
+                <label for="simDuree" class="form-label">Durée du remboursement (Mois) *</label>
+                <input type="number" id="simDuree" class="form-control" required placeholder="ex: 12" min="1" value="12">
               </div>
               <div class="form-group">
-                <label for="simMethode">Méthode de calcul</label>
-                <select id="simMethode" class="input-control">
+                <label for="simMethode" class="form-label">Méthode de calcul</label>
+                <select id="simMethode" class="form-control">
                   <option value="DEGRESSIF">Dégressif (Annuités constantes)</option>
                   <option value="CONSTANT">Constant (Flat Rate)</option>
                   <option value="IN_FINE">In Fine (Remboursement final)</option>
@@ -81,12 +160,21 @@
               </div>
             </div>
 
-            <button type="submit" class="btn btn-primary mt-15">📊 Lancer la simulation</button>
+            <button type="submit" class="btn btn-primary mt-15">Lancer la simulation</button>
           </form>
 
           <!-- Result Area -->
           <div id="simulationResult" style="display: none;">
-            <h3 class="card-section-title">📋 Synthèse de la simulation</h3>
+            <h3 class="card-section-title">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width: 16px; height: 16px; margin-right: 8px; display: inline-block; vertical-align: middle;">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              <span>Synthèse de la simulation</span>
+            </h3>
             
             <div class="simulation-summary">
               <div class="summary-box">
@@ -103,9 +191,17 @@
               </div>
             </div>
 
-            <h3 class="card-subsection-title">📅 Tableau d'Amortissement Prévisionnel</h3>
+            <h3 class="card-subsection-title">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width: 16px; height: 16px; margin-right: 8px; display: inline-block; vertical-align: middle;">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>Tableau d'Amortissement Prévisionnel</span>
+            </h3>
             <div class="overflow-x-auto">
-              <table>
+              <table class="data-table">
                 <thead>
                   <tr>
                     <th>Échéance N°</th>
@@ -130,32 +226,32 @@
           <form id="applyCreditForm">
             <div class="form-row">
               <div class="form-group">
-                <label for="applyProduit">Formule de crédit *</label>
-                <select id="applyProduit" class="input-control" required onchange="onCreditProductChange()">
+                <label for="applyProduit" class="form-label">Formule de crédit *</label>
+                <select id="applyProduit" class="form-control" required onchange="onCreditProductChange()">
                   <option value="MC-COMMERCE">Micro-crédit Commerce (18% - 3 à 24 mois)</option>
                   <option value="MC-AGRICULTURE">Micro-crédit Agriculture (15% - 6 à 36 mois)</option>
                   <option value="PRET-SALARIE">Prêt Salarié (12% - 1 à 48 mois)</option>
                 </select>
               </div>
               <div class="form-group">
-                <label for="applyMontant">Montant demandé (FCFA) *</label>
-                <input type="number" id="applyMontant" class="input-control" required placeholder="ex: 1000000" min="50000">
+                <label for="applyMontant" class="form-label">Montant demandé (FCFA) *</label>
+                <input type="number" id="applyMontant" class="form-control" required placeholder="ex: 1000000" min="50000">
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label for="applyDuree">Durée souhaitée (Mois) *</label>
-                <input type="number" id="applyDuree" class="input-control" required placeholder="ex: 12" min="1">
+                <label for="applyDuree" class="form-label">Durée souhaitée (Mois) *</label>
+                <input type="number" id="applyDuree" class="form-control" required placeholder="ex: 12" min="1">
               </div>
             </div>
 
             <div class="form-group">
-              <label for="applyObjet">Objet / Motif détaillé de la demande *</label>
-              <textarea id="applyObjet" class="input-control h-120 resize-y" required placeholder="Décrivez le but de ce prêt et comment les fonds seront utilisés..."></textarea>
+              <label for="applyObjet" class="form-label">Objet / Motif détaillé de la demande *</label>
+              <textarea id="applyObjet" class="form-control h-120 resize-y" required placeholder="Décrivez le but de ce prêt et comment les fonds seront utilisés..."></textarea>
             </div>
 
-            <button type="submit" class="btn btn-primary mt-15">📩 Soumettre ma demande</button>
+            <button type="submit" class="btn btn-primary mt-15">Soumettre ma demande</button>
           </form>
         </div>
       </div>
@@ -165,7 +261,13 @@
         <!-- Active Credits -->
         <div class="card mb-30">
           <div class="card-header">
-            <span class="card-title">📈 Mes crédits en cours de remboursement</span>
+            <span class="card-title">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width: 16px; height: 16px; margin-right: 8px; display: inline-block; vertical-align: middle;">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+              </svg>
+              <span>Mes crédits en cours de remboursement</span>
+            </span>
           </div>
           <div class="list-container" id="activeCreditsList">
             <div class="no-data">
@@ -177,7 +279,16 @@
         <!-- Past Requests -->
         <div class="card">
           <div class="card-header">
-            <span class="card-title">📋 Historique de mes demandes</span>
+            <span class="card-title">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width: 16px; height: 16px; margin-right: 8px; display: inline-block; vertical-align: middle;">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              <span>Historique de mes demandes</span>
+            </span>
           </div>
           <div class="list-container" id="demandsList">
             <div class="no-data">
@@ -190,10 +301,10 @@
       <div id="scheduleModal" class="card schedule-modal">
         <div class="card-header">
           <span class="card-title" id="modalTitle">Tableau d'Amortissement</span>
-          <button class="btn btn-danger btn-sm modal-close-btn" onclick="closeScheduleModal()">Fermer</button>
+          <button class="btn btn-outline btn-sm modal-close-btn" onclick="closeScheduleModal()" style="color: var(--color-danger); border-color: var(--color-danger);">Fermer</button>
         </div>
         <div class="overflow-x-auto mt-20">
-          <table>
+          <table class="data-table">
             <thead>
               <tr>
                 <th>N°</th>
@@ -217,6 +328,15 @@
   <script src="../assets/js/portal-app.js?v=1.0.1"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      var sidebarToggle = document.querySelector('.mobile-sidebar-toggle');
+      var sidebar = document.getElementById('portalSidebar');
+      if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', function () {
+          var isOpen = sidebar.classList.toggle('is-open');
+          sidebarToggle.setAttribute('aria-expanded', String(isOpen));
+        });
+      }
+
       initCreditsPage();
 
       // Simulation Form submit
@@ -372,7 +492,7 @@
                     <div class="credit-label-muted">CAPITAL RESTANT DÛ</div>
                     <div class="credit-value-accent">${formatCurrency(c.montantRestantDu)}</div>
                   </div>
-                  <button class="btn btn-secondary btn-sm" onclick="viewCreditSchedule(${c.idCredit})">🗓️ Échéancier</button>
+                  <button class="btn btn-secondary btn-sm" onclick="viewCreditSchedule(${c.idCredit})">Échéancier</button>
                 </div>
               `;
               credListDiv.appendChild(div);

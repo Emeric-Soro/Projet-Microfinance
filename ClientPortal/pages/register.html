@@ -13,7 +13,7 @@
 
   <div class="register-container">
     <div class="register-logo">
-      <div class="logo-symbol">S</div>
+      <img class="logo-symbol" src="../assets/images/logo.png" alt="Soutra Finance Logo" style="width: 58px; height: 58px; border-radius: 50%; object-fit: contain; background: var(--color-surface); padding: 4px; display: inline-flex; align-items: center; justify-content: center;">
       <h2>Créer mon compte en ligne</h2>
     </div>
 
@@ -404,22 +404,41 @@
         }
 
         // Upload provided docs sequentially
+        var hasFailures = false;
         for (var typeDoc in kycFiles) {
           var fileData = kycFiles[typeDoc];
           if (fileData) {
+            var apiType = typeDoc;
+            if (typeDoc === 'PHOTO_IDENTITE') {
+              apiType = 'PIECE_IDENTITE';
+            }
             var uploadRes = await window.ClientProfil.enregistrerDocumentKyc(
-              typeDoc,
+              apiType,
               fileData.nomFichier,
               fileData.base64
             );
             if (!uploadRes.ok) {
               console.error('Failed to upload ' + typeDoc);
+              hasFailures = true;
+            } else if (typeDoc === 'PHOTO_IDENTITE') {
+              var user = window.SF_Client.getUser();
+              if (user) {
+                user.photoIdentiteUrl = 'upload/' + fileData.nomFichier;
+                localStorage.setItem('sf_client_user', JSON.stringify(user));
+              }
             }
           }
         }
 
-        showToast('Vos documents ont été transmis pour étude KYC !', 'success');
-        finishRegistration(false);
+        if (hasFailures) {
+          showToast('Certains documents n\'ont pas pu être transmis. Veuillez réessayer.', 'warning');
+          btnSubmit.disabled = false;
+          btnSkip.disabled = false;
+          btnSubmit.textContent = 'Valider mes documents';
+        } else {
+          showToast('Vos documents ont été transmis pour étude KYC !', 'success');
+          finishRegistration(false);
+        }
 
       } catch (err) {
         console.error(err);

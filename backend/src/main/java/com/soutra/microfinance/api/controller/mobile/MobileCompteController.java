@@ -160,7 +160,9 @@ public class MobileCompteController {
             throw new EntityNotFoundException("Compte introuvable");
         }
 
-        String urlReleve = "/api/v1/comptes/" + compte.getNumCompte() + "/releve?format=pdf";
+        java.time.LocalDate au = java.time.LocalDate.now();
+        java.time.LocalDate du = au.minusDays(90);
+        String urlReleve = "/api/v1/comptes/" + compte.getNumCompte() + "/releve?format=PDF&du=" + du + "&au=" + au;
         return ResponseEntity.ok(new MobileReleveResponseDTO(urlReleve));
     }
 
