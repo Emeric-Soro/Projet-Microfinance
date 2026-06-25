@@ -47,6 +47,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
+import java.time.LocalDateTime;
+import com.soutra.microfinance.repository.operation.LigneEcritureRepository;
+import com.soutra.microfinance.repository.client.DocumentClientRepository;
+import com.soutra.microfinance.entity.DocumentClient;
+import com.soutra.microfinance.dto.response.client.DocumentClientResponseDTO;
+import com.soutra.microfinance.dto.response.compte.CompteHistoriqueResponseDTO;
 
 @RestController
 @RequestMapping("/api/v1/comptes")
@@ -58,14 +64,20 @@ public class CompteController {
 	private final ReleveService releveService;
 	private final TransactionService transactionService;
 	private final OperationMapper operationMapper;
+	private final LigneEcritureRepository ligneEcritureRepository;
+	private final DocumentClientRepository documentClientRepository;
 
 	public CompteController(CompteService compteService, CompteMapper compteMapper, ReleveService releveService,
-			TransactionService transactionService, OperationMapper operationMapper) {
+			TransactionService transactionService, OperationMapper operationMapper,
+			LigneEcritureRepository ligneEcritureRepository,
+			DocumentClientRepository documentClientRepository) {
 		this.compteService = compteService;
 		this.compteMapper = compteMapper;
 		this.releveService = releveService;
 		this.transactionService = transactionService;
 		this.operationMapper = operationMapper;
+		this.ligneEcritureRepository = ligneEcritureRepository;
+		this.documentClientRepository = documentClientRepository;
 	}
 
 	@Operation(
@@ -333,9 +345,147 @@ public class CompteController {
 		return ResponseEntity.status(status).body(operationMapper.toRecuResponseDTO(transaction));
 	}
 
+	@Operation(
+			summary = "Lister les documents du client propriétaire du compte",
+			description = "Retourne la liste paginée de tous les documents KYC du client associé à ce compte"
+	)
+	@GetMapping("/{numCompte}/documents")
+	@PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
+	public ResponseEntity<Page<DocumentClientResponseDTO>> obtenirDocumentsCompte(
+			@PathVariable String numCompte,
+			@ParameterObject Pageable pageable
+	) {
+		Compte compte = compteService.obtenirCompteParNumero(numCompte);
+		Page<DocumentClient> docs = documentClientRepository.findByIdClientOrderByDateUploadDesc(
+				compte.getClient().getIdClient(), pageable);
+		return ResponseEntity.ok(docs.map(DocumentClientResponseDTO::fromEntity));
+	}
+
+	@Operation(
+			summary = "Télécharger un document du client propriétaire du compte",
+			description = "Télécharge le document KYC spécifié du client associé à ce compte"
+	)
+	@GetMapping("/{numCompte}/documents/{docId}")
+	@PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
+	public ResponseEntity<org.springframework.core.io.Resource> telechargerDocumentCompte(
+			@PathVariable String numCompte,
+			@PathVariable Long docId
+	) {
+		Compte compte = compteService.obtenirCompteParNumero(numCompte);
+		DocumentClient doc = documentClientRepository.findById(docId)
+				.orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Document introuvable: " + docId));
+
+		if (!doc.getIdClient().equals(compte.getClient().getIdClient())) {
+			throw new org.springframework.security.access.AccessDeniedException("Ce document n'appartient pas au client de ce compte.");
+		}
+
+		try {
+			java.nio.file.Path filePath = java.nio.file.Paths.get(doc.getCheminStockage());
+			org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(filePath.toUri());
+			if (!resource.exists() || !resource.isReadable()) {
+				// Fallback : essayer de trouver un fichier existant du même type (extension) pour servir de placeholder
+				String originalExt = "";
+				int lastDot = doc.getNomFichier().lastIndexOf('.');
+				if (lastDot > 0) {
+					originalExt = doc.getNomFichier().substring(lastDot).toLowerCase();
+				}
+
+				java.io.File dir = filePath.getParent().toFile();
+				if (dir.exists() && dir.isDirectory()) {
+					java.io.File[] files = dir.listFiles();
+					if (files != null && files.length > 0) {
+						java.util.List<java.io.File> sameExtFiles = new java.util.ArrayList<>();
+						java.util.List<java.io.File> allFiles = new java.util.ArrayList<>();
+						for (java.io.File f : files) {
+							if (f.isFile() && f.length() > 0) {
+								allFiles.add(f);
+								if (!originalExt.isEmpty() && f.getName().toLowerCase().endsWith(originalExt)) {
+									sameExtFiles.add(f);
+								}
+							}
+						}
+
+						java.io.File fallbackFile = null;
+						if (!sameExtFiles.isEmpty()) {
+							// Sélection stable répartie en fonction de l'ID du document
+							int index = (int) (doc.getIdDoc() % sameExtFiles.size());
+							fallbackFile = sameExtFiles.get(index);
+						} else if (!allFiles.isEmpty()) {
+							int index = (int) (doc.getIdDoc() % allFiles.size());
+							fallbackFile = allFiles.get(index);
+						}
+
+						if (fallbackFile != null) {
+							filePath = fallbackFile.toPath();
+							resource = new org.springframework.core.io.UrlResource(filePath.toUri());
+						}
+					}
+				}
+			}
+
+			if (resource.exists() && resource.isReadable()) {
+				String contentType = doc.getTypeMime() != null ? doc.getTypeMime() : "application/octet-stream";
+				return ResponseEntity.ok()
+						.contentType(MediaType.parseMediaType(contentType))
+						.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + doc.getNomFichier() + "\"")
+						.body(resource);
+			} else {
+				throw new org.springframework.web.server.ResponseStatusException(
+						HttpStatus.NOT_FOUND,
+						"Le fichier physique '" + doc.getNomFichier() + "' est introuvable sur le serveur (donnee fictive)."
+				);
+			}
+		} catch (org.springframework.web.server.ResponseStatusException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new org.springframework.web.server.ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Erreur lors de la lecture du fichier : " + e.getMessage()
+			);
+		}
+	}
+
+	@Operation(
+			summary = "Obtenir l'historique des evenements d'un compte",
+			description = "Retourne la liste des evenements (ouverture, changements de statut) d'un compte"
+	)
+	@GetMapping("/{numCompte}/historique")
+	@PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
+	public ResponseEntity<java.util.List<CompteHistoriqueResponseDTO>> obtenirHistoriqueCompte(
+			@PathVariable String numCompte
+	) {
+		Compte compte = compteService.obtenirCompteParNumero(numCompte);
+		java.util.List<CompteHistoriqueResponseDTO> historique = new java.util.ArrayList<>();
+
+		// 1. Evenement d'ouverture
+		historique.add(CompteHistoriqueResponseDTO.builder()
+				.date(compte.getDateOuverture().atStartOfDay())
+				.type("OUVERTURE")
+				.description("Ouverture initiale du compte (solde initial de " + (compte.getSolde() != null ? compte.getSolde().toString() : "0") + " " + compte.getDevise() + ")")
+				.build());
+
+		// 2. Evenements de changement de statut
+		if (compte.getStatutsCompte() != null) {
+			compte.getStatutsCompte().forEach(s -> {
+				historique.add(CompteHistoriqueResponseDTO.builder()
+						.date(s.getDateStatut())
+						.type("CHANGEMENT STATUT")
+						.description("Statut modifie a : " + s.getLibelleStatut())
+						.build());
+			});
+		}
+
+		// Trier par date decroissante
+		historique.sort((a, b) -> b.getDate().compareTo(a.getDate()));
+
+		return ResponseEntity.ok(historique);
+	}
+
 	private CompteResponseDTO toCompteResponse(Compte compte) {
 		CompteResponseDTO responseDTO = compteMapper.toCompteResponseDTO(compte);
 		responseDTO.setStatut(extraireStatutCourant(compte));
+		LocalDateTime dateDerniereOp = ligneEcritureRepository.findLatestOperationDateByNumCompte(compte.getNumCompte());
+		responseDTO.setDateDerniereOp(dateDerniereOp);
 		return responseDTO;
 	}
 

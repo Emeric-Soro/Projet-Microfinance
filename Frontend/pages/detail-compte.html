@@ -826,6 +826,8 @@
         var res = await Comptes.obtenir(numCompte);
         if (res && res.ok) {
           compteData = await res.json();
+          console.log('Compte data:', compteData);
+          console.log('Compte keys:', Object.keys(compteData));
           renderHero(compteData);
           renderResume(compteData);
           startBalancePolling();
@@ -871,8 +873,8 @@
       document.getElementById('heroDevise').textContent = 'Devise : ' + (c.devise || 'XOF');
 
       // Bottom details
-      document.getElementById('heroDateOuverture').textContent = formatDateShort(c.dateOuverture);
-      document.getElementById('heroDerniereOp').textContent = formatDateShort(c.dateDerniereOp);
+      document.getElementById('heroDateOuverture').textContent = formatDateShort(c.dateOuverture || c.dateCreation);
+      document.getElementById('heroDerniereOp').textContent = formatDateShort(c.dateDerniereOp || c.dateDerniereOperation);
       document.getElementById('heroDecouvert').textContent = formatCurrency(c.decouvertAutorise || 0) + ' FCFA';
 
       // Hide/show action buttons based on status
@@ -946,32 +948,41 @@
     /* ── Render Resume Tab ──────────────────────────── */
     function renderResume(c) {
       var client = c.client || {};
+      var nom = c.clientNom || (client.nom || '-') + ' ' + (client.prenom || '');
+      var telephone = c.clientTelephone || client.telephone || '-';
+      var email = c.clientEmail || client.email || '-';
+      var numeroClient = c.clientNumero || client.numeroClient || '-';
+      var statut = c.clientStatut || client.statut || '-';
 
       document.getElementById('clientInfo').innerHTML =
         '<div class="info-grid">' +
-          infoRow('Nom', (client.nom || '-') + ' ' + (client.prenom || '')) +
-          infoRow('Telephone', client.telephone || '-') +
-          infoRow('Email', client.email || '-') +
-          infoRow('N° Client', client.numeroClient || '-') +
-          infoRow('Statut', client.statut || '-') +
+          infoRow('Nom', nom) +
+          infoRow('Telephone', telephone) +
+          infoRow('Email', email) +
+          infoRow('N° Client', numeroClient) +
+          infoRow('Statut', statut) +
         '</div>';
 
       document.getElementById('compteInfo').innerHTML =
         '<div class="info-grid">' +
-          infoRow('Type', c.typeCompte || '-') +
+          infoRow('Type', c.typeCompte || c.codeTypeCompte || '-') +
           infoRow('Devise', c.devise || 'XOF') +
           infoRow('Decouvert autorise', formatCurrency(c.decouvertAutorise || 0) + ' FCFA') +
           infoRow('Mode signature', c.modeSignature || 'INDIVIDUEL') +
-          infoRow('Date ouverture', formatDate(c.dateOuverture)) +
-          infoRow('Derniere operation', formatDate(c.dateDerniereOp)) +
+          infoRow('Date ouverture', formatDate(c.dateOuverture || c.dateCreation)) +
+          infoRow('Derniere operation', formatDate(c.dateDerniereOp || c.dateDerniereOperation)) +
         '</div>';
 
       var agence = c.agence || {};
+      var agenceCode = c.agenceCode || agence.code || '-';
+      var agenceNom = c.agenceNom || agence.nom || '-';
+      var agenceAdresse = c.agenceAdresse || agence.adresse || '-';
+
       document.getElementById('agenceInfo').innerHTML =
         '<div class="info-grid">' +
-          infoRow('Code', agence.code || '-') +
-          infoRow('Nom', agence.nom || '-') +
-          infoRow('Adresse', agence.adresse || '-') +
+          infoRow('Code', agenceCode) +
+          infoRow('Nom', agenceNom) +
+          infoRow('Adresse', agenceAdresse) +
         '</div>';
 
       // Load quick stats for resume tab
@@ -1145,9 +1156,11 @@
               '</div>' +
             '</div>';
           }).join('');
+        } else {
+          el.innerHTML = '<div style="color:#D93025;font-size:0.9rem;padding:16px;">Impossible de charger l\'historique des événements (Erreur du serveur).</div>';
         }
       } catch (e) {
-        el.innerHTML = '<div style="color:#D93025;font-size:0.9rem;">Erreur de chargement de l\'historique.</div>';
+        el.innerHTML = '<div style="color:#D93025;font-size:0.9rem;padding:16px;">Erreur de chargement de l\'historique.</div>';
       }
     }
 
@@ -1172,6 +1185,7 @@
           }
 
           el.innerHTML = docs.map(function (d) {
+            var originalName = d.nom || d.nomFichier || 'document';
             return '<div class="doc-card">' +
               '<div style="display:flex;align-items:center;">' +
                 '<div class="doc-card-icon">' +
@@ -1182,18 +1196,21 @@
                   '<div class="doc-card-date">' + formatDate(d.dateUpload || d.createdAt) + '</div>' +
                 '</div>' +
               '</div>' +
-              '<button class="btn btn-outline btn-sm" onclick="downloadDoc(\'' + escapeHtml(d.id || d.chemin || '') + '\')">Telecharger</button>' +
+              '<button class="btn btn-outline btn-sm" onclick="downloadDoc(\'' + escapeHtml(d.id || d.chemin || '') + '\', \'' + escapeHtml(originalName) + '\')">Telecharger</button>' +
             '</div>';
           }).join('');
+        } else {
+          el.innerHTML = '<div style="color:#D93025;font-size:0.9rem;padding:16px;">Impossible de charger les documents (Erreur du serveur).</div>';
         }
       } catch (e) {
-        el.innerHTML = '<div style="color:#D93025;font-size:0.9rem;">Erreur de chargement des documents.</div>';
+        el.innerHTML = '<div style="color:#D93025;font-size:0.9rem;padding:16px;">Erreur de chargement des documents.</div>';
       }
     }
 
-    function downloadDoc(docId) {
+    function downloadDoc(docId, defaultName) {
       if (!docId) return;
-      SF.downloadFile('/api/v1/comptes/' + encodeURIComponent(numCompte) + '/documents/' + docId, 'document_' + docId + '.pdf');
+      var fallbackName = defaultName || ('document_' + docId + '.pdf');
+      SF.downloadFile('/api/v1/comptes/' + encodeURIComponent(numCompte) + '/documents/' + docId, fallbackName);
     }
 
     /* ── Action: Releve PDF ─────────────────────────── */

@@ -7,6 +7,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,4 +25,7 @@ public interface LigneEcritureRepository extends JpaRepository<LigneEcriture, Lo
 
     List<LigneEcriture> findByCompte_IdCompteAndCreatedAtBetweenOrderByCreatedAtDesc(
             Long idCompte, LocalDateTime dateDebut, LocalDateTime dateFin);
+
+    @Query("SELECT MAX(le.createdAt) FROM LigneEcriture le WHERE le.compte.numCompte = :numCompte")
+    LocalDateTime findLatestOperationDateByNumCompte(@Param("numCompte") String numCompte);
 }

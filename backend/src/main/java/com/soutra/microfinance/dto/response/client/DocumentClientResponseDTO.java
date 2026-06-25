@@ -24,6 +24,10 @@ public class DocumentClientResponseDTO {
     private String categorie;
     private LocalDateTime dateUpload;
     private Long uploadedBy;
+    private Long id;
+    private String nom;
+    private String typeDocument;
+    private String chemin;
 
     public static DocumentClientResponseDTO fromEntity(DocumentClient doc) {
         if (doc == null) {
@@ -31,13 +35,17 @@ public class DocumentClientResponseDTO {
         }
         return DocumentClientResponseDTO.builder()
                 .idDoc(doc.getIdDoc())
+                .id(doc.getIdDoc())
                 .idClient(doc.getIdClient())
                 .nomFichier(doc.getNomFichier())
+                .nom(doc.getNomFichier())
                 .typeMime(doc.getTypeMime())
                 .tailleOctets(doc.getTailleOctets())
                 .categorie(doc.getCategorie())
+                .typeDocument(doc.getCategorie())
                 .dateUpload(doc.getDateUpload())
                 .uploadedBy(doc.getUploadedBy())
+                .chemin(doc.getCheminStockage())
                 .build();
     }
 }

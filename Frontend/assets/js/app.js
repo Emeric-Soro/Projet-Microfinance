@@ -208,6 +208,12 @@
   };
 
   var Comptes = {
+    lister: async function (page, size, search) {
+      page = page || 0; size = size || 20;
+      var path = '/api/v1/comptes?page=' + page + '&size=' + size;
+      if (search) path += '&search=' + encodeURIComponent(search);
+      return await apiFetch(path);
+    },
     obtenir: async function (numCompte) { return await apiFetch('/api/v1/comptes/' + numCompte); },
     ouvrir: async function (idClient, type, depot) { return await apiFetch('/api/v1/comptes', { method: 'POST', body: JSON.stringify({ idClient: idClient, codeTypeCompte: type, depotInitial: depot }) }); },
     bloquer: async function (numCompte, motif) { return await apiFetch('/api/v1/comptes/' + numCompte + '/blocage', { method: 'PUT', body: JSON.stringify({ motif: motif }) }); },

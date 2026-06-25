@@ -23,6 +23,14 @@ public class CompteResponseDTO {
     private BigDecimal decouvertAutorise;
     private String statut;
     private String clientNom;
+    private String clientTelephone;
+    private String clientEmail;
+    private String clientNumero;
+    private String clientStatut;
     private String agenceNom;
+    private String agenceCode;
+    private String agenceAdresse;
     private java.time.LocalDate dateOuverture;
+    private java.time.LocalDateTime dateDerniereOp;
 }
+

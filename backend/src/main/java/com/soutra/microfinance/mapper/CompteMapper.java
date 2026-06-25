@@ -15,7 +15,13 @@ public interface CompteMapper {
     @Mapping(target = "numCompte", expression = "java(masquerNumeroCompte(compte))")
     @Mapping(source = "numCompte", target = "numCompteComplet")
     @Mapping(target = "clientNom", expression = "java(compte.getClient() != null ? compte.getClient().getNom() + \" \" + compte.getClient().getPrenom() : null)")
+    @Mapping(target = "clientTelephone", expression = "java(compte.getClient() != null ? compte.getClient().getTelephone() : null)")
+    @Mapping(target = "clientEmail", expression = "java(compte.getClient() != null ? compte.getClient().getEmail() : null)")
+    @Mapping(target = "clientNumero", expression = "java(compte.getClient() != null ? compte.getClient().getCodeClient() : null)")
+    @Mapping(target = "clientStatut", expression = "java(compte.getClient() != null && compte.getClient().getStatutClient() != null ? compte.getClient().getStatutClient().getLibelleStatut() : null)")
     @Mapping(target = "agenceNom", expression = "java(compte.getAgence() != null ? compte.getAgence().getNom() : null)")
+    @Mapping(target = "agenceCode", expression = "java(compte.getAgence() != null ? compte.getAgence().getCodeAgence() : null)")
+    @Mapping(target = "agenceAdresse", expression = "java(compte.getAgence() != null ? compte.getAgence().getAdresse() : null)")
     // Le statut actuel est un peu complexe à récupérer via MapStruct car c'est un historique (StatutCompte).
     // On l'ignore ici, le Controller s'en chargera si besoin !
     @Mapping(target = "statut", ignore = true)

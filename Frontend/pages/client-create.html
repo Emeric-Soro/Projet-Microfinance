@@ -116,25 +116,39 @@
             <div class="step-content" id="step2" style="display: none;">
               <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #084355;">Pièce d'identité</h3>
               <div class="form-group">
-                <label class="form-label" for="typePieceIdentite">Type de justificatif</label>
-                <select class="form-control" id="typePieceIdentite" name="typePieceIdentite">
+                <label class="form-label" for="typePieceIdentite">Type de justificatif *</label>
+                <select class="form-control" id="typePieceIdentite" name="typePieceIdentite" required>
                   <option value="">Sélectionner…</option>
                   <option value="CNI">Carte Nationale d'Identité</option>
                   <option value="PASSEPORT">Passeport</option>
                   <option value="TITRE_SEJOUR">Titre de Séjour</option>
                   <option value="PERMIS_CONDUIRE">Permis de Conduire</option>
                 </select>
+                <div class="field-error" id="typePiece-error">Le type de justificatif est obligatoire.</div>
               </div>
               <div class="form-row">
                 <div class="form-group">
-                  <label class="form-label" for="numeroPieceIdentite">N° d'immatriculation</label>
+                  <label class="form-label" for="numeroPieceIdentite">N° d'immatriculation *</label>
                   <input type="text" class="form-control" id="numeroPieceIdentite" name="numeroPieceIdentite"
-                         placeholder="Ex: CI-AB-2024-001234" maxlength="80">
+                         placeholder="Ex: CI-AB-2024-001234" maxlength="80" required>
+                  <div class="field-error" id="numPiece-error">Le numéro de pièce est obligatoire.</div>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="dateExpirationPieceIdentite">Date d'expiration</label>
-                  <input type="date" class="form-control" id="dateExpirationPieceIdentite" name="dateExpirationPieceIdentite">
+                  <label class="form-label" for="dateExpirationPieceIdentite">Date d'expiration *</label>
+                  <input type="date" class="form-control" id="dateExpirationPieceIdentite" name="dateExpirationPieceIdentite" required>
+                  <div class="field-error" id="dateExpPiece-error">La date d'expiration est obligatoire.</div>
                 </div>
+              </div>
+
+              <div class="form-group" style="margin-top: 16px;">
+                <label class="form-label">Téléverser la pièce d'identité (CNI/Passeport) *</label>
+                <div class="upload-zone" id="uploadZonePiece">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <p id="pieceUploadLabel">Glisser-déposer la pièce d'identité ici</p>
+                  <p class="upload-hint">ou cliquer pour parcourir (PDF, JPG, JPEG — Max 5 Mo)</p>
+                  <input type="file" accept="application/pdf,image/jpeg,image/jpg" style="display: none;" id="pieceUpload">
+                </div>
+                <div class="field-error" id="pieceUpload-error">Le fichier de la pièce d'identité est obligatoire.</div>
               </div>
 
               <div style="display: flex; justify-content: space-between; margin-top: 24px;">
@@ -142,7 +156,7 @@
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="15 18 9 12 15 6"/></svg>
                   Précédent
                 </button>
-                <button type="button" class="btn btn-primary btn-next-step">
+                <button type="button" class="btn btn-primary btn-next-step" id="next2">
                   Suivant
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
@@ -222,15 +236,7 @@
                 </div>
               </div>
 
-              <div class="form-group">
-                <label class="form-label">Photo du client (optionnel)</label>
-                <div class="upload-zone" id="uploadZonePhoto">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  <p id="photoUploadLabel">Glisser-déposer la photo ici</p>
-                  <p class="upload-hint">ou cliquer pour parcourir (JPG, PNG — Max 2 Mo)</p>
-                  <input type="file" accept="image/*" style="display: none;" id="photoUpload">
-                </div>
-              </div>
+
 
               <div class="form-group">
                 <label class="form-label">Justificatif de domicile (optionnel)</label>
@@ -277,13 +283,57 @@
   <script src="../assets/js/app.js"></script>
   <script>
     /* ── Upload zones click & display ──────────────────── */
-    document.getElementById('uploadZonePhoto').addEventListener('click', function () {
-      document.getElementById('photoUpload').click();
+    document.getElementById('uploadZonePiece').addEventListener('click', function () {
+      document.getElementById('pieceUpload').click();
     });
-    document.getElementById('photoUpload').addEventListener('change', function () {
-      if (this.files[0]) {
-        document.getElementById('photoUploadLabel').textContent = this.files[0].name;
+    
+    document.getElementById('pieceUpload').addEventListener('change', function () {
+      const file = this.files[0];
+      const errEl = document.getElementById('pieceUpload-error');
+      const uploadZone = document.getElementById('uploadZonePiece');
+      if (file) {
+        // Validation taille (Max 5 Mo)
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('Le fichier dépasse la taille maximale de 5 Mo.', 'error');
+          this.value = ''; // Réinitialiser
+          document.getElementById('pieceUploadLabel').textContent = 'Glisser-déposer la pièce d\'identité ici';
+          uploadZone.classList.add('is-invalid');
+          if (errEl) {
+            errEl.textContent = 'Le fichier est trop volumineux (Max 5 Mo).';
+            errEl.style.display = 'block';
+          }
+          return;
+        }
+        
+        // Validation type (PDF, JPG, JPEG)
+        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg'];
+        if (!allowedTypes.includes(file.type) && !file.name.toLowerCase().endsWith('.jpg') && !file.name.toLowerCase().endsWith('.jpeg') && !file.name.toLowerCase().endsWith('.pdf')) {
+          showToast('Seuls les fichiers PDF, JPG, et JPEG sont autorisés.', 'error');
+          this.value = ''; // Réinitialiser
+          document.getElementById('pieceUploadLabel').textContent = 'Glisser-déposer la pièce d\'identité ici';
+          uploadZone.classList.add('is-invalid');
+          if (errEl) {
+            errEl.textContent = 'Format de fichier non autorisé (PDF, JPG, JPEG uniquement).';
+            errEl.style.display = 'block';
+          }
+          return;
+        }
+
+        document.getElementById('pieceUploadLabel').textContent = file.name;
+        uploadZone.classList.remove('is-invalid');
+        if (errEl) {
+          errEl.style.display = 'none';
+          errEl.textContent = 'Le fichier de la pièce d\'identité est obligatoire.';
+        }
+      } else {
+        document.getElementById('pieceUploadLabel').textContent = 'Glisser-déposer la pièce d\'identité ici';
       }
+    });
+
+    document.getElementById('uploadZonePiece').addEventListener('drop', function () {
+      setTimeout(() => {
+        document.getElementById('pieceUpload').dispatchEvent(new Event('change'));
+      }, 0);
     });
 
     document.getElementById('uploadZoneDomicile').addEventListener('click', function () {
@@ -294,6 +344,11 @@
         document.getElementById('domicileUploadLabel').textContent = this.files[0].name;
       }
     });
+    document.getElementById('uploadZoneDomicile').addEventListener('drop', function () {
+      setTimeout(() => {
+        document.getElementById('domicileUpload').dispatchEvent(new Event('change'));
+      }, 0);
+    });
 
     document.getElementById('uploadZoneRevenus').addEventListener('click', function () {
       document.getElementById('revenusUpload').click();
@@ -303,6 +358,29 @@
         document.getElementById('revenusUploadLabel').textContent = this.files[0].name;
       }
     });
+    document.getElementById('uploadZoneRevenus').addEventListener('drop', function () {
+      setTimeout(() => {
+        document.getElementById('revenusUpload').dispatchEvent(new Event('change'));
+      }, 0);
+    });
+
+    /* ── Step 2 Next Button Capture Phase Validation ─── */
+    document.getElementById('next2').addEventListener('click', function (e) {
+      const fileInput = document.getElementById('pieceUpload');
+      const file = fileInput.files[0];
+      const errEl = document.getElementById('pieceUpload-error');
+      const uploadZone = document.getElementById('uploadZonePiece');
+      if (!file) {
+        e.preventDefault();
+        e.stopPropagation();
+        uploadZone.classList.add('is-invalid');
+        if (errEl) {
+          errEl.textContent = 'Le fichier de la pièce d\'identité est obligatoire.';
+          errEl.style.display = 'block';
+        }
+        showToast('Le fichier de la pièce d\'identité est obligatoire.', 'warning');
+      }
+    }, true); // useCapture = true
 
     /* ── Soumission formulaire → API ───────────────────── */
     document.getElementById('clientForm').addEventListener('submit', async function (e) {
@@ -337,7 +415,10 @@
         { id: 'dateNaissance', valeur: dateNaissance,errId: 'dateNaissance-error' },
         { id: 'email',         valeur: email,        errId: 'email-error' },
         { id: 'telephone',     valeur: document.getElementById('telephone').value.trim(), errId: 'telephone-error' },
-        { id: 'adresse',       valeur: adresse,      errId: 'adresse-error' }
+        { id: 'adresse',       valeur: adresse,      errId: 'adresse-error' },
+        { id: 'typePieceIdentite', valeur: typePieceIdentite, errId: 'typePiece-error' },
+        { id: 'numeroPieceIdentite', valeur: numeroPiece, errId: 'numPiece-error' },
+        { id: 'dateExpirationPieceIdentite', valeur: dateExpPiece, errId: 'dateExpPiece-error' }
       ];
 
       champs.forEach(({ id, valeur, errId }) => {
@@ -352,6 +433,22 @@
           if (err) err.style.display = 'none';
         }
       });
+
+      // Validation de la pièce d'identité (obligatoire)
+      const pieceFile = document.getElementById('pieceUpload').files[0];
+      const uploadZonePiece = document.getElementById('uploadZonePiece');
+      const pieceUploadError = document.getElementById('pieceUpload-error');
+      if (!pieceFile) {
+        uploadZonePiece.classList.add('is-invalid');
+        if (pieceUploadError) {
+          pieceUploadError.textContent = 'Le fichier de la pièce d\'identité est obligatoire.';
+          pieceUploadError.style.display = 'block';
+        }
+        valide = false;
+      } else {
+        uploadZonePiece.classList.remove('is-invalid');
+        if (pieceUploadError) pieceUploadError.style.display = 'none';
+      }
 
       if (!valide) {
         showToast('Veuillez compléter tous les champs obligatoires.', 'error');
@@ -396,7 +493,7 @@
             localStorage.removeItem(currentPageName + ':step');
             localStorage.removeItem(currentPageName.replace('.html', '') + ':step');
             document.getElementById('clientForm').reset();
-            document.getElementById('photoUploadLabel').textContent = 'Glisser-déposer la photo ici';
+            document.getElementById('pieceUploadLabel').textContent = 'Glisser-déposer la pièce d\'identité ici';
             document.getElementById('domicileUploadLabel').textContent = 'Glisser-déposer le justificatif de domicile ici';
             document.getElementById('revenusUploadLabel').textContent = 'Glisser-déposer le justificatif de revenus ici';
           } catch (_) {}
@@ -404,20 +501,20 @@
           const id = data.idClient;
           
           // Uploader les fichiers
-          const photoFile = document.getElementById('photoUpload').files[0];
+          const pieceFileToUpload = document.getElementById('pieceUpload').files[0];
           const domicileFile = document.getElementById('domicileUpload').files[0];
           const revenusFile = document.getElementById('revenusUpload').files[0];
           
-          let photoUrl = null;
+          let pieceUrl = null;
           let domicileUrl = null;
           let revenusUrl = null;
           
           try {
-            if (photoFile) {
-              const uRes = await Clients.uploadDocument(id, photoFile, 'PIECE_IDENTITE');
+            if (pieceFileToUpload) {
+              const uRes = await Clients.uploadDocument(id, pieceFileToUpload, 'PIECE_IDENTITE');
               if (uRes && uRes.ok) {
                 const uData = await uRes.json();
-                photoUrl = "upload/" + uData.nomFichier;
+                pieceUrl = "upload/" + uData.nomFichier;
               }
             }
             if (domicileFile) {
@@ -442,7 +539,7 @@
               typePieceIdentite: typePieceIdentite || "CNI",
               numeroPieceIdentite: numeroPiece || "NC",
               dateExpirationPieceIdentite: dateExpPiece || new Date(Date.now() + 365*24*60*60*1000).toISOString().split('T')[0],
-              photoIdentiteUrl: photoUrl,
+              photoIdentiteUrl: pieceUrl,
               justificatifDomicileUrl: domicileUrl,
               justificatifRevenusUrl: revenusUrl,
               paysNationalite: paysNationalite || "Côte d'Ivoire",
