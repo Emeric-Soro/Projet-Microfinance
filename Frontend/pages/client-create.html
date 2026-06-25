@@ -390,8 +390,16 @@
 
         if (res.status === 201) {
           showToast('Client créé avec succès !', 'success');
-          // Vider le brouillon stepper
-          try { localStorage.removeItem('client-create.html:step'); } catch (_) {}
+          // Vider le brouillon stepper et réinitialiser le formulaire
+          try {
+            const currentPageName = (window.location.pathname.split('/').pop() || 'client-create.html').toLowerCase();
+            localStorage.removeItem(currentPageName + ':step');
+            localStorage.removeItem(currentPageName.replace('.html', '') + ':step');
+            document.getElementById('clientForm').reset();
+            document.getElementById('photoUploadLabel').textContent = 'Glisser-déposer la photo ici';
+            document.getElementById('domicileUploadLabel').textContent = 'Glisser-déposer le justificatif de domicile ici';
+            document.getElementById('revenusUploadLabel').textContent = 'Glisser-déposer le justificatif de revenus ici';
+          } catch (_) {}
           
           const id = data.idClient;
           
@@ -400,9 +408,9 @@
           const domicileFile = document.getElementById('domicileUpload').files[0];
           const revenusFile = document.getElementById('revenusUpload').files[0];
           
-          let photoUrl = "demo/kyc/default/photo.jpg";
-          let domicileUrl = "demo/kyc/default/domicile.pdf";
-          let revenusUrl = "demo/kyc/default/revenus.pdf";
+          let photoUrl = null;
+          let domicileUrl = null;
+          let revenusUrl = null;
           
           try {
             if (photoFile) {

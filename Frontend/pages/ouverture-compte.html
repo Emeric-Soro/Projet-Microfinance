@@ -522,7 +522,7 @@
             list.innerHTML = comptes.map(function(c) {
               var badgeCls = c.statut === 'ACTIF' ? 'badge-active' : c.statut === 'BLOQUE' ? 'badge-blocked' : 'badge-danger';
               return '<div style="background:#fff;border:1px solid #E8EFF3;border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">'
-                + '<div><div style="font-weight:700;font-size:13px;color:#084355;">' + escapeHtml(c.numCompte) + '</div>'
+                + '<div><div style="font-weight:700;font-size:13px;color:#084355;">' + escapeHtml(c.numCompteComplet || c.numCompte) + '</div>'
                 + '<div style="font-size:11px;color:#4A7A8A;">' + escapeHtml(c.typeCompte) + ' - ' + formatMoney(c.solde) + ' FCFA</div></div>'
                 + '<span class="badge ' + badgeCls + '">' + escapeHtml(c.statut || 'ACTIF') + '</span></div>';
             }).join('');
@@ -646,7 +646,7 @@
         }
 
         // Step 3: Show success modal
-        document.getElementById('modalAccNum').textContent  = compte.numCompte || '—';
+        document.getElementById('modalAccNum').textContent  = compte.numCompteComplet || compte.numCompte || '—';
         document.getElementById('modalAccType').textContent = 'Compte ' + gabarit;
 
         document.getElementById('modalDownloadBtn').onclick = async function() {
@@ -720,7 +720,11 @@
       });
       var checked = document.querySelector('input[name="gabarit"]:checked');
       if (checked) checked.checked = false;
-      try { localStorage.removeItem('ouverture-compte.html:step'); } catch (_) {}
+      try {
+        const currentPageName = (window.location.pathname.split('/').pop() || 'ouverture-compte.html').toLowerCase();
+        localStorage.removeItem(currentPageName + ':step');
+        localStorage.removeItem(currentPageName.replace('.html', '') + ':step');
+      } catch (_) {}
       goToStep(1);
     }
   </script>

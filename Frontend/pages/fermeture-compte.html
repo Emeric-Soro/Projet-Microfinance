@@ -401,7 +401,7 @@
     function openConfirmModal() {
       if (!compteData) return;
       var clientNom = compteData.clientNom || (compteData.client ? (compteData.client.prenom + ' ' + compteData.client.nom) : '-');
-      document.getElementById('modalNum').textContent = compteData.numCompte || document.getElementById('fcNumCompte').value.trim();
+      document.getElementById('modalNum').textContent = compteData.numCompteComplet || compteData.numCompte || document.getElementById('fcNumCompte').value.trim();
       document.getElementById('modalClient').textContent = clientNom;
       document.getElementById('modalType').textContent = compteData.typeCompte || '-';
       var motifSelect = document.getElementById('fcMotifSelect');

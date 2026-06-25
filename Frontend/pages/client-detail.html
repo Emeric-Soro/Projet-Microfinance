@@ -548,7 +548,7 @@
           const btnId = 'btn-releve-' + idx;
           return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #E8F0F3;gap:8px;flex-wrap:wrap;">
             <div style="flex:1;min-width:0;">
-              <div style="font-weight:700;font-size:13px;color:#084355;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${c.numCompte || ''}">${c.numCompte || '—'}</div>
+              <div style="font-weight:700;font-size:13px;color:#084355;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${c.numCompteComplet || c.numCompte || ''}">${c.numCompteComplet || c.numCompte || '—'}</div>
               <div style="font-size:11px;color:#4A7A8A;margin-top:2px;">${c.typeCompte || '—'}</div>
             </div>
             <div style="text-align:right;flex-shrink:0;">

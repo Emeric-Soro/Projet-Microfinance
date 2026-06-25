@@ -387,7 +387,7 @@
         <!-- HERO -->
         <div class="search-hero">
           <h1>Recherche avanc&eacute;e de clients</h1>
-          <p>Recherchez par nom, t&eacute;l&eacute;phone, pi&egrave;ce d'identit&eacute; ou NIF</p>
+          <p>Recherchez par nom, N&deg; de compte, t&eacute;l&eacute;phone, pi&egrave;ce d'identit&eacute; ou NIF</p>
         </div>
 
         <!-- QUICK SEARCH BAR -->
@@ -395,7 +395,7 @@
           <span class="qs-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           </span>
-          <input type="text" id="mainSearch" placeholder="Nom, pr&eacute;nom, t&eacute;l&eacute;phone, N&deg; pi&egrave;ce, NIF..." autofocus>
+          <input type="text" id="mainSearch" placeholder="Nom, pr&eacute;nom, N&deg; de compte, t&eacute;l&eacute;phone, N&deg; pi&egrave;ce, NIF..." autofocus>
         </div>
 
         <!-- QUICK FILTER CHIPS -->
@@ -849,8 +849,8 @@
           +   '<div><div class="cc-detail-label">KYC</div><div class="cc-detail-value">' + badgeKyc(kyc) + '</div></div>'
           + '</div>'
           + '<div class="cc-footer">'
-          +   '<a href="client-detail.html?id=' + c.idClient + '" class="btn btn-outline btn-sm" onclick="event.stopPropagation();">Voir fiche</a>'
-          +   '<a href="client-create.html?edit=' + c.idClient + '" class="btn btn-ghost btn-sm" onclick="event.stopPropagation();">Modifier</a>'
+          +   '<a href="client-detail?id=' + c.idClient + '" class="btn btn-outline btn-sm" onclick="event.stopPropagation();">Voir fiche</a>'
+          +   '<a href="client-create?edit=' + c.idClient + '" class="btn btn-ghost btn-sm" onclick="event.stopPropagation();">Modifier</a>'
           + '</div>'
           + '</div>';
       }).join('');

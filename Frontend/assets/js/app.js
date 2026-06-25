@@ -69,9 +69,18 @@
       defaultHeaders['Content-Type'] = 'application/json';
     }
     var headers = Object.assign(defaultHeaders, options.headers || {});
+    
+    // Eviter la mise en cache par le navigateur sur toutes les requetes GET
+    var urlPath = path;
+    var method = (options.method || 'GET').toUpperCase();
+    if (method === 'GET') {
+      var separator = urlPath.includes('?') ? '&' : '?';
+      urlPath = urlPath + separator + '_t=' + Date.now();
+    }
+
     var res;
     try {
-      res = await fetch(API_BASE + path, Object.assign({}, options, { headers: headers }));
+      res = await fetch(API_BASE + urlPath, Object.assign({}, options, { headers: headers }));
     } catch (fetchErr) {
       var msg = 'Impossible de joindre le serveur (localhost:8080). Vérifiez que le backend est démarré.';
       if (fetchErr && fetchErr.message && fetchErr.message.toLowerCase().includes('cors')) {
@@ -173,6 +182,10 @@
     /** PUT /api/v1/clients/{id}/statut?nouveauStatut= */
     modifierStatut: async function (idClient, nouveauStatut) {
       return await apiFetch('/api/v1/clients/' + idClient + '/statut?nouveauStatut=' + encodeURIComponent(nouveauStatut), { method: 'PUT' });
+    },
+    /** PUT /api/v1/clients/{id} */
+    modifier: async function (idClient, data) {
+      return await apiFetch('/api/v1/clients/' + idClient, { method: 'PUT', body: JSON.stringify(data) });
     },
     /** PUT /api/v1/clients/{id}/kyc/decision */
     traiterKyc: async function (idClient, data) {
@@ -358,9 +371,39 @@
     }
   };
 
+  async function downloadFile(path, defaultFilename) {
+    try {
+      if (typeof window.showToast === 'function') window.showToast('Téléchargement du fichier en cours...', 'info');
+      var res = await apiFetch(path);
+      if (res && res.ok) {
+        var blob = await res.blob();
+        var blobUrl = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = blobUrl;
+        
+        var filename = defaultFilename;
+        var cd = res.headers.get('Content-Disposition');
+        if (cd) {
+          var match = cd.match(/filename="?([^"]+)"?/);
+          if (match && match[1]) filename = match[1];
+        }
+        a.download = filename;
+        a.click();
+        setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 10000);
+        if (typeof window.showToast === 'function') window.showToast('Téléchargement terminé.', 'success');
+      } else if (res) {
+        var err = await res.json().catch(function () { return {}; });
+        if (typeof window.showToast === 'function') window.showToast('Erreur : ' + (err.message || 'Impossible de télécharger le fichier.'), 'error');
+      }
+    } catch (e) {
+      console.error('[Download] Error:', e);
+      if (typeof window.showToast === 'function') window.showToast('Erreur lors du téléchargement.', 'error');
+    }
+  }
+
   /* ── Exposition globale ─────────────────────────── */
 
-  window.SF   = { API_BASE, getToken, setSession, clearSession, getUser, getChallengeId, apiFetch };
+  window.SF   = { API_BASE, getToken, setSession, clearSession, getUser, getChallengeId, apiFetch, downloadFile };
   window.Auth = Auth;
   window.Clients = Clients;
   window.Comptes = Comptes;
@@ -404,43 +447,27 @@
         { href: 'client-create.html', label: 'Nouveau client', icon: icons.users, match: ['client-create.html'] },
         { href: 'kyc-validation.html', label: 'Validation KYC', icon: icons.audit, match: ['kyc-validation.html'] },
         { href: 'recherche-client.html', label: 'Recherche avancée', icon: icons.users, match: ['recherche-client.html'] },
-        { href: 'documents-client.html', label: 'Documents', icon: icons.audit, match: ['documents-client.html'] },
         { href: 'blacklist-client.html', label: 'Blacklist', icon: icons.audit, match: ['blacklist-client.html'] }
       ]
     },
     {
       title: 'Comptes & Cartes',
       items: [
-        { href: 'comptes.html', label: 'Comptes', icon: icons.card, match: ['comptes.html'] },
+        { href: 'comptes.html', label: 'Comptes', icon: icons.card, match: ['comptes.html', 'detail-compte.html', 'fermeture-compte.html', 'blocage-compte.html'] },
         { href: 'ouverture-compte.html', label: 'Ouverture compte', icon: icons.card, match: ['ouverture-compte.html'] },
-        { href: 'detail-compte.html', label: 'Détail compte', icon: icons.card, match: ['detail-compte.html'] },
-        { href: 'recherche-compte.html', label: 'Recherche compte', icon: icons.card, match: ['recherche-compte.html'] },
-        { href: 'fermeture-compte.html', label: 'Fermeture compte', icon: icons.card, match: ['fermeture-compte.html'] },
-        { href: 'blocage-compte.html', label: 'Blocage/Déblocage', icon: icons.card, match: ['blocage-compte.html'] },
-        { href: 'cartes.html', label: 'Cartes Visa', icon: icons.card, match: ['cartes.html'] },
-        { href: 'demande-carte.html', label: 'Demande carte', icon: icons.card, match: ['demande-carte.html'] },
-        { href: 'detail-carte.html', label: 'Détail carte', icon: icons.card, match: ['detail-carte.html'] },
-        { href: 'opposition-carte.html', label: 'Opposition carte', icon: icons.card, match: ['opposition-carte.html'] },
-        { href: 'beneficiaires.html', label: 'Bénéficiaires', icon: icons.users, match: ['beneficiaires.html'] },
+        { href: 'cartes.html', label: 'Cartes Visa', icon: icons.card, match: ['cartes.html', 'detail-carte.html', 'demande-carte.html', 'opposition-carte.html'] },
         { href: 'paiement-carte.html', label: 'Paiement carte', icon: icons.card, match: ['paiement-carte.html'] }
       ]
     },
     {
       title: 'Caisse & Opérations',
       items: [
-        { href: 'caisse.html', label: 'Caisse', icon: icons.cash, match: ['caisse.html'] },
-        { href: 'fermeture-caisse.html', label: 'Fermeture caisse', icon: icons.cash, match: ['fermeture-caisse.html'] },
-        { href: 'etat-caisse.html', label: 'État caisse', icon: icons.cash, match: ['etat-caisse.html'] },
+        { href: 'caisse.html', label: 'Caisse', icon: icons.cash, match: ['caisse.html', 'fermeture-caisse.html'] },
         { href: 'guichet.html', label: 'Guichet', icon: icons.cash, match: ['guichet.html'] },
         { href: 'virement.html', label: 'Virement', icon: icons.transfer, match: ['virement.html'] },
         { href: 'retrait-mm.html', label: 'Retrait Mobile Money', icon: icons.cash, match: ['retrait-mm.html'] },
         { href: 'validation.html', label: 'Validation 4-eyes', icon: icons.audit, match: ['validation.html'] },
-        { href: 'approbation.html', label: 'Approbation', icon: icons.audit, match: ['approbation.html'] },
-        { href: 'rejet.html', label: 'Rejet', icon: icons.audit, match: ['rejet.html'] },
-        { href: 'detail-transaction.html', label: 'Détail transaction', icon: icons.audit, match: ['detail-transaction.html'] },
-        { href: 'annulation.html', label: 'Annulation', icon: icons.audit, match: ['annulation.html'] },
-        { href: 'export-transactions.html', label: 'Export transactions', icon: icons.audit, match: ['export-transactions.html'] },
-        { href: 'historique.html', label: 'Historique', icon: icons.audit, match: ['historique.html'] }
+        { href: 'historique.html', label: 'Historique', icon: icons.audit, match: ['historique.html', 'detail-transaction.html', 'annulation.html', 'export-transactions.html'] }
       ]
     },
     {
@@ -478,8 +505,7 @@
       items: [
         { href: 'securite.html', label: 'Rôles & permissions', icon: icons.settings, match: ['securite.html'] },
         { href: 'utilisateurs.html', label: 'Utilisateurs', icon: icons.users, match: ['utilisateurs.html'] },
-        { href: 'sessions-actives.html', label: 'Sessions actives', icon: icons.audit, match: ['sessions-actives.html'] },
-        { href: 'sessions-admin.html', label: 'Sessions admin', icon: icons.audit, match: ['sessions-admin.html'] },
+        { href: 'sessions-actives.html', label: 'Sessions actives', icon: icons.audit, match: ['sessions-actives.html', 'sessions-admin.html'] },
         { href: 'parametres-2fa.html', label: 'Paramètres 2FA', icon: icons.settings, match: ['parametres-2fa.html'] }
       ]
     },

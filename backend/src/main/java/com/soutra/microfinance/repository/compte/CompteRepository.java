@@ -44,6 +44,15 @@ public interface CompteRepository extends JpaRepository<Compte, Long> {
 	// Liste paginee des comptes crees entre deux dates.
 	Page<Compte> findByCreatedAtBetween(LocalDateTime dateDebut, LocalDateTime dateFin, Pageable pageable);
 
+	@Query("SELECT c FROM Compte c WHERE " +
+	       "LOWER(c.numCompte) LIKE LOWER(CONCAT('%', :query, '%')) " +
+	       "OR LOWER(c.client.nom) LIKE LOWER(CONCAT('%', :query, '%')) " +
+	       "OR LOWER(c.client.prenom) LIKE LOWER(CONCAT('%', :query, '%')) " +
+	       "OR LOWER(c.client.codeClient) LIKE LOWER(CONCAT('%', :query, '%')) " +
+	       "OR LOWER(c.client.telephone) LIKE LOWER(CONCAT('%', :query, '%')) " +
+	       "OR LOWER(c.client.email) LIKE LOWER(CONCAT('%', :query, '%'))")
+	Page<Compte> rechercherComptesGlobale(@Param("query") String query, Pageable pageable);
+
 	// --- Aggregation queries for reporting ---
 
 	long countByDateOuvertureBetween(LocalDate dateDebut, LocalDate dateFin);

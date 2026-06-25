@@ -5,6 +5,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sessions actives - MicroFinance</title>
   <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    .refresh-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: #4A7A8A;
+    }
+    .refresh-bar .countdown {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(74,122,138,0.08);
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .refresh-bar .countdown .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #4CAF50;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .session-row-highlight {
+      background: rgba(255,152,0,0.04) !important;
+    }
+    .user-session-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      border-radius: 10px;
+      background: rgba(217,48,37,0.10);
+      color: #D93025;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 6px;
+    }
+    .kpi-card .kpi-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .kpi-icon.blue   { background: rgba(66,133,244,0.10); color: #4285F4; }
+    .kpi-icon.green  { background: rgba(76,175,80,0.10);  color: #4CAF50; }
+    .kpi-icon.orange { background: rgba(255,152,0,0.10);  color: #FF9800; }
+    .kpi-icon.red    { background: rgba(217,48,37,0.10);  color: #D93025; }
+  </style>
 </head>
 <body>
   <div class="app-layout">
@@ -14,210 +74,524 @@
         <div class="topbar-left">
           <div>
             <div class="topbar-title">Sessions actives</div>
-            <div class="topbar-breadcrumb">Sécurité / Sessions actives</div>
+            <div class="topbar-breadcrumb">Sécurité / Sessions</div>
           </div>
         </div>
-        <div class="topbar-right"></div>
+        <div class="topbar-right">
+          <div class="refresh-bar">
+            <span class="countdown"><span class="dot"></span> Rafraîchissement dans <span id="countdownValue">30</span>s</span>
+            <button class="btn btn-outline btn-sm" onclick="manualRefresh()" title="Rafraîchir maintenant">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            </button>
+          </div>
+          <button class="topbar-icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
       </header>
+
       <main class="content-area">
         <div class="page-header">
           <div>
-            <h1 class="page-title">Gestion des sessions actives</h1>
-            <p class="page-subtitle">Consultez et révoquez les sessions utilisateurs en cours.</p>
+            <h1 class="page-title">Sessions actives</h1>
+            <p class="page-subtitle">Gestion des sessions utilisateurs connectés au système</p>
           </div>
-          <button class="btn btn-danger" onclick="revokeAllSessions()">Révoquer toutes les sessions</button>
+          <button class="btn btn-danger" onclick="revokeAll()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px;vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            Révoquer toutes les sessions
+          </button>
         </div>
 
+        <!-- KPI CARDS -->
         <section class="kpi-grid">
           <div class="kpi-card">
+            <div class="kpi-icon blue">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
             <div class="kpi-info">
               <div class="kpi-label">Sessions actives</div>
               <div class="kpi-value" id="kpiTotal">-</div>
             </div>
           </div>
           <div class="kpi-card">
+            <div class="kpi-icon green">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
             <div class="kpi-info">
               <div class="kpi-label">Utilisateurs connectés</div>
               <div class="kpi-value" id="kpiUsers">-</div>
             </div>
           </div>
           <div class="kpi-card">
+            <div class="kpi-icon orange">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
             <div class="kpi-info">
               <div class="kpi-label">Sessions aujourd'hui</div>
               <div class="kpi-value" id="kpiToday">-</div>
             </div>
           </div>
           <div class="kpi-card">
+            <div class="kpi-icon red">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
             <div class="kpi-info">
-              <div class="kpi-label">Tentatives bloquées</div>
-              <div class="kpi-value" id="kpiBlocked">-</div>
+              <div class="kpi-label">Multi-sessions (&gt;1)</div>
+              <div class="kpi-value" id="kpiMulti">-</div>
             </div>
           </div>
         </section>
 
+        <!-- SESSIONS TABLE -->
         <section class="card">
           <div class="card-header">
             <div>
               <div class="card-title">Sessions en cours</div>
-              <div class="card-subtitle">Endpoint : /api/v1/auth/sessions</div>
+              <div class="card-subtitle">Endpoint : /api/v1/securite/sessions — Rafraîchissement auto 30s</div>
+            </div>
+            <span style="font-size:12px;color:#4A7A8A;" id="lastRefresh">Dernière maj : -</span>
+          </div>
+
+          <!-- FILTER BAR -->
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#4A7A8A;display:block;margin-bottom:4px;">Utilisateur</label>
+              <input class="form-control" placeholder="Rechercher par nom..." id="sessSearch" oninput="filterSessions()" style="width:200px;">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#4A7A8A;display:block;margin-bottom:4px;">Rôle</label>
+              <select class="form-control" id="sessRole" onchange="filterSessions()" style="width:160px;">
+                <option value="ALL">Tous les rôles</option>
+                <option value="ADMIN">Admin</option>
+                <option value="SUPERVISEUR">Superviseur</option>
+                <option value="AGENT">Agent</option>
+                <option value="CAISSIER">Caissier</option>
+                <option value="COMPLIANCE">Compliance</option>
+              </select>
+            </div>
+            <div style="align-self:flex-end;">
+              <button class="btn btn-secondary btn-sm" onclick="filterSessions()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Filtrer
+              </button>
             </div>
           </div>
-          <div class="filter-bar">
-            <input class="form-control" placeholder="Rechercher par utilisateur..." id="filterUser" oninput="filterSessions()">
-            <select class="form-control" id="filterStatut" onchange="filterSessions()">
-              <option value="ALL">Tous les statuts</option>
-              <option value="ACTIVE">Active</option>
-              <option value="EXPIREE">Expirée</option>
-              <option value="BLOQUEE">Bloquée</option>
-            </select>
+
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Utilisateur</th>
+                  <th>Rôle</th>
+                  <th>IP</th>
+                  <th>Navigateur</th>
+                  <th>Date début</th>
+                  <th>Dernière activité</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="sessBody">
+                <tr><td colspan="7" style="text-align:center;color:#4A7A8A;padding:20px;">Chargement...</td></tr>
+              </tbody>
+            </table>
           </div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Utilisateur</th>
-                <th>Adresse IP</th>
-                <th>Navigateur</th>
-                <th>Date début</th>
-                <th>Dernière activité</th>
-                <th>Statut</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="sessionsTableBody">
-              <tr><td colspan="7" style="text-align:center;color:#4A7A8A;padding:20px;">Chargement des sessions...</td></tr>
-            </tbody>
-          </table>
+
+          <div class="pagination">
+            <div class="pagination-info" id="paginationInfo">-</div>
+            <div class="pagination-buttons" id="paginationButtons"></div>
+          </div>
         </section>
       </main>
     </div>
   </div>
+
+  <!-- CONFIRMATION MODAL -->
+  <div id="confirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:12px;padding:28px 32px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="width:40px;height:40px;border-radius:50%;background:rgba(217,48,37,0.10);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D93025" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <h3 style="margin:0;font-size:16px;color:#1a1a1a;" id="confirmTitle">Confirmer</h3>
+      </div>
+      <p style="color:#555;font-size:14px;line-height:1.5;margin-bottom:24px;" id="confirmMessage">Êtes-vous sûr ?</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="closeConfirmModal()">Annuler</button>
+        <button class="btn btn-danger" id="confirmAction">Confirmer</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
   <script>
     let allSessions = [];
+    let refreshTimer = null;
+    let countdownTimer = null;
+    let countdown = 30;
+    const REFRESH_INTERVAL = 30;
+    const PER_PAGE = 15;
+    let currentPage = 1;
 
     document.addEventListener('DOMContentLoaded', () => {
       loadSessions();
-      setInterval(loadSessions, 30000);
+      startAutoRefresh();
     });
+
+    /* ── Auto-refresh with countdown ─────────────────── */
+
+    function startAutoRefresh() {
+      clearInterval(refreshTimer);
+      clearInterval(countdownTimer);
+      countdown = REFRESH_INTERVAL;
+      updateCountdown();
+
+      countdownTimer = setInterval(() => {
+        countdown--;
+        updateCountdown();
+        if (countdown <= 0) {
+          loadSessions();
+          countdown = REFRESH_INTERVAL;
+        }
+      }, 1000);
+    }
+
+    function updateCountdown() {
+      const el = document.getElementById('countdownValue');
+      if (el) el.textContent = countdown;
+    }
+
+    window.manualRefresh = function() {
+      countdown = REFRESH_INTERVAL;
+      loadSessions();
+    }
+
+    /* ── Data loading ────────────────────────────────── */
 
     async function loadSessions() {
       try {
-        const res = await SF.apiFetch('/api/v1/auth/sessions');
+        const res = await SF.apiFetch('/api/v1/securite/sessions');
         if (res && res.ok) {
           const data = await res.json();
-          allSessions = data.content || data || [];
+          allSessions = data || [];
           filterSessions();
           updateKpis(allSessions);
+          updateLastRefresh();
         }
-      } catch (e) {
+      } catch(e) {
         console.error('Erreur chargement sessions:', e);
       }
     }
 
-    function filterSessions() {
-      const q = document.getElementById('filterUser').value.toLowerCase();
-      const statut = document.getElementById('filterStatut').value;
-      const filtered = allSessions.filter(s => {
-        const matchUser = !q || (s.utilisateur || s.login || '').toLowerCase().includes(q);
-        const sessionStatut = resolveStatut(s);
-        const matchStatut = statut === 'ALL' || sessionStatut === statut;
-        return matchUser && matchStatut;
+    function updateLastRefresh() {
+      const el = document.getElementById('lastRefresh');
+      if (el) {
+        const now = new Date();
+        el.textContent = 'Dernière maj : ' + now.toLocaleTimeString('fr-FR');
+      }
+    }
+
+    /* ── KPIs ────────────────────────────────────────── */
+
+    function updateKpis(sessions) {
+      document.getElementById('kpiTotal').textContent = sessions.length;
+
+      const users = new Set(sessions.map(s => (s.login || s.username || '').toLowerCase()));
+      document.getElementById('kpiUsers').textContent = users.size;
+
+      const today = new Date().toISOString().slice(0, 10);
+      const todayCount = sessions.filter(s => {
+        const d = s.dateConnexion || s.dateDebut || s.createdAt;
+        return d && d.slice(0, 10) === today;
+      }).length;
+      document.getElementById('kpiToday').textContent = todayCount || '0';
+
+      const sessionCounts = {};
+      sessions.forEach(s => {
+        const u = (s.login || s.username || '').toLowerCase();
+        sessionCounts[u] = (sessionCounts[u] || 0) + 1;
       });
+      const multiCount = Object.values(sessionCounts).filter(c => c > 1).length;
+      document.getElementById('kpiMulti').textContent = multiCount || '0';
+    }
+
+    /* ── Filtering ───────────────────────────────────── */
+
+    window.filterSessions = function() {
+      const q = document.getElementById('sessSearch').value.toLowerCase();
+      const role = document.getElementById('sessRole').value;
+
+      const filtered = allSessions.filter(s => {
+        const matchQ = !q || (s.login || s.username || '').toLowerCase().includes(q) || (s.nomPrenom || '').toLowerCase().includes(q);
+        const matchR = role === 'ALL' || (s.role || '').toUpperCase() === role;
+        return matchQ && matchR;
+      });
+
+      currentPage = 1;
       renderSessions(filtered);
     }
 
-    function resolveStatut(s) {
-      if (s.statut) return s.statut.toUpperCase();
-      if (s.courante) return 'ACTIVE';
-      if (s.expiree) return 'EXPIREE';
-      if (s.bloquee) return 'BLOQUEE';
-      return 'ACTIVE';
-    }
+    /* ── Rendering ───────────────────────────────────── */
 
-    function renderSessions(sessions) {
-      const tbody = document.getElementById('sessionsTableBody');
-      if (!sessions.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#4A7A8A;padding:20px;">Aucune session active.</td></tr>';
+    function renderSessions(items) {
+      const tbody = document.getElementById('sessBody');
+
+      if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#4A7A8A;padding:30px;">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;margin-bottom:8px;opacity:0.4;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><br>' +
+          'Aucune session active pour les filtres sélectionnés.</td></tr>';
+        updatePagination(0, 0);
         return;
       }
-      tbody.innerHTML = sessions.map(s => {
-        const isCurrentUser = s.courante;
-        const statut = resolveStatut(s);
-        const statutBadge = statut === 'ACTIVE' ? 'badge-active' :
-                            statut === 'EXPIREE' ? 'badge-warning' :
-                            statut === 'BLOQUEE' ? 'badge-danger' : 'badge-info';
-        const statutLabel = statut === 'ACTIVE' ? 'Active' :
-                            statut === 'EXPIREE' ? 'Expirée' :
-                            statut === 'BLOQUEE' ? 'Bloquée' : statut;
-        return `<tr>
-          <td><strong>${s.utilisateur || s.login || '-'}</strong>${isCurrentUser ? ' <span class="badge badge-info">Vous</span>' : ''}</td>
-          <td style="font-family:monospace;">${s.adresseIp || s.ip || '-'}</td>
-          <td style="font-size:.85rem;">${s.userAgent || s.navigateur || '-'}</td>
-          <td>${formatDate(s.dateDebut || s.createdAt)}</td>
-          <td>${formatDate(s.derniereActivite || s.updatedAt)}</td>
-          <td><span class="badge ${statutBadge}">${statutLabel}</span></td>
-          <td>${isCurrentUser
-            ? '<span style="color:#4A7A8A;font-size:.85rem;">Session courante</span>'
-            : `<button class="btn btn-danger btn-sm" onclick="revokeSession('${s.id}')">Révoquer</button>`}</td>
+
+      const sessionCounts = {};
+      items.forEach(s => {
+        const u = (s.login || s.username || '').toLowerCase();
+        sessionCounts[u] = (sessionCounts[u] || 0) + 1;
+      });
+
+      const totalPages = Math.ceil(items.length / PER_PAGE);
+      if (currentPage > totalPages) currentPage = totalPages;
+      const start = (currentPage - 1) * PER_PAGE;
+      const pageItems = items.slice(start, start + PER_PAGE);
+
+      tbody.innerHTML = pageItems.map(s => {
+        const user = s.nomPrenom || s.login || s.username || '-';
+        const loginKey = (s.login || s.username || '').toLowerCase();
+        const isMulti = sessionCounts[loginKey] > 1;
+        
+        let roleDisplay = s.role || 'AGENT';
+        // Auto resolve role mapping if needed
+        const roleUpper = roleDisplay.toUpperCase();
+        const roleBadge = getRoleBadgeClass(roleUpper);
+        const highlightClass = isMulti ? ' session-row-highlight' : '';
+        const isCurrentUser = s.estSessionCourante || s.courante || false;
+
+        return `<tr class="${highlightClass}">
+          <td>
+            <strong>${escapeHtml(user)}</strong>
+            ${isCurrentUser ? ' <span class="badge badge-info">Vous</span>' : ''}
+            ${isMulti ? '<span class="user-session-count" title="Sessions multiples ouvertes">' + sessionCounts[loginKey] + '</span>' : ''}
+          </td>
+          <td><span class="badge ${roleBadge}">${escapeHtml(roleDisplay)}</span></td>
+          <td style="font-family:monospace;font-size:13px;">${escapeHtml(s.adresseIp || s.ip || '-')}</td>
+          <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(s.userAgent || s.navigateur || '')}">${escapeHtml(s.userAgent || s.navigateur || '-')}</td>
+          <td style="white-space:nowrap;">${formatDateTime(s.dateConnexion || s.dateDebut || s.createdAt)}</td>
+          <td style="white-space:nowrap;">${formatDateTime(s.derniereActivite || s.lastActivity)}</td>
+          <td style="white-space:nowrap;">
+            ${isCurrentUser 
+              ? '<span style="color:#4A7A8A;font-size:.85rem;font-weight:600;">Session courante</span>'
+              : `<button class="btn btn-danger btn-sm" onclick="revokeSession('${escapeHtml(s.sessionId || s.id || s.token)}')" title="Révoquer cette session unique">Révoquer</button>
+                 <button class="btn btn-outline btn-sm" onclick="revokeUserSessions('${escapeHtml(s.login || s.username)}')" title="Déconnecter cet utilisateur de tous ses terminaux">Révoquer utilisateur</button>`
+            }
+          </td>
         </tr>`;
       }).join('');
+
+      updatePagination(items.length, totalPages);
     }
 
-    function updateKpis(sessions) {
-      const users = new Set(sessions.map(s => s.utilisateur || s.login));
-      document.getElementById('kpiTotal').textContent = sessions.length;
-      document.getElementById('kpiUsers').textContent = users.size;
-      const today = new Date().toISOString().slice(0, 10);
-      const todayCount = sessions.filter(s => {
-        const d = s.dateDebut || s.createdAt;
-        return d && d.slice(0, 10) === today;
-      }).length;
-      document.getElementById('kpiToday').textContent = todayCount || '-';
-      const blocked = sessions.filter(s => resolveStatut(s) === 'BLOQUEE').length;
-      document.getElementById('kpiBlocked').textContent = blocked || '0';
-    }
-
-    async function revokeSession(id) {
-      if (!confirm('Révoquer cette session ? L\'utilisateur sera déconnecté.')) return;
-      try {
-        const res = await SF.apiFetch('/api/v1/auth/sessions/' + id + '/revoguer', { method: 'POST' });
-        if (res && res.ok) {
-          showToast('Session révoquée.', 'success');
-          loadSessions();
-        } else {
-          showToast('Erreur lors de la révocation.', 'error');
-        }
-      } catch (e) {
-        showToast(e.message, 'error');
+    function getRoleBadgeClass(role) {
+      switch (role) {
+        case 'ADMIN':       return 'badge-danger';
+        case 'SUPERVISEUR': return 'badge-warning';
+        case 'COMPLIANCE':  return 'badge-info';
+        case 'AGENT':       return 'badge-active';
+        case 'CAISSIER':    return 'badge-success';
+        default:            return 'badge-info';
       }
     }
 
-    async function revokeAllSessions() {
-      if (!confirm('Révoquer TOUTES les sessions (sauf la vôtre) ?')) return;
-      try {
-        const res = await SF.apiFetch('/api/v1/auth/sessions/revoguer-toutes', { method: 'POST' });
-        if (res && res.ok) {
-          showToast('Toutes les sessions révoquées.', 'success');
-          loadSessions();
-        } else {
-          showToast('Erreur lors de la révocation globale.', 'error');
-        }
-      } catch (e) {
-        showToast(e.message, 'error');
+    function updatePagination(total, totalPages) {
+      const info = document.getElementById('paginationInfo');
+      const buttons = document.getElementById('paginationButtons');
+
+      if (total === 0) {
+        info.textContent = 'Aucun résultat';
+        buttons.innerHTML = '';
+        return;
       }
+
+      const start = (currentPage - 1) * PER_PAGE + 1;
+      const end = Math.min(currentPage * PER_PAGE, total);
+      info.textContent = 'Affichage ' + start + '-' + end + ' sur ' + total + ' sessions';
+
+      if (totalPages <= 1) {
+        buttons.innerHTML = '';
+        return;
+      }
+
+      let html = '';
+      html += '<button class="page-btn' + (currentPage === 1 ? ' disabled' : '') + '" onclick="goToPage(' + (currentPage - 1) + ')"' + (currentPage === 1 ? ' disabled' : '') + '>&lsaquo;</button>';
+
+      const maxVisible = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+      if (endPage - startPage < maxVisible - 1) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
+      }
+
+      if (startPage > 1) {
+        html += '<button class="page-btn" onclick="goToPage(1)">1</button>';
+        if (startPage > 2) html += '<button class="page-btn disabled">...</button>';
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        html += '<button class="page-btn' + (i === currentPage ? ' active' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
+      }
+
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) html += '<button class="page-btn disabled">...</button>';
+        html += '<button class="page-btn" onclick="goToPage(' + totalPages + ')">' + totalPages + '</button>';
+      }
+
+      html += '<button class="page-btn' + (currentPage === totalPages ? ' disabled' : '') + '" onclick="goToPage(' + (currentPage + 1) + ')"' + (currentPage === totalPages ? ' disabled' : '') + '>&rsaquo;</button>';
+
+      buttons.innerHTML = html;
     }
 
-    function formatDate(d) {
+    window.goToPage = function(page) {
+      currentPage = page;
+      filterSessions();
+      document.querySelector('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    /* ── Revoke actions (POST /api/v1/securite/sessions/revoguer) ── */
+
+    window.revokeSession = function(id) {
+      showConfirmModal(
+        'Révoquer cette session',
+        'L\'utilisateur sera immédiatement déconnecté de cette session. Cette action est irréversible.',
+        async () => {
+          try {
+            const res = await SF.apiFetch('/api/v1/securite/sessions/revoguer', {
+              method: 'POST',
+              body: JSON.stringify({ sessionId: id })
+            });
+            if (res && (res.status === 200 || res.status === 204 || res.status === 202)) {
+              showToast('Session révoquée avec succès.', 'success');
+              loadSessions();
+            } else {
+              const err = await res.json().catch(()=>({}));
+              showToast(err.message || 'Erreur lors de la révocation.', 'error');
+            }
+          } catch(e) {
+            showToast(e.message, 'error');
+          }
+        }
+      );
+    }
+
+    window.revokeUserSessions = function(login) {
+      showConfirmModal(
+        'Révoquer toutes les sessions de ' + login,
+        'Toutes les sessions actives de ' + login + ' seront révoquées en boucle. L\'utilisateur sera déconnecté de tous ses appareils.',
+        async () => {
+          const userSessions = allSessions.filter(s => (s.login || s.username || '').toLowerCase() === login.toLowerCase());
+          
+          let successCount = 0;
+          for (const s of userSessions) {
+            // Ne pas révoquer sa propre session courante lors d'un traitement en lot
+            if (s.estSessionCourante || s.courante) continue;
+            try {
+              const res = await SF.apiFetch('/api/v1/securite/sessions/revoguer', {
+                method: 'POST',
+                body: JSON.stringify({ sessionId: s.sessionId || s.id || s.token })
+              });
+              if (res && res.ok) {
+                successCount++;
+              }
+            } catch(err) {
+              console.error(err);
+            }
+          }
+          showToast(successCount + ' session(s) de ' + login + ' révoquée(s).', 'success');
+          loadSessions();
+        }
+      );
+    }
+
+    window.revokeAll = function() {
+      showConfirmModal(
+        'Révoquer TOUTES les sessions',
+        'Tous les autres utilisateurs connectés seront déconnectés en boucle. Votre session active actuelle sera préservée.',
+        async () => {
+          const otherSessions = allSessions.filter(s => !(s.estSessionCourante || s.courante));
+          
+          if (otherSessions.length === 0) {
+            showToast('Aucune autre session active à révoquer.', 'info');
+            return;
+          }
+
+          let successCount = 0;
+          for (const s of otherSessions) {
+            try {
+              const res = await SF.apiFetch('/api/v1/securite/sessions/revoguer', {
+                method: 'POST',
+                body: JSON.stringify({ sessionId: s.sessionId || s.id || s.token })
+              });
+              if (res && res.ok) {
+                successCount++;
+              }
+            } catch(err) {
+              console.error(err);
+            }
+          }
+          showToast(successCount + ' session(s) révoquée(s) sur ' + otherSessions.length + '.', 'success');
+          loadSessions();
+        }
+      );
+    }
+
+    /* ── Confirmation modal ──────────────────────────── */
+
+    let pendingConfirmAction = null;
+
+    function showConfirmModal(title, message, action) {
+      document.getElementById('confirmTitle').textContent = title;
+      document.getElementById('confirmMessage').textContent = message;
+      pendingConfirmAction = action;
+      const modal = document.getElementById('confirmModal');
+      modal.style.display = 'flex';
+    }
+
+    window.closeConfirmModal = function() {
+      document.getElementById('confirmModal').style.display = 'none';
+      pendingConfirmAction = null;
+    }
+
+    document.getElementById('confirmAction').addEventListener('click', async () => {
+      if (pendingConfirmAction) {
+        await pendingConfirmAction();
+      }
+      closeConfirmModal();
+    });
+
+    document.getElementById('confirmModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeConfirmModal();
+    });
+
+    /* ── Utilities ───────────────────────────────────── */
+
+    function formatDateTime(d) {
       if (!d) return '-';
       try {
         return new Date(d).toLocaleString('fr-FR', {
           day: '2-digit', month: '2-digit', year: 'numeric',
           hour: '2-digit', minute: '2-digit'
         });
-      } catch {
-        return d;
-      }
+      } catch { return d; }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
   </script>
 </body>

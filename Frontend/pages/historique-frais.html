@@ -326,8 +326,7 @@
       /* ── PDF Export ─────────────────────────────── */
 
       function exportPDF() {
-        window.open(SF.API_BASE + '/api/v1/tarification/historique/export?format=PDF', '_blank');
-        showToast('Export PDF lancé.', 'success');
+        SF.downloadFile('/api/v1/tarification/historique/export?format=PDF', 'historique_frais_export.pdf');
       }
       window.exportPDF = exportPDF;
 

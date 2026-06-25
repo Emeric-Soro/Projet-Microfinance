@@ -304,7 +304,7 @@
         showToast('Le montant du retrait dépasse le solde disponible.', 'warning');
       }
 
-      document.getElementById('guichetConfirmAccount').textContent = _compte.numCompte;
+      document.getElementById('guichetConfirmAccount').textContent = _compte.numCompteComplet || _compte.numCompte;
       document.getElementById('guichetConfirmHolder').textContent = document.getElementById('guichetHolder').textContent;
       document.getElementById('guichetConfirmAmount').textContent = fmt(amount);
       

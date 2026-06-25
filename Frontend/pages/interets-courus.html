@@ -508,10 +508,9 @@
        EXPORT PDF
        ============================== */
     function exportPDF() {
-      showToast('Export PDF prepare. Le document sera genere par le serveur.', 'info');
       var periode = document.getElementById('icPeriode').value;
       var methode = document.getElementById('icMethode').value;
-      window.open('/api/v1/epargne/interets-courus/export-pdf?periode=' + encodeURIComponent(periode) + '&methode=' + encodeURIComponent(methode), '_blank');
+      SF.downloadFile('/api/v1/epargne/interets-courus/export-pdf?periode=' + encodeURIComponent(periode) + '&methode=' + encodeURIComponent(methode), 'interets_courus_' + periode + '.pdf');
     }
 
     /* ==============================

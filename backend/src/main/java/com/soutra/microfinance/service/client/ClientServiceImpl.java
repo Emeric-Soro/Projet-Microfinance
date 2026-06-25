@@ -3,6 +3,7 @@ package com.soutra.microfinance.service.client;
 import com.soutra.microfinance.constant.AppConstants;
 import com.soutra.microfinance.dto.request.client.DecisionKycClientRequestDTO;
 import com.soutra.microfinance.dto.request.client.MiseAJourKycClientRequestDTO;
+import com.soutra.microfinance.dto.request.client.MiseAJourClientRequestDTO;
 import com.soutra.microfinance.entity.Client;
 import com.soutra.microfinance.entity.NiveauRisqueClient;
 import com.soutra.microfinance.entity.StatutClient;
@@ -168,6 +169,31 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     @Transactional
+    public Client modifierProfilClient(Long idClient, MiseAJourClientRequestDTO requestDTO) {
+        Client client = chargerClient(idClient);
+        client.setNom(requestDTO.getNom());
+        client.setPrenom(requestDTO.getPrenom());
+        client.setDateNaissance(requestDTO.getDateNaissance());
+        client.setEmail(requestDTO.getEmail());
+        client.setTelephone(requestDTO.getTelephone());
+        client.setAdresse(requestDTO.getAdresse());
+        client.setProfession(requestDTO.getProfession());
+        client.setEmployeur(requestDTO.getEmployeur());
+        client.setTypePieceIdentite(requestDTO.getTypePieceIdentite());
+        if (requestDTO.getNumeroPieceIdentite() != null && !requestDTO.getNumeroPieceIdentite().isBlank()) {
+            if (!requestDTO.getNumeroPieceIdentite().contains("*")) {
+                client.setNumeroPieceIdentite(requestDTO.getNumeroPieceIdentite());
+            }
+        }
+        client.setDateExpirationPieceIdentite(requestDTO.getDateExpirationPieceIdentite());
+        client.setPaysNationalite(requestDTO.getPaysNationalite());
+        client.setPaysResidence(requestDTO.getPaysResidence());
+        client.setPep(Boolean.TRUE.equals(requestDTO.getPep()));
+        return clientRepository.save(client);
+    }
+
+    @Override
+    @Transactional
     public Client mettreAJourKycMobile(Long idClient, String profession, String secteurActivite, java.math.BigDecimal revenuMensuel) {
         Client client = chargerClient(idClient);
         if (profession != null) {
@@ -218,7 +244,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     @Transactional(readOnly = true)
     public Page<Client> rechercherClients(String query, Pageable pageable) {
-        return clientRepository.findByNomContainingIgnoreCaseOrPrenomContainingIgnoreCase(query, query, pageable);
+        return clientRepository.rechercherClientsGlobale(query, pageable);
     }
 
     private String genererCodeClientUnique() {
@@ -259,16 +285,16 @@ public class ClientServiceImpl implements ClientService {
             throw new IllegalArgumentException("La piece d'identite ne peut pas etre expiree");
         }
 
-        client.setProfession(requestDTO.getProfession().trim());
+        client.setProfession(requestDTO.getProfession() == null ? null : requestDTO.getProfession().trim());
         client.setEmployeur(requestDTO.getEmployeur());
         client.setTypePieceIdentite(requestDTO.getTypePieceIdentite());
         client.setNumeroPieceIdentite(normaliserNumeroPiece(requestDTO.getNumeroPieceIdentite()));
         client.setDateExpirationPieceIdentite(requestDTO.getDateExpirationPieceIdentite());
-        client.setPhotoIdentiteUrl(requestDTO.getPhotoIdentiteUrl().trim());
-        client.setJustificatifDomicileUrl(requestDTO.getJustificatifDomicileUrl().trim());
-        client.setJustificatifRevenusUrl(requestDTO.getJustificatifRevenusUrl().trim());
-        client.setPaysNationalite(requestDTO.getPaysNationalite().trim());
-        client.setPaysResidence(requestDTO.getPaysResidence().trim());
+        client.setPhotoIdentiteUrl(requestDTO.getPhotoIdentiteUrl() == null ? null : requestDTO.getPhotoIdentiteUrl().trim());
+        client.setJustificatifDomicileUrl(requestDTO.getJustificatifDomicileUrl() == null ? null : requestDTO.getJustificatifDomicileUrl().trim());
+        client.setJustificatifRevenusUrl(requestDTO.getJustificatifRevenusUrl() == null ? null : requestDTO.getJustificatifRevenusUrl().trim());
+        client.setPaysNationalite(requestDTO.getPaysNationalite() == null ? null : requestDTO.getPaysNationalite().trim());
+        client.setPaysResidence(requestDTO.getPaysResidence() == null ? null : requestDTO.getPaysResidence().trim());
         client.setPep(Boolean.TRUE.equals(requestDTO.getPep()));
     }
 

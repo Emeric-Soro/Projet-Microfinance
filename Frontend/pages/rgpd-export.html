@@ -24,8 +24,10 @@
             <div style="padding:20px;">
               <div class="form-group">
                 <label class="form-label">Rechercher le client *</label>
-                <input type="text" class="form-control" id="exportClientSearch" placeholder="Nom, prenom ou numero..." oninput="searchExportClient()">
-                <div class="search-results" id="exportClientResults"></div>
+                <div class="search-predictive">
+                  <input type="text" class="form-control" id="exportClientSearch" placeholder="Nom, prenom ou numero..." oninput="searchExportClient()">
+                  <div class="search-results" id="exportClientResults"></div>
+                </div>
               </div>
               <div id="exportClientInfo" style="display:none;"></div>
             </div>

@@ -846,7 +846,7 @@
       document.getElementById('accountHero').style.display = '';
       document.getElementById('tabNav').style.display = '';
 
-      var num = c.numCompte || c.numeroCompte || numCompte;
+      var num = c.numCompteComplet || c.numCompte || c.numeroCompte || numCompte;
       document.getElementById('pageTitle').textContent = 'Compte ' + num;
       document.getElementById('heroNum').textContent = num;
       document.getElementById('heroBalance').textContent = formatCurrency(c.solde || 0) + ' FCFA';
@@ -1193,13 +1193,18 @@
 
     function downloadDoc(docId) {
       if (!docId) return;
-      window.open(SF.API_BASE + '/api/v1/comptes/' + encodeURIComponent(numCompte) + '/documents/' + docId, '_blank');
+      SF.downloadFile('/api/v1/comptes/' + encodeURIComponent(numCompte) + '/documents/' + docId, 'document_' + docId + '.pdf');
     }
 
     /* ── Action: Releve PDF ─────────────────────────── */
     function generateReleve() {
-      showToast('Generation du releve PDF en cours...', 'info');
-      window.open(SF.API_BASE + '/api/v1/comptes/' + encodeURIComponent(numCompte) + '/releve', '_blank');
+      var today = new Date();
+      var todayStr = today.toISOString().split('T')[0];
+      var depuis = new Date(today);
+      depuis.setDate(depuis.getDate() - 30);
+      var depuisStr = depuis.toISOString().split('T')[0];
+      var url = '/api/v1/comptes/' + encodeURIComponent(numCompte) + '/releve?format=PDF&du=' + depuisStr + '&au=' + todayStr;
+      SF.downloadFile(url, 'releve_' + numCompte + '_' + todayStr + '.pdf');
     }
 
     /* ── Action: Bloquer Compte ─────────────────────── */
@@ -1267,7 +1272,7 @@
 
     /* ── Copy Account Number ────────────────────────── */
     function copyNum() {
-      var num = compteData ? (compteData.numCompte || compteData.numeroCompte || numCompte) : numCompte;
+      var num = compteData ? (compteData.numCompteComplet || compteData.numCompte || compteData.numeroCompte || numCompte) : numCompte;
       if (navigator.clipboard) {
         navigator.clipboard.writeText(num).then(function () {
           showToast('Numero de compte copie.', 'success');

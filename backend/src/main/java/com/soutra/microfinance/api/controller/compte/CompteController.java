@@ -34,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,6 +42,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
@@ -101,9 +103,15 @@ public class CompteController {
 	@GetMapping
 	@PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
 	public ResponseEntity<Page<CompteResponseDTO>> listerComptes(
+			@RequestParam(required = false) String search,
 			@ParameterObject Pageable pageable
 	) {
-		Page<Compte> comptes = compteService.listerTousLesComptes(pageable);
+		Page<Compte> comptes;
+		if (search != null && !search.trim().isEmpty()) {
+			comptes = compteService.rechercherComptes(search, pageable);
+		} else {
+			comptes = compteService.listerTousLesComptes(pageable);
+		}
 		return ResponseEntity.ok(comptes.map(this::toCompteResponse));
 	}
 
@@ -260,7 +268,11 @@ public class CompteController {
             @Valid ReleveRequestDTO requestDTO
     ) {
         Utilisateur connectedUser = SoutraSecurityHelper.extraireUtilisateurAuthentifie();
-        if (connectedUser.getClient() != null) {
+        boolean isStaff = connectedUser.getAuthorities().stream()
+                .anyMatch(a -> "ADMIN".equals(a.getAuthority()) ||
+                               "GUICHETIER".equals(a.getAuthority()) ||
+                               "SUPERVISEUR".equals(a.getAuthority()));
+        if (!isStaff && connectedUser.getClient() != null) {
             Compte compte = compteService.obtenirCompteParNumero(numCompte);
             if (compte == null || !compte.getClient().getIdClient().equals(connectedUser.getClient().getIdClient())) {
                 throw new org.springframework.security.access.AccessDeniedException("Vous n'etes pas autorise a acceder au releve de ce compte.");

@@ -23,8 +23,10 @@
           <div style="padding:20px;">
             <div class="form-group">
               <label class="form-label">Nom, prénom ou numéro client</label>
-              <input type="text" class="form-control" id="rgpdClientSearch" placeholder="Rechercher..." oninput="searchRgpdClient()">
-              <div class="search-results" id="rgpdClientResults"></div>
+              <div class="search-predictive">
+                <input type="text" class="form-control" id="rgpdClientSearch" placeholder="Rechercher..." oninput="searchRgpdClient()">
+                <div class="search-results" id="rgpdClientResults"></div>
+              </div>
             </div>
             <div id="rgpdClientInfo" style="display:none;"></div>
           </div>

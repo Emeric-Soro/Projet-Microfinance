@@ -52,9 +52,11 @@
                   <div style="padding:20px;">
                     <div class="form-group">
                       <label class="form-label" for="sarClientSearch">Rechercher le client *</label>
-                      <input type="text" class="form-control" id="sarClientSearch" placeholder="Nom, prenom ou numero..." oninput="searchSarClient()" required>
+                      <div class="search-predictive">
+                        <input type="text" class="form-control" id="sarClientSearch" placeholder="Nom, prenom ou numero..." oninput="searchSarClient()" required>
+                        <div class="search-results" id="sarClientResults"></div>
+                      </div>
                       <div class="field-error" id="sarClientSearch-error">La selection d'un client est obligatoire.</div>
-                      <div class="search-results" id="sarClientResults"></div>
                     </div>
                     <div id="sarClientInfo" style="display:none;"></div>
                   </div>

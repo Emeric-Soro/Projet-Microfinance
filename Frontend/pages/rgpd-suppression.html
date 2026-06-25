@@ -31,8 +31,10 @@
             <div style="padding:20px;">
               <div class="form-group">
                 <label class="form-label">Rechercher le client *</label>
-                <input type="text" class="form-control" id="suppClientSearch" placeholder="Nom, prénom ou numéro..." oninput="searchSuppClient()">
-                <div class="search-results" id="suppClientResults"></div>
+                <div class="search-predictive">
+                  <input type="text" class="form-control" id="suppClientSearch" placeholder="Nom, prénom ou numéro..." oninput="searchSuppClient()">
+                  <div class="search-results" id="suppClientResults"></div>
+                </div>
               </div>
               <div id="suppClientInfo" style="display:none;"></div>
             </div>

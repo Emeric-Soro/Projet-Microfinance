@@ -472,7 +472,7 @@
       const typeCompte = c.typeCompte || '—';
 
       // Fill info panel
-      document.getElementById('bdNumDisplay').textContent = c.numCompte || c.numCompteComplet || '—';
+      document.getElementById('bdNumDisplay').textContent = c.numCompteComplet || c.numCompte || '—';
       document.getElementById('bdTypeDisplay').textContent = 'Compte ' + typeCompte;
       document.getElementById('bdClientDisplay').textContent = clientNom;
       document.getElementById('bdSoldeDisplay').textContent = formatMontant(c.solde) + ' FCFA';
@@ -560,7 +560,7 @@
 
       // Build resume
       let html = '<div style="text-align:left; background:#f0f6fa; border-radius:8px; padding:14px; margin-top:12px;">';
-      html += '<div><strong>Compte :</strong> ' + escHtml(bdCompteData.numCompte || bdCompteData.numCompteComplet) + '</div>';
+      html += '<div><strong>Compte :</strong> ' + escHtml(bdCompteData.numCompteComplet || bdCompteData.numCompte) + '</div>';
       html += '<div><strong>Client :</strong> ' + escHtml(bdCompteData.clientNom || bdCompteData.client?.nomComplet || '—') + '</div>';
       html += '<div><strong>Type :</strong> ' + (typeBlocage === 'definitif' ? 'Définitif' : 'Temporaire') + '</div>';
       html += '<div><strong>Motif :</strong> ' + escHtml(motifLabel(motifVal)) + '</div>';
@@ -642,7 +642,7 @@
       };
 
       let html = '<div style="text-align:left; background:#f0f6fa; border-radius:8px; padding:14px; margin-top:12px;">';
-      html += '<div><strong>Compte :</strong> ' + escHtml(bdCompteData.numCompte || bdCompteData.numCompteComplet) + '</div>';
+      html += '<div><strong>Compte :</strong> ' + escHtml(bdCompteData.numCompteComplet || bdCompteData.numCompte) + '</div>';
       html += '<div><strong>Client :</strong> ' + escHtml(bdCompteData.clientNom || bdCompteData.client?.nomComplet || '—') + '</div>';
       html += '<div><strong>Motif :</strong> ' + escHtml(motifLabels[motifVal] || motifVal) + '</div>';
       if (details) html += '<div><strong>Commentaire :</strong> ' + escHtml(details) + '</div>';

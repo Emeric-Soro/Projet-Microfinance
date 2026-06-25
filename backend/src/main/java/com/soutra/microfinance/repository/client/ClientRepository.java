@@ -45,6 +45,16 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
             Pageable pageable
     );
 
+    @Query("SELECT DISTINCT c FROM Client c " +
+           "LEFT JOIN c.comptes co " +
+           "WHERE LOWER(c.nom) LIKE LOWER(CONCAT('%', :query, '%')) " +
+           "OR LOWER(c.prenom) LIKE LOWER(CONCAT('%', :query, '%')) " +
+           "OR LOWER(c.codeClient) LIKE LOWER(CONCAT('%', :query, '%')) " +
+           "OR LOWER(c.telephone) LIKE LOWER(CONCAT('%', :query, '%')) " +
+           "OR LOWER(c.email) LIKE LOWER(CONCAT('%', :query, '%')) " +
+           "OR LOWER(co.numCompte) LIKE LOWER(CONCAT('%', :query, '%'))")
+    Page<Client> rechercherClientsGlobale(@Param("query") String query, Pageable pageable);
+
     // Liste paginée des clients inscrits entre deux dates.
     Page<Client> findByCreatedAtBetween(LocalDateTime dateDebut, LocalDateTime dateFin, Pageable pageable);
 

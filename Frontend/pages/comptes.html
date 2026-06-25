@@ -2,8 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestion des Comptes — SOUTRA FINANCE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.  <t  <title>Gestion des Comptes — SOUTRA FINANCE</title>
   <meta name="description" content="Gérez les comptes clients : ouverture, consultation, blocage, clôture, cartes et découverts.">
   <link rel="stylesheet" href="../assets/css/backoffice.css">
   <script src="../assets/js/chart.min.js"></script>
@@ -2617,6 +2616,132 @@
       document.getElementById('btn-card-next').style.display = 'inline-flex';
       document.getElementById('btn-card-next').textContent = 'Continuer →';
       document.getElementById('btn-card-next').onclick = cardModalNext;
+      document.getElementById('btn-card-final').style.display = 'none';
+
+      openModal('cardModal');
+    }
+
+    function cardModalNext() {
+      document.getElementById('cardModalStep1').classList.remove('active');
+      document.getElementById('cardModalStep2').classList.add('active');
+      document.getElementById('btn-card-next').style.display = 'none';
+      document.getElementById('btn-card-final').style.display = 'inline-flex';
+      const inp = document.getElementById('cardConfirmInput');
+      if (inp) inp.value = '';
+      document.getElementById('btn-card-final').disabled = true;
+    }
+
+    document.getElementById('btn-card-final').addEventListener('click', async function() {
+      closeModal('cardModal');
+      try {
+        const res = await Cartes.opposer(typedCardNumber);
+        if (res && res.ok) {
+          showToast('Opposition effectuée avec succès !', 'success');
+          document.getElementById('opposeCardNumber').value = '';
+          document.getElementById('opposeCardInfo').style.display = 'none';
+          if (document.getElementById('opposeMotif')) document.getElementById('opposeMotif').value = '';
+          if (document.getElementById('opposeComment')) document.getElementById('opposeComment').value = '';
+          opposeCard = null;
+          hideLookupBadge('cardLookupBadge');
+          renderContextGuide(currentTab);
+        } else {
+          const err = await res.json();
+          showToast(err.message || 'Erreur lors de l\'opposition', 'error');
+        }
+      } catch(e) { showToast('Erreur lors de l\'opposition', 'error'); }
+    });
+
+    // ── Double confirmation: CONFIRMER input ───────────────────────
+    function checkConfirmInput(inputId, btnId) {
+      const inp = document.getElementById(inputId);
+      const btn = document.getElementById(btnId);
+      if (!inp || !btn) return;
+      const val = inp.value.trim().toUpperCase();
+      if (val === 'CONFIRMER') {
+        inp.classList.add('valid');
+        inp.classList.remove('is-invalid');
+        btn.disabled = false;
+      } else {
+        inp.classList.remove('valid');
+        btn.disabled = true;
+      }
+    }
+
+    // ── Mobile sidebar toggle ──────────────────────────────────────
+    const mobileToggle = document.getElementById('mobileSidebarToggle');
+    if (mobileToggle) {
+      mobileToggle.addEventListener('click', () => {
+        document.querySelector('.sidebar')?.classList.toggle('is-open');
+      });
+    }
+
+    // ── Init ───────────────────────────────────────────────────────
+    initOptionCards();
+    renderContextGuide('open'); // Default state
+= cardModalNext;
+      document.getElementById('btn-card-final').style.display = 'none';
+
+      openModal('cardModal');
+    }
+
+    function cardModalNext() {
+      document.getElementById('cardModalStep1').classList.remove('active');
+      document.getElementById('cardModalStep2').classList.add('active');
+      document.getElementById('btn-card-next').style.display = 'none';
+      document.getElementById('btn-card-final').style.display = 'inline-flex';
+      const inp = document.getElementById('cardConfirmInput');
+      if (inp) inp.value = '';
+      document.getElementById('btn-card-final').disabled = true;
+    }
+
+    document.getElementById('btn-card-final').addEventListener('click', async function() {
+      closeModal('cardModal');
+      try {
+        const res = await Cartes.opposer(typedCardNumber);
+        if (res && res.ok) {
+          showToast('Opposition effectuée avec succès !', 'success');
+          document.getElementById('opposeCardNumber').value = '';
+          document.getElementById('opposeCardInfo').style.display = 'none';
+          if (document.getElementById('opposeMotif')) document.getElementById('opposeMotif').value = '';
+          if (document.getElementById('opposeComment')) document.getElementById('opposeComment').value = '';
+          opposeCard = null;
+          hideLookupBadge('cardLookupBadge');
+          renderContextGuide(currentTab);
+        } else {
+          const err = await res.json();
+          showToast(err.message || 'Erreur lors de l\'opposition', 'error');
+        }
+      } catch(e) { showToast('Erreur lors de l\'opposition', 'error'); }
+    });
+
+    // ── Double confirmation: CONFIRMER input ───────────────────────
+    function checkConfirmInput(inputId, btnId) {
+      const inp = document.getElementById(inputId);
+      const btn = document.getElementById(btnId);
+      if (!inp || !btn) return;
+      const val = inp.value.trim().toUpperCase();
+      if (val === 'CONFIRMER') {
+        inp.classList.add('valid');
+        inp.classList.remove('is-invalid');
+        btn.disabled = false;
+      } else {
+        inp.classList.remove('valid');
+        btn.disabled = true;
+      }
+    }
+
+    // ── Mobile sidebar toggle ──────────────────────────────────────
+    const mobileToggle = document.getElementById('mobileSidebarToggle');
+    if (mobileToggle) {
+      mobileToggle.addEventListener('click', () => {
+        document.querySelector('.sidebar')?.classList.toggle('is-open');
+      });
+    }
+
+    // ── Init ───────────────────────────────────────────────────────
+    initOptionCards();
+    renderContextGuide('open'); // Default state
+ = cardModalNext;
       document.getElementById('btn-card-final').style.display = 'none';
 
       openModal('cardModal');

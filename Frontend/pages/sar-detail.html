@@ -1050,7 +1050,7 @@
 
     /* ── Export PDF ─────────────────────────────────────────── */
     function exportSARPdf() {
-      window.open(SF.API_BASE + '/api/v1/conformite/sar/' + sarId + '/export', '_blank');
+      SF.downloadFile('/api/v1/conformite/sar/' + sarId + '/export', 'declaration_sar_' + sarId + '.pdf');
     }
 
     /* ── Print ─────────────────────────────────────────────── */
@@ -1060,7 +1060,7 @@
 
     /* ── Download document ─────────────────────────────────── */
     function downloadDocument(docId) {
-      window.open(SF.API_BASE + '/api/v1/conformite/sar/' + sarId + '/documents/' + docId, '_blank');
+      SF.downloadFile('/api/v1/conformite/sar/' + sarId + '/documents/' + docId, 'document_sar_' + docId + '.pdf');
     }
 
     /* ── Scroll to decision form ───────────────────────────── */

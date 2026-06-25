@@ -4,6 +4,7 @@ import com.soutra.microfinance.audit.AuditLog;
 import com.soutra.microfinance.dto.request.client.CreationClientRequestDTO;
 import com.soutra.microfinance.dto.request.client.DecisionKycClientRequestDTO;
 import com.soutra.microfinance.dto.request.client.MiseAJourKycClientRequestDTO;
+import com.soutra.microfinance.dto.request.client.MiseAJourClientRequestDTO;
 import com.soutra.microfinance.dto.response.client.ClientConfidentielResponseDTO;
 import com.soutra.microfinance.dto.response.client.ClientResponseDTO;
 import com.soutra.microfinance.dto.response.client.DocumentClientResponseDTO;
@@ -120,6 +121,26 @@ public class ClientController {
     public ResponseEntity<ClientConfidentielResponseDTO> obtenirDonneesConfidentielles(@PathVariable Long idClient) {
         Client client = clientService.obtenirDetailsClient(idClient);
         return ResponseEntity.ok(clientMapper.toConfidentielDTO(client));
+    }
+
+    @Operation(
+            summary = "Modifier le profil d'un client",
+            description = "Met a jour toutes les informations civiles, de contact et d'identite d'un client (sans les pieces jointes)"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Profil client mis a jour avec succes"),
+            @ApiResponse(responseCode = "400", description = "Donnees invalides"),
+            @ApiResponse(responseCode = "404", description = "Client introuvable")
+    })
+    @PutMapping("/{idClient}")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER')")
+    @AuditLog(action = "CLIENT_PROFILE_UPDATE", resource = "CLIENT")
+    public ResponseEntity<ClientResponseDTO> modifierProfilClient(
+            @PathVariable Long idClient,
+            @Valid @RequestBody MiseAJourClientRequestDTO requestDTO
+    ) {
+        Client client = clientService.modifierProfilClient(idClient, requestDTO);
+        return ResponseEntity.ok(clientMapper.toResponseDTO(client));
     }
 
     @Operation(

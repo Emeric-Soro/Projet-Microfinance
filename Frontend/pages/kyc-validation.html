@@ -308,15 +308,18 @@
         ['Adresse', client.adresse],
         ['Profession', client.profession]
       ];
-      document.getElementById('documentChecklist').innerHTML = items.map(([label, value]) => `
-        <div class="info-row">
-          <span class="info-label">${label}</span>
-          <span class="info-value">${value ? '<span class="badge badge-active">OK</span>' : '<span class="badge badge-pending">Manquant</span>'}</span>
-        </div>
-      `).join('');
+      document.getElementById('documentChecklist').innerHTML = items.map(([label, value]) => {
+        const isOk = value && !String(value).toLowerCase().includes('default') && !String(value).toLowerCase().includes('demo');
+        return `
+          <div class="info-row">
+            <span class="info-label">${label}</span>
+            <span class="info-value">${isOk ? '<span class="badge badge-active">OK</span>' : '<span class="badge badge-pending">Manquant</span>'}</span>
+          </div>
+        `;
+      }).join('');
     }
 
-    function selectClient(idClient) {
+    async function selectClient(idClient) {
       const client = state.clients.find(item => Number(item.idClient) === Number(idClient));
       if (!client) return;
       state.selectedClient = client;
@@ -333,6 +336,26 @@
       document.getElementById('detailRisk').innerHTML = badgeRisk(client.niveauRisque);
       document.getElementById('openClientLink').href = `client-detail.html?id=${client.idClient}`;
       renderChecklist(client);
+
+      try {
+        const res = await Clients.obtenir(idClient);
+        if (res && res.ok) {
+          const fresh = await res.json();
+          // Mettre à jour dans la liste locale
+          const index = state.clients.findIndex(item => Number(item.idClient) === Number(idClient));
+          if (index >= 0) state.clients[index] = fresh;
+          
+          // Mettre à jour l'affichage si le client sélectionné est toujours le même
+          if (state.selectedClient && Number(state.selectedClient.idClient) === Number(idClient)) {
+            state.selectedClient = fresh;
+            renderChecklist(fresh);
+            document.getElementById('detailKyc').innerHTML = badgeKyc(fresh.statutKyc);
+            document.getElementById('detailRisk').innerHTML = badgeRisk(fresh.niveauRisque);
+          }
+        }
+      } catch (err) {
+        console.error('Erreur lors de la récupération des détails frais du client:', err);
+      }
     }
 
     function openDecision(status) {

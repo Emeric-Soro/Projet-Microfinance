@@ -1117,9 +1117,9 @@
 
     function genererReleve() {
       if (!carteData) return;
-      showToast('Generation du releve PDF en cours...', 'info');
       var id = carteData.idCarte || carteData.id || carteId;
-      window.open(SF.API_BASE + '/api/v1/cartes-visa/' + id + '/releve', '_blank');
+      var today = new Date().toISOString().split('T')[0];
+      SF.downloadFile('/api/v1/cartes-visa/' + id + '/releve', 'releve_carte_' + id + '_' + today + '.pdf');
     }
 
     /* ── Modal Helpers ─────────────────────────────── */

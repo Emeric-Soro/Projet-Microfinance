@@ -154,8 +154,10 @@
         <!-- Client search -->
         <div class="form-group">
           <label class="form-label">Rechercher le client *</label>
-          <input type="text" class="form-control" id="blClientSearch" placeholder="Nom ou numero client..." oninput="searchBLClient()" autocomplete="off">
-          <div class="search-results" id="blClientResults"></div>
+          <div class="search-predictive">
+            <input type="text" class="form-control" id="blClientSearch" placeholder="Nom ou numero client..." oninput="searchBLClient()" autocomplete="off">
+            <div class="search-results" id="blClientResults"></div>
+          </div>
           <div id="selectedClientInfo" style="margin-top:8px;display:none;">
             <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#E8F5E9;border-radius:8px;font-size:13px;font-weight:600;color:#084355;">
               <svg viewBox="0 0 24 24" fill="none" stroke="#084355" stroke-width="2" style="width:14px;height:14px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -432,9 +434,10 @@
               div.innerHTML = '<div style="padding:12px;color:#4A7A8A;text-align:center;font-size:13px;">Aucun client trouve.</div>';
             } else {
               div.innerHTML = items.map(function (c) {
-                return '<div class="search-result-item" onclick="pickBLClient(' + c.idClient + ',\'' + escHtml(c.nomComplet || (c.nom + ' ' + c.prenom)) + '\',\'' + escHtml(c.numeroClient || '') + '\')">' +
+                var num = c.codeClient || c.numeroClient || '';
+                return '<div class="search-result-item" onclick="pickBLClient(' + c.idClient + ',\'' + escHtml(c.nomComplet || (c.nom + ' ' + c.prenom)) + '\',\'' + num + '\')">' +
                   '<strong>' + escHtml(c.nomComplet || (c.nom + ' ' + c.prenom)) + '</strong>' +
-                  ' <span style="color:#4A7A8A;font-family:monospace;font-size:12px;">' + escHtml(c.numeroClient || '') + '</span>' +
+                  ' <span style="color:#4A7A8A;font-family:monospace;font-size:12px;">' + escHtml(num) + '</span>' +
                 '</div>';
               }).join('');
             }

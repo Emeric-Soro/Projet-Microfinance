@@ -18,6 +18,8 @@ public interface CompteService {
 
     Page<Compte> listerTousLesComptes(Pageable pageable);
 
+    Page<Compte> rechercherComptes(String query, Pageable pageable);
+
     Compte changerDecouvertAutorise(String numCompte, BigDecimal nouveauPlafond);
 
     Compte cloturerCompte(String numCompte);

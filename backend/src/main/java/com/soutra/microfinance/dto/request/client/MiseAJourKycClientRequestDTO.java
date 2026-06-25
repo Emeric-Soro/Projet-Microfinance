@@ -35,15 +35,12 @@ public class MiseAJourKycClientRequestDTO {
     @NotNull(message = "La date d'expiration de la piece d'identite est obligatoire")
     private LocalDate dateExpirationPieceIdentite;
 
-    @NotBlank(message = "La photo d'identite est obligatoire")
     @Size(max = 255, message = "L'URL de la photo d'identite ne doit pas depasser 255 caracteres")
     private String photoIdentiteUrl;
 
-    @NotBlank(message = "Le justificatif de domicile est obligatoire")
     @Size(max = 255, message = "L'URL du justificatif de domicile ne doit pas depasser 255 caracteres")
     private String justificatifDomicileUrl;
 
-    @NotBlank(message = "Le justificatif de revenus est obligatoire")
     @Size(max = 255, message = "L'URL du justificatif de revenus ne doit pas depasser 255 caracteres")
     private String justificatifRevenusUrl;
 

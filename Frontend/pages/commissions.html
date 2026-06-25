@@ -644,8 +644,7 @@
     }
 
     function exportPDF() {
-      window.open(SF.API_BASE + '/api/v1/tarification/parametres/export?categorie=COMMISSION&format=PDF', '_blank');
-      showToast('Export PDF lance.', 'success');
+      SF.downloadFile('/api/v1/tarification/parametres/export?categorie=COMMISSION&format=PDF', 'commissions_export.pdf');
     }
 
     /* ── Data loading ───────────────────────────────── */

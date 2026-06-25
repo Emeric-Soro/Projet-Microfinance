@@ -82,8 +82,10 @@
             <div style="padding:20px;">
               <div class="form-group">
                 <label class="form-label" for="alertClientSearch">Rechercher un client</label>
-                <input type="text" class="form-control" id="alertClientSearch" placeholder="Nom, prenom ou numero..." oninput="searchAlertClient()">
-                <div class="search-results" id="alertClientResults"></div>
+                <div class="search-predictive">
+                  <input type="text" class="form-control" id="alertClientSearch" placeholder="Nom, prenom ou numero..." oninput="searchAlertClient()">
+                  <div class="search-results" id="alertClientResults"></div>
+                </div>
               </div>
               <div id="alertClientInfo" style="display:none;"></div>
               <div class="form-group" style="margin-top:12px;">

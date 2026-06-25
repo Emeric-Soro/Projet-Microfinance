@@ -100,7 +100,7 @@
         html += `<tr>
           <td style="font-family: monospace;">${c.numeroCarteMasque}</td>
           <td>${c.titulaire || 'N/A'}</td>
-          <td>${c.numCompte || 'N/A'}</td>
+          <td>${c.numCompteComplet || c.numCompte || 'N/A'}</td>
           <td>${type}</td>
           <td>${dateExp}</td>
           <td>${statusBadge}</td>

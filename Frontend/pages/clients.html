@@ -233,7 +233,7 @@
               <a class="action-icon" title="Voir la fiche" href="${window.location.pathname.includes('.html') ? 'client-detail.html' : 'client-detail'}?id=${c.idClient}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </a>
-              <button class="action-icon" title="Modifier le statut" onclick="ouvrirModalStatut(${c.idClient}, '${escHtml(c.nomComplet)}', '${normaliserStatut(c.statut)}')">
+              <button class="action-icon" title="Modifier" onclick="ouvrirModalModifier(${c.idClient})">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </button>
               <a class="action-icon" title="Historique" href="historique.html">
@@ -359,6 +359,31 @@
       openModal('modalStatut');
     }
 
+    /* ── Modal modifier client ──────────────────────── */
+    let _editClientId = null;
+    function ouvrirModalModifier(idClient) {
+      const c = state.clients.find(item => item.idClient === idClient);
+      if (!c) return;
+      _editClientId = idClient;
+      
+      document.getElementById('editNom').value = c.nom || '';
+      document.getElementById('editPrenom').value = c.prenom || '';
+      document.getElementById('editDateNaissance').value = c.dateNaissance || '';
+      document.getElementById('editEmail').value = c.email || '';
+      document.getElementById('editTelephone').value = c.telephone || '';
+      document.getElementById('editAdresse').value = c.adresse || '';
+      document.getElementById('editTypePiece').value = c.typePieceIdentite || '';
+      document.getElementById('editNumeroPiece').value = c.numeroPieceIdentiteMasque || '';
+      document.getElementById('editDateExpPiece').value = c.dateExpirationPieceIdentite || '';
+      document.getElementById('editPaysNat').value = c.paysNationalite || '';
+      document.getElementById('editPaysRes').value = c.paysResidence || '';
+      document.getElementById('editProfession').value = c.profession || '';
+      document.getElementById('editEmployeur').value = c.employeur || '';
+      document.getElementById('editPep').checked = !!c.pep;
+      
+      openModal('modalModifierClient');
+    }
+
     /* ── Helpers ──────────────────────────────────────── */
     function escHtml(str) {
       return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -432,6 +457,56 @@
           this.disabled = false;
         }
       });
+
+      // Validation modal modifier
+      document.getElementById('btnConfirmerModifier').addEventListener('click', async function () {
+        const nom = document.getElementById('editNom').value.trim();
+        const prenom = document.getElementById('editPrenom').value.trim();
+        const dateNaissance = document.getElementById('editDateNaissance').value;
+        const email = document.getElementById('editEmail').value.trim();
+        const telephone = document.getElementById('editTelephone').value.trim();
+        const adresse = document.getElementById('editAdresse').value.trim();
+        
+        if (!nom || !prenom || !dateNaissance || !email || !telephone || !adresse) {
+          showToast('Veuillez remplir tous les champs obligatoires.', 'error');
+          return;
+        }
+        
+        const payload = {
+          nom: nom,
+          prenom: prenom,
+          dateNaissance: dateNaissance,
+          email: email,
+          telephone: telephone,
+          adresse: adresse,
+          profession: document.getElementById('editProfession').value.trim() || null,
+          employeur: document.getElementById('editEmployeur').value.trim() || null,
+          typePieceIdentite: document.getElementById('editTypePiece').value || null,
+          numeroPieceIdentite: document.getElementById('editNumeroPiece').value.trim() || null,
+          dateExpirationPieceIdentite: document.getElementById('editDateExpPiece').value || null,
+          paysNationalite: document.getElementById('editPaysNat').value.trim() || null,
+          paysResidence: document.getElementById('editPaysRes').value.trim() || null,
+          pep: document.getElementById('editPep').checked
+        };
+        
+        this.disabled = true;
+        try {
+          const res = await Clients.modifier(_editClientId, payload);
+          if (!res) return;
+          const data = await res.json().catch(() => ({}));
+          if (res.ok) {
+            showToast('Profil client mis à jour avec succès.', 'success');
+            closeModal('modalModifierClient');
+            chargerPage(state.page); // recharger la liste
+          } else {
+            showToast(data.message || 'Erreur lors de la mise à jour du client.', 'error');
+          }
+        } catch (_) {
+          showToast('Impossible de joindre le serveur.', 'error');
+        } finally {
+          this.disabled = false;
+        }
+      });
     });
   </script>
 
@@ -459,6 +534,115 @@
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('modalStatut')">Annuler</button>
         <button class="btn btn-primary" id="btnConfirmerStatut">Confirmer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal modifier profil client -->
+  <div class="modal-overlay" id="modalModifierClient">
+    <div class="modal" style="max-width:700px;">
+      <div class="modal-header">
+        <div class="modal-title">Modifier le client</div>
+        <button class="modal-close" onclick="closeModal('modalModifierClient')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formModifierClient">
+          <div style="display:flex; flex-direction:column; gap:16px;">
+            <!-- Civilité -->
+            <div style="display:flex; gap:16px; flex-wrap:wrap;">
+              <div class="form-group" style="flex:1; min-width:200px;">
+                <label class="form-label">Nom de famille *</label>
+                <input type="text" class="form-control" id="editNom" required maxlength="100">
+              </div>
+              <div class="form-group" style="flex:1; min-width:200px;">
+                <label class="form-label">Prénom(s) *</label>
+                <input type="text" class="form-control" id="editPrenom" required maxlength="100">
+              </div>
+            </div>
+            
+            <div style="display:flex; gap:16px; flex-wrap:wrap;">
+              <div class="form-group" style="flex:1; min-width:200px;">
+                <label class="form-label">Date de naissance *</label>
+                <input type="date" class="form-control" id="editDateNaissance" required>
+              </div>
+              <div class="form-group" style="flex:1; min-width:200px;">
+                <label class="form-label">Email *</label>
+                <input type="email" class="form-control" id="editEmail" required maxlength="150">
+              </div>
+            </div>
+
+            <!-- Contact -->
+            <div style="display:flex; gap:16px; flex-wrap:wrap;">
+              <div class="form-group" style="flex:1; min-width:200px;">
+                <label class="form-label">Téléphone mobile *</label>
+                <input type="tel" class="form-control" id="editTelephone" required maxlength="30">
+              </div>
+              <div class="form-group" style="flex:1; min-width:200px;">
+                <label class="form-label">Adresse *</label>
+                <input type="text" class="form-control" id="editAdresse" required maxlength="255">
+              </div>
+            </div>
+
+            <!-- Identité -->
+            <div style="display:flex; gap:16px; flex-wrap:wrap;">
+              <div class="form-group" style="flex:1; min-width:180px;">
+                <label class="form-label">Type de pièce</label>
+                <select class="form-control" id="editTypePiece">
+                  <option value="">Sélectionner…</option>
+                  <option value="CNI">Carte Nationale d'Identité</option>
+                  <option value="PASSEPORT">Passeport</option>
+                  <option value="PERMIS">Permis de Conduire</option>
+                  <option value="CARTE_CONSULAIRE">Carte Consulaire</option>
+                  <option value="NINA">NINA</option>
+                  <option value="AUTRE">Autre</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:1; min-width:180px;">
+                <label class="form-label">N° de pièce d'identité</label>
+                <input type="text" class="form-control" id="editNumeroPiece" maxlength="80">
+              </div>
+              <div class="form-group" style="flex:1; min-width:180px;">
+                <label class="form-label">Date d'expiration pièce</label>
+                <input type="date" class="form-control" id="editDateExpPiece">
+              </div>
+            </div>
+
+            <!-- Géo & Profession -->
+            <div style="display:flex; gap:16px; flex-wrap:wrap;">
+              <div class="form-group" style="flex:1; min-width:200px;">
+                <label class="form-label">Pays de nationalité</label>
+                <input type="text" class="form-control" id="editPaysNat" maxlength="80">
+              </div>
+              <div class="form-group" style="flex:1; min-width:200px;">
+                <label class="form-label">Pays de résidence</label>
+                <input type="text" class="form-control" id="editPaysRes" maxlength="80">
+              </div>
+            </div>
+
+            <div style="display:flex; gap:16px; flex-wrap:wrap;">
+              <div class="form-group" style="flex:1; min-width:200px;">
+                <label class="form-label">Profession</label>
+                <input type="text" class="form-control" id="editProfession" maxlength="120">
+              </div>
+              <div class="form-group" style="flex:1; min-width:200px;">
+                <label class="form-label">Employeur</label>
+                <input type="text" class="form-control" id="editEmployeur" maxlength="150">
+              </div>
+            </div>
+
+            <!-- PEP -->
+            <div class="form-group">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px; font-weight:600; color:#084355;">
+                <input type="checkbox" id="editPep" style="width:18px; height:18px; accent-color:#084355;">
+                Personne Exposée Politiquement (PEP)
+              </label>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalModifierClient')">Annuler</button>
+        <button class="btn btn-primary" id="btnConfirmerModifier">Enregistrer</button>
       </div>
     </div>
   </div>

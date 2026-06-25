@@ -158,12 +158,14 @@
               </div>
             </div>
             <div style="padding: 20px;">
-              <div class="form-group" style="position: relative;">
+              <div class="form-group">
                 <label class="form-label">Client <span style="color:var(--color-danger);">*</span></label>
-                <input type="text" class="form-control" id="clientSearch"
-                       placeholder="Nom, prenom ou numero client..."
-                       autocomplete="off" oninput="searchClients()">
-                <div class="search-results" id="clientResults"></div>
+                <div class="search-predictive">
+                  <input type="text" class="form-control" id="clientSearch"
+                         placeholder="Nom, prenom ou numero client..."
+                         autocomplete="off" oninput="searchClients()">
+                  <div class="search-results" id="clientResults"></div>
+                </div>
                 <div id="selectedClientChip" style="display:none;"></div>
               </div>
 
@@ -383,7 +385,7 @@
           } else {
             select.innerHTML = '<option value="">-- Selectionner un compte --</option>' +
               comptes.map(function (c) {
-                var num = c.numCompte || c.numeroCompte || '';
+                var num = c.numCompteComplet || c.numCompte || c.numeroCompte || '';
                 var solde = c.solde || 0;
                 var type = c.typeCompte || '';
                 return '<option value="' + escapeHtml(num) + '" data-solde="' + solde + '">' +

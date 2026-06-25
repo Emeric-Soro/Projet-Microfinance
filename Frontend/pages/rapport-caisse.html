@@ -131,7 +131,7 @@
       showToast('CSV exporté.', 'success');
     }
 
-    function exportPDF() { window.open(SF.API_BASE + '/api/v1/reporting/caisse/export?format=PDF', '_blank'); showToast('Export PDF lancé.', 'success'); }
+    function exportPDF() { SF.downloadFile('/api/v1/reporting/caisse/export?format=PDF', 'rapport_caisse_export.pdf'); }
 
     document.addEventListener('DOMContentLoaded', async function() {
       try {

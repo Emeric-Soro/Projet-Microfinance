@@ -16,6 +16,8 @@ public class ClientResponseDTO {
     private Long idClient;
     private String codeClient;
     private String nomComplet;
+    private String nom;
+    private String prenom;
     private String email;
     private String telephone;
     private String statut;

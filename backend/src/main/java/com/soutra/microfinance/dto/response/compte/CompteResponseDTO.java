@@ -22,4 +22,7 @@ public class CompteResponseDTO {
     private String devise;
     private BigDecimal decouvertAutorise;
     private String statut;
+    private String clientNom;
+    private String agenceNom;
+    private java.time.LocalDate dateOuverture;
 }

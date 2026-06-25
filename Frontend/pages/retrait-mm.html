@@ -561,7 +561,7 @@
       var SEUIL = 500000;
       document.getElementById('confirmPendingAlert').style.display = montant >= SEUIL ? 'block' : 'none';
 
-      document.getElementById('confirmAccount').textContent = _compte.numCompte;
+      document.getElementById('confirmAccount').textContent = _compte.numCompteComplet || _compte.numCompte;
       document.getElementById('confirmHolder').textContent = document.getElementById('accountHolder').textContent;
       document.getElementById('confirmOperator').textContent = _selectedOperator + ' Money';
       document.getElementById('confirmPhone').textContent = '+228 ' + document.getElementById('mmTelephone').value.trim();

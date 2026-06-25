@@ -71,9 +71,17 @@
       options.headers || {}
     );
 
+    // Eviter la mise en cache par le navigateur sur toutes les requetes GET
+    var urlPath = path;
+    var method = (options.method || 'GET').toUpperCase();
+    if (method === 'GET') {
+      var separator = urlPath.includes('?') ? '&' : '?';
+      urlPath = urlPath + separator + '_t=' + Date.now();
+    }
+
     var res;
     try {
-      res = await fetch(API_BASE + path, Object.assign({}, options, { headers: headers }));
+      res = await fetch(API_BASE + urlPath, Object.assign({}, options, { headers: headers }));
     } catch (fetchErr) {
       // Distinguer erreur CORS (TypeError) d'une erreur réseau
       var msg = 'Impossible de joindre le serveur (localhost:8080). Vérifiez que le backend est démarré.';
@@ -228,6 +236,18 @@
     modifierStatut: async function (idClient, nouveauStatut) {
       return await apiFetch('/api/v1/clients/' + idClient + '/statut?nouveauStatut=' + encodeURIComponent(nouveauStatut), {
         method: 'PUT'
+      });
+    },
+
+    /**
+     * Modifier le profil d'un client (sans KYC)
+     * PUT /api/v1/clients/{idClient}
+     * @returns {Response|null}
+     */
+    modifier: async function (idClient, data) {
+      return await apiFetch('/api/v1/clients/' + idClient, {
+        method: 'PUT',
+        body: JSON.stringify(data)
       });
     },
 

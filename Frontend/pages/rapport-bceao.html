@@ -1231,16 +1231,16 @@
             showToast('PDF officiel BCEAO telecharge.', 'success');
           } else {
             // Fallback: open export endpoint directly
-            window.open(SF.API_BASE + '/api/v1/reporting/export?type=bceao&format=PDF', '_blank');
+            SF.downloadFile('/api/v1/reporting/export?type=bceao&format=PDF', 'rapport-bceao-T' + trimestre + '-' + annee + '.pdf');
           }
         } else {
           // Fallback: open export endpoint directly
-          window.open(SF.API_BASE + '/api/v1/reporting/export?type=bceao&format=PDF', '_blank');
+          SF.downloadFile('/api/v1/reporting/export?type=bceao&format=PDF', 'rapport-bceao-T' + trimestre + '-' + annee + '.pdf');
         }
       } catch (e) {
         console.error('Erreur export PDF BCEAO:', e);
         // Fallback: open export endpoint directly
-        window.open(SF.API_BASE + '/api/v1/reporting/export?type=bceao&format=PDF', '_blank');
+        SF.downloadFile('/api/v1/reporting/export?type=bceao&format=PDF', 'rapport-bceao-trimestriel.pdf');
       }
     }
 

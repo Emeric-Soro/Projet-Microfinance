@@ -3,113 +3,232 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>État de Caisse - MicroFinance</title>
+  <title>Gestion de Caisse - MicroFinance</title>
   <link rel="stylesheet" href="../assets/css/backoffice.css">
   <script src="../assets/js/chart.min.js"></script>
+  <style>
+    /* ── Live badge & countdown ──────────────────── */
+    .ec-live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #084355;
+      background: rgba(8, 67, 85, 0.06);
+      padding: 5px 12px;
+      border-radius: 20px;
+    }
+    .ec-live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #43a047;
+      animation: ec-pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes ec-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.75); }
+    }
+    .ec-countdown {
+      font-size: 11px;
+      color: #999;
+      font-family: monospace;
+    }
+    .ec-freshness-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+      transition: background 0.3s;
+    }
+    .ec-freshness-dot.green { background: #43a047; }
+    .ec-freshness-dot.orange { background: #f57c00; }
+    .ec-freshness-dot.red { background: #D32F2F; }
+
+    /* ── Flash animation on value update ─────────── */
+    @keyframes ec-flash {
+      0% { background: rgba(8, 67, 85, 0.08); }
+      100% { background: transparent; }
+    }
+    .ec-flash { animation: ec-flash 0.6s ease-out; }
+
+    /* ── KPI cards enhancements ──────────────────── */
+    .ec-kpi-sub {
+      font-size: 11px;
+      color: #6B8A95;
+      margin-top: 2px;
+    }
+    .ec-kpi-sub .ec-sub-count {
+      font-weight: 700;
+      color: #084355;
+    }
+
+    /* ── Filter bar ──────────────────────────────── */
+    .ec-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      flex-wrap: wrap;
+    }
+    .ec-filter-bar .form-control {
+      max-width: 160px;
+      font-size: 13px;
+    }
+    .ec-filter-bar .ec-search-input {
+      flex: 1;
+      min-width: 140px;
+      max-width: 260px;
+    }
+
+    /* ── Movements table ─────────────────────────── */
+    .ec-movements-scroll {
+      max-height: 420px;
+      overflow-y: auto;
+    }
+    .ec-movements-scroll::-webkit-scrollbar { width: 6px; }
+    .ec-movements-scroll::-webkit-scrollbar-thumb { background: #C9DFE8; border-radius: 3px; }
+    .ec-row-enter { border-left: 3px solid #43a047; }
+    .ec-row-exit { border-left: 3px solid #D93025; }
+    .ec-amount-enter { font-weight: 600; color: #2E7D32; }
+    .ec-amount-exit { font-weight: 600; color: #D93025; }
+    .ec-empty-state {
+      text-align: center;
+      padding: 40px 16px;
+      color: #6B8A95;
+      font-size: 14px;
+    }
+    .ec-empty-state svg {
+      width: 48px;
+      height: 48px;
+      color: #C9DFE8;
+      margin-bottom: 12px;
+    }
+    .ec-movements-count {
+      font-size: 12px;
+      color: #6B8A95;
+      padding: 8px 20px;
+      border-top: 1px solid rgba(0,0,0,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ── Chart section ───────────────────────────── */
+    .ec-chart-wrap {
+      position: relative;
+      height: 280px;
+      padding: 20px;
+    }
+    .ec-chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      padding: 0 20px 16px;
+    }
+    .ec-chart-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #4A7A8A;
+    }
+    .ec-chart-legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Summary card ────────────────────────────── */
+    .ec-summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 16px 20px;
+    }
+    .ec-summary-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: #fafbfc;
+      border-radius: 8px;
+    }
+    .ec-summary-label {
+      font-size: 12px;
+      color: #6B8A95;
+    }
+    .ec-summary-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: #084355;
+    }
+
+    /* ── Print styles ────────────────────────────── */
+    @media print {
+      .sidebar, #ecTopbarWidgets, .ec-filter-bar, .btn,
+      .ec-live-badge, .ec-countdown { display: none !important; }
+      .main-content { margin: 0; padding: 0; }
+      .content-area { padding: 0 !important; }
+      .card { break-inside: avoid; box-shadow: none !important; border: 1px solid #ddd; }
+      .kpi-card { box-shadow: none !important; border: 1px solid #ddd; }
+      .ec-movements-scroll { max-height: none; overflow: visible; }
+      .ec-chart-wrap { height: 220px; }
+      body { font-size: 11px; }
+      .page-title { font-size: 18px !important; }
+      .ec-print-header { display: block !important; text-align: center; margin-bottom: 16px; }
+      .ec-print-header h2 { font-size: 16px; margin: 0; }
+      .ec-print-header p { font-size: 11px; color: #666; margin: 4px 0 0; }
+    }
+    .ec-print-header { display: none; }
+
+    @media (max-width: 900px) {
+      .ec-summary-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
   <div class="app-layout">
     <aside class="sidebar"></aside>
 
     <div class="main-content">
+      <!-- TOPBAR -->
       <header class="topbar">
         <div class="topbar-left">
           <div>
-            <div class="topbar-title">État de Caisse</div>
+            <div class="topbar-title">Gestion de Caisse</div>
             <div class="topbar-breadcrumb">Opérations / Caisse</div>
           </div>
         </div>
         <div class="topbar-right">
-          <span style="font-size: 12px; color: #4A7A8A;">Guichet 1 - 18/05/2026</span>
-          <button class="topbar-icon-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            <span class="notif-dot"></span>
-          </button>
+          <!-- WIDGETS TEMPS REEL (masqués si caisse fermée) -->
+          <div id="ecTopbarWidgets" style="display: none; align-items: center; gap: 12px;">
+            <div class="ec-live-badge">
+              <span class="ec-live-dot" id="ecLiveDot"></span>
+              <span>En direct</span>
+            </div>
+            <span class="ec-countdown" id="ecCountdown">Rafraîchissement : 15s</span>
+            <button class="btn btn-ghost btn-sm" id="ecPauseBtn" title="Pause / Reprendre">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+              Pause
+            </button>
+            <button class="topbar-icon-btn" id="ecRefreshBtn" title="Rafraîchir maintenant">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            </button>
+            <span class="ec-freshness-dot green" id="ecFreshDot"></span>
+            <span id="ecLastUpdate" style="font-size:.8rem;color:#6B8A95;">-</span>
+          </div>
         </div>
       </header>
 
-      <div class="content-area">
-        <div id="caisseOpenView" style="display: none;">
-          <!-- STATUS BANNER -->
-          <div id="caisseStatus" style="background: rgba(46,125,50,0.1); border-radius: 12px; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="width: 12px; height: 12px; border-radius: 50%; background: #2E7D32;"></div>
-              <div>
-                <div style="font-weight: 700; font-size: 14px; color: #084355;" id="caisseStateLabel">Caisse ouverte</div>
-                <div style="font-size: 12px; color: #4A7A8A;" id="caisseDetailsLabel">Ouverte depuis ... - Caissier: ...</div>
-              </div>
-            </div>
-            <button class="btn btn-primary" onclick="toggleCaisse()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-              Clôturer la caisse
-            </button>
-          </div>
+      <!-- CONTENT AREA -->
+      <main class="content-area">
 
-          <!-- KPI CARDS -->
-          <div class="kpi-grid">
-            <div class="kpi-card">
-              <div class="kpi-icon blue">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-              </div>
-              <div class="kpi-info">
-                <div class="kpi-label">Solde d'ouverture</div>
-                <div class="kpi-value" id="soldeOuvertureVal">0 <span style="font-size:13px;font-weight:600;">FCFA</span></div>
-              </div>
-            </div>
-            <div class="kpi-card" style="display:none;">
-              <div class="kpi-icon green">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-              </div>
-              <div class="kpi-info">
-                <div class="kpi-label">Total Dépôts (jour)</div>
-                <div class="kpi-value" style="color: #2E7D32;">+0 <span style="font-size:13px;font-weight:600;">FCFA</span></div>
-              </div>
-            </div>
-            <div class="kpi-card" style="display:none;">
-              <div class="kpi-icon orange">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
-              </div>
-              <div class="kpi-info">
-                <div class="kpi-label">Total Retraits (jour)</div>
-                <div class="kpi-value" style="color: #D93025;">-0 <span style="font-size:13px;font-weight:600;">FCFA</span></div>
-              </div>
-            </div>
-            <div class="kpi-card" style="grid-column: span 3;">
-              <div class="kpi-icon blue">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
-              </div>
-              <div class="kpi-info">
-                <div class="kpi-label">Solde actuel caisse</div>
-                <div class="kpi-value" id="soldeCourantVal">0 <span style="font-size:13px;font-weight:600;">FCFA</span></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- CHART + SUMMARY -->
-          <div class="grid-3" style="grid-template-columns: 1fr; margin-top: 24px;">
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title">Résumé des soldes</div>
-              </div>
-              <div style="display: flex; flex-direction: column; gap: 12px; padding: 10px 0;">
-                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #C9DFE8; padding-bottom: 8px;">
-                  <span style="color:#4A7A8A;">Solde initial</span>
-                  <span style="font-weight:700;" id="soldeInitialSummary">0 FCFA</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #C9DFE8; padding-bottom: 8px;">
-                  <span style="color:#4A7A8A;">Solde actuel</span>
-                  <span style="font-weight:700;" id="soldeActuelSummary">0 FCFA</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding-bottom: 8px;">
-                  <span style="color:#4A7A8A;">Date d'ouverture</span>
-                  <span style="font-weight:700;" id="dateOuvertureSummary">—</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- CAISSE FERMEE VIEW -->
+        <!-- ═══ VUE CAISSE FERMEE ═══ -->
         <div id="caisseClosedView" style="display: none; max-width: 500px; margin: 60px auto;">
           <div class="card" style="padding: 32px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 10px 30px rgba(0,0,0,0.04); text-align: center;">
             <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(8,67,85,0.1); color: #084355; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
@@ -127,104 +246,300 @@
             </div>
             
             <button class="btn btn-primary btn-lg btn-block" onclick="ouvrirCaisse()" style="margin-top: 8px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;margin-right:6px;vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               Ouvrir la caisse
             </button>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Modal: Clôture caisse -->
-  <div class="modal-overlay" id="closeCaisseModal">
-    <div class="modal">
-      <div class="modal-header">
-        <div class="modal-title">Clôturer la caisse</div>
-        <button class="modal-close" onclick="closeModal('closeCaisseModal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div style="text-align: center; margin-bottom: 20px;">
-          <div style="font-size: 14px; color: #4A7A8A;">Solde théorique</div>
-          <div style="font-size: 28px; font-weight: 800; color: #084355;" id="theoreticalBalanceDisplay">6 600 000 FCFA</div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Solde physique compté *</label>
-          <div class="input-group">
-            <input type="number" class="form-control" placeholder="0" id="physicalBalance">
-            <span class="input-addon">FCFA</span>
+        <!-- ═══ VUE CAISSE OUVERTE (DASHBOARD TEMPS REEL) ═══ -->
+        <div id="caisseOpenView" style="display: none;">
+          <!-- Print-only header -->
+          <div class="ec-print-header">
+            <h2>État de caisse en temps réel</h2>
+            <p id="ecPrintDate"></p>
+          </div>
+
+          <!-- PAGE HEADER -->
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">État de caisse en temps réel</h1>
+              <p class="page-subtitle" id="ecCaisseInfo">Chargement...</p>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-outline" onclick="printEtat()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="margin-right:4px;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Imprimer
+              </button>
+              <button class="btn btn-primary" onclick="goToCloture()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="margin-right:4px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Clôturer la caisse
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI CARDS -->
+          <section class="kpi-grid">
+            <div class="kpi-card" id="kpiSoldeCard">
+              <div class="kpi-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+              </div>
+              <div class="kpi-info">
+                <div class="kpi-label">Solde actuel</div>
+                <div class="kpi-value" id="kpiSolde">-</div>
+                <div class="ec-kpi-sub" id="kpiSoldeSub"></div>
+              </div>
+            </div>
+            <div class="kpi-card" id="kpiFondCard">
+              <div class="kpi-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <div class="kpi-info">
+                <div class="kpi-label">Fond initial</div>
+                <div class="kpi-value" id="kpiFond">-</div>
+                <div class="ec-kpi-sub">Ouverture de journée</div>
+              </div>
+            </div>
+            <div class="kpi-card" id="kpiEntreesCard">
+              <div class="kpi-icon green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              </div>
+              <div class="kpi-info">
+                <div class="kpi-label">Total entrées</div>
+                <div class="kpi-value" id="kpiEntrees" style="color:#2E7D32;">-</div>
+                <div class="ec-kpi-sub"><span class="ec-sub-count" id="kpiEntreesNb">-</span> opération(s)</div>
+              </div>
+            </div>
+            <div class="kpi-card" id="kpiSortiesCard">
+              <div class="kpi-icon orange">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+              </div>
+              <div class="kpi-info">
+                <div class="kpi-label">Total sorties</div>
+                <div class="kpi-value" id="kpiSorties" style="color:#D93025;">-</div>
+                <div class="ec-kpi-sub"><span class="ec-sub-count" id="kpiSortiesNb">-</span> opération(s)</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- TWO-COLUMN: MOVEMENTS + CHART -->
+          <div class="grid-2" style="margin-top: 24px;">
+            <!-- Mouvements du jour -->
+            <section class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Mouvements du jour</div>
+                  <div class="card-subtitle">Flux de trésorerie en temps réel</div>
+                </div>
+                <span class="badge badge-active" id="ecMvtCount">0 mouvements</span>
+              </div>
+              <div class="ec-filter-bar">
+                <select class="form-control" id="ecMvtTypeFilter" onchange="filterMouvements()">
+                  <option value="ALL">Tous les types</option>
+                  <option value="ENTREE">Entrées uniquement</option>
+                  <option value="SORTIE">Sorties uniquement</option>
+                </select>
+                <select class="form-control" id="ecMvtOpFilter" onchange="filterMouvements()">
+                  <option value="ALL">Toutes opérations</option>
+                </select>
+                <input class="form-control ec-search-input" placeholder="Rechercher (motif, réf...)" id="ecMvtSearch" oninput="filterMouvements()">
+              </div>
+              <div class="ec-movements-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width:80px;">Heure</th>
+                      <th style="width:90px;">Type</th>
+                      <th>Opération</th>
+                      <th style="width:60px;">Réf.</th>
+                      <th style="text-align:right;width:130px;">Montant</th>
+                      <th style="text-align:right;width:120px;">Solde après</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ecMvtBody">
+                    <tr><td colspan="6" class="ec-empty-state">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      <div>Chargement des mouvements...</div>
+                    </td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="ec-movements-count">
+                <span id="ecMvtFiltered">-</span>
+                <span id="ecMvtSoldeActuel">-</span>
+              </div>
+            </section>
+
+            <!-- Répartition par type + Résumé -->
+            <div style="display:flex;flex-direction:column;gap:20px;">
+              <section class="card">
+                <div class="card-header">
+                  <div>
+                    <div class="card-title">Répartition par type d'opération</div>
+                    <div class="card-subtitle">Distribution des opérations du jour</div>
+                  </div>
+                </div>
+                <div class="ec-chart-wrap">
+                  <canvas id="ecRepartitionChart"></canvas>
+                </div>
+                <div class="ec-chart-legend" id="ecChartLegend"></div>
+              </section>
+
+              <!-- Résumé des soldes -->
+              <section class="card">
+                <div class="card-header">
+                  <div class="card-title">Résumé des soldes</div>
+                </div>
+                <div class="ec-summary-grid">
+                  <div class="ec-summary-item">
+                    <span class="ec-summary-label">Fond initial</span>
+                    <span class="ec-summary-value" id="ecSumFond">-</span>
+                  </div>
+                  <div class="ec-summary-item">
+                    <span class="ec-summary-label">Solde actuel</span>
+                    <span class="ec-summary-value" id="ecSumSolde">-</span>
+                  </div>
+                  <div class="ec-summary-item">
+                    <span class="ec-summary-label">Variation nette</span>
+                    <span class="ec-summary-value" id="ecSumVariation">-</span>
+                  </div>
+                  <div class="ec-summary-item">
+                    <span class="ec-summary-label">Heure d'ouverture</span>
+                    <span class="ec-summary-value" id="ecSumOuverture">-</span>
+                  </div>
+                </div>
+              </section>
+            </div>
           </div>
         </div>
-        <div id="ecartDisplay" style="display: none; background: #F0F6FA; border-radius: 8px; padding: 12px; text-align: center; margin-bottom: 16px;">
-          <div style="font-size: 12px; color: #4A7A8A;">Écart</div>
-          <div style="font-size: 20px; font-weight: 800;" id="ecartValue">0 FCFA</div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Commentaire</label>
-          <textarea class="form-control" rows="2" placeholder="Observations..."></textarea>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" onclick="closeModal('closeCaisseModal')">Annuler</button>
-        <button class="btn btn-primary" onclick="executeCloseCaisse()">Confirmer la clôture</button>
-      </div>
+
+      </main>
     </div>
   </div>
 
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
   <script>
+  (function () {
+    'use strict';
+
+    /* ===================================================
+       CONSTANTS & STATE
+       =================================================== */
+    var REFRESH_INTERVAL = 15;   // seconds
+    var countdownId = null;
+    var countdown = REFRESH_INTERVAL;
+    var isPaused = false;
+    var allMouvements = [];
+    var repChart = null;
+    var previousSolde = null;
     var _caisse = null;
 
-    function fmt(n) {
-      return Number(n || 0).toLocaleString('fr-FR') + ' FCFA';
+    /* ===================================================
+       DOM REFS
+       =================================================== */
+    var $topbarWidgets = document.getElementById('ecTopbarWidgets');
+    var $countdown     = document.getElementById('ecCountdown');
+    var $pauseBtn      = document.getElementById('ecPauseBtn');
+    var $refreshBtn    = document.getElementById('ecRefreshBtn');
+    var $freshDot      = document.getElementById('ecFreshDot');
+    var $lastUpdate    = document.getElementById('ecLastUpdate');
+    var $liveDot       = document.getElementById('ecLiveDot');
+    var $caisseInfo    = document.getElementById('ecCaisseInfo');
+    var $mvtBody       = document.getElementById('ecMvtBody');
+    var $mvtCount      = document.getElementById('ecMvtCount');
+    var $mvtFiltered   = document.getElementById('ecMvtFiltered');
+    var $mvtSolde      = document.getElementById('ecMvtSoldeActuel');
+    var $opFilter      = document.getElementById('ecMvtOpFilter');
+    var $caisseClosed  = document.getElementById('caisseClosedView');
+    var $caisseOpen    = document.getElementById('caisseOpenView');
+
+    /* ===================================================
+       UTILITY
+       =================================================== */
+    function formatCurrency(n) {
+      return (Number(n) || 0).toLocaleString('fr-FR') + ' FCFA';
     }
 
-    function formatDate(dStr) {
-      if (!dStr) return '—';
+    function formatCurrencyRaw(n) {
+      return (Number(n) || 0).toLocaleString('fr-FR');
+    }
+
+    function formatTime(d) {
+      if (!d) return '-';
       try {
-        const d = new Date(dStr);
-        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' à ' +
-               d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-      } catch (e) {
-        return dStr;
+        return new Date(d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      } catch (e) { return d; }
+    }
+
+    function flashCard(id) {
+      var el = document.getElementById(id);
+      if (el) {
+        el.classList.remove('ec-flash');
+        void el.offsetWidth;
+        el.classList.add('ec-flash');
       }
     }
 
-    async function initCaisse() {
+    function updateFreshness(state) {
+      $freshDot.className = 'ec-freshness-dot ' + (state || 'green');
+      $lastUpdate.textContent = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    /* ===================================================
+       PRINT
+       =================================================== */
+    window.printEtat = function () {
+      document.getElementById('ecPrintDate').textContent =
+        'Imprimé le ' + new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) +
+        ' à ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      window.print();
+    };
+
+    window.goToCloture = function () {
+      window.location.href = 'fermeture-caisse.html';
+    };
+
+    /* ===================================================
+       FETCH & STATE ROUTER
+       =================================================== */
+    async function loadCaisseState() {
       try {
-        const res = await Caisses.etat();
+        var res = await Caisses.etat();
         if (res && res.status === 200) {
-          const data = await res.json();
+          var data = await res.json();
           if (data && data.statut === 'OUVERTE') {
             _caisse = data;
-            document.getElementById('caisseClosedView').style.display = 'none';
-            document.getElementById('caisseOpenView').style.display = 'block';
+            
+            // Switch views
+            $caisseClosed.style.display = 'none';
+            $caisseOpen.style.display = 'block';
+            $topbarWidgets.style.display = 'flex';
 
-            document.getElementById('caisseDetailsLabel').textContent = 'Ouverte le ' + formatDate(data.dateOuverture) + ' - Caissier: ' + (data.guichetierNom || '—');
-            document.getElementById('soldeOuvertureVal').innerHTML = fmt(data.fondInitial);
-            document.getElementById('soldeInitialSummary').textContent = fmt(data.fondInitial);
-            document.getElementById('soldeCourantVal').innerHTML = fmt(data.soldeActuel);
-            document.getElementById('soldeActuelSummary').textContent = fmt(data.soldeActuel);
-            document.getElementById('dateOuvertureSummary').textContent = formatDate(data.dateOuverture);
-            document.getElementById('theoreticalBalanceDisplay').textContent = fmt(data.soldeActuel);
+            renderEtat(data);
+            updateFreshness('green');
             return;
           }
         }
         showClosedCaisseScreen();
       } catch (e) {
-        console.error('Error fetching caisse state:', e);
+        console.error('[Caisse] Erreur init:', e);
         showClosedCaisseScreen();
       }
     }
 
     function showClosedCaisseScreen() {
       _caisse = null;
-      document.getElementById('caisseOpenView').style.display = 'none';
-      document.getElementById('caisseClosedView').style.display = 'block';
+      clearInterval(countdownId);
+      $caisseOpen.style.display = 'none';
+      $topbarWidgets.style.display = 'none';
+      $caisseClosed.style.display = 'block';
     }
 
-    async function ouvrirCaisse() {
+    /* ===================================================
+       OUVERTURE CAISSE
+       =================================================== */
+    window.ouvrirCaisse = async function () {
       const soldeVal = document.getElementById('soldeInitialInput').value;
       const solde = parseFloat(soldeVal);
       if (!solde || solde <= 0) {
@@ -237,7 +552,10 @@
         if (res && (res.status === 201 || res.status === 200)) {
           showToast('Caisse ouverte avec succès !', 'success');
           document.getElementById('soldeInitialInput').value = '';
-          await initCaisse();
+          
+          // Switch to dashboard
+          await loadCaisseState();
+          startCountdown();
         } else {
           const err = await res.json().catch(() => ({}));
           showToast(err.message || 'Erreur lors de l\'ouverture de la caisse.', 'error');
@@ -245,56 +563,249 @@
       } catch (e) {
         showToast('Erreur réseau : ' + e.message, 'error');
       }
-    }
+    };
 
-    function toggleCaisse() {
-      document.getElementById('physicalBalance').value = '';
-      document.getElementById('ecartDisplay').style.display = 'none';
-      if (_caisse) {
-        document.getElementById('theoreticalBalanceDisplay').textContent = fmt(_caisse.soldeActuel);
+    /* ===================================================
+       RENDER DASHBOARD
+       =================================================== */
+    function renderEtat(data) {
+      var resume = data.resumeJournee || {};
+
+      // Info bar
+      $caisseInfo.textContent = 'Guichetier : ' + (data.guichetierNom || '-') +
+        ' | Agence : ' + (data.agenceNom || '-') +
+        ' | Ouverte depuis ' + formatTime(data.dateOuverture);
+
+      // KPI - Solde actuel
+      var solde = data.soldeActuel || 0;
+      document.getElementById('kpiSolde').textContent = formatCurrency(solde);
+      if (previousSolde !== null && solde !== previousSolde) {
+        flashCard('kpiSoldeCard');
       }
-      openModal('closeCaisseModal');
+      previousSolde = solde;
+
+      // KPI - Fond initial
+      var fond = data.fondInitial || data.soldeOuverture || 0;
+      document.getElementById('kpiFond').textContent = formatCurrency(fond);
+
+      // KPI - Entrées
+      var totalEntrees = resume.totalEntrees || 0;
+      var nbEntrees = resume.nbEntrees || resume.nombreOperations || 0;
+      document.getElementById('kpiEntrees').textContent = '+' + formatCurrencyRaw(totalEntrees);
+      document.getElementById('kpiEntreesNb').textContent = nbEntrees;
+      if (totalEntrees > 0) flashCard('kpiEntreesCard');
+
+      // KPI - Sorties
+      var totalSorties = resume.totalSorties || 0;
+      var nbSorties = resume.nbSorties || 0;
+      document.getElementById('kpiSorties').textContent = '-' + formatCurrencyRaw(totalSorties);
+      document.getElementById('kpiSortiesNb').textContent = nbSorties;
+      if (totalSorties > 0) flashCard('kpiSortiesCard');
+
+      // Summary section
+      document.getElementById('ecSumFond').textContent = formatCurrency(fond);
+      document.getElementById('ecSumSolde').textContent = formatCurrency(solde);
+      var variation = solde - fond;
+      var $variation = document.getElementById('ecSumVariation');
+      $variation.textContent = (variation >= 0 ? '+' : '') + formatCurrencyRaw(variation) + ' FCFA';
+      $variation.style.color = variation >= 0 ? '#2E7D32' : '#D93025';
+      document.getElementById('ecSumOuverture').textContent = formatTime(data.dateOuverture);
+
+      // Mouvements
+      allMouvements = (data.mouvements && data.mouvements.content) ? data.mouvements.content :
+                       (Array.isArray(data.mouvements) ? data.mouvements : []);
+      buildOperationFilter(allMouvements);
+      filterMouvements();
+
+      // Chart
+      renderRepartition(resume.repartitionParType || {});
     }
 
-    document.getElementById('physicalBalance').addEventListener('input', function() {
-      const physical = parseInt(this.value) || 0;
-      const theoretical = _caisse ? parseFloat(_caisse.soldeActuel) : 0;
-      const ecart = physical - theoretical;
-      const display = document.getElementById('ecartDisplay');
-      const value = document.getElementById('ecartValue');
-      display.style.display = 'block';
-      value.textContent = (ecart >= 0 ? '+' : '') + ecart.toLocaleString('fr-FR') + ' FCFA';
-      value.style.color = ecart === 0 ? '#2E7D32' : '#D93025';
-    });
+    /* ===================================================
+       FILTER MOVEMENTS
+       =================================================== */
+    function buildOperationFilter(mouvements) {
+      var currentVal = $opFilter.value;
+      var types = {};
+      mouvements.forEach(function (m) {
+        var t = m.typeOperation || m.motif || m.libelle || '';
+        if (t) types[t] = (types[t] || 0) + 1;
+      });
+      var html = '<option value="ALL">Toutes opérations</option>';
+      Object.keys(types).sort().forEach(function (t) {
+        html += '<option value="' + t + '">' + t + ' (' + types[t] + ')</option>';
+      });
+      $opFilter.innerHTML = html;
+      if (currentVal && $opFilter.querySelector('option[value="' + currentVal + '"]')) {
+        $opFilter.value = currentVal;
+      }
+    }
 
-    async function executeCloseCaisse() {
-      const physicalVal = document.getElementById('physicalBalance').value;
-      const physical = parseFloat(physicalVal);
-      if (physicalVal === '' || isNaN(physical) || physical < 0) {
-        showToast('Veuillez saisir un solde physique compté valide.', 'warning');
+    window.filterMouvements = function () {
+      var typeFilter = document.getElementById('ecMvtTypeFilter').value;
+      var opFilter = $opFilter.value;
+      var q = document.getElementById('ecMvtSearch').value.toLowerCase().trim();
+
+      var filtered = allMouvements.filter(function (m) {
+        var mvtType = (m.typeMouvement || '').toUpperCase();
+        var matchType = typeFilter === 'ALL' || mvtType === typeFilter;
+        var matchOp = opFilter === 'ALL' || (m.typeOperation || m.motif || m.libelle || '') === opFilter;
+        var matchQ = !q ||
+          (m.motif || m.libelle || '').toLowerCase().indexOf(q) !== -1 ||
+          (m.reference || '').toLowerCase().indexOf(q) !== -1 ||
+          (m.typeOperation || '').toLowerCase().indexOf(q) !== -1;
+        return matchType && matchOp && matchQ;
+      });
+
+      $mvtCount.textContent = allMouvements.length + ' mouvement' + (allMouvements.length !== 1 ? 's' : '');
+      $mvtFiltered.textContent = filtered.length + ' affiché(s) sur ' + allMouvements.length;
+      $mvtSolde.textContent = 'Solde : ' + formatCurrency(previousSolde || 0);
+
+      if (!filtered.length) {
+        $mvtBody.innerHTML = '<tr><td colspan="6" class="ec-empty-state">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>' +
+          '<div>Aucun mouvement ne correspond aux filtres.</div></td></tr>';
         return;
       }
 
-      try {
-        const res = await Caisses.fermer(physical);
-        if (res && res.status === 200) {
-          closeModal('closeCaisseModal');
-          showToast('Caisse clôturée avec succès !', 'success');
-          await initCaisse();
-        } else {
-          const err = await res.json().catch(() => ({}));
-          showToast(err.message || 'Erreur lors de la clôture de la caisse.', 'error');
-        }
-      } catch (e) {
-        showToast('Erreur réseau : ' + e.message, 'error');
+      $mvtBody.innerHTML = filtered.map(function (m) {
+        var isEntree = (m.typeMouvement || '').toUpperCase() === 'ENTREE';
+        var rowClass = isEntree ? 'ec-row-enter' : 'ec-row-exit';
+        var amountClass = isEntree ? 'ec-amount-enter' : 'ec-amount-exit';
+        var sign = isEntree ? '+' : '-';
+        return '<tr class="' + rowClass + '">' +
+          '<td>' + formatTime(m.dateMouvement) + '</td>' +
+          '<td><span class="badge ' + (isEntree ? 'badge-success' : 'badge-danger') + '">' + (m.typeMouvement || '-') + '</span></td>' +
+          '<td>' + (m.typeOperation || m.motif || m.libelle || '-') + '</td>' +
+          '<td style="font-size:11px;color:#6B8A95;">' + (m.reference || '-') + '</td>' +
+          '<td style="text-align:right;" class="' + amountClass + '">' + sign + ' ' + formatCurrencyRaw(m.montant || 0) + '</td>' +
+          '<td style="text-align:right;font-weight:600;">' + formatCurrencyRaw(m.soldeApres || 0) + '</td>' +
+        '</tr>';
+      }).join('');
+    };
+
+    /* ===================================================
+       REPARTITION CHART
+       =================================================== */
+    function renderRepartition(repartition) {
+      var labels = Object.keys(repartition);
+      if (!labels.length) {
+        labels = ['Aucune donnée'];
       }
+      var values = labels.map(function (l) {
+        var v = repartition[l];
+        return (v && typeof v === 'object') ? (v.nombre || v.count || 0) : (v || 0);
+      });
+      var colors = ['#084355', '#43a047', '#f57c00', '#8cd5fa', '#fab482', '#D32F2F', '#7B1FA2', '#0097A7'];
+
+      if (repChart) repChart.destroy();
+
+      var ctx = document.getElementById('ecRepartitionChart').getContext('2d');
+      repChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values,
+            backgroundColor: colors.slice(0, labels.length),
+            borderWidth: 2,
+            borderColor: '#fff',
+            hoverBorderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '55%',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#084355',
+              titleFont: { size: 12 },
+              bodyFont: { size: 13 },
+              callbacks: {
+                label: function (ctx) {
+                  var total = ctx.dataset.data.reduce(function (a, b) { return a + b; }, 0);
+                  var pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                  return ctx.label + ': ' + ctx.parsed + ' op. (' + pct + '%)';
+                }
+              }
+            }
+          }
+        }
+      });
+
+      var total = values.reduce(function (a, b) { return a + b; }, 0);
+      var legendHtml = labels.map(function (l, i) {
+        var pct = total > 0 ? ((values[i] / total) * 100).toFixed(1) : 0;
+        return '<div class="ec-chart-legend-item">' +
+          '<span class="ec-chart-legend-dot" style="background:' + colors[i] + ';"></span>' +
+          '<span>' + l + ' (' + values[i] + ' - ' + pct + '%)</span>' +
+        '</div>';
+      }).join('');
+      document.getElementById('ecChartLegend').innerHTML = legendHtml;
     }
 
-    // Initialisation
-    document.addEventListener('DOMContentLoaded', initCaisse);
+    /* ===================================================
+       COUNTDOWN & AUTO-REFRESH
+       =================================================== */
+    function startCountdown() {
+      countdown = REFRESH_INTERVAL;
+      $countdown.textContent = 'Rafraîchissement : ' + countdown + 's';
+      clearInterval(countdownId);
+      countdownId = setInterval(function () {
+        if (isPaused) return;
+        countdown--;
+        if (countdown <= 0) {
+          countdown = REFRESH_INTERVAL;
+          loadCaisseState();
+        }
+        $countdown.textContent = isPaused ? 'En pause' : 'Rafraîchissement : ' + countdown + 's';
+      }, 1000);
+    }
+
+    /* ===================================================
+       EVENT HANDLERS
+       =================================================== */
+    $pauseBtn.addEventListener('click', function () {
+      isPaused = !isPaused;
+      if (isPaused) {
+        $pauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg> Reprendre';
+        $countdown.textContent = 'En pause';
+        $countdown.style.color = '#f57c00';
+        $liveDot.style.background = '#f57c00';
+        $liveDot.style.animation = 'none';
+      } else {
+        $pauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Pause';
+        $countdown.style.color = '#999';
+        $liveDot.style.background = '#43a047';
+        $liveDot.style.animation = '';
+        countdown = 1;
+      }
+    });
+
+    $refreshBtn.addEventListener('click', function () {
+      loadCaisseState();
+      if (!isPaused) {
+        countdown = REFRESH_INTERVAL;
+      }
+      if (typeof window.showToast === 'function') {
+        window.showToast('Rafraîchissement de la caisse...', 'info');
+      }
+    });
+
+    /* ===================================================
+       INIT
+       =================================================== */
+    document.addEventListener('DOMContentLoaded', function () {
+      loadCaisseState().then(function() {
+        if (_caisse) {
+          startCountdown();
+        }
+      });
+    });
+
+  })();
   </script>
 </body>
 </html>
-
-
-

@@ -100,7 +100,7 @@
       showToast('CSV exporté.', 'success');
     }
 
-    function exportPDF() { window.open(SF.API_BASE + '/api/v1/reporting/credits/export?format=PDF', '_blank'); showToast('Export PDF lancé.', 'success'); }
+    function exportPDF() { SF.downloadFile('/api/v1/reporting/credits/export?format=PDF', 'rapport_credits_export.pdf'); }
 
     document.addEventListener('DOMContentLoaded', async function() {
       try {

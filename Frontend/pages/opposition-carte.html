@@ -145,7 +145,7 @@
           const c = await res.json();
           document.getElementById('oppNum').textContent = c.numeroCarteMasque || '****';
           document.getElementById('oppClient').textContent = c.titulaire || c.clientNom || '-';
-          document.getElementById('oppCompte').textContent = c.numCompte || '-';
+          document.getElementById('oppCompte').textContent = c.numCompteComplet || c.numCompte || '-';
           document.getElementById('oppType').textContent = c.typeCarte || '-';
           document.getElementById('oppStatut').textContent = c.statut || '-';
           document.getElementById('oppExpiration').textContent = formatDate(c.dateExpiration);

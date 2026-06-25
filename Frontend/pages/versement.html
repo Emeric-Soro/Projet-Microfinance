@@ -346,7 +346,7 @@
       var titulaire = document.getElementById('accountHolder').textContent;
       var currentBal = parseFloat(_compte.solde) || 0;
 
-      document.getElementById('confirmAccount').textContent = _compte.numCompte;
+      document.getElementById('confirmAccount').textContent = _compte.numCompteComplet || _compte.numCompte;
       document.getElementById('confirmHolder').textContent = titulaire;
       document.getElementById('confirmAmount').textContent = fmt(amount);
       document.getElementById('confirmCurrentBalance').textContent = fmt(currentBal);

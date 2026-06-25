@@ -2,6 +2,7 @@ package com.soutra.microfinance.service.client;
 
 import com.soutra.microfinance.dto.request.client.DecisionKycClientRequestDTO;
 import com.soutra.microfinance.dto.request.client.MiseAJourKycClientRequestDTO;
+import com.soutra.microfinance.dto.request.client.MiseAJourClientRequestDTO;
 import com.soutra.microfinance.entity.Client;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,8 @@ public interface ClientService {
     Client obtenirDetailsClient(Long idClient);
 
     Client modifierProfilMobile(Long idClient, String telephone, String email, String adresse);
+
+    Client modifierProfilClient(Long idClient, MiseAJourClientRequestDTO requestDTO);
 
     Client mettreAJourKycMobile(Long idClient, String profession, String secteurActivite, java.math.BigDecimal revenuMensuel);
 

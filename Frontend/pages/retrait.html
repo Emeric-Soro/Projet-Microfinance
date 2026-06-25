@@ -388,7 +388,7 @@
       var SEUIL = 500000;
       document.getElementById('confirmPendingAlert').style.display = amount >= SEUIL ? 'block' : 'none';
 
-      document.getElementById('confirmAccount').textContent = _compte.numCompte;
+      document.getElementById('confirmAccount').textContent = _compte.numCompteComplet || _compte.numCompte;
       document.getElementById('confirmHolder').textContent = document.getElementById('accountHolder').textContent;
       document.getElementById('confirmAmount').textContent = fmt(amount);
       document.getElementById('confirmCurrentBalance').textContent = fmt(solde);

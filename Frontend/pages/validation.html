@@ -121,6 +121,22 @@
     </div>
   </div>
 
+  <!-- Modal: Détail complet et Décision 4-eyes -->
+  <div class="modal-overlay" id="txnDetailModal">
+    <div class="modal" style="max-width: 640px;">
+      <div class="modal-header">
+        <div class="modal-title">Détails de la Transaction</div>
+        <button class="modal-close" onclick="closeModal('txnDetailModal')">✕</button>
+      </div>
+      <div class="modal-body" id="modalDetailContent">
+        <!-- Rempli en JS -->
+      </div>
+      <div class="modal-footer" id="modalDetailFooter">
+        <!-- Rempli en JS -->
+      </div>
+    </div>
+  </div>
+
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
   <script>
@@ -135,11 +151,21 @@
       return window.SF ? window.SF.getUser() : null;
     }
 
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     function formatTime(dStr) {
       if (!dStr) return '—';
       try {
         const d = new Date(dStr);
-        return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        return d.toLocaleDateString('fr-FR') + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
       } catch (_) {
         return dStr;
       }
@@ -193,7 +219,7 @@
         const limitText = '> 500 000 FCFA';
 
         return `<tr>
-          <td style="font-family:monospace;font-size:12px;color:#084355;">${ref}</td>
+          <td style="font-family:monospace;font-size:12px;color:#084355;cursor:pointer;text-decoration:underline;" onclick="viewTxnDetails('${ref}')" title="Voir les détails complets">${ref}</td>
           <td><span class="badge ${typeClass}">${typeStr}</span></td>
           <td style="font-family:monospace;font-size:11px;">${accountDisplay}</td>
           <td>${client}</td>
@@ -213,6 +239,157 @@
           </td>
         </tr>`;
       }).join('');
+    }
+
+    /* ── Inspection détaillée de la transaction ── */
+    window.viewTxnDetails = function (ref) {
+      const tx = _txns.find(t => t.referenceUnique === ref);
+      if (!tx) {
+        showToast('Impossible de charger les détails de cette transaction.', 'error');
+        return;
+      }
+
+      const typeStr = (tx.typeOperation || 'Opération').toUpperCase();
+      const typeClass = typeStr === 'VIREMENT' ? 'badge-info' : 'badge-pending';
+      const formatAmount = fmt(tx.montant);
+      const time = formatTime(tx.dateCreation);
+      const limitText = '> 500 000 FCFA';
+
+      let accountDetailsHtml = '';
+      if (typeStr === 'VIREMENT') {
+        accountDetailsHtml = `
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px;">
+            <div style="background:rgba(217,48,37,0.04); border:1px solid rgba(217,48,37,0.1); border-radius:8px; padding:12px;">
+              <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:#D93025; margin-bottom:6px;">Compte débité</div>
+              <div style="font-family:monospace; font-weight:700; color:#084355;">${tx.compteSource || '—'}</div>
+              <div style="font-size:12px; color:#4A7A8A; margin-top:2px;">Client: ${escapeHtml(tx.clientNom || '—')}</div>
+            </div>
+            <div style="background:rgba(46,125,50,0.04); border:1px solid rgba(46,125,50,0.1); border-radius:8px; padding:12px;">
+              <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:#2E7D32; margin-bottom:6px;">Compte crédité</div>
+              <div style="font-family:monospace; font-weight:700; color:#084355;">${tx.compteDestination || '—'}</div>
+              <div style="font-size:12px; color:#4A7A8A; margin-top:2px;">Client: ${escapeHtml(tx.clientDestinationNom || '—')}</div>
+            </div>
+          </div>
+        `;
+      } else {
+        accountDetailsHtml = `
+          <div style="margin-top: 14px; background:rgba(8,67,85,0.04); border:1px solid rgba(8,67,85,0.1); border-radius:8px; padding:12px;">
+            <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:#084355; margin-bottom:6px;">Compte concerné</div>
+            <div style="font-family:monospace; font-weight:700; color:#084355;">${tx.compteSource || tx.compteDestination || '—'}</div>
+            <div style="font-size:12px; color:#4A7A8A; margin-top:2px;">Client: ${escapeHtml(tx.clientNom || '—')}</div>
+          </div>
+        `;
+      }
+
+      document.getElementById('modalDetailContent').innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div>
+            <span style="color:#4A7A8A; font-size:11px;">Référence unique</span><br>
+            <strong style="font-family:monospace; font-size:14px; color:#084355;">${tx.referenceUnique}</strong>
+          </div>
+          <div>
+            <span style="color:#4A7A8A; font-size:11px;">Type d'opération</span><br>
+            <span class="badge ${typeClass}">${typeStr}</span>
+          </div>
+          <div>
+            <span style="color:#4A7A8A; font-size:11px;">Montant de la transaction</span><br>
+            <strong style="font-size:1.3rem; color:#084355;">${formatAmount}</strong>
+          </div>
+          <div>
+            <span style="color:#4A7A8A; font-size:11px;">Créé par (Guichetier)</span><br>
+            <strong>${escapeHtml(tx.demandeurNom || '—')}</strong>
+          </div>
+          <div>
+            <span style="color:#4A7A8A; font-size:11px;">Heure de création</span><br>
+            <strong>${time}</strong>
+          </div>
+          <div>
+            <span style="color:#4A7A8A; font-size:11px;">Motif de validation</span><br>
+            <span class="badge badge-warning">${limitText}</span>
+          </div>
+        </div>
+        ${accountDetailsHtml}
+      `;
+
+      document.getElementById('modalDetailFooter').innerHTML = `
+        <button class="btn btn-outline" onclick="closeModal('txnDetailModal')">Annuler</button>
+        <button class="btn btn-danger" style="background:#D93025;" onclick="startRejectFromDetail('${tx.referenceUnique}')">Rejeter</button>
+        <button class="btn btn-primary" onclick="executeApproveFromDetail('${tx.referenceUnique}')">Approuver</button>
+      `;
+
+      openModal('txnDetailModal');
+    }
+
+    window.executeApproveFromDetail = async function(ref) {
+      closeModal('txnDetailModal');
+      await approveTxn(ref);
+    }
+
+    window.startRejectFromDetail = function(ref) {
+      document.getElementById('modalDetailContent').innerHTML = `
+        <div style="text-align:center; margin-bottom:16px;">
+          <span style="color:#4A7A8A; font-size:12px;">Rejet de la transaction</span>
+          <div style="font-family:monospace; font-size:14px; color:#D93025; font-weight:700; margin-top:4px;">${ref}</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Catégorie de rejet *</label>
+          <select class="form-control" id="modalRejectCategory">
+            <option value="">Sélectionner...</option>
+            <option value="DOCUMENTS_MANQUANTS">Documents manquants</option>
+            <option value="MONTANT_ERRONE">Montant erroné</option>
+            <option value="COMPTE_NON_ELIGIBLE">Compte non éligible</option>
+            <option value="ACTIVITE_SUSPECTE">Activité suspecte</option>
+            <option value="DEPASSEMENT_PLAFOND">Dépassement de plafond</option>
+            <option value="ERREUR_SAISIE">Erreur de saisie</option>
+            <option value="AUTRE">Autre</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Motif détaillé * (minimum 10 caractères)</label>
+          <textarea class="form-control" rows="4" placeholder="Précisez la raison détaillée du rejet..." id="modalRejectComment"></textarea>
+        </div>
+      `;
+
+      document.getElementById('modalDetailFooter').innerHTML = `
+        <button class="btn btn-outline" onclick="viewTxnDetails('${ref}')">Retour</button>
+        <button class="btn btn-danger" style="background:#D93025;" onclick="executeRejectFromDetail('${ref}')">Confirmer le rejet</button>
+      `;
+    }
+
+    window.executeRejectFromDetail = async function(ref) {
+      const cat = document.getElementById('modalRejectCategory').value;
+      const comment = document.getElementById('modalRejectComment').value.trim();
+
+      if (!cat) {
+        showToast('Veuillez sélectionner une catégorie de rejet.', 'warning');
+        return;
+      }
+      if (comment.length < 10) {
+        showToast('Veuillez saisir un commentaire d\'au moins 10 caractères.', 'warning');
+        return;
+      }
+
+      const user = currentUser();
+      if (!user || !user.idUser) {
+        showToast('Session expirée. Veuillez vous reconnecter.', 'error');
+        return;
+      }
+
+      closeModal('txnDetailModal');
+
+      try {
+        const fullReason = cat + ' : ' + comment;
+        const res = await Transactions.rejeter(ref, user.idUser, fullReason);
+        if (res && res.status === 200) {
+          showToast('Transaction ' + ref + ' rejetée avec succès.', 'warning');
+          await loadPendingTransactions();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Erreur lors du rejet.', 'error');
+        }
+      } catch (e) {
+        showToast('Erreur réseau : ' + e.message, 'error');
+      }
     }
 
     async function approveTxn(ref) {
@@ -254,8 +431,8 @@
         showToast('Veuillez sélectionner un motif.', 'warning');
         return;
       }
-      if (!comment) {
-        showToast('Veuillez saisir un commentaire détaillé.', 'warning');
+      if (comment.length < 10) {
+        showToast('Veuillez saisir un commentaire d\'au moins 10 caractères.', 'warning');
         return;
       }
 
