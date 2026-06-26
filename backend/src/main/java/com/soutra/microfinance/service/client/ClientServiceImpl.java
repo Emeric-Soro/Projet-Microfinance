@@ -228,6 +228,7 @@ public class ClientServiceImpl implements ClientService {
         String documentUrl = "upload/" + nomFichier;
         switch (typeDocument.toUpperCase()) {
             case "PIECE_IDENTITE" -> client.setPhotoIdentiteUrl(documentUrl);
+            case "PHOTO_PROFIL" -> client.setPhotoProfilUrl(documentUrl);
             case "JUSTIFICATIF_DOMICILE" -> client.setJustificatifDomicileUrl(documentUrl);
             case "JUSTIFICATIF_REVENUS" -> client.setJustificatifRevenusUrl(documentUrl);
             default -> throw new IllegalArgumentException("Type de document KYC invalide");

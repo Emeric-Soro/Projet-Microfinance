@@ -107,6 +107,12 @@
                 <span class="info-label">Expiration</span>
                 <span class="info-value" id="infoExpPiece">—</span>
               </div>
+              <div style="margin-top: 14px; border-top: 1px dashed #e2e8f0; padding-top: 12px;" id="kycDocsContainer">
+                <div style="font-size: 12px; font-weight: 700; color: #084355; margin-bottom: 8px;">Documents joints :</div>
+                <div style="display: flex; flex-direction: column; gap: 6px;" id="kycDocsList">
+                  <div style="font-size:11px; color:#7f8c8d; font-style:italic;">Chargement...</div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -295,7 +301,7 @@
         <div class="form-group" style="margin-bottom: 12px;">
           <label class="form-label">Photo d'identité (Selfie)</label>
           <div style="display:flex; align-items:center; gap:12px;">
-            <input type="file" accept="image/*" id="inputKycPhoto" style="display:none;">
+            <input type="file" accept="application/pdf,image/*" id="inputKycPhoto" style="display:none;">
             <button class="btn btn-outline btn-sm" onclick="document.getElementById('inputKycPhoto').click()">Choisir un fichier</button>
             <span id="labelKycPhoto" style="font-size:12px; color:#4A7A8A;">Aucun nouveau fichier choisi</span>
           </div>
@@ -403,7 +409,7 @@
       avatarEl.innerHTML = '';
       avatarEl.textContent = '';
       
-      const photoUrl = client.photoIdentiteUrl;
+      const photoUrl = client.photoProfilUrl || (client.photoIdentiteUrl && !client.photoIdentiteUrl.toLowerCase().endsWith('.pdf') ? client.photoIdentiteUrl : null);
       if (photoUrl && !photoUrl.includes('default/') && photoUrl.trim() !== '') {
         const baseUrl = window.SF ? window.SF.API_BASE : 'http://localhost:8080';
         // Encoder chaque segment du chemin pour gérer les espaces et caractères spéciaux
@@ -487,6 +493,40 @@
       document.getElementById('riskLabel').textContent  = rMap.label;
       document.getElementById('riskLabel').style.color  = rMap.color;
       document.getElementById('riskDate').textContent   = 'Dernière évaluation: ' + formatDateFR(new Date().toISOString().split('T')[0]);
+
+      // Peupler la liste des documents KYC
+      const docsList = document.getElementById('kycDocsList');
+      docsList.innerHTML = '';
+      const baseUrl = window.SF ? window.SF.API_BASE : 'http://localhost:8080';
+      const docItems = [
+        { label: 'CNI / Passeport', url: client.photoIdentiteUrl, icon: '🪪' },
+        { label: 'Justif. Domicile', url: client.justificatifDomicileUrl, icon: '🏠' },
+        { label: 'Justif. Revenus', url: client.justificatifRevenusUrl, icon: '💼' }
+      ];
+      
+      let hasDocs = false;
+      docItems.forEach(item => {
+        if (item.url && !item.url.includes('default/') && !item.url.includes('demo') && item.url.trim() !== '') {
+          hasDocs = true;
+          const urlEncodee = item.url.split('/').map(s => encodeURIComponent(s)).join('/');
+          const fileUrl = baseUrl + '/' + urlEncodee;
+          
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; font-size:12px; padding: 4px 0; border-bottom: 1px solid #f8fafc;';
+          row.innerHTML = `
+            <span style="display:flex; align-items:center; gap:6px; color:#4A7A8A;">
+              <span>${item.icon}</span>
+              <span style="font-weight: 500;">${item.label}</span>
+            </span>
+            <a href="${fileUrl}" target="_blank" class="btn btn-outline btn-sm" style="font-size:10px; padding:2px 8px; min-height:auto; height:20px; line-height:16px;">Voir</a>
+          `;
+          docsList.appendChild(row);
+        }
+      });
+      
+      if (!hasDocs) {
+        docsList.innerHTML = '<div style="font-size:11px; color:#7f8c8d; font-style:italic; padding-top:4px;">Aucun document joint</div>';
+      }
 
       // Bouton statut — utilise le statut normalisé
       const btnStatut = document.getElementById('btnModifierStatut');
@@ -1070,8 +1110,8 @@
       try {
         const baseUrl = window.SF ? window.SF.API_BASE : 'http://localhost:8080';
 
-        // Utiliser Clients.uploadDocument (défini dans app.js)
-        const resp = await Clients.uploadDocument(_clientId, fichier, 'PIECE_IDENTITE');
+        // Utiliser Clients.uploadDocument avec catégorie PHOTO_PROFIL (distinct de la pièce d'identité CNI)
+        const resp = await Clients.uploadDocument(_clientId, fichier, 'PHOTO_PROFIL');
         if (!resp || !resp.ok) {
           const errText = resp ? await resp.text().catch(() => '') : '';
           throw new Error(errText || `Erreur HTTP ${resp ? resp.status : 'réseau'}`);

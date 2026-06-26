@@ -40,6 +40,7 @@ public class ClientConfidentielResponseDTO {
     private LocalDate dateExpirationPieceIdentite;
 
     private String photoIdentiteUrl;
+    private String photoProfilUrl;
     private String justificatifDomicileUrl;
     private String justificatifRevenusUrl;
     private String paysNationalite;

@@ -3,8 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sécurité & Rôles - MicroFinance</title>
+  <title>Rôles & Permissions — Soutra Finance Backoffice</title>
   <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(8, 67, 85, 0.4);
+      backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .modal-overlay.visible { opacity: 1; pointer-events: auto; }
+    .modal-container {
+      background: white; border-radius: 12px; width: 480px; max-width: 92%;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,.1), 0 10px 10px -5px rgba(0,0,0,.04);
+      overflow: hidden; transform: translateY(20px);
+      transition: transform 0.25s ease;
+    }
+    .modal-overlay.visible .modal-container { transform: translateY(0); }
+    .modal-header {
+      padding: 16px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-title { font-size: 16px; font-weight: 700; color: #084355; }
+    .modal-body  { padding: 20px; }
+    .modal-footer {
+      padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0;
+      display: flex; justify-content: flex-end; gap: 8px;
+    }
+    .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b; }
+    .modal-close:hover { color: #0f172a; }
+
+    /* Grille roles */
+    .roles-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .roles-kpi-card { background: white; border-radius: 10px; padding: 16px 18px; border: 1px solid #e2e8f0; }
+    .roles-kpi-label { font-size: 12px; color: #64748b; font-weight: 500; margin-bottom: 4px; }
+    .roles-kpi-value { font-size: 24px; font-weight: 800; color: #084355; }
+
+    /* Lien vers gestion utilisateurs */
+    .link-panel {
+      background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px;
+      padding: 14px 18px; margin-bottom: 24px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .link-panel-text { font-size: 13px; color: #0369a1; }
+    .link-panel-text strong { color: #084355; }
+  </style>
 </head>
 <body>
   <div class="app-layout">
@@ -13,8 +58,8 @@
       <header class="topbar">
         <div class="topbar-left">
           <div>
-            <div class="topbar-title">Sécurité & Rôles</div>
-            <div class="topbar-breadcrumb">Accueil / Paramétrage / Sécurité</div>
+            <div class="topbar-title">Rôles & Permissions</div>
+            <div class="topbar-breadcrumb">Accueil / Sécurité / Rôles & permissions</div>
           </div>
         </div>
         <div class="topbar-right"></div>
@@ -23,139 +68,365 @@
       <main class="content-area">
         <div class="page-header">
           <div>
-            <h1 class="page-title">Administration des accès</h1>
-            <p class="page-subtitle">Utilisateurs, rôles, permissions et sessions actives.</p>
+            <h1 class="page-title">Gestion des rôles</h1>
+            <p class="page-subtitle">Définissez les rôles du système et visualisez le nombre d'utilisateurs associés.</p>
           </div>
-          <button class="btn btn-primary" onclick="showToast('Formulaire utilisateur prêt.', 'info')">Nouvel utilisateur</button>
+          <button class="btn btn-primary" onclick="ouvrirRoleModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              style="width:16px;height:16px;margin-right:8px;display:inline-block;vertical-align:middle;">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="16"/>
+              <line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+            Nouveau rôle
+          </button>
         </div>
 
-        <section class="grid-2">
-          <div class="card">
-            <div class="card-header">
-              <div>
-                <div class="card-title">Utilisateurs backoffice</div>
-                <div class="card-subtitle">Endpoint : /api/v1/securite/utilisateurs</div>
-              </div>
-            </div>
-            <div class="filter-bar">
-              <input class="form-control" placeholder="Recherche login, nom, email">
-              <select class="form-control">
-                <option>Rôle : Tous</option>
-                <option>Admin</option>
-                <option>Superviseur</option>
-                <option>Caissier</option>
-              </select>
-            </div>
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Utilisateur</th>
-                  <th>Rôle</th>
-                  <th>Agence</th>
-                  <th>2FA</th>
-                  <th>Statut</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>admin.principal</td>
-                  <td>ADMIN</td>
-                  <td>Toutes</td>
-                  <td><span class="badge badge-success">Actif</span></td>
-                  <td><span class="badge badge-active">Actif</span></td>
-                  <td><button class="btn btn-outline btn-sm">Modifier</button></td>
-                </tr>
-                <tr>
-                  <td>caisse.plateau01</td>
-                  <td>CAISSIER</td>
-                  <td>Plateau</td>
-                  <td><span class="badge badge-warning">À activer</span></td>
-                  <td><span class="badge badge-active">Actif</span></td>
-                  <td><button class="btn btn-outline btn-sm">Désactiver</button></td>
-                </tr>
-              </tbody>
-            </table>
+        <!-- Lien rapide vers gestion utilisateurs -->
+        <div class="link-panel">
+          <div class="link-panel-text">
+            <strong>💡 Gestion des accès utilisateurs</strong> — Pour activer ou créer un accès espace client,
+            rendez-vous dans la section <strong>Sécurité → Utilisateurs</strong>.
           </div>
+          <a href="utilisateurs.html" class="btn btn-secondary btn-sm">Gérer les utilisateurs →</a>
+        </div>
 
-          <div class="card">
-            <div class="card-header">
-              <div>
-                <div class="card-title">Rôles & permissions</div>
-                <div class="card-subtitle">Endpoints : /roles, /permissions</div>
-              </div>
-              <button class="btn btn-secondary btn-sm">Nouveau rôle</button>
+        <!-- KPI des rôles (dynamiques) -->
+        <div class="roles-kpi" id="rolesKpi">
+          <!-- Peuplé dynamiquement -->
+        </div>
+
+        <!-- Tableau des rôles -->
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Rôles système</div>
+              <div class="card-subtitle">Chaque rôle détermine les droits d'accès dans le backoffice</div>
             </div>
+            <button class="btn btn-outline btn-sm" onclick="chargerRoles()">↺ Actualiser</button>
+          </div>
+          <div style="overflow-x:auto;">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Rôle</th>
-                  <th>Permissions clés</th>
+                  <th>Code rôle</th>
+                  <th>Intitulé</th>
+                  <th>Créé le</th>
                   <th>Utilisateurs</th>
                   <th>Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="rolesTableBody">
                 <tr>
-                  <td>SUPERVISEUR</td>
-                  <td>VALIDATE_TRANSACTION, KYC_DECIDE, ACCOUNT_BLOCK</td>
-                  <td>8</td>
-                  <td><button class="btn btn-outline btn-sm">Configurer</button></td>
-                </tr>
-                <tr>
-                  <td>COMPLIANCE</td>
-                  <td>KYC_DECIDE, AUDIT_READ, LCBFT_MANAGE</td>
-                  <td>3</td>
-                  <td><button class="btn btn-outline btn-sm">Configurer</button></td>
+                  <td colspan="5" style="text-align:center;padding:40px;color:#64748b;">Chargement des rôles...</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
 
-        <section class="card">
+        <!-- Sessions actives -->
+        <section class="card" style="margin-top:24px;">
           <div class="card-header">
             <div>
               <div class="card-title">Sessions actives</div>
-              <div class="card-subtitle">Endpoint : /api/v1/securite/sessions</div>
+              <div class="card-subtitle">Connexions Web actives en temps réel</div>
             </div>
-            <button class="btn btn-danger btn-sm" onclick="showToast('Session révoquée côté UI.', 'warning')">Révoquer sélection</button>
+            <button class="btn btn-outline btn-sm" onclick="chargerSessions()">↺ Actualiser</button>
           </div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Login</th>
-                <th>IP</th>
-                <th>Appareil</th>
-                <th>Dernière activité</th>
-                <th>Expiration</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>admin.principal</td>
-                <td>10.0.0.14</td>
-                <td>Chrome Windows</td>
-                <td>03/06/2026 14:58</td>
-                <td>03/06/2026 15:28</td>
-                <td><button class="btn btn-outline btn-sm">Révoquer</button></td>
-              </tr>
-              <tr>
-                <td>superviseur.plateau</td>
-                <td>10.0.0.21</td>
-                <td>Edge Windows</td>
-                <td>03/06/2026 14:47</td>
-                <td>03/06/2026 15:17</td>
-                <td><button class="btn btn-outline btn-sm">Révoquer</button></td>
-              </tr>
-            </tbody>
-          </table>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Utilisateur</th>
+                  <th>ID Session</th>
+                  <th>Adresse IP</th>
+                  <th>Appareil</th>
+                  <th>Activité</th>
+                  <th>Expiration</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="sessionsTableBody">
+                <tr>
+                  <td colspan="7" style="text-align:center;padding:40px;color:#64748b;">Chargement des sessions...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </section>
       </main>
     </div>
   </div>
+
+  <!-- ══ MODAL : CRÉER UN RÔLE ══════════════════════════ -->
+  <div class="modal-overlay" id="modalRole">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-title">Créer un nouveau rôle</div>
+        <button class="modal-close" onclick="fermerModal('modalRole')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label" for="roleCode">Code du rôle <span style="color:#b91c1c;">*</span></label>
+          <input type="text" class="form-control" id="roleCode" required
+            placeholder="Ex : COMPLIANCE, AUDITEUR (MAJUSCULES)"
+            oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9_]/g,'')">
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Uniquement lettres majuscules, chiffres et _ (underscore)</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="roleIntitule">Intitulé du rôle <span style="color:#b91c1c;">*</span></label>
+          <input type="text" class="form-control" id="roleIntitule" required
+            placeholder="Ex : Responsable Conformité">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="fermerModal('modalRole')">Annuler</button>
+        <button class="btn btn-primary" id="btnEnregistrerRole" onclick="enregistrerRole()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
+  <script>
+    /* ── État ──────────────────────────────────────────── */
+    let _roles    = [];
+    let _sessions = [];
+
+    /* ── Helpers ────────────────────────────────────────── */
+    function escapeHtml(s) {
+      if (!s) return '';
+      return String(s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+        .replace(/'/g,'&#039;');
+    }
+    function nettoyerDateStr(d) {
+      if (typeof d !== 'string') return d;
+      const idx = d.indexOf('.');
+      if (idx > 0) {
+        const frac = d.substring(idx + 1).match(/^\d+/);
+        if (frac) return d.substring(0, idx) + '.' + frac[0].substring(0, 3);
+      }
+      return d;
+    }
+    function formatDate(d) {
+      if (!d) return '—';
+      try {
+        const dt = new Date(nettoyerDateStr(d));
+        if (isNaN(dt.getTime())) return d;
+        return dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+          + ' ' + dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      } catch { return d; }
+    }
+    function formatDateCourt(d) {
+      if (!d) return '—';
+      try {
+        const dt = new Date(nettoyerDateStr(d));
+        if (isNaN(dt.getTime())) return d;
+        return dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      } catch { return d; }
+    }
+
+    /* ── Modale ─────────────────────────────────────────── */
+    function ouvrirModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('visible');
+    }
+    function fermerModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('visible');
+    }
+    function ouvrirRoleModal() {
+      document.getElementById('roleCode').value    = '';
+      document.getElementById('roleIntitule').value = '';
+      ouvrirModal('modalRole');
+    }
+
+    /* ── KPI des rôles ──────────────────────────────────── */
+    function mettreAJourKpiRoles(roles) {
+      const total  = roles.length;
+      const avecMembres  = roles.filter(r => r.nombreUtilisateurs > 0).length;
+      const sansMembres  = roles.filter(r => !r.nombreUtilisateurs).length;
+      const totalUsers   = roles.reduce((acc, r) => acc + (r.nombreUtilisateurs || 0), 0);
+
+      document.getElementById('rolesKpi').innerHTML = `
+        <div class="roles-kpi-card">
+          <div class="roles-kpi-label">Rôles définis</div>
+          <div class="roles-kpi-value">${total}</div>
+        </div>
+        <div class="roles-kpi-card">
+          <div class="roles-kpi-label">Rôles utilisés</div>
+          <div class="roles-kpi-value">${avecMembres}</div>
+        </div>
+        <div class="roles-kpi-card">
+          <div class="roles-kpi-label">Rôles vides</div>
+          <div class="roles-kpi-value">${sansMembres}</div>
+        </div>
+        <div class="roles-kpi-card">
+          <div class="roles-kpi-label">Total assignations</div>
+          <div class="roles-kpi-value">${totalUsers}</div>
+        </div>
+      `;
+    }
+
+    /* ── Chargement des rôles ───────────────────────────── */
+    async function chargerRoles() {
+      const tbody = document.getElementById('rolesTableBody');
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:#64748b;">Chargement...</td></tr>`;
+
+      try {
+        const res = await Securite.listerRoles();
+        if (!res || !res.ok) throw new Error('API error');
+        _roles = await res.json();
+        mettreAJourKpiRoles(_roles);
+        afficherRoles(_roles);
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:#D93025;">
+          Impossible de charger les rôles. Vérifiez que le backend est démarré.
+        </td></tr>`;
+        document.getElementById('rolesKpi').innerHTML = '';
+      }
+    }
+
+    function afficherRoles(roles) {
+      const tbody = document.getElementById('rolesTableBody');
+      if (!roles.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:#64748b;">Aucun rôle défini.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = roles.map(r => {
+        const badgeMembres = r.nombreUtilisateurs > 0
+          ? `<span class="badge badge-active" style="font-size:11px;">${r.nombreUtilisateurs} utilisateur${r.nombreUtilisateurs > 1 ? 's' : ''}</span>`
+          : `<span class="badge" style="font-size:11px;background:#f1f5f9;color:#94a3b8;">Aucun</span>`;
+
+        const peutSupprimer = !r.nombreUtilisateurs;
+        const btnSuppr = peutSupprimer
+          ? `<button class="btn btn-outline btn-sm" onclick="supprimerRole(${r.idRole}, '${escapeHtml(r.codeRoleUtilisateur)}')" title="Supprimer ce rôle">Supprimer</button>`
+          : `<button class="btn btn-sm" disabled style="opacity:.4;cursor:not-allowed;" title="Impossible : des utilisateurs ont ce rôle">Supprimer</button>`;
+
+        return `
+          <tr>
+            <td>
+              <span class="badge badge-info" style="font-weight:700;font-size:12px;letter-spacing:.5px;">
+                ${escapeHtml(r.codeRoleUtilisateur)}
+              </span>
+            </td>
+            <td style="font-weight:600;color:#084355;">${escapeHtml(r.intituleRole || '—')}</td>
+            <td style="font-size:12px;color:#64748b;">${formatDateCourt(r.dateCreation)}</td>
+            <td>${badgeMembres}</td>
+            <td>${btnSuppr}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    /* ── Créer un rôle ──────────────────────────────────── */
+    async function enregistrerRole() {
+      const codeRole = document.getElementById('roleCode').value.trim().toUpperCase();
+      const intitule = document.getElementById('roleIntitule').value.trim();
+      const btn      = document.getElementById('btnEnregistrerRole');
+
+      if (!codeRole || !intitule) {
+        showToast('Veuillez remplir tous les champs.', 'warning');
+        return;
+      }
+
+      btn.disabled    = true;
+      btn.textContent = 'Enregistrement...';
+      try {
+        const res = await Securite.creerRole({ codeRole, intitule });
+        if (res && res.ok) {
+          showToast('✅ Rôle créé avec succès !', 'success');
+          fermerModal('modalRole');
+          chargerRoles();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Impossible de créer le rôle (code déjà existant ?).', 'error');
+        }
+      } catch (e) {
+        showToast('Erreur serveur lors de la création du rôle.', 'error');
+      } finally {
+        btn.disabled    = false;
+        btn.textContent = 'Enregistrer';
+      }
+    }
+
+    /* ── Supprimer un rôle ──────────────────────────────── */
+    async function supprimerRole(id, code) {
+      if (!confirm(`Voulez-vous vraiment supprimer le rôle "${code}" ?\nCette action est irréversible.`)) return;
+      try {
+        const res = await Securite.supprimerRole(id);
+        if (res && res.ok) {
+          showToast('Rôle supprimé avec succès.', 'success');
+          chargerRoles();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Impossible de supprimer ce rôle.', 'error');
+        }
+      } catch (e) {
+        showToast('Erreur lors de la suppression du rôle.', 'error');
+      }
+    }
+
+    /* ── Sessions actives ───────────────────────────────── */
+    async function chargerSessions() {
+      const tbody = document.getElementById('sessionsTableBody');
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:#64748b;">Chargement...</td></tr>`;
+      try {
+        const res = await Securite.listerSessions();
+        if (!res || !res.ok) throw new Error();
+        _sessions = await res.json();
+        afficherSessions(_sessions);
+      } catch {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:#D93025;">Serveur inaccessible.</td></tr>`;
+      }
+    }
+
+    function afficherSessions(sessions) {
+      const tbody = document.getElementById('sessionsTableBody');
+      if (!sessions.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:#64748b;">Aucune session active enregistrée.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = sessions.map(s => `
+        <tr>
+          <td style="font-weight:700;color:#084355;">${escapeHtml(s.username)}</td>
+          <td style="font-family:monospace;font-size:11px;color:#64748b;">${escapeHtml(s.sessionId || '—')}</td>
+          <td style="font-family:monospace;font-size:12px;">${escapeHtml(s.ipAddress || '—')}</td>
+          <td style="font-size:12px;color:#4a5568;">${escapeHtml(s.userAgent || '—')}</td>
+          <td style="font-size:12px;">${formatDate(s.lastAccessTime)}</td>
+          <td style="font-size:12px;color:#b27b00;font-weight:500;">${formatDate(s.expireTime)}</td>
+          <td>
+            <button class="btn btn-outline btn-sm"
+              onclick="revoquerSession('${escapeHtml(s.sessionId)}')">Révoquer</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function revoquerSession(sessionId) {
+      if (!confirm("Voulez-vous vraiment révoquer cette session ?\nL'utilisateur sera immédiatement déconnecté.")) return;
+      try {
+        const res = await Securite.revoquerSession(sessionId);
+        if (res && res.ok) {
+          showToast('Session révoquée avec succès.', 'success');
+          chargerSessions();
+        } else {
+          showToast('Impossible de révoquer la session.', 'error');
+        }
+      } catch {
+        showToast('Erreur lors de la révocation.', 'error');
+      }
+    }
+
+    /* ── Initialisation ─────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', () => {
+      chargerRoles();
+      chargerSessions();
+    });
+  </script>
 </body>
 </html>

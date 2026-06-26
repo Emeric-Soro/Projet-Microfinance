@@ -2,6 +2,7 @@ package com.soutra.microfinance.service.client;
 
 import com.soutra.microfinance.entity.DocumentClient;
 import com.soutra.microfinance.repository.client.DocumentClientRepository;
+import com.soutra.microfinance.repository.client.ClientRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,7 @@ import java.util.UUID;
 public class DocumentClientServiceImpl implements DocumentClientService {
 
     private final DocumentClientRepository documentClientRepository;
+    private final ClientRepository clientRepository;
 
     @Value("${app.file.storage-path:./uploads/documents}")
     private String storagePath;
@@ -67,7 +69,23 @@ public class DocumentClientServiceImpl implements DocumentClientService {
             doc.setUploadedBy(uploadedBy);
             doc.setDateUpload(LocalDateTime.now());
 
-            return documentClientRepository.save(doc);
+            DocumentClient savedDoc = documentClientRepository.save(doc);
+
+            // Mettre à jour l'entité Client associée si la catégorie correspond
+            if (categorie != null) {
+                clientRepository.findById(idClient).ifPresent(client -> {
+                    String docUrl = "upload/" + nomUnique;
+                    switch (categorie.toUpperCase()) {
+                        case "PHOTO_PROFIL" -> client.setPhotoProfilUrl(docUrl);
+                        case "PIECE_IDENTITE" -> client.setPhotoIdentiteUrl(docUrl);
+                        case "JUSTIFICATIF_DOMICILE" -> client.setJustificatifDomicileUrl(docUrl);
+                        case "JUSTIFICATIF_REVENUS" -> client.setJustificatifRevenusUrl(docUrl);
+                    }
+                    clientRepository.save(client);
+                });
+            }
+
+            return savedDoc;
         } catch (IOException e) {
             throw new IllegalStateException("Erreur lors de l'enregistrement du fichier : " + e.getMessage());
         }

@@ -377,6 +377,56 @@
     }
   };
 
+  const Securite = {
+    listerRoles: async function () {
+      return await apiFetch('/api/v1/securite/roles');
+    },
+    creerRole: async function (data) {
+      return await apiFetch('/api/v1/securite/roles', { method: 'POST', body: JSON.stringify(data) });
+    },
+    modifierRole: async function (id, data) {
+      return await apiFetch('/api/v1/securite/roles/' + id, { method: 'PUT', body: JSON.stringify(data) });
+    },
+    supprimerRole: async function (id) {
+      return await apiFetch('/api/v1/securite/roles/' + id, { method: 'DELETE' });
+    },
+    listerPermissions: async function (codeRole) {
+      var url = '/api/v1/securite/permissions';
+      if (codeRole) url += '?codeRole=' + encodeURIComponent(codeRole);
+      return await apiFetch(url);
+    },
+    mettreAJourPermissions: async function (data) {
+      return await apiFetch('/api/v1/securite/permissions', { method: 'PUT', body: JSON.stringify(data) });
+    },
+    listerUtilisateurs: async function (page = 0, size = 100, codeRole, actif) {
+      var url = '/api/v1/securite/utilisateurs?page=' + page + '&size=' + size;
+      if (codeRole) url += '&codeRole=' + encodeURIComponent(codeRole);
+      if (actif !== undefined) url += '&actif=' + actif;
+      return await apiFetch(url);
+    },
+    creerUtilisateur: async function (data) {
+      return await apiFetch('/api/v1/securite/utilisateurs', { method: 'POST', body: JSON.stringify(data) });
+    },
+    modifierUtilisateur: async function (id, data) {
+      return await apiFetch('/api/v1/securite/utilisateurs/' + id, { method: 'PUT', body: JSON.stringify(data) });
+    },
+    activerDesactiverUtilisateur: async function (id, actif) {
+      return await apiFetch('/api/v1/securite/utilisateurs/' + id + '/activer-desactiver', {
+        method: 'PUT',
+        body: JSON.stringify({ actif: actif })
+      });
+    },
+    listerSessions: async function () {
+      return await apiFetch('/api/v1/securite/sessions');
+    },
+    revoquerSession: async function (sessionId) {
+      return await apiFetch('/api/v1/securite/sessions/revoguer', {
+        method: 'POST',
+        body: JSON.stringify({ sessionId: sessionId })
+      });
+    }
+  };
+
   async function downloadFile(path, defaultFilename) {
     try {
       if (typeof window.showToast === 'function') window.showToast('Téléchargement du fichier en cours...', 'info');
@@ -419,6 +469,7 @@
   window.Caisses = Caisses;
   window.Dashboards = Dashboards;
   window.Conformite = Conformite;
+  window.Securite = Securite;
 
 }());
 
@@ -501,7 +552,6 @@
         { href: 'agences.html', label: 'Agences', icon: icons.settings, match: ['agences.html'] },
         { href: 'calendrier-jours-feries.html', label: 'Jours fériés', icon: icons.settings, match: ['calendrier-jours-feries.html'] },
         { href: 'personnel-create.html', label: 'Ajouter personnel', icon: icons.users, match: ['personnel-create.html'] },
-        { href: 'utilisateurs.html', label: 'Utilisateurs', icon: icons.users, match: ['utilisateurs.html'] },
         { href: 'parametres-systeme.html', label: 'Paramètres système', icon: icons.settings, match: ['parametres-systeme.html'] },
         { href: 'cache.html', label: 'Cache tarification', icon: icons.settings, match: ['cache.html'] }
       ]

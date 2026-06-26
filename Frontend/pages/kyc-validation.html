@@ -300,20 +300,30 @@
     }
 
     function renderChecklist(client) {
+      const baseUrl = window.SF ? window.SF.API_BASE : 'http://localhost:8080';
       const items = [
-        ['Photo identité', client.photoIdentiteUrl],
-        ['Justificatif domicile', client.justificatifDomicileUrl],
-        ['Justificatif revenus', client.justificatifRevenusUrl],
-        ['Pièce identité', client.numeroPieceIdentiteMasque || client.typePieceIdentite],
-        ['Adresse', client.adresse],
-        ['Profession', client.profession]
+        { label: 'Photo identité', value: client.photoIdentiteUrl, isFile: true },
+        { label: 'Justificatif domicile', value: client.justificatifDomicileUrl, isFile: true },
+        { label: 'Justificatif revenus', value: client.justificatifRevenusUrl, isFile: true },
+        { label: 'Pièce identité', value: client.numeroPieceIdentiteMasque || client.typePieceIdentite, isFile: false },
+        { label: 'Adresse', value: client.adresse, isFile: false },
+        { label: 'Profession', value: client.profession, isFile: false }
       ];
-      document.getElementById('documentChecklist').innerHTML = items.map(([label, value]) => {
-        const isOk = value && !String(value).toLowerCase().includes('default') && !String(value).toLowerCase().includes('demo');
+      
+      document.getElementById('documentChecklist').innerHTML = items.map(item => {
+        const isOk = item.value && !String(item.value).toLowerCase().includes('default') && !String(item.value).toLowerCase().includes('demo');
+        let badgeHtml = isOk ? '<span class="badge badge-active">OK</span>' : '<span class="badge badge-pending">Manquant</span>';
+        
+        if (isOk && item.isFile) {
+          const urlEncodee = item.value.split('/').map(s => encodeURIComponent(s)).join('/');
+          const fileUrl = baseUrl + '/' + urlEncodee;
+          badgeHtml += ` <a href="${fileUrl}" target="_blank" class="btn btn-outline btn-sm" style="padding: 2px 8px; margin-left: 8px; font-size: 11px; height: auto; min-height: auto; display: inline-flex; align-items: center; text-decoration: none;">Voir</a>`;
+        }
+        
         return `
-          <div class="info-row">
-            <span class="info-label">${label}</span>
-            <span class="info-value">${isOk ? '<span class="badge badge-active">OK</span>' : '<span class="badge badge-pending">Manquant</span>'}</span>
+          <div class="info-row" style="align-items: center; min-height: 28px;">
+            <span class="info-label">${item.label}</span>
+            <span class="info-value" style="display: flex; align-items: center;">${badgeHtml}</span>
           </div>
         `;
       }).join('');

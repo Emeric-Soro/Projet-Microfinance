@@ -68,8 +68,12 @@ public class Client extends BaseAuditEntity {
 	private LocalDate dateExpirationPieceIdentite;
 
 	@Column(name = "photo_identite_url", length = 255)
-	// Reference de la photo ou du selfie de verification.
+	// Reference de la photo ou du selfie de verification (scan CNI/Passeport).
 	private String photoIdentiteUrl;
+
+	@Column(name = "photo_profil_url", length = 255)
+	// Reference de la photo de profil (portrait du client, distincte du scan de pièce d'identité).
+	private String photoProfilUrl;
 
 	@Column(name = "justificatif_domicile_url", length = 255)
 	// Reference du justificatif de domicile.

@@ -43,6 +43,7 @@ public interface ClientMapper {
     @Mapping(target = "demandesCredit", ignore = true)
     @Mapping(target = "credits", ignore = true)
     @Mapping(target = "version", ignore = true)
+    @Mapping(target = "photoProfilUrl", ignore = true)
     Client toEntity(CreationClientRequestDTO dto);
 
     // --- Mapping confidentiel (admin) : données sensibles en clair ---

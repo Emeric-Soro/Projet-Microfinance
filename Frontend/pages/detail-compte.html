@@ -1302,10 +1302,28 @@
       return (n || 0).toLocaleString('fr-FR');
     }
 
+    function nettoyerDateStr(d) {
+      if (typeof d !== 'string') return d;
+      // Gérer les dates avec trop de microsecondes (comme .187017) que certains navigateurs n'analysent pas
+      var indexPoint = d.indexOf('.');
+      if (indexPoint > 0) {
+        var base = d.substring(0, indexPoint);
+        var fraction = d.substring(indexPoint + 1);
+        var matchMs = fraction.match(/^\d+/);
+        if (matchMs) {
+          var msStr = matchMs[0].substring(0, 3);
+          var suffix = fraction.substring(matchMs[0].length);
+          return base + '.' + msStr + suffix;
+        }
+      }
+      return d;
+    }
+
     function formatDate(d) {
       if (!d) return '-';
       try {
-        var dt = new Date(d);
+        var dt = new Date(nettoyerDateStr(d));
+        if (isNaN(dt.getTime())) return d;
         return dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
                dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
       } catch (e) {
@@ -1316,7 +1334,9 @@
     function formatDateShort(d) {
       if (!d) return '--';
       try {
-        return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        var dt = new Date(nettoyerDateStr(d));
+        if (isNaN(dt.getTime())) return d;
+        return dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
       } catch (e) {
         return d;
       }

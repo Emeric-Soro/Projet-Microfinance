@@ -146,7 +146,7 @@
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                   <p id="pieceUploadLabel">Glisser-déposer la pièce d'identité ici</p>
                   <p class="upload-hint">ou cliquer pour parcourir (PDF, JPG, JPEG — Max 5 Mo)</p>
-                  <input type="file" accept="application/pdf,image/jpeg,image/jpg" style="display: none;" id="pieceUpload">
+                  <input type="file" accept="application/pdf,image/jpeg,image/jpg,image/png,image/webp" style="display: none;" id="pieceUpload">
                 </div>
                 <div class="field-error" id="pieceUpload-error">Le fichier de la pièce d'identité est obligatoire.</div>
               </div>
@@ -487,6 +487,14 @@
 
         if (res.status === 201) {
           showToast('Client créé avec succès !', 'success');
+          
+          const id = data.idClient;
+          
+          // Capturer les fichiers AVANT le reset du formulaire
+          const pieceFileToUpload = document.getElementById('pieceUpload').files[0];
+          const domicileFile = document.getElementById('domicileUpload').files[0];
+          const revenusFile = document.getElementById('revenusUpload').files[0];
+
           // Vider le brouillon stepper et réinitialiser le formulaire
           try {
             const currentPageName = (window.location.pathname.split('/').pop() || 'client-create.html').toLowerCase();
@@ -497,13 +505,6 @@
             document.getElementById('domicileUploadLabel').textContent = 'Glisser-déposer le justificatif de domicile ici';
             document.getElementById('revenusUploadLabel').textContent = 'Glisser-déposer le justificatif de revenus ici';
           } catch (_) {}
-          
-          const id = data.idClient;
-          
-          // Uploader les fichiers
-          const pieceFileToUpload = document.getElementById('pieceUpload').files[0];
-          const domicileFile = document.getElementById('domicileUpload').files[0];
-          const revenusFile = document.getElementById('revenusUpload').files[0];
           
           let pieceUrl = null;
           let domicileUrl = null;
