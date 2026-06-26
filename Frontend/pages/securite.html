@@ -6,35 +6,6 @@
   <title>Rôles & Permissions — Soutra Finance Backoffice</title>
   <link rel="stylesheet" href="../assets/css/backoffice.css">
   <style>
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(8, 67, 85, 0.4);
-      backdrop-filter: blur(4px);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 1000; opacity: 0; pointer-events: none;
-      transition: opacity 0.25s ease;
-    }
-    .modal-overlay.visible { opacity: 1; pointer-events: auto; }
-    .modal-container {
-      background: white; border-radius: 12px; width: 480px; max-width: 92%;
-      box-shadow: 0 20px 25px -5px rgba(0,0,0,.1), 0 10px 10px -5px rgba(0,0,0,.04);
-      overflow: hidden; transform: translateY(20px);
-      transition: transform 0.25s ease;
-    }
-    .modal-overlay.visible .modal-container { transform: translateY(0); }
-    .modal-header {
-      padding: 16px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .modal-title { font-size: 16px; font-weight: 700; color: #084355; }
-    .modal-body  { padding: 20px; }
-    .modal-footer {
-      padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0;
-      display: flex; justify-content: flex-end; gap: 8px;
-    }
-    .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b; }
-    .modal-close:hover { color: #0f172a; }
-
     /* Grille roles */
     .roles-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 24px; }
     .roles-kpi-card { background: white; border-radius: 10px; padding: 16px 18px; border: 1px solid #e2e8f0; }
@@ -161,10 +132,10 @@
 
   <!-- ══ MODAL : CRÉER UN RÔLE ══════════════════════════ -->
   <div class="modal-overlay" id="modalRole">
-    <div class="modal-container">
+    <div class="modal">
       <div class="modal-header">
         <div class="modal-title">Créer un nouveau rôle</div>
-        <button class="modal-close" onclick="fermerModal('modalRole')">&times;</button>
+        <button class="modal-close" onclick="closeModal('modalRole')">&times;</button>
       </div>
       <div class="modal-body">
         <div class="form-group" style="margin-bottom:14px;">
@@ -181,7 +152,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="fermerModal('modalRole')">Annuler</button>
+        <button class="btn btn-ghost" onclick="closeModal('modalRole')">Annuler</button>
         <button class="btn btn-primary" id="btnEnregistrerRole" onclick="enregistrerRole()">Enregistrer</button>
       </div>
     </div>
@@ -230,18 +201,10 @@
     }
 
     /* ── Modale ─────────────────────────────────────────── */
-    function ouvrirModal(id) {
-      const el = document.getElementById(id);
-      if (el) el.classList.add('visible');
-    }
-    function fermerModal(id) {
-      const el = document.getElementById(id);
-      if (el) el.classList.remove('visible');
-    }
     function ouvrirRoleModal() {
       document.getElementById('roleCode').value    = '';
       document.getElementById('roleIntitule').value = '';
-      ouvrirModal('modalRole');
+      openModal('modalRole');
     }
 
     /* ── KPI des rôles ──────────────────────────────────── */
@@ -340,7 +303,7 @@
         const res = await Securite.creerRole({ codeRole, intitule });
         if (res && res.ok) {
           showToast('✅ Rôle créé avec succès !', 'success');
-          fermerModal('modalRole');
+          closeModal('modalRole');
           chargerRoles();
         } else {
           const err = await res.json().catch(() => ({}));

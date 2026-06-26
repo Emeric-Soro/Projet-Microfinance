@@ -65,6 +65,12 @@ class UtilisateurServiceImplTest {
     @Mock
     private PasswordResetProperties passwordResetProperties;
 
+    @Mock
+    private com.soutra.microfinance.repository.parametrage.AgenceRepository agenceRepository;
+
+    @Mock
+    private com.soutra.microfinance.repository.client.StatutClientRepository statutClientRepository;
+
     @InjectMocks
     private UtilisateurServiceImpl utilisateurService;
 

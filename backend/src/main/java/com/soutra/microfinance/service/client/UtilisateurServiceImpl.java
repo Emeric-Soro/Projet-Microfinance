@@ -27,6 +27,16 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import java.math.BigDecimal;
+import java.util.concurrent.ThreadLocalRandom;
+import com.soutra.microfinance.entity.Agence;
+import com.soutra.microfinance.entity.StatutClient;
+import com.soutra.microfinance.entity.TypePieceIdentite;
+import com.soutra.microfinance.entity.NiveauRisqueClient;
+import com.soutra.microfinance.entity.StatutKycClient;
+import com.soutra.microfinance.repository.parametrage.AgenceRepository;
+import com.soutra.microfinance.repository.client.StatutClientRepository;
+import com.soutra.microfinance.dto.request.client.CreationCollaborateurRequestDTO;
 
 @Service
 public class UtilisateurServiceImpl implements UtilisateurService {
@@ -41,6 +51,8 @@ public class UtilisateurServiceImpl implements UtilisateurService {
     private final NotificationService notificationService;
     private final EmailService emailService;
     private final PasswordResetProperties passwordResetProperties;
+    private final AgenceRepository agenceRepository;
+    private final StatutClientRepository statutClientRepository;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public UtilisateurServiceImpl(
@@ -51,7 +63,9 @@ public class UtilisateurServiceImpl implements UtilisateurService {
             AuthSecurityProperties authSecurityProperties,
             NotificationService notificationService,
             EmailService emailService,
-            PasswordResetProperties passwordResetProperties
+            PasswordResetProperties passwordResetProperties,
+            AgenceRepository agenceRepository,
+            StatutClientRepository statutClientRepository
     ) {
         this.utilisateurRepository = utilisateurRepository;
         this.clientRepository = clientRepository;
@@ -61,6 +75,8 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         this.notificationService = notificationService;
         this.emailService = emailService;
         this.passwordResetProperties = passwordResetProperties;
+        this.agenceRepository = agenceRepository;
+        this.statutClientRepository = statutClientRepository;
     }
 
     @Override
@@ -126,6 +142,103 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         utilisateur.getRoles().add(roleClient);
 
         return utilisateurRepository.save(utilisateur);
+    }
+
+    @Override
+    @Transactional
+    public Utilisateur creerCollaborateur(CreationCollaborateurRequestDTO requestDTO) {
+        if (requestDTO == null) {
+            throw new IllegalArgumentException("Les données du collaborateur sont obligatoires");
+        }
+        if (utilisateurRepository.existsByLogin(requestDTO.getLogin())) {
+            throw new IllegalArgumentException("Login déjà utilisé : " + requestDTO.getLogin());
+        }
+        if (clientRepository.existsByEmail(requestDTO.getEmail())) {
+            throw new IllegalArgumentException("Email déjà utilisé : " + requestDTO.getEmail());
+        }
+        if (clientRepository.existsByTelephone(requestDTO.getTelephone())) {
+            throw new IllegalArgumentException("Téléphone déjà utilisé : " + requestDTO.getTelephone());
+        }
+
+        Agence agence = agenceRepository.findByCodeAgence(requestDTO.getCodeAgence())
+                .orElseThrow(() -> new IllegalArgumentException("Agence introuvable : " + requestDTO.getCodeAgence()));
+
+        StatutClient statutActif = statutClientRepository.findByLibelleStatutIgnoreCase("ACTIF")
+                .orElseThrow(() -> new IllegalStateException("StatutClient ACTIF non configuré"));
+
+        // 1. Créer le profil Client associé
+        Client client = new Client();
+        client.setCodeClient(genererCodeClientUniqueForCollaborateur());
+        client.setNom(requestDTO.getNom());
+        client.setPrenom(requestDTO.getPrenom());
+        client.setDateNaissance(requestDTO.getDateNaissance());
+        client.setEmail(requestDTO.getEmail());
+        client.setTelephone(requestDTO.getTelephone());
+        client.setAdresse(agence.getAdresse()); // Par défaut, l'adresse de l'agence
+        client.setTypePieceIdentite(TypePieceIdentite.CNI);
+        client.setNumeroPieceIdentite(requestDTO.getNumeroPieceIdentite() != null && !requestDTO.getNumeroPieceIdentite().isBlank() ? requestDTO.getNumeroPieceIdentite() : "CNI-COLLAB-" + System.currentTimeMillis());
+        client.setDateExpirationPieceIdentite(LocalDate.now().plusYears(10));
+        client.setProfession("Personnel de Microfinance");
+        client.setEmployeur("SOUTRA FINANCE");
+        client.setPaysNationalite("Côte d'Ivoire");
+        client.setPaysResidence("Côte d'Ivoire");
+        client.setPep(false);
+        client.setNiveauRisque(NiveauRisqueClient.FAIBLE);
+        client.setStatutKyc(StatutKycClient.VALIDE);
+        client.setDateSoumissionKyc(LocalDate.now());
+        client.setDateValidationKyc(LocalDate.now());
+        client.setCommentaireKyc("Profil personnel créé automatiquement");
+        client.setValidateurKyc("SYSTEM");
+        client.setDateInscription(LocalDate.now());
+        client.setStatutClient(statutActif);
+        client.setAgence(agence);
+        client.setRevenuMensuel(BigDecimal.ZERO);
+        client.setSecteurActivite("FINANCE");
+        Client clientSauvegarde = clientRepository.save(client);
+
+        // 2. Créer l'Utilisateur
+        LocalDateTime maintenant = LocalDateTime.now();
+        Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setClient(clientSauvegarde);
+        utilisateur.setLogin(requestDTO.getLogin());
+        utilisateur.setPassword(passwordEncoder.encode(requestDTO.getMotDePasseBrut()));
+        utilisateur.setActif(true);
+        utilisateur.setCompteExpireLe(null);
+        utilisateur.setCompteVerrouilleJusquAu(null);
+        utilisateur.setNombreEchecsConnexion(0);
+        utilisateur.setDernierEchecConnexion(null);
+        utilisateur.setDerniereConnexionReussie(null);
+        utilisateur.setMotDePasseModifieLe(maintenant);
+        utilisateur.setIdentifiantsExpirentLe(maintenant.plusDays(authSecurityProperties.getCredentialsValidityDays()));
+        utilisateur.setSecondFacteurActive(requestDTO.getSecondFacteurActive() != null ? requestDTO.getSecondFacteurActive() : true);
+        utilisateur.setOtpChallengeId(null);
+        utilisateur.setOtpHash(null);
+        utilisateur.setOtpExpireLe(null);
+        utilisateur.setOtpTentativesRestantes(0);
+        utilisateur.setAgence(agence);
+
+        // Assigner le rôle
+        String roleCode = requestDTO.getRole();
+        if ("CAISSIER".equalsIgnoreCase(roleCode)) {
+            roleCode = "GUICHETIER";
+        }
+        RoleUtilisateur role = roleUtilisateurRepository.findByCodeRoleUtilisateur(roleCode)
+                .orElseThrow(() -> new IllegalArgumentException("Rôle introuvable : " + requestDTO.getRole()));
+        utilisateur.getRoles().add(role);
+
+        return utilisateurRepository.save(utilisateur);
+    }
+
+    private String genererCodeClientUniqueForCollaborateur() {
+        String prefixeDate = LocalDate.now().toString().replace("-", "");
+        for (int tentative = 0; tentative < 20; tentative++) {
+            int suffixe = ThreadLocalRandom.current().nextInt(1000, 10000);
+            String code = "CLI-" + prefixeDate + "-" + suffixe;
+            if (!clientRepository.existsByCodeClient(code)) {
+                return code;
+            }
+        }
+        throw new IllegalStateException("Impossible de générer un code client unique");
     }
 
     @Override

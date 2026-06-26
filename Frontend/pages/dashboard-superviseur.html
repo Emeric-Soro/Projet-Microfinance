@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de bord Superviseur - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Tableau de bord Superviseur</div>
+            <div class="topbar-breadcrumb">Supervision / Vue d'ensemble</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <span style="font-size: 12px; color: #4A7A8A;" id="pendingCountHeader">— en attente</span>
+          <a href="validation.html" class="btn btn-primary btn-sm">Validation 4-eyes →</a>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <!-- KPI VALIDATION + OPERATIONS -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon orange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Validations en attente</div>
+              <div class="kpi-value" id="kpiPending">—</div>
+              <div class="kpi-trend" id="kpiPendingTrend">4-eyes</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Transactions (aujourd'hui)</div>
+              <div class="kpi-value" id="kpiNbTx">—</div>
+              <div class="kpi-trend" id="kpiNbTxTrend">réseau</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Volume opérationnel</div>
+              <div class="kpi-value" id="kpiVolume">—</div>
+              <div class="kpi-trend" id="kpiVolumeTrend">aujourd'hui</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Frais perçus</div>
+              <div class="kpi-value" id="kpiFrais">—</div>
+              <div class="kpi-trend" id="kpiFraisTrend">aujourd'hui</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <!-- PENDING PREVIEW -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">File de validation</div>
+                <div class="card-subtitle">Opérations sensibles en attente d'approbation</div>
+              </div>
+              <a href="validation.html" class="btn btn-ghost btn-sm">Tout valider →</a>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Réf.</th>
+                  <th>Type</th>
+                  <th>Montant</th>
+                  <th>Client</th>
+                  <th>Date & heure</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pendingPreviewBody">
+                <tr>
+                  <td colspan="6" style="text-align:center;padding:20px;color:#4A7A8A;">Chargement…</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- OPERATIONAL SUMMARY -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Synthèse opérationnelle</div>
+                <div class="card-subtitle" id="opSummaryPeriod">Aujourd'hui</div>
+              </div>
+              <a href="rapport-operationnel.html" class="btn btn-ghost btn-sm">Rapport complet →</a>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Indicateur</th>
+                  <th>Valeur</th>
+                </tr>
+              </thead>
+              <tbody id="opSummaryBody">
+                <tr>
+                  <td colspan="2" style="text-align:center;padding:20px;color:#4A7A8A;">Chargement…</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- QUICK ACTIONS -->
+        <div class="card" style="margin-top: 24px;">
+          <div class="card-header">
+            <div class="card-title">Actions rapides</div>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:12px; padding: 4px 0 8px;">
+            <a href="validation.html" class="btn btn-primary">Valider des transactions</a>
+            <a href="historique.html" class="btn btn-outline">Historique des opérations</a>
+            <a href="clients.html" class="btn btn-outline">Consulter les clients</a>
+            <a href="rapport-operationnel.html" class="btn btn-outline">Rapport opérationnel</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Rejet avec motif -->
+  <div class="modal-overlay" id="rejectModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Rejeter la transaction</div>
+        <button class="modal-close" onclick="closeModal('rejectModal')"></button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align:center;margin-bottom:16px;">
+          <div style="font-family:monospace;font-size:14px;color:#084355;font-weight:700;" id="rejectRef">—</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Motif du rejet *</label>
+          <select class="form-control" id="rejectMotifSelect">
+            <option value="">Sélectionner...</option>
+            <option value="Suspicion de fraude">Suspicion de fraude</option>
+            <option value="Solde insuffisant">Solde insuffisant</option>
+            <option value="Document manquant">Document manquant</option>
+            <option value="Non-conformité LAB">Non-conformité LAB</option>
+            <option value="Autre motif">Autre motif</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Commentaire détaillé *</label>
+          <textarea class="form-control" rows="3" placeholder="Précisez la raison du rejet..." id="rejectCommentTextarea"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('rejectModal')">Annuler</button>
+        <button class="btn btn-primary" style="background:#D93025;" onclick="executeReject()">Confirmer le rejet</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    var currentRejectRef = '';
+
+    function fmt(n) {
+      return Number(n || 0).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function fmtNum(n) {
+      return Number(n || 0).toLocaleString('fr-FR');
+    }
+
+    function todayISO() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function currentUser() {
+      return window.SF ? window.SF.getUser() : null;
+    }
+
+    function formatDateTime(dStr) {
+      if (!dStr) return '—';
+      try {
+        var d = new Date(dStr);
+        return d.toLocaleDateString('fr-FR') + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      } catch (_) {
+        return dStr;
+      }
+    }
+
+    async function loadPendingPreview() {
+      var bodyEl = document.getElementById('pendingPreviewBody');
+      try {
+        var res = await Transactions.listerEnAttente(0, 10);
+        if (!res || !res.ok) {
+          bodyEl.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#c62828;">Impossible de charger la file de validation.</td></tr>';
+          return;
+        }
+        var page = await res.json();
+        var list = page.content || [];
+        var total = typeof page.totalElements === 'number' ? page.totalElements : list.length;
+
+        document.getElementById('kpiPending').textContent = total;
+        document.getElementById('pendingCountHeader').textContent = total + ' validation' + (total > 1 ? 's' : '') + ' en attente';
+        document.getElementById('kpiPendingTrend').innerHTML = total > 0
+          ? '<span style="color:#d93025;font-weight:700;">Action requise</span>'
+          : 'Aucune en attente';
+
+        if (!list.length) {
+          bodyEl.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#4A7A8A;">Aucune transaction en attente.</td></tr>';
+          return;
+        }
+
+        bodyEl.innerHTML = list.map(function (tx) {
+          var typeStr = (tx.typeOperation || 'Opération').toUpperCase();
+          var typeClass = typeStr === 'VIREMENT' ? 'badge-info' : 'badge-pending';
+          var ref = tx.referenceUnique || '';
+          return '<tr>' +
+            '<td style="font-family:monospace;font-size:11px;color:#084355;">' + ref + '</td>' +
+            '<td><span class="badge ' + typeClass + '">' + typeStr + '</span></td>' +
+            '<td><strong>' + fmt(tx.montant) + '</strong></td>' +
+            '<td>' + (tx.clientNom || '—') + '</td>' +
+            '<td style="font-size:12px;white-space:nowrap;">' + formatDateTime(tx.dateCreation) + '</td>' +
+            '<td>' +
+              '<div style="display:flex;gap:6px;">' +
+                '<button class="action-icon" title="Approuver" onclick="approveTxn(\'' + ref + '\')" style="background:rgba(46,125,50,0.15);color:#2E7D32;">' +
+                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg>' +
+                '</button>' +
+                '<button class="action-icon" title="Rejeter" onclick="rejectTxn(\'' + ref + '\')" style="background:rgba(217,48,37,0.15);color:#D93025;">' +
+                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+                '</button>' +
+              '</div>' +
+            '</td>' +
+          '</tr>';
+        }).join('');
+      } catch (e) {
+        console.error('Erreur file validation:', e);
+        bodyEl.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#c62828;">Erreur réseau.</td></tr>';
+      }
+    }
+
+    async function approveTxn(ref) {
+      var user = currentUser();
+      if (!user || !user.idUser) {
+        showToast('Session expirée.', 'error');
+        return;
+      }
+      if (!confirm('Approuver la transaction ' + ref + ' ?')) return;
+
+      try {
+        var res = await Transactions.approuver(ref, user.idUser);
+        if (res && res.status === 200) {
+          showToast('Transaction ' + ref + ' approuvée.', 'success');
+          await loadPendingPreview();
+        } else {
+          var err = await res.json().catch(function () { return {}; });
+          showToast(err.message || 'Erreur lors de l\'approbation.', 'error');
+        }
+      } catch (e) {
+        showToast('Erreur réseau : ' + e.message, 'error');
+      }
+    }
+
+    function rejectTxn(ref) {
+      currentRejectRef = ref;
+      document.getElementById('rejectRef').textContent = ref;
+      document.getElementById('rejectMotifSelect').value = '';
+      document.getElementById('rejectCommentTextarea').value = '';
+      openModal('rejectModal');
+    }
+
+    async function executeReject() {
+      var motif = document.getElementById('rejectMotifSelect').value;
+      var comment = document.getElementById('rejectCommentTextarea').value.trim();
+
+      if (!motif) {
+        showToast('Veuillez sélectionner un motif.', 'warning');
+        return;
+      }
+      if (comment.length < 10) {
+        showToast('Veuillez saisir un commentaire d\'au moins 10 caractères.', 'warning');
+        return;
+      }
+
+      var user = currentUser();
+      if (!user || !user.idUser) {
+        showToast('Session expirée.', 'error');
+        return;
+      }
+
+      closeModal('rejectModal');
+
+      try {
+        var fullReason = motif + ' - ' + comment;
+        var res = await Transactions.rejeter(currentRejectRef, user.idUser, fullReason);
+        if (res && res.status === 200) {
+          showToast('Transaction ' + currentRejectRef + ' rejetée.', 'warning');
+          await loadPendingPreview();
+        } else {
+          var err = await res.json().catch(function () { return {}; });
+          showToast(err.message || 'Erreur lors du rejet.', 'error');
+        }
+      } catch (e) {
+        showToast('Erreur réseau : ' + e.message, 'error');
+      }
+    }
+
+    window.approveTxn = approveTxn;
+    window.rejectTxn = rejectTxn;
+    window.executeReject = executeReject;
+
+    async function loadOperationalSummary() {
+      var bodyEl = document.getElementById('opSummaryBody');
+      var today = todayISO();
+      try {
+        var res = await SF.apiFetch('/api/v1/reporting/operationnel?dateDebut=' + today + '&dateFin=' + today);
+        if (!res || !res.ok) {
+          bodyEl.innerHTML = '<tr><td colspan="2" style="text-align:center;padding:20px;color:#c62828;">Rapport opérationnel indisponible.</td></tr>';
+          return;
+        }
+        var data = await res.json();
+        var depots = Number(data.totalDepots || 0);
+        var retraits = Number(data.totalRetraits || 0);
+        var virements = Number(data.totalVirements || 0);
+        var volume = depots + retraits + virements;
+        var nbTx = data.nbTransactions || 0;
+        var frais = Number(data.montantTotalFrais || 0);
+
+        document.getElementById('kpiNbTx').textContent = fmtNum(nbTx);
+        document.getElementById('kpiVolume').textContent = fmt(volume);
+        document.getElementById('kpiFrais').textContent = fmt(frais);
+        document.getElementById('opSummaryPeriod').textContent = data.periode || ('Aujourd\'hui — ' + today);
+
+        bodyEl.innerHTML = [
+          { label: 'Dépôts', value: fmt(depots) },
+          { label: 'Retraits', value: fmt(retraits) },
+          { label: 'Virements', value: fmt(virements) },
+          { label: 'Volume total', value: fmt(volume) },
+          { label: 'Frais perçus', value: fmt(frais) }
+        ].map(function (row) {
+          return '<tr><td>' + row.label + '</td><td><strong>' + row.value + '</strong></td></tr>';
+        }).join('');
+      } catch (e) {
+        console.error('Erreur synthèse opérationnelle:', e);
+        bodyEl.innerHTML = '<tr><td colspan="2" style="text-align:center;padding:20px;color:#c62828;">Erreur réseau.</td></tr>';
+      }
+    }
+
+    async function loadRealtimeIndicators() {
+      try {
+        var res = await Dashboards.indicateurs();
+        if (!res || !res.ok) return;
+        var data = await res.json();
+        if (data && typeof data.totalTransactionsJour === 'number') {
+          document.getElementById('kpiNbTxTrend').textContent =
+            fmtNum(data.totalTransactionsJour) + ' tx · ' + fmt(data.montantTotalTransactionsJour || 0);
+        }
+      } catch (e) {
+        console.warn('Indicateurs temps réel indisponibles:', e);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      loadPendingPreview();
+      loadOperationalSummary();
+      loadRealtimeIndicators();
+    });
+  </script>
+</body>
+</html>

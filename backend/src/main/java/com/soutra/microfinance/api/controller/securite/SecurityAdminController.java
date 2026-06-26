@@ -206,6 +206,16 @@ public class SecurityAdminController {
         return ResponseEntity.status(HttpStatus.CREATED).body(utilisateurMapper.toResponseDTO(utilisateur));
     }
 
+    @Operation(summary = "Creer un collaborateur (membre du personnel)", description = "Cree un profil client et un acces web pour un membre du personnel")
+    @PostMapping("/utilisateurs/collaborateur")
+    @AuditLog(action = "SECURITY_CREATE_COLLABORATEUR", resource = "SECURITE")
+    public ResponseEntity<UtilisateurResponseDTO> creerCollaborateur(
+            @Valid @RequestBody CreationCollaborateurRequestDTO requestDTO
+    ) {
+        Utilisateur utilisateur = utilisateurService.creerCollaborateur(requestDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(utilisateurMapper.toResponseDTO(utilisateur));
+    }
+
     @Operation(summary = "Modifier un utilisateur", description = "Modifie les informations d'un utilisateur existant")
     @PutMapping("/utilisateurs/{id}")
     @AuditLog(action = "SECURITY_UPDATE_USER", resource = "SECURITE")

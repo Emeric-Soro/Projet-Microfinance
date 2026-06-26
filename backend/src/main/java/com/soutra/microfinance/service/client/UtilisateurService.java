@@ -8,6 +8,8 @@ public interface UtilisateurService {
 
     Utilisateur creerCompteWeb(String codeClient, String email, LocalDate dateNaissance, String motDePasse);
 
+    Utilisateur creerCollaborateur(com.soutra.microfinance.dto.request.client.CreationCollaborateurRequestDTO requestDTO);
+
     AuthenticationWorkflowResult authentifier(String login, String motDePasseBrut);
 
     Utilisateur verifierSecondFacteur(String login, String challengeId, String codeOtp);

@@ -16,32 +16,61 @@
         <div class="topbar-left">
           <div>
             <div class="topbar-title">Tableau de bord Direction</div>
-            <div class="topbar-breadcrumb">Pilotage / Vue d'ensemble</div>
+            <div class="topbar-breadcrumb">Pilotage / Vue d'ensemble réseau</div>
           </div>
         </div>
         <div class="topbar-right">
-          <select class="form-control" style="width: 140px; font-size: 12px;">
-            <option>Année 2026</option>
-            <option>Année 2025</option>
-          </select>
-          <button class="topbar-icon-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            <span class="notif-dot"></span>
-          </button>
+          <span style="font-size:11px;color:#4A7A8A;" id="lastUpdate">—</span>
+          <a href="rapport-financier.html" class="btn btn-outline btn-sm">Rapport financier →</a>
+          <a href="rapport-operationnel.html" class="btn btn-ghost btn-sm">Rapport opérationnel →</a>
         </div>
       </header>
 
       <div class="content-area">
-        <!-- TOP 4 KPI CARDS -->
+        <!-- TEMPS REEL -->
+        <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 16px;">
+          <div class="kpi-card" style="padding:14px 16px;">
+            <div class="kpi-info">
+              <div class="kpi-label">Clients actifs</div>
+              <div class="kpi-value" style="font-size:1.25rem;" id="rtClients">—</div>
+            </div>
+          </div>
+          <div class="kpi-card" style="padding:14px 16px;">
+            <div class="kpi-info">
+              <div class="kpi-label">Comptes ouverts</div>
+              <div class="kpi-value" style="font-size:1.25rem;" id="rtComptes">—</div>
+            </div>
+          </div>
+          <div class="kpi-card" style="padding:14px 16px;">
+            <div class="kpi-info">
+              <div class="kpi-label">Transactions (jour)</div>
+              <div class="kpi-value" style="font-size:1.25rem;" id="rtTransactions">—</div>
+            </div>
+          </div>
+          <div class="kpi-card" style="padding:14px 16px;">
+            <div class="kpi-info">
+              <div class="kpi-label">Volume (jour)</div>
+              <div class="kpi-value" style="font-size:1.25rem;" id="rtVolume">—</div>
+            </div>
+          </div>
+          <div class="kpi-card" style="padding:14px 16px;">
+            <div class="kpi-info">
+              <div class="kpi-label">Sessions actives</div>
+              <div class="kpi-value" style="font-size:1.25rem;" id="rtSessions">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI RESEAU -->
         <div class="kpi-grid">
           <div class="kpi-card">
             <div class="kpi-icon blue">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             </div>
             <div class="kpi-info">
-              <div class="kpi-label">Liquidité totale</div>
-              <div class="kpi-value">1.37 Md <span style="font-size:13px;font-weight:600;">FCFA</span></div>
-              <div class="kpi-trend up">+12.4% vs N-1</div>
+              <div class="kpi-label">Liquidité totale (soldes)</div>
+              <div class="kpi-value" id="kpiLiquidite">—</div>
+              <div class="kpi-trend" id="kpiLiquiditeTrend">réseau</div>
             </div>
           </div>
           <div class="kpi-card">
@@ -50,8 +79,8 @@
             </div>
             <div class="kpi-info">
               <div class="kpi-label">Encours de crédit</div>
-              <div class="kpi-value">523 M <span style="font-size:13px;font-weight:600;">FCFA</span></div>
-              <div class="kpi-trend up">+8.7% vs N-1</div>
+              <div class="kpi-value" id="kpiEncours">—</div>
+              <div class="kpi-trend" id="kpiEncoursTrend">—</div>
             </div>
           </div>
           <div class="kpi-card">
@@ -59,9 +88,9 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
             </div>
             <div class="kpi-info">
-              <div class="kpi-label">Dépôts à vue</div>
-              <div class="kpi-value">847 M <span style="font-size:13px;font-weight:600;">FCFA</span></div>
-              <div class="kpi-trend up">+15.2% vs N-1</div>
+              <div class="kpi-label">Dépôts du jour</div>
+              <div class="kpi-value" id="kpiDepotsJour">—</div>
+              <div class="kpi-trend" id="kpiDepotsJourTrend">—</div>
             </div>
           </div>
           <div class="kpi-card">
@@ -69,23 +98,19 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </div>
             <div class="kpi-info">
-              <div class="kpi-label">Créances douteuses</div>
-              <div class="kpi-value">5.8%</div>
-              <div class="kpi-trend down">+0.3% vs N-1</div>
+              <div class="kpi-label">PAR global (30j)</div>
+              <div class="kpi-value" id="kpiPar">—</div>
+              <div class="kpi-trend" id="kpiParTrend">créances douteuses</div>
             </div>
           </div>
         </div>
 
-        <!-- CENTRAL CHART -->
+        <!-- CHART -->
         <div class="card" style="margin-bottom: 24px;">
           <div class="card-header">
             <div>
-              <div class="card-title">Évolution Dépôts vs Crédits</div>
-              <div class="card-subtitle">Sur l'année 2026</div>
-            </div>
-            <div class="filter-tabs">
-              <span class="filter-tab active">Mensuel</span>
-              <span class="filter-tab">Trimestriel</span>
+              <div class="card-title">Évolution Dépôts vs Retraits</div>
+              <div class="card-subtitle" id="chartSubtitle">7 derniers jours — réseau</div>
             </div>
           </div>
           <div class="chart-container" style="height: 300px;">
@@ -93,46 +118,69 @@
           </div>
         </div>
 
-        <!-- PRUDENTIAL RATIOS -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">Indicateurs de performance - Ratios prudentiels</div>
+        <div class="grid-3">
+          <!-- SYNTHESE FINANCIERE -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Synthèse financière</div>
+                <div class="card-subtitle" id="finPeriode">—</div>
+              </div>
+              <a href="rapport-financier.html" class="btn btn-ghost btn-sm">Détail →</a>
+            </div>
+            <table class="data-table">
+              <tbody id="finSummaryBody">
+                <tr><td colspan="2" style="text-align:center;padding:20px;color:#4A7A8A;">Chargement…</td></tr>
+              </tbody>
+            </table>
           </div>
-          <div class="gauge-row" style="padding: 20px 0;">
+
+          <!-- RESEAU -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Indicateurs réseau</div>
+            </div>
+            <table class="data-table">
+              <tbody id="networkBody">
+                <tr><td colspan="2" style="text-align:center;padding:20px;color:#4A7A8A;">Chargement…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- RATIOS -->
+        <div class="card" style="margin-top: 24px;">
+          <div class="card-header">
+            <div class="card-title">Ratios de pilotage</div>
+          </div>
+          <div class="gauge-row" style="padding: 20px 0;" id="gaugeRow">
             <div class="gauge-item">
-              <div class="gauge-circle" style="--rotation: 270deg; border-color: #2E7D32;">
-                <span class="gauge-percent">85%</span>
+              <div class="gauge-circle" id="gaugeLiquidite" style="--rotation: 0deg;">
+                <span class="gauge-percent" id="gaugeLiquiditePct">—</span>
               </div>
               <div class="gauge-name">Coefficient de liquidité</div>
-              <div style="font-size:10px;color:#2E7D32;font-weight:600;">Seuil: > 60%</div>
+              <div style="font-size:10px;color:#4A7A8A;font-weight:600;">soldes / encours</div>
             </div>
             <div class="gauge-item">
-              <div class="gauge-circle" style="--rotation: 200deg; border-color: #2E7D32;">
-                <span class="gauge-percent">72%</span>
-              </div>
-              <div class="gauge-name">Ratio de solvabilité</div>
-              <div style="font-size:10px;color:#2E7D32;font-weight:600;">Seuil: > 50%</div>
-            </div>
-            <div class="gauge-item">
-              <div class="gauge-circle" style="--rotation: 310deg; border-color: #2E7D32;">
-                <span class="gauge-percent">91%</span>
+              <div class="gauge-circle" id="gaugeTransformation" style="--rotation: 0deg;">
+                <span class="gauge-percent" id="gaugeTransformationPct">—</span>
               </div>
               <div class="gauge-name">Ratio de transformation</div>
-              <div style="font-size:10px;color:#2E7D32;font-weight:600;">Seuil: > 80%</div>
+              <div style="font-size:10px;color:#4A7A8A;font-weight:600;">encours / liquidité</div>
             </div>
             <div class="gauge-item">
-              <div class="gauge-circle" style="--rotation: 120deg; border-color: #fab482;">
-                <span class="gauge-percent">42%</span>
+              <div class="gauge-circle" id="gaugePar" style="--rotation: 0deg;">
+                <span class="gauge-percent" id="gaugeParPct">—</span>
               </div>
-              <div class="gauge-name">Ratio de couverture</div>
-              <div style="font-size:10px;color:#E65100;font-weight:600;">Seuil: > 40%</div>
+              <div class="gauge-name">PAR 30 jours</div>
+              <div style="font-size:10px;color:#4A7A8A;font-weight:600;">seuil cible &lt; 5%</div>
             </div>
             <div class="gauge-item">
-              <div class="gauge-circle" style="--rotation: 250deg; border-color: #2E7D32;">
-                <span class="gauge-percent">78%</span>
+              <div class="gauge-circle" id="gaugeEfficacite" style="--rotation: 0deg;">
+                <span class="gauge-percent" id="gaugeEfficacitePct">—</span>
               </div>
-              <div class="gauge-name">Taux de recouvrement</div>
-              <div style="font-size:10px;color:#2E7D32;font-weight:600;">Seuil: > 70%</div>
+              <div class="gauge-name">Ratio d'efficacité</div>
+              <div style="font-size:10px;color:#4A7A8A;font-weight:600;">frais / volume</div>
             </div>
           </div>
         </div>
@@ -143,49 +191,244 @@
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
   <script>
-    const ctx = document.getElementById('directionChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
-        datasets: [{
-          label: 'Dépôts',
-          data: [620, 650, 680, 710, 740, 760, 780, 800, 820, 835, 847, 860],
-          borderColor: '#8cd5fa',
-          backgroundColor: 'rgba(140, 213, 250, 0.1)',
-          tension: 0.4,
-          fill: true,
-          pointRadius: 4,
-          pointBackgroundColor: '#8cd5fa'
-        }, {
-          label: 'Crédits',
-          data: [380, 400, 420, 440, 460, 475, 490, 500, 510, 518, 523, 530],
-          borderColor: '#fab482',
-          backgroundColor: 'rgba(250, 180, 130, 0.1)',
-          tension: 0.4,
-          fill: true,
-          pointRadius: 4,
-          pointBackgroundColor: '#fab482'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'top', labels: { usePointStyle: true, padding: 20, font: { size: 12 } } }
+    var directionChart = null;
+
+    function fmt(n) {
+      return Number(n || 0).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function fmtNum(n) {
+      return Number(n || 0).toLocaleString('fr-FR');
+    }
+
+    function fmtShort(n) {
+      n = Number(n || 0);
+      if (n >= 1e9) return (n / 1e9).toFixed(1).replace('.0', '') + ' Md';
+      if (n >= 1e6) return (n / 1e6).toFixed(1).replace('.0', '') + ' M';
+      if (n >= 1e3) return (n / 1e3).toFixed(1).replace('.0', '') + ' K';
+      return fmtNum(n);
+    }
+
+    function fmtPct(n) {
+      return Number(n || 0).toFixed(1) + '%';
+    }
+
+    function setGauge(circleId, pctId, value, maxScale) {
+      var pct = Math.min(Math.max(Number(value || 0), 0), maxScale || 100);
+      var rotation = Math.round((pct / (maxScale || 100)) * 360);
+      var circle = document.getElementById(circleId);
+      var label = document.getElementById(pctId);
+      if (circle) {
+        circle.style.setProperty('--rotation', rotation + 'deg');
+        var color = pct >= (maxScale || 100) * 0.6 ? '#2E7D32' : (pct >= (maxScale || 100) * 0.4 ? '#fab482' : '#D93025');
+        circle.style.borderColor = color;
+      }
+      if (label) label.textContent = fmtPct(pct);
+    }
+
+    function addSummaryRow(label, value) {
+      return '<tr><td>' + label + '</td><td><strong>' + value + '</strong></td></tr>';
+    }
+
+    function initChart() {
+      var ctx = document.getElementById('directionChart').getContext('2d');
+      directionChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Dépôts',
+            data: [],
+            borderColor: '#8cd5fa',
+            backgroundColor: 'rgba(140, 213, 250, 0.1)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 4,
+            pointBackgroundColor: '#8cd5fa'
+          }, {
+            label: 'Retraits',
+            data: [],
+            borderColor: '#fab482',
+            backgroundColor: 'rgba(250, 180, 130, 0.1)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 4,
+            pointBackgroundColor: '#fab482'
+          }]
         },
-        scales: {
-          y: {
-            grid: { color: 'rgba(0,0,0,0.05)' },
-            ticks: { font: { size: 11 }, callback: v => v + 'M' }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top', labels: { usePointStyle: true, padding: 20, font: { size: 12 } } },
+            tooltip: {
+              callbacks: {
+                label: function (ctx) {
+                  var label = ctx.dataset.label || '';
+                  if (label) label += ': ';
+                  label += new Intl.NumberFormat('fr-FR').format(ctx.parsed.y) + ' FCFA';
+                  return label;
+                }
+              }
+            }
           },
-          x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: { font: { size: 11 } }
+            },
+            x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+          }
+        }
+      });
+    }
+
+    function formatChartDate(dateStr) {
+      var d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    }
+
+    async function fetchDayOperational(dateStr) {
+      var res = await SF.apiFetch('/api/v1/reporting/operationnel?dateDebut=' + dateStr + '&dateFin=' + dateStr);
+      if (!res || !res.ok) return { depots: 0, retraits: 0 };
+      var data = await res.json();
+      return {
+        depots: Number(data.totalDepots || 0),
+        retraits: Number(data.totalRetraits || 0)
+      };
+    }
+
+    async function loadWeeklyChart() {
+      var today = new Date();
+      var days = [];
+
+      for (var i = 6; i >= 0; i--) {
+        var d = new Date(today);
+        d.setDate(d.getDate() - i);
+        days.push(d.toISOString().slice(0, 10));
+      }
+
+      var results = await Promise.all(days.map(function (iso) {
+        return fetchDayOperational(iso).then(function (dayData) {
+          return { iso: iso, depots: dayData.depots, retraits: dayData.retraits };
+        });
+      }));
+
+      if (directionChart) {
+        directionChart.data.labels = results.map(function (r) { return formatChartDate(r.iso); });
+        directionChart.data.datasets[0].data = results.map(function (r) { return r.depots; });
+        directionChart.data.datasets[1].data = results.map(function (r) { return r.retraits; });
+        directionChart.update();
+      }
+    }
+
+    async function loadDirectionData() {
+      try {
+        var results = await Promise.all([
+          Dashboards.direction(),
+          SF.apiFetch('/api/v1/statistiques/kpi'),
+          SF.apiFetch('/api/v1/reporting/financier'),
+          Dashboards.indicateurs()
+        ]);
+
+        var dirRes = results[0];
+        var kpiRes = results[1];
+        var finRes = results[2];
+        var rtRes = results[3];
+
+        if (dirRes && dirRes.ok) {
+          var dir = await dirRes.json();
+          document.getElementById('kpiEncours').textContent = fmtShort(dir.encoursTotalReseau) + ' FCFA';
+          document.getElementById('kpiEncoursTrend').textContent = fmtShort(dir.totalCreditsReseau) + ' FCFA accordés';
+          document.getElementById('kpiDepotsJour').textContent = fmtShort(dir.totalDepotsReseau) + ' FCFA';
+          document.getElementById('kpiDepotsJourTrend').textContent = fmtShort(dir.totalRetraitsReseau) + ' FCFA retirés';
+          document.getElementById('kpiPar').textContent = fmtPct(dir.parGlobal);
+
+          var parVal = Number(dir.parGlobal || 0);
+          setGauge('gaugePar', 'gaugeParPct', parVal, 15);
+
+          var effVal = Number(dir.ratioEfficaciteGlobal || 0);
+          setGauge('gaugeEfficacite', 'gaugeEfficacitePct', effVal, 10);
+
+          document.getElementById('networkBody').innerHTML =
+            addSummaryRow('Agences actives', fmtNum(dir.nbAgencesActives)) +
+            addSummaryRow('Clients réseau', fmtNum(dir.totalClientsReseau)) +
+            addSummaryRow('Utilisateurs connectés', fmtNum(dir.nbUtilisateursActifs)) +
+            addSummaryRow('Date de référence', dir.date || '—');
+
+          if (dir.date) {
+            document.getElementById('lastUpdate').textContent = 'Màj ' + dir.date;
+          }
+        }
+
+        var liquidite = 0;
+        var encours = 0;
+
+        if (kpiRes && kpiRes.ok) {
+          var kpi = await kpiRes.json();
+          liquidite = Number(kpi.totalDepots || 0);
+          encours = Number(kpi.totalCreditsEnCours || 0);
+          document.getElementById('kpiLiquidite').textContent = fmtShort(liquidite) + ' FCFA';
+          document.getElementById('kpiLiquiditeTrend').textContent = fmtNum(kpi.totalClientsActifs) + ' clients actifs';
+
+          if (!dirRes || !dirRes.ok) {
+            document.getElementById('kpiPar').textContent = fmtPct(kpi.tauxCreditsEnRetard);
+            setGauge('gaugePar', 'gaugeParPct', Number(kpi.tauxCreditsEnRetard || 0), 15);
+          }
+        }
+
+        if (finRes && finRes.ok) {
+          var fin = await finRes.json();
+          document.getElementById('finPeriode').textContent = fin.periode || 'Période courante';
+          document.getElementById('finSummaryBody').innerHTML =
+            addSummaryRow('Total actifs', fmt(fin.totalActifs)) +
+            addSummaryRow('Total passifs', fmt(fin.totalPassifs)) +
+            addSummaryRow('Produit net', fmt(fin.produitNet)) +
+            addSummaryRow('Marge intérêts', fmt(fin.margeInterets)) +
+            addSummaryRow('Ratio efficacité', fmtPct(fin.ratioEfficacite));
+
+          if (fin.ratioEfficacite != null) {
+            setGauge('gaugeEfficacite', 'gaugeEfficacitePct', Number(fin.ratioEfficacite), 10);
+          }
+        } else {
+          document.getElementById('finSummaryBody').innerHTML =
+            '<tr><td colspan="2" style="text-align:center;padding:20px;color:#c62828;">Synthèse financière indisponible.</td></tr>';
+        }
+
+        if (rtRes && rtRes.ok) {
+          var rt = await rtRes.json();
+          document.getElementById('rtClients').textContent = fmtNum(rt.totalClients);
+          document.getElementById('rtComptes').textContent = fmtNum(rt.totalComptes);
+          document.getElementById('rtTransactions').textContent = fmtNum(rt.totalTransactionsJour);
+          document.getElementById('rtVolume').textContent = fmtShort(rt.montantTotalTransactionsJour);
+          document.getElementById('rtSessions').textContent = fmtNum(rt.nbSessionsActives);
+          if (rt.derniereMiseAJour) {
+            document.getElementById('lastUpdate').textContent = 'Live · ' + new Date(rt.derniereMiseAJour).toLocaleString('fr-FR');
+          }
+        }
+
+        if (liquidite > 0 && encours > 0) {
+          var liqRatio = Math.min((liquidite / encours) * 100, 150);
+          var transRatio = Math.min((encours / liquidite) * 100, 150);
+          setGauge('gaugeLiquidite', 'gaugeLiquiditePct', liqRatio, 150);
+          setGauge('gaugeTransformation', 'gaugeTransformationPct', transRatio, 150);
+        }
+
+      } catch (e) {
+        console.error('Erreur chargement direction:', e);
+        if (typeof showToast === 'function') {
+          showToast('Erreur lors du chargement du tableau de bord direction.', 'error');
         }
       }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      initChart();
+      loadDirectionData();
+      loadWeeklyChart();
     });
   </script>
 </body>
 </html>
-
-
-

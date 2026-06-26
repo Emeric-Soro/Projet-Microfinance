@@ -44,6 +44,14 @@
     }
   }
 
+  function getHomeDashboardUrl(user) {
+    var u = user || getUser();
+    var role = u && Array.isArray(u.roles) && u.roles.length ? u.roles[0] : '';
+    if (role === 'DIRECTEUR') return 'direction.html';
+    if (role === 'SUPERVISEUR') return 'dashboard-superviseur.html';
+    return 'dashboard.html';
+  }
+
   function getChallengeId() {
     return sessionStorage.getItem('sf_challenge_id') || null;
   }
@@ -427,6 +435,24 @@
     }
   };
 
+  var Agences = {
+    lister: async function (page = 0, size = 50) {
+      return await apiFetch('/api/v1/parametrages/agences?page=' + page + '&size=' + size);
+    },
+    creer: async function (data) {
+      return await apiFetch('/api/v1/parametrages/agences', { method: 'POST', body: JSON.stringify(data) });
+    },
+    modifier: async function (id, data) {
+      return await apiFetch('/api/v1/parametrages/agences/' + id, { method: 'PUT', body: JSON.stringify(data) });
+    },
+    obtenir: async function (id) {
+      return await apiFetch('/api/v1/parametrages/agences/' + id);
+    },
+    desactiver: async function (id) {
+      return await apiFetch('/api/v1/parametrages/agences/' + id + '/desactiver', { method: 'PUT' });
+    }
+  };
+
   async function downloadFile(path, defaultFilename) {
     try {
       if (typeof window.showToast === 'function') window.showToast('Téléchargement du fichier en cours...', 'info');
@@ -459,7 +485,7 @@
 
   /* ── Exposition globale ─────────────────────────── */
 
-  window.SF   = { API_BASE, getToken, setSession, clearSession, getUser, getChallengeId, apiFetch, downloadFile };
+  window.SF   = { API_BASE, getToken, setSession, clearSession, getUser, getHomeDashboardUrl, getChallengeId, apiFetch, downloadFile };
   window.Auth = Auth;
   window.Clients = Clients;
   window.Comptes = Comptes;
@@ -470,6 +496,7 @@
   window.Dashboards = Dashboards;
   window.Conformite = Conformite;
   window.Securite = Securite;
+  window.Agences = Agences;
 
 }());
 
@@ -524,11 +551,8 @@
       items: [
         { href: 'caisse.html', label: 'Caisse', icon: icons.cash, match: ['caisse.html'] },
         { href: 'guichet.html', label: 'Guichet', icon: icons.cash, match: ['guichet.html'] },
-        { href: 'versement.html', label: 'Versement', icon: icons.cash, match: ['versement.html'] },
-        { href: 'retrait.html', label: 'Retrait', icon: icons.cash, match: ['retrait.html'] },
         { href: 'virement.html', label: 'Virement', icon: icons.transfer, match: ['virement.html'] },
         { href: 'validation.html', label: 'Validation 4-eyes', icon: icons.audit, match: ['validation.html'] },
-        { href: 'fermeture-caisse.html', label: 'Fermeture caisse', icon: icons.cash, match: ['fermeture-caisse.html'] },
         { href: 'historique.html', label: 'Historique', icon: icons.audit, match: ['historique.html', 'detail-transaction.html', 'annulation.html', 'export-transactions.html'] }
       ]
     },
@@ -562,6 +586,24 @@
   function isActive(item) {
     const cleanPage = pageName.replace(/\.html$/, '');
     return item.match.some(m => m.replace(/\.html$/, '') === cleanPage);
+  }
+
+  function getDashboardNavItems(role) {
+    const base = { icon: icons.dashboard };
+    if (role === 'ADMIN') {
+      return [
+        { ...base, href: 'dashboard.html', label: 'Dashboard agence', match: ['dashboard.html'] },
+        { ...base, href: 'direction.html', label: 'Direction', match: ['direction.html'] },
+        { ...base, href: 'dashboard-superviseur.html', label: 'Supervision', match: ['dashboard-superviseur.html'] }
+      ];
+    }
+    if (role === 'DIRECTEUR') {
+      return [{ ...base, href: 'direction.html', label: 'Tableau de bord', match: ['direction.html'] }];
+    }
+    if (role === 'SUPERVISEUR') {
+      return [{ ...base, href: 'dashboard-superviseur.html', label: 'Tableau de bord', match: ['dashboard-superviseur.html'] }];
+    }
+    return [{ ...base, href: 'dashboard.html', label: 'Dashboard', match: ['dashboard.html'] }];
   }
 
   function createToastContainer() {
@@ -620,7 +662,29 @@
     const roles = Array.isArray(user.roles) && user.roles.length ? user.roles[0] : 'Agent';
     const initiales = login.substring(0, 2).toUpperCase();
 
-    const groups = navGroups.map(group => `
+    // ── Filtrage par rôle ──────────────────────────────────
+    const ROLE_ACCESS = {
+      GUICHETIER:       ['Caisse & Opérations'],
+      SUPERVISEUR:      ['Tableau de bord', 'Caisse & Opérations', 'Clients'],
+      AGENT_COMMERCIAL: ['Clients', 'Comptes'],
+      AGENT_CREDIT:     ['Clients', 'Crédits'],
+      CHEF_AGENCE:      ['Tableau de bord', 'Clients', 'Comptes', 'Caisse & Opérations', 'Crédits'],
+      DIRECTEUR:        ['Tableau de bord', 'Clients', 'Comptes', 'Caisse & Opérations', 'Crédits'],
+      ADMIN:            'ALL'
+    };
+
+    const allowedSections = ROLE_ACCESS[roles] || 'ALL';
+    const visibleGroups = (allowedSections === 'ALL'
+      ? navGroups
+      : navGroups.filter(group => allowedSections.includes(group.title))
+    ).map(group => {
+      if (group.title === 'Tableau de bord') {
+        return { ...group, items: getDashboardNavItems(roles) };
+      }
+      return group;
+    });
+
+    const groups = visibleGroups.map(group => `
       <div class="nav-section-title">${group.title}</div>
       ${group.items.map(item => `
         <a href="${item.href}" class="nav-item ${isActive(item) ? 'active' : ''}" ${isActive(item) ? 'aria-current="page"' : ''}>
@@ -1022,7 +1086,11 @@
           sessionStorage.removeItem('sf_otp_login');
           sessionStorage.removeItem('sf_challenge_id');
           showToast('Vérification réussie.', 'success');
-          setTimeout(() => { window.location.href = 'dashboard.html'; }, 700);
+          setTimeout(() => {
+            window.location.href = (window.SF && window.SF.getHomeDashboardUrl)
+              ? window.SF.getHomeDashboardUrl()
+              : 'dashboard.html';
+          }, 700);
           return;
         }
 

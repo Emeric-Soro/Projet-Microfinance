@@ -39,6 +39,7 @@
 
         <section class="grid-3">
           <form class="card" id="personnelForm" data-autosave>
+            <!-- ÉTAPE 1 : Identité -->
             <div class="step-content">
               <div class="card-header">
                 <div>
@@ -72,16 +73,25 @@
               </div>
               <div class="form-row">
                 <div class="form-group">
-                  <label class="form-label">Date de naissance</label>
-                  <input class="form-control" name="dateNaissance" type="date">
+                  <label class="form-label">Date de naissance *</label>
+                  <input class="form-control" name="dateNaissance" type="date" required>
+                  <div class="field-error">Date de naissance obligatoire.</div>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Numéro pièce interne</label>
                   <input class="form-control" name="piece" placeholder="CNI / passeport / matricule RH">
                 </div>
               </div>
+
+              <div style="display:flex;justify-content:flex-end;margin-top:24px;">
+                <button type="button" class="btn btn-primary btn-next-step">
+                  Suivant
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-left:4px;"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </div>
             </div>
 
+            <!-- ÉTAPE 2 : Affectation -->
             <div class="step-content" style="display:none;">
               <div class="card-header">
                 <div>
@@ -93,10 +103,7 @@
                 <div class="form-group">
                   <label class="form-label">Agence *</label>
                   <select class="form-control" name="agence" required>
-                    <option value="">Sélectionner une agence</option>
-                    <option>Agence Plateau</option>
-                    <option>Agence Cocody</option>
-                    <option>Agence Yopougon</option>
+                    <option value="">Chargement des agences...</option>
                   </select>
                   <div class="field-error">Agence obligatoire.</div>
                 </div>
@@ -104,13 +111,13 @@
                   <label class="form-label">Fonction *</label>
                   <select class="form-control" name="fonction" required>
                     <option value="">Sélectionner une fonction</option>
-                    <option>Agent commercial</option>
-                    <option>Agent guichet</option>
-                    <option>Caissier</option>
-                    <option>Agent de crédit</option>
-                    <option>Superviseur</option>
-                    <option>Compliance Officer</option>
-                    <option>Auditeur interne</option>
+                    <option value="AGENT_COMMERCIAL">Agent commercial</option>
+                    <option value="GUICHETIER">Agent guichet</option>
+                    <option value="CAISSIER">Caissier</option>
+                    <option value="AGENT_CREDIT">Agent de crédit</option>
+                    <option value="SUPERVISEUR">Superviseur</option>
+                    <option value="COMPLIANCE">Compliance Officer</option>
+                    <option value="AUDITEUR">Auditeur interne</option>
                   </select>
                   <div class="field-error">Fonction obligatoire.</div>
                 </div>
@@ -119,10 +126,10 @@
                 <div class="form-group">
                   <label class="form-label">Caisse rattachée</label>
                   <select class="form-control" name="caisse">
-                    <option>Aucune</option>
-                    <option>Caisse C-01</option>
-                    <option>Caisse C-02</option>
-                    <option>Caisse mobile</option>
+                    <option value="">Aucune</option>
+                    <option value="Caisse C-01">Caisse C-01</option>
+                    <option value="Caisse C-02">Caisse C-02</option>
+                    <option value="Caisse mobile">Caisse mobile</option>
                   </select>
                 </div>
                 <div class="form-group">
@@ -136,18 +143,30 @@
               <div class="form-group">
                 <label class="form-label">Périmètre agence</label>
                 <select class="form-control" name="scope">
-                  <option>Agence uniquement</option>
-                  <option>Multi-agences</option>
-                  <option>Toutes agences</option>
+                  <option value="Agence uniquement">Agence uniquement</option>
+                  <option value="Multi-agences">Multi-agences</option>
+                  <option value="Toutes agences">Toutes agences</option>
                 </select>
+              </div>
+
+              <div style="display:flex;justify-content:space-between;margin-top:24px;">
+                <button type="button" class="btn btn-outline btn-prev-step">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:4px;"><polyline points="15 18 9 12 15 6"/></svg>
+                  Précédent
+                </button>
+                <button type="button" class="btn btn-primary btn-next-step">
+                  Suivant
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-left:4px;"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
               </div>
             </div>
 
+            <!-- ÉTAPE 3 : Accès -->
             <div class="step-content" style="display:none;">
               <div class="card-header">
                 <div>
                   <div class="card-title">Accès utilisateur</div>
-                  <div class="card-subtitle">À raccorder à /api/v1/securite/utilisateurs</div>
+                  <div class="card-subtitle">À raccorder à /api/v1/securite/utilisateurs/collaborateur</div>
                 </div>
               </div>
               <div class="form-row">
@@ -159,14 +178,7 @@
                 <div class="form-group">
                   <label class="form-label">Rôle principal *</label>
                   <select class="form-control" name="role" required>
-                    <option value="">Sélectionner un rôle</option>
-                    <option>AGENT_COMMERCIAL</option>
-                    <option>CAISSIER</option>
-                    <option>AGENT_CREDIT</option>
-                    <option>SUPERVISEUR</option>
-                    <option>COMPLIANCE</option>
-                    <option>AUDITEUR</option>
-                    <option>ADMIN</option>
+                    <option value="">Chargement des rôles...</option>
                   </select>
                   <div class="field-error">Rôle obligatoire.</div>
                 </div>
@@ -183,24 +195,28 @@
                 <div class="form-group">
                   <label class="form-label">2FA</label>
                   <select class="form-control" name="secondFacteur">
-                    <option>Activer à la première connexion</option>
-                    <option>Activer immédiatement</option>
-                    <option>Désactivé temporairement</option>
+                    <option value="Activer à la première connexion">Activer à la première connexion</option>
+                    <option value="Activer immédiatement">Activer immédiatement</option>
+                    <option value="Désactivé temporairement">Désactivé temporairement</option>
                   </select>
                 </div>
               </div>
               <div class="form-group">
                 <label class="filter-tab active" style="display:flex;justify-content:space-between;">
                   Forcer le changement de mot de passe à la première connexion
-                  <input type="checkbox" checked>
+                  <input type="checkbox" name="forcerChangement" checked>
                 </label>
               </div>
-            </div>
 
-            <div style="display:flex;justify-content:space-between;gap:12px;margin-top:20px;">
-              <button type="button" class="btn btn-outline btn-prev-step">Précédent</button>
-              <button type="button" class="btn btn-primary btn-next-step">Suivant</button>
-              <button type="button" class="btn btn-primary" onclick="showToast('Membre du personnel prêt à être créé.', 'success')">Créer le membre</button>
+              <div style="display:flex;justify-content:space-between;margin-top:24px;">
+                <button type="button" class="btn btn-outline btn-prev-step">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:4px;"><polyline points="15 18 9 12 15 6"/></svg>
+                  Précédent
+                </button>
+                <button type="submit" class="btn btn-primary" id="btnSubmit">
+                  Créer le membre
+                </button>
+              </div>
             </div>
           </form>
 
@@ -209,9 +225,9 @@
             <div class="info-row"><span class="info-label">Compte actif</span><span class="info-value">Oui</span></div>
             <div class="info-row"><span class="info-label">2FA</span><span class="info-value">Recommandé</span></div>
             <div class="info-row"><span class="info-label">Audit</span><span class="info-value">Création tracée</span></div>
-            <div class="info-row"><span class="info-label">Endpoint actuel</span><span class="info-value">/api/v1/securite/utilisateurs</span></div>
+            <div class="info-row"><span class="info-label">Endpoint actuel</span><span class="info-value">/api/v1/securite/utilisateurs/collaborateur</span></div>
             <hr style="border:0;border-top:1px solid #C9DFE8;margin:20px 0;">
-            <p class="page-subtitle">Le backend actuel expose la création d’utilisateur. Si une fiche RH/personnel dédiée est ajoutée plus tard, cette page pourra envoyer les deux blocs séparément.</p>
+            <p class="page-subtitle">Cette page crée simultanément le profil de base (fiche client) et l'accès applicatif (utilisateur) avec le rôle backoffice sélectionné.</p>
           </aside>
         </section>
       </main>
@@ -219,5 +235,125 @@
   </div>
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Attendre que la session soit chargée
+      await chargerAgences();
+      await chargerRoles();
+
+      const form = document.getElementById('personnelForm');
+      if (form) {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const btnSubmit = document.getElementById('btnSubmit');
+          const originalText = btnSubmit.textContent;
+          btnSubmit.disabled = true;
+          btnSubmit.textContent = 'Création en cours...';
+
+          const payload = {
+            nom: form.elements['nom'].value.trim(),
+            prenom: form.elements['prenom'].value.trim(),
+            email: form.elements['email'].value.trim(),
+            telephone: form.elements['telephone'].value.trim(),
+            dateNaissance: form.elements['dateNaissance'].value || null,
+            numeroPieceIdentite: form.elements['piece'].value.trim() || null,
+            codeAgence: form.elements['agence'].value,
+            login: form.elements['login'].value.trim(),
+            role: form.elements['role'].value,
+            motDePasseBrut: form.elements['password'].value,
+            secondFacteurActive: form.elements['secondFacteur'].value !== 'Désactivé temporairement'
+          };
+
+          try {
+            const res = await SF.apiFetch('/api/v1/securite/utilisateurs/collaborateur', {
+              method: 'POST',
+              body: JSON.stringify(payload)
+            });
+
+            if (!res) return; // redirigé en 401 ou toast 403 géré par app.js
+
+            const data = await res.json().catch(() => ({}));
+
+            if (res.ok) {
+              showToast('Collaborateur créé avec succès !', 'success');
+              
+              // Vider le brouillon stepper et réinitialiser le formulaire
+              try {
+                const pageName = (window.location.pathname.split('/').pop() || 'personnel-create.html').toLowerCase();
+                localStorage.removeItem(pageName + ':step');
+                localStorage.removeItem(pageName + ':personnelForm:draft');
+                form.reset();
+              } catch (_) {}
+
+              setTimeout(() => {
+                window.location.href = 'utilisateurs.html';
+              }, 1500);
+            } else {
+              showToast(data.message || 'Erreur lors de la création du membre du personnel.', 'error');
+            }
+          } catch (err) {
+            showToast(err.message || 'Erreur de communication avec le serveur.', 'error');
+          } finally {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = originalText;
+          }
+        });
+      }
+    });
+
+    async function chargerAgences() {
+      const selectAgence = document.querySelector('select[name="agence"]');
+      if (!selectAgence) return;
+      try {
+        const res = await SF.apiFetch('/api/v1/parametrages/agences/actives');
+        if (res && res.ok) {
+          const agences = await res.json();
+          selectAgence.innerHTML = '<option value="">Sélectionner une agence</option>' + 
+            agences.map(a => `<option value="${a.codeAgence}">${a.nom} (${a.codeAgence})</option>`).join('');
+          
+          // Recharger le brouillon pour ce champ si existant
+          try {
+            const pageName = (window.location.pathname.split('/').pop() || 'personnel-create.html').toLowerCase();
+            const draft = JSON.parse(localStorage.getItem(`${pageName}:personnelForm:draft`) || '{}');
+            if (draft.agence) selectAgence.value = draft.agence;
+          } catch (_) {}
+        } else {
+          selectAgence.innerHTML = '<option value="">Erreur de chargement des agences</option>';
+        }
+      } catch (err) {
+        console.error('Erreur lors du chargement des agences:', err);
+        selectAgence.innerHTML = '<option value="">Erreur de connexion</option>';
+      }
+    }
+
+    async function chargerRoles() {
+      const selectRole = document.querySelector('select[name="role"]');
+      if (!selectRole) return;
+      try {
+        const res = await SF.apiFetch('/api/v1/securite/roles');
+        if (res && res.ok) {
+          const roles = await res.json();
+          // Filtrer le rôle CLIENT pour ne pas l'attribuer au personnel
+          const staffRoles = roles.filter(r => r.codeRoleUtilisateur !== 'CLIENT');
+          selectRole.innerHTML = '<option value="">Sélectionner un rôle</option>' + 
+            staffRoles.map(r => `<option value="${r.codeRoleUtilisateur}">${r.intituleRole}</option>`).join('');
+
+          // Recharger le brouillon pour ce champ si existant
+          try {
+            const pageName = (window.location.pathname.split('/').pop() || 'personnel-create.html').toLowerCase();
+            const draft = JSON.parse(localStorage.getItem(`${pageName}:personnelForm:draft`) || '{}');
+            if (draft.role) selectRole.value = draft.role;
+          } catch (_) {}
+        } else {
+          selectRole.innerHTML = '<option value="">Erreur de chargement des rôles</option>';
+        }
+      } catch (err) {
+        console.error('Erreur lors du chargement des rôles:', err);
+        selectRole.innerHTML = '<option value="">Erreur de connexion</option>';
+      }
+    }
+  </script>
 </body>
 </html>

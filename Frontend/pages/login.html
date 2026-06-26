@@ -166,17 +166,19 @@
         const data = await res.json().catch(() => ({}));
 
         if (res.ok) {
-          // Stocker token + user en session
           SF.setSession(data);
 
           if (data.otpRequis === true) {
-            // Sauvegarder le login pour l'étape OTP
             sessionStorage.setItem('sf_otp_login', idInput.value.trim());
             showToast('Code OTP envoyé. Vérifiez votre téléphone.', 'info');
             setTimeout(() => { window.location.href = 'otp.html'; }, 700);
           } else {
             showToast('Connexion réussie !', 'success');
-            setTimeout(() => { window.location.href = 'dashboard.html'; }, 600);
+            setTimeout(() => {
+              window.location.href = (window.SF && window.SF.getHomeDashboardUrl)
+                ? window.SF.getHomeDashboardUrl()
+                : 'dashboard.html';
+            }, 600);
           }
 
         } else if (res.status === 401 || res.status === 403) {
