@@ -14,8 +14,8 @@
       <header class="topbar">
         <div class="topbar-left">
           <div>
-            <div class="topbar-title">Échéancier - CRD-2026-0098</div>
-            <div class="topbar-breadcrumb">Crédits / Kouamé Aya / Échéancier</div>
+            <div class="topbar-title" id="creditTitle">Échéancier - CRD-2026-0098</div>
+            <div class="topbar-breadcrumb" id="breadcrumbClient">Crédits / Kouamé Aya / Échéancier</div>
           </div>
         </div>
         <div class="topbar-right">
@@ -36,25 +36,25 @@
           <div class="kpi-card">
             <div class="kpi-info">
               <div class="kpi-label">Montant décaissé</div>
-              <div class="kpi-value">3 000 000 <span style="font-size:13px;font-weight:600;">FCFA</span></div>
+              <div class="kpi-value" id="kpiMontant">3 000 000 <span style="font-size:13px;font-weight:600;">FCFA</span></div>
             </div>
           </div>
           <div class="kpi-card">
             <div class="kpi-info">
               <div class="kpi-label">Reste à payer</div>
-              <div class="kpi-value">2 250 000 <span style="font-size:13px;font-weight:600;">FCFA</span></div>
+              <div class="kpi-value" id="kpiReste">2 250 000 <span style="font-size:13px;font-weight:600;">FCFA</span></div>
             </div>
           </div>
           <div class="kpi-card">
             <div class="kpi-info">
               <div class="kpi-label">Prochaine échéance</div>
-              <div class="kpi-value" style="font-size:16px;">01/06/2026</div>
+              <div class="kpi-value" id="kpiProchaine" style="font-size:16px;">01/06/2026</div>
             </div>
           </div>
           <div class="kpi-card">
             <div class="kpi-info">
               <div class="kpi-label">Mensualité</div>
-              <div class="kpi-value">141 250 <span style="font-size:13px;font-weight:600;">FCFA</span></div>
+              <div class="kpi-value" id="kpiMensualite">141 250 <span style="font-size:13px;font-weight:600;">FCFA</span></div>
             </div>
           </div>
         </div>
@@ -83,79 +83,7 @@
                   <th>Statut</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td style="font-weight:700;">1</td>
-                  <td style="font-size:12px;">01/01/2026</td>
-                  <td>111 250</td>
-                  <td>30 000</td>
-                  <td style="font-weight:700;">141 250</td>
-                  <td>2 888 750</td>
-                  <td><span class="badge badge-active">Payé</span></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:700;">2</td>
-                  <td style="font-size:12px;">01/02/2026</td>
-                  <td>112 363</td>
-                  <td>28 887</td>
-                  <td style="font-weight:700;">141 250</td>
-                  <td>2 776 387</td>
-                  <td><span class="badge badge-active">Payé</span></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:700;">3</td>
-                  <td style="font-size:12px;">01/03/2026</td>
-                  <td>113 487</td>
-                  <td>27 763</td>
-                  <td style="font-weight:700;">141 250</td>
-                  <td>2 662 900</td>
-                  <td><span class="badge badge-active">Payé</span></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:700;">4</td>
-                  <td style="font-size:12px;">01/04/2026</td>
-                  <td>114 622</td>
-                  <td>26 628</td>
-                  <td style="font-weight:700;">141 250</td>
-                  <td>2 548 278</td>
-                  <td><span class="badge badge-active">Payé</span></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:700;">5</td>
-                  <td style="font-size:12px;">01/05/2026</td>
-                  <td>115 768</td>
-                  <td>25 482</td>
-                  <td style="font-weight:700;">141 250</td>
-                  <td>2 432 510</td>
-                  <td><span class="badge badge-active">Payé</span></td>
-                </tr>
-                <tr style="background: rgba(250,180,130,0.08);">
-                  <td style="font-weight:700;">6</td>
-                  <td style="font-size:12px;">01/06/2026</td>
-                  <td>116 926</td>
-                  <td>24 324</td>
-                  <td style="font-weight:700;">141 250</td>
-                  <td>2 315 584</td>
-                  <td><span class="badge badge-pending">En attente</span></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:700;">7</td>
-                  <td style="font-size:12px;">01/07/2026</td>
-                  <td>118 095</td>
-                  <td>23 155</td>
-                  <td style="font-weight:700;">141 250</td>
-                  <td>2 197 489</td>
-                  <td><span class="badge badge-info">À venir</span></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:700;">8</td>
-                  <td style="font-size:12px;">01/08/2026</td>
-                  <td>119 276</td>
-                  <td>21 974</td>
-                  <td style="font-weight:700;">141 250</td>
-                  <td>2 078 213</td>
-                  <td><span class="badge badge-info">À venir</span></td>
-                </tr>
+              <tbody id="echeancierBody">
               </tbody>
             </table>
           </div>
@@ -185,20 +113,18 @@
         <div class="form-group">
           <label class="form-label">Montant à décaisser *</label>
           <div class="input-group">
-            <input type="number" class="form-control" placeholder="0" value="3000000">
+            <input type="number" class="form-control" id="disburseAmount" placeholder="0" value="3000000">
             <span class="input-addon">FCFA</span>
           </div>
         </div>
         <div class="form-group">
           <label class="form-label">Compte de destination *</label>
-          <select class="form-control">
-            <option>MFN-2024-001234-A (Courant) - Kouamé Aya</option>
-          </select>
+          <input type="text" class="form-control" id="disburseAccount" placeholder="Numéro de compte">
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline" onclick="closeModal('disburseModal')">Annuler</button>
-        <button class="btn btn-primary" onclick="closeModal('disburseModal');showToast('Décaissement effectué','success')">Décaisser</button>
+        <button class="btn btn-primary" onclick="doDisburse()">Décaisser</button>
       </div>
     </div>
   </div>
@@ -214,28 +140,120 @@
         <div class="form-group">
           <label class="form-label">Montant du remboursement *</label>
           <div class="input-group">
-            <input type="number" class="form-control" placeholder="0">
+            <input type="number" class="form-control" id="repayAmount" placeholder="0">
             <span class="input-addon">FCFA</span>
           </div>
         </div>
         <div class="form-group">
           <label class="form-label">Source du remboursement</label>
-          <select class="form-control">
-            <option>Depuis le guichet (espèces)</option>
-            <option>Depuis le compte courant</option>
-            <option>Virement externe</option>
+          <select class="form-control" id="repaySource">
+            <option value="guichet">Depuis le guichet (espèces)</option>
+            <option value="compte">Depuis le compte courant</option>
+            <option value="virement">Virement externe</option>
           </select>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline" onclick="closeModal('repayModal')">Annuler</button>
-        <button class="btn btn-primary" onclick="closeModal('repayModal');showToast('Remboursement enregistré','success')">Rembourser</button>
+        <button class="btn btn-primary" onclick="doRepay()">Rembourser</button>
       </div>
     </div>
   </div>
 
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
+  <script>
+    function getCreditId() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('id') || '1';
+    }
+
+    async function chargerCredit() {
+      try {
+        const res = await Credits.obtenir(getCreditId());
+        if (!res || !res.ok) throw new Error('Erreur');
+        const credit = await res.json();
+        document.getElementById('creditTitle').textContent = 'Échéancier - ' + (credit.reference || 'CR-' + credit.idCredit);
+        document.getElementById('breadcrumbClient').textContent = 'Crédits / ' + (credit.nomClient || 'Client') + ' / Échéancier';
+        document.getElementById('kpiMontant').innerHTML = ((credit.montantCredit || 0).toLocaleString('fr-FR')) + ' <span style="font-size:13px;font-weight:600;">FCFA</span>';
+        document.getElementById('kpiReste').innerHTML = ((credit.resteAPayer || 0).toLocaleString('fr-FR')) + ' <span style="font-size:13px;font-weight:600;">FCFA</span>';
+        document.getElementById('kpiMensualite').innerHTML = ((credit.mensualite || 0).toLocaleString('fr-FR')) + ' <span style="font-size:13px;font-weight:600;">FCFA</span>';
+      } catch (e) {
+        showToast('Impossible de charger le crédit', 'error');
+      }
+    }
+
+    async function chargerEcheancier() {
+      try {
+        const res = await Credits.echeancier(getCreditId());
+        if (!res || !res.ok) throw new Error('Erreur');
+        const data = await res.json();
+        const tbody = document.getElementById('echeancierBody');
+        tbody.innerHTML = '';
+        const echeances = data.echeances || [];
+        echeances.forEach((e, i) => {
+          const tr = document.createElement('tr');
+          let badgeClass = 'badge-info';
+          let statut = 'À venir';
+          if (e.payee) { badgeClass = 'badge-active'; statut = 'Payé'; }
+          else if (e.enRetard) { badgeClass = 'badge-pending'; statut = 'En retard'; }
+          tr.innerHTML = `
+            <td style="font-weight:700;">${i + 1}</td>
+            <td style="font-size:12px;">${e.dateEcheance ? new Date(e.dateEcheance).toLocaleDateString('fr-FR') : '-'}</td>
+            <td>${(e.capitalAmorti || 0).toLocaleString('fr-FR')}</td>
+            <td>${(e.interet || 0).toLocaleString('fr-FR')}</td>
+            <td style="font-weight:700;">${(e.montantEcheance || 0).toLocaleString('fr-FR')}</td>
+            <td>${(e.capitalRestant || 0).toLocaleString('fr-FR')}</td>
+            <td><span class="badge ${badgeClass}">${statut}</span></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        showToast('Impossible de charger l\'échéancier', 'error');
+      }
+    }
+
+    async function doDisburse() {
+      const montant = parseInt(document.getElementById('disburseAmount').value);
+      const compte = document.getElementById('disburseAccount').value.trim();
+      if (!montant || !compte) { showToast('Veuillez remplir tous les champs', 'error'); return; }
+      try {
+        const res = await Credits.decaisser(getCreditId(), compte);
+        if (res && res.ok) {
+          showToast('Décaissement effectué', 'success');
+          closeModal('disburseModal');
+          chargerCredit();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Erreur', 'error');
+        }
+      } catch (e) {
+        showToast(e.message || 'Erreur réseau', 'error');
+      }
+    }
+
+    async function doRepay() {
+      const montant = parseInt(document.getElementById('repayAmount').value);
+      if (!montant) { showToast('Veuillez saisir un montant', 'error'); return; }
+      try {
+        const res = await Credits.rembourser(getCreditId(), montant);
+        if (res && res.ok) {
+          showToast('Remboursement enregistré', 'success');
+          closeModal('repayModal');
+          chargerCredit();
+          chargerEcheancier();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Erreur', 'error');
+        }
+      } catch (e) {
+        showToast(e.message || 'Erreur réseau', 'error');
+      }
+    }
+
+    chargerCredit();
+    chargerEcheancier();
+  </script>
 </body>
 </html>
 

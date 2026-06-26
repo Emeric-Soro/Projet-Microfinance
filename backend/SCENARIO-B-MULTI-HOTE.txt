@@ -1,0 +1,512 @@
+================================================================================
+        PROJET SOUTRA — MICROFINANCE
+        SCENARIO B : DEPLOIEMENT MULTI-HOTE
+        (2 PC SERVEURS + 2 PC CLIENTS + 1 MOBILE)
+================================================================================
+
+Date          : 2026-06-06
+Plateforme    : SOUTRA (Core Banking)
+Stack         : Spring Boot 3 + Oracle 21 XE + Docker + Windows 11
+Contexte      : Expose scolaire - Architecture 3-tiers reseau
+
+
+================================================================================
+1. VUE D'ENSEMBLE
+================================================================================
+
+Le scenario B deploie SOUTRA sur 2 machines serveur distinctes reliees par
+le reseau local 192.168.1.0/24, avec des clients (web + mobile) qui obtiennent
+leur adresse IP dynamiquement via DHCP.
+
+Le backend Spring Boot n'est pas heberge sur la meme machine que la base
+de donnees Oracle. Chaque service est isole dans un conteneur Docker
+sur sa propre machine, ce qui represente fidelement une architecture de
+production.
+
+
+================================================================================
+2. SCHEMA RESEAU
+================================================================================
+
+                            [BOX / ROUTEUR SALLE]
+                            Role : DHCP + Passerelle
+                            IP  : 192.168.1.1
+                            Plage DHCP : 192.168.1.100 - 192.168.1.200
+                                    |
+                                    |
+        +---------------------------+---------------------------+
+        |                           |                           |
+        |                           |                           |
++---------------+         +---------------+         +-------------------+
+|   PC1 - BD    |         |  PC2 - APP    |         |   PC3 / PC4       |
+|   Oracle XE   |<--------|  Spring Boot  |<--------|   Clients         |
+|               |  TCP    |               |  HTTP   |                   |
+| 192.168.1.21  |  /1521  | 192.168.1.20  |  /8080  | .100 a .200 (DHCP)|
+|   IP fixe     |         |   IP fixe     |         | Web + Mobile      |
++---------------+         +---------------+         +-------------------+
+       ^                          ^
+       |                          |
+   Conteneur                Conteneur
+   Docker                   Docker
+   (port 1521)              (port 8080)
+
+
+Resume des flux :
+   - PC1 <-> PC2       : TCP/1521 (Oracle) - uniquement entre les 2 serveurs
+   - PC2 <-> Clients   : TCP/8080 (API REST Spring Boot)
+   - Clients -> DHCP   : attribution dynamique des IP (box salle)
+
+
+================================================================================
+3. ADRESSAGE IP
+================================================================================
+
++----------+--------------------+----------------+---------+
+| Machine  | Role               | Adresse IP     | Mode    |
++----------+--------------------+----------------+---------+
+| PC1      | Serveur BD Oracle  | 192.168.1.21   | FIXE    |
+| PC2      | Serveur APP Spring | 192.168.1.20   | FIXE    |
+| PC3      | Client Web 1       | 192.168.1.30*  | DHCP    |
+| PC4      | Client Web 2       | 192.168.1.31*  | DHCP    |
+| Mobile   | Client Mobile      | 192.168.1.32*  | DHCP    |
+| Box      | Routeur / DHCP     | 192.168.1.1    | FIXE    |
++----------+--------------------+----------------+---------+
+
+  * Les IP des clients dependent du DHCP. Les valeurs indiquees sont
+    des exemples : la box attribuera n'importe quelle IP dans la plage.
+
+Masque de sous-reseau : 255.255.255.0
+Passerelle par defaut : 192.168.1.1
+DNS : 8.8.8.8 (Google)
+
+
+================================================================================
+4. PREPARATION COMMUNE (PC1 et PC2)
+================================================================================
+
+------------------------------------------------------------------------------
+4.1 - Verifier que Docker Desktop est installe
+------------------------------------------------------------------------------
+Sur les deux machines :
+   - Telecharger Docker Desktop depuis https://www.docker.com/products/docker-desktop/
+   - Installer, redemarrer si demande
+   - Lancer Docker Desktop et attendre que l'icone en bas a droite soit verte
+   - Tester dans un terminal (PowerShell) :
+         docker --version
+         docker compose version
+
+Les deux machines doivent imperativement avoir Docker.
+
+
+------------------------------------------------------------------------------
+4.2 - Configurer le profil reseau Windows sur "Prive"
+------------------------------------------------------------------------------
+Important : en profil "Public", Windows bloque tous les ports entrants par
+defaut et le ping inter-machines echouera.
+
+   1. Clic droit sur l'icone Wi-Fi / Ethernet en bas a droite
+   2. "Parametres reseau et Internet"
+   3. Cliquer sur la connexion active (Wi-Fi ou Ethernet)
+   4. Rechercher "Profil reseau" -> selectionner "Prive"
+
+Alternative en PowerShell admin :
+   Get-NetConnectionProfile
+   Set-NetConnectionProfile -InterfaceAlias "Wi-Fi" -NetworkCategory Private
+
+
+================================================================================
+5. PC1 - SERVEUR BASE DE DONNEES ORACLE
+================================================================================
+
+Adresse IP : 192.168.1.21 (fixe)
+OS : Windows 11
+Logiciel : Docker Desktop + Oracle 21 XE (image gvenzl)
+
+------------------------------------------------------------------------------
+5.1 - Configurer l'IP fixe
+------------------------------------------------------------------------------
+   1. Parametres -> Reseau et Internet -> Ethernet (ou Wi-Fi)
+   2. Cliquer sur le nom de la connexion active
+   3. "Modifier les options de l'adaptateur"
+   4. Clic droit sur la carte -> Proprietes
+   5. Double-clic sur "Protocole Internet version 4 (TCP/IPv4)"
+   6. Selectionner "Utiliser l'adresse IP suivante" et remplir :
+
+      Adresse IP      : 192.168.1.21
+      Masque de sous-reseau : 255.255.255.0
+      Passerelle par defaut : 192.168.1.1
+      DNS prefere     : 8.8.8.8
+      DNS auxiliaire  : 8.8.4.4
+
+   7. Valider par OK puis Fermer.
+
+------------------------------------------------------------------------------
+5.2 - Ouvrir le port 1521 dans le pare-feu Windows
+------------------------------------------------------------------------------
+Lancer PowerShell en ADMINISTRATEUR (clic droit -> Executer en tant qu'administrateur) :
+
+   New-NetFirewallRule -DisplayName "SOUTRA Oracle" -Direction Inbound -LocalPort 1521 -Protocol TCP -Action Allow
+
+Verifier que la regle est bien creee :
+   Get-NetFirewallRule -DisplayName "SOUTRA Oracle"
+
+------------------------------------------------------------------------------
+5.3 - Creer le repertoire et le fichier docker-compose.yml
+------------------------------------------------------------------------------
+Dans un explorateur de fichiers :
+   - Creer le dossier C:\oracle
+   - Creer un fichier C:\oracle\docker-compose.yml avec ce contenu :
+
+   version: "3.8"
+   services:
+     oracledb:
+       image: gvenzl/oracle-xe:21-slim
+       container_name: core_banking_oracle
+       environment:
+         - ORACLE_PASSWORD=Oracle2026
+         - APP_USER=SOUTRA
+         - APP_USER_PASSWORD=SOUTRA2026
+       ports:
+         - "1521:1521"
+       volumes:
+         - oracle_data:/opt/oracle/oradata
+       restart: unless-stopped
+   volumes:
+     oracle_data:
+
+------------------------------------------------------------------------------
+5.4 - Lancer Oracle
+------------------------------------------------------------------------------
+Dans PowerShell :
+   cd C:\oracle
+   docker compose up -d
+
+La premiere fois, Docker va telecharger l'image (~1.2 Go), cela peut prendre
+plusieurs minutes selon le debit internet.
+
+Verifier l'etat du conteneur :
+   docker ps
+
+Le conteneur doit apparaitre avec le statut "Up". La base met 30 a 60 secondes
+a etre reellement prete.
+
+------------------------------------------------------------------------------
+5.5 - Tester Oracle en local (sur PC1)
+------------------------------------------------------------------------------
+   docker exec -it core_banking_oracle bash
+
+   # A l'interieur du shell du conteneur :
+   sqlplus SOUTRA/SOUTRA2026@//localhost:1521/XEPDB1
+   SQL> SELECT 1 FROM dual;
+   SQL> EXIT
+   # Puis taper "exit" pour quitter le shell
+
+Si tu vois "1" puis que tu sors, Oracle fonctionne.
+
+------------------------------------------------------------------------------
+5.6 - Test depuis PC2 (reseau)
+------------------------------------------------------------------------------
+Depuis PC2, dans PowerShell :
+   Test-NetConnection -ComputerName 192.168.1.21 -Port 1521
+
+Resultat attendu : TcpTestSucceeded : True
+
+Si False : verifier le pare-feu Windows de PC1 (paragraphe 5.2).
+
+
+================================================================================
+6. PC2 - SERVEUR APPLICATION SPRING BOOT
+================================================================================
+
+Adresse IP : 192.168.1.20 (fixe)
+OS : Windows 11
+Logiciel : Docker Desktop + image backend SOUTRA
+
+------------------------------------------------------------------------------
+6.1 - Configurer l'IP fixe
+------------------------------------------------------------------------------
+Meme demarche qu'au 5.1, mais avec l'adresse 192.168.1.20.
+
+   Adresse IP      : 192.168.1.20
+   Masque de sous-reseau : 255.255.255.0
+   Passerelle par defaut : 192.168.1.1
+   DNS prefere     : 8.8.8.8
+
+------------------------------------------------------------------------------
+6.2 - Ouvrir le port 8080 dans le pare-feu
+------------------------------------------------------------------------------
+PowerShell ADMIN :
+   New-NetFirewallRule -DisplayName "SOUTRA Backend" -Direction Inbound -LocalPort 8080 -Protocol TCP -Action Allow
+
+Verifier :
+   Get-NetFirewallRule -DisplayName "SOUTRA Backend"
+
+------------------------------------------------------------------------------
+6.3 - Recuperer le code source du backend
+------------------------------------------------------------------------------
+   - Copier le dossier backend/ du projet SOUTRA dans C:\soutra\backend
+     (cle USB, partage reseau, ou git clone)
+   - Verifier que C:\soutra\backend\docker-compose.yml existe
+   - Verifier que C:\soutra\backend\.env existe
+
+------------------------------------------------------------------------------
+6.4 - Adapter le docker-compose.yml pour pointer vers PC1
+------------------------------------------------------------------------------
+Ouvrir C:\soutra\backend\docker-compose.yml et verifier / modifier :
+
+   version: "3.8"
+   services:
+     backend:
+       build:
+         context: .
+         dockerfile: Dockerfile
+       container_name: core_banking_backend
+       environment:
+         - DB_URL=jdbc:oracle:thin:@192.168.1.21:1521/XEPDB1
+         - DB_USERNAME=SOUTRA
+         - DB_PASSWORD=SOUTRA2026
+         - JWT_SECRET_KEY=un-secret-tres-long-aleatoire-minimum-32-caracteres-ici
+         - JWT_EXPIRATION_MS=86400000
+         - APP_CORS_ALLOWED_ORIGINS=*
+       ports:
+         - "0.0.0.0:8080:8080"
+       extra_hosts:
+         - "host.docker.internal:host-gateway"
+       restart: unless-stopped
+
+ATTENTION : supprimer le service "oracledb" du compose de PC2.
+PC2 n'heberge QUE Spring Boot, pas Oracle.
+
+Verifier aussi le fichier C:\soutra\backend\.env :
+   ORACLE_PASSWORD=Oracle2026
+   DB_USERNAME=SOUTRA
+   DB_PASSWORD=SOUTRA2026
+   JWT_SECRET_KEY=un-secret-tres-long-aleatoire-minimum-32-caracteres-ici
+   JWT_EXPIRATION_MS=86400000
+   APP_CORS_ALLOWED_ORIGINS=*
+   BACKEND_PORT=8080
+
+------------------------------------------------------------------------------
+6.5 - Construire et lancer le backend
+------------------------------------------------------------------------------
+Dans PowerShell :
+   cd C:\soutra\backend
+   docker compose up -d --build
+
+La premiere fois, Maven telecharge les dependances et compile l'application.
+Cela peut prendre 5 a 10 minutes. Les fois suivantes c'est quasi instantane.
+
+Suivre les logs :
+   docker logs -f core_banking_backend
+
+Attendre le message "Started CoreBankingApplication" puis Ctrl+C pour sortir
+du suivi de logs (le conteneur continue de tourner).
+
+------------------------------------------------------------------------------
+6.6 - Tester le backend
+------------------------------------------------------------------------------
+Test local (sur PC2) :
+   curl http://localhost:8080/actuator/health
+   # Reponse attendue : {"status":"UP"}
+
+Test reseau (depuis PC1 ou n'importe quel client) :
+   Ouvrir un navigateur et aller a :
+   http://192.168.1.20:8080/actuator/health
+   Reponse attendue : {"status":"UP"}
+
+------------------------------------------------------------------------------
+6.7 - Tester un endpoint metier
+------------------------------------------------------------------------------
+Test du login (PowerShell ou terminal) :
+   $body = @{
+       username = "admin"
+       password = "Admin2026!"
+   } | ConvertTo-Json
+
+   Invoke-RestMethod -Uri "http://192.168.1.20:8080/api/v1/auth/login" `
+                     -Method POST `
+                     -ContentType "application/json" `
+                     -Body $body
+
+Un token JWT doit etre retourne.
+
+
+================================================================================
+7. PC3 ET PC4 - MACHINES CLIENTS (WEB)
+================================================================================
+
+------------------------------------------------------------------------------
+7.1 - Configuration
+------------------------------------------------------------------------------
+   - Ces machines n'ont rien de specia l a installer
+   - Verifier qu'elles sont sur le meme reseau Wi-Fi / Ethernet que PC1 et PC2
+   - Verifier qu'elles obtiennent une IP via DHCP :
+       - Clic droit sur l'icone reseau -> "Ouvrir les parametres reseau"
+       - Cliquer sur la connexion
+       - Verifier que "Obtenir une adresse IP automatiquement" est coche
+
+------------------------------------------------------------------------------
+7.2 - Acces a l'application
+------------------------------------------------------------------------------
+   - Lancer Chrome ou Edge
+   - Aller a : http://192.168.1.20:8080
+   - Se connecter avec un compte seed (voir memoire projet) :
+       admin / Admin2026!
+   - Tester la navigation : dashboard, clients, credits, etc.
+
+------------------------------------------------------------------------------
+7.3 - Si le frontend PHP (soutra.local) est utilise
+------------------------------------------------------------------------------
+Sur la machine qui heberge le frontend (WAMP), editer la config pour pointer
+vers le backend distant :
+   - Ouvrir le fichier de configuration de l'API dans le frontend
+   - Changer l'URL de :
+       http://localhost:8080/api
+     a :
+       http://192.168.1.20:8080/api
+
+
+================================================================================
+8. CLIENT MOBILE (Android ou iOS)
+================================================================================
+
+------------------------------------------------------------------------------
+8.1 - Prerequis
+------------------------------------------------------------------------------
+   - Le telephone doit etre connecte au MEME reseau Wi-Fi que les serveurs
+   - Pas de Wi-Fi invite / isole (beaucoup d'enseignants utilisent ca)
+   - Si pas de Wi-Fi disponible, utiliser un partage de connexion depuis PC2
+
+------------------------------------------------------------------------------
+8.2 - Acces a l'application web responsive
+------------------------------------------------------------------------------
+   - Ouvrir Chrome / Safari
+   - Aller a : http://192.168.1.20:8080
+   - Tester login et navigation
+
+------------------------------------------------------------------------------
+8.3 - Si appli mobile native (Ionic / Flutter / React Native)
+------------------------------------------------------------------------------
+Dans le code source de l'app mobile, modifier l'URL de l'API :
+
+   // Ionic / Angular
+   export const environment = {
+     apiUrl: 'http://192.168.1.20:8080/api'
+   };
+
+   // Flutter
+   const apiUrl = 'http://192.168.1.20:8080/api';
+
+Puis reconstruire l'APK / IPA et reinstaller sur le telephone.
+
+
+================================================================================
+9. SERVEUR DHCP
+================================================================================
+
+Pour cette expose, le serveur DHCP n'est pas deploye sur une machine dediee.
+C'est la box / le routeur de la salle de TP qui joue ce role :
+
+   - Il attribue dynamiquement les adresses IP aux machines clientes
+   - Plage par defaut classique : 192.168.1.100 a 192.168.1.200
+   - Les serveurs PC1 et PC2 sont en IP FIXE, donc HORS plage DHCP
+   - Pas de conflit possible
+
+Si le prof exige un serveur DHCP dedie :
+   Option 1 - Utiliser le role Windows Server DHCP (si dispo)
+   Option 2 - Installer un soft gratuit comme "DHCP Server for Windows"
+   Option 3 - Activer le partage de connexion internet sur PC1 ou PC2
+              (Parametres -> Reseau -> Partage -> Activer)
+
+Reponse type a donner au prof :
+"Le service DHCP est assure par le routeur de la salle. Il attribue
+dynamiquement les IP aux postes clients, tandis que les serveurs
+applicatif et base de donnees sont configures en IP fixe hors plage
+pour garantir leur accessibilite permanente."
+
+
+================================================================================
+10. CHECK-LIST FINALE AVANT L'EXPOSE
+================================================================================
+
+Preparation (J-1) :
+   [ ] PC1 et PC2 : Windows 11 a jour
+   [ ] PC1 et PC2 : Docker Desktop installe et lance (icone verte)
+   [ ] PC1 et PC2 : Profil reseau sur "Prive"
+   [ ] PC1 : IP fixe 192.168.1.21 configuree
+   [ ] PC1 : Port 1521 ouvert dans le pare-feu
+   [ ] PC1 : Oracle demarre et healthcheck OK
+   [ ] PC2 : IP fixe 192.168.1.20 configuree
+   [ ] PC2 : Port 8080 ouvert dans le pare-feu
+   [ ] PC2 : Code source backend copié dans C:\soutra\backend
+   [ ] PC2 : docker-compose.yml pointe vers 192.168.1.21
+   [ ] PC2 : docker compose up -d --build execute
+   [ ] PC2 : Started CoreBankingApplication dans les logs
+
+Tests reseau (jour J, avant l'expose) :
+   [ ] Depuis PC2 : ping 192.168.1.21 repond
+   [ ] Depuis PC1 : ping 192.168.1.20 repond
+   [ ] Depuis PC2 : Test-NetConnection -ComputerName 192.168.1.21 -Port 1521
+                   -> TcpTestSucceeded : True
+   [ ] Depuis PC3 : Test-NetConnection -ComputerName 192.168.1.20 -Port 8080
+                   -> TcpTestSucceeded : True
+   [ ] Depuis PC3 : http://192.168.1.20:8080/actuator/health -> UP
+   [ ] Depuis PC3 : login admin / Admin2026! fonctionne
+   [ ] Depuis mobile : http://192.168.1.20:8080 s'affiche
+
+Pendant l'expose :
+   [ ] Garder une fenetre PowerShell avec docker ps visible
+   [ ] Garder la console de logs accessible pour montrer les requetes
+   [ ] Montrer le docker-compose.yml ouvert dans VS Code
+   [ ] Montrer le schema reseau (paragraphe 2 de ce document)
+
+
+================================================================================
+11. PIEGES CLASSIQUES SOUS WINDOWS
+================================================================================
+
+Probleme                          Cause probable                  Solution
+--------------------------------- ------------------------------- --------------------
+ping inter-PC echoue              Profil reseau "Public"          Basculer en "Prive"
+port 1521/8080 ferme              Pare-feu Windows                Regles New-NetFirewallRule
+Oracle ne repond pas              Image non prete                 Attendre 60s, voir logs
+Spring Boot ne joint pas Oracle   DB_URL pointe sur localhost     Mettre @192.168.1.21
+Tel ne voit pas 192.168.1.20      Wi-Fi different / isole         Meme SSID, pas de Wi-Fi invite
+IP change apres reboot            DHCP au lieu de fixe            Reconfigurer IPv4 fixe
+"docker compose up" echoue        Docker Desktop pas lance        Lancer Docker Desktop d'abord
+Le frontend ne se connecte pas    APP_CORS_ALLOWED_ORIGINS=* ?    Verifier la variable
+Le mobile n'accede pas en HTTP    Android bloque HTTP clair        Ajouter network_security_config
+
+
+================================================================================
+12. ANNEXE - COMMANDE RESUME
+================================================================================
+
+PC1 - Tout en une fois (PowerShell admin) :
+   # Pare-feu
+   New-NetFirewallRule -DisplayName "SOUTRA Oracle" -Direction Inbound -LocalPort 1521 -Protocol TCP -Action Allow
+   # Lancer Oracle
+   cd C:\oracle ; docker compose up -d
+   # Logs
+   docker logs -f core_banking_oracle
+
+PC2 - Tout en une fois (PowerShell admin) :
+   # Pare-feu
+   New-NetFirewallRule -DisplayName "SOUTRA Backend" -Direction Inbound -LocalPort 8080 -Protocol TCP -Action Allow
+   # Lancer le backend
+   cd C:\soutra\backend ; docker compose up -d --build
+   # Logs
+   docker logs -f core_banking_backend
+
+Tests croises :
+   # PC2 vers PC1
+   Test-NetConnection -ComputerName 192.168.1.21 -Port 1521
+   # PC1 vers PC2
+   Test-NetConnection -ComputerName 192.168.1.20 -Port 8080
+   # Depuis n'importe quel client
+   curl http://192.168.1.20:8080/actuator/health
+
+
+================================================================================
+FIN DU DOCUMENT
+================================================================================

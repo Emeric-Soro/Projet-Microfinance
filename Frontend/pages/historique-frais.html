@@ -326,37 +326,33 @@
       /* ── PDF Export ─────────────────────────────── */
 
       function exportPDF() {
-        SF.downloadFile('/api/v1/tarification/historique/export?format=PDF', 'historique_frais_export.pdf');
+        // Endpoint backend inexistant (cf. note dans loadData)
+        showToast('Export PDF non disponible : aucun endpoint d\'historique des tarifications.', 'warning');
+        return;
+        // SF.downloadFile('/api/v1/tarification/historique/export?format=PDF', 'historique_frais_export.pdf');
       }
       window.exportPDF = exportPDF;
 
       /* ── Data loading ───────────────────────────── */
 
       async function loadData() {
-        try {
-          var res = await SF.apiFetch('/api/v1/tarification/historique');
-          if (!res) return;
-          if (res.status === 403) {
-            document.getElementById('histTableBody').innerHTML =
-              '<tr><td colspan="6" style="text-align:center;padding:32px;color:#D93025;">Accès refusé : droits insuffisants.</td></tr>';
-            return;
-          }
-          if (!res.ok) {
-            throw new Error('Erreur serveur (' + res.status + ')');
-          }
-          var data = await res.json();
-          allHistory = Array.isArray(data) ? data : (data.content || []);
-          allHistory.sort(function (a, b) { return new Date(b.dateModification) - new Date(a.dateModification); });
-          filteredHistory = allHistory.slice();
-          updateStats();
-          updateFilterInfo();
-          renderTable(getPageData());
-          renderPagination();
-        } catch (e) {
-          document.getElementById('histTableBody').innerHTML =
-            '<tr><td colspan="6" style="text-align:center;padding:32px;color:#D93025;">Erreur de chargement : ' + e.message + '</td></tr>';
-          showToast('Erreur chargement historique : ' + e.message, 'error');
-        }
+        // NOTE : Le backend n'expose PAS d'endpoint d'historique des
+        // tarifications. Aucun GET /api/v1/tarification/historique n'est
+        // declare dans le catalogue d'endpoints. On affiche un message
+        // clair a l'utilisateur plutot que de faire un appel qui renverrait
+        // indefectiblement un 404.
+        document.getElementById('histTableBody').innerHTML =
+          '<tr><td colspan="6" style="text-align:center;padding:32px;color:#4A7A8A;">' +
+          'Fonctionnalité non disponible : l\'API backend n\'expose pas d\'endpoint d\'historique des tarifications.<br>' +
+          '<small>Endpoint attendu (inexistant) : GET /api/v1/tarification/historique</small></td></tr>';
+        document.getElementById('countBadge').textContent = '0 modifications';
+        allHistory = [];
+        filteredHistory = [];
+        updateStats();
+        updateFilterInfo();
+        // Ancien code (endpoint inexistant) :
+        //   var res = await SF.apiFetch('/api/v1/tarification/historique');
+        //   ...gestion 403, erreur serveur, parsing du tableau...
       }
 
       document.addEventListener('DOMContentLoaded', loadData);

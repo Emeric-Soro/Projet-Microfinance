@@ -39,13 +39,8 @@
 
             <div class="form-group">
               <label class="form-label">Produit de crédit *</label>
-              <select class="form-control" id="creditProduct" onchange="simulateCredit()">
+              <select class="form-control" id="creditProduct" onchange="onProductChange()">
                 <option value="">Sélectionner un produit...</option>
-                <option value="perso">Crédit Personnel (Taux: 12%/an)</option>
-                <option value="immo">Crédit Immobilier (Taux: 8%/an)</option>
-                <option value="auto">Crédit Automobile (Taux: 10%/an)</option>
-                <option value="equip">Crédit Équipement (Taux: 14%/an)</option>
-                <option value="agri">Crédit Agricole (Taux: 9%/an)</option>
               </select>
             </div>
 
@@ -69,8 +64,18 @@
             </div>
 
             <div class="form-group">
+              <label class="form-label">Objet du crédit *</label>
+              <input type="text" class="form-control" id="creditObjet" placeholder="Ex: Achat de matériel">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">ID Client *</label>
+              <input type="number" class="form-control" id="creditClientId" placeholder="ID client">
+            </div>
+
+            <div class="form-group">
               <label class="form-label">Garantie</label>
-              <select class="form-control">
+              <select class="form-control" id="creditGarantie">
                 <option value="">Sélectionner...</option>
                 <option value="salaire">Domiciliation de salaire</option>
                 <option value="hypothecaire">Hypothèque immobilière</option>
@@ -133,8 +138,41 @@
   <script src="../assets/js/app.js"></script>
   <script src="../assets/js/chart.min.js"></script>
   <script>
-    const rates = { perso: 12, immo: 8, auto: 10, equip: 14, agri: 9 };
+    let produits = [];
     let pieChart;
+
+    async function chargerProduits() {
+      try {
+        const res = await ProduitsCredit.actifs();
+        if (!res || !res.ok) throw new Error('Erreur chargement produits');
+        produits = await res.json();
+        const select = document.getElementById('creditProduct');
+        select.innerHTML = '<option value="">Sélectionner un produit...</option>';
+        produits.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.codeProduit;
+          opt.textContent = p.libelle + ' (Taux: ' + (p.tauxInteretAnnuel || 0) + '%/an)';
+          opt.dataset.taux = p.tauxInteretAnnuel;
+          select.appendChild(opt);
+        });
+      } catch (e) {
+        showToast('Impossible de charger les produits crédit', 'error');
+      }
+    }
+
+    function getTauxProduit() {
+      const select = document.getElementById('creditProduct');
+      const opt = select.options[select.selectedIndex];
+      return parseFloat(opt.dataset.taux) || 0;
+    }
+
+    function onProductChange() {
+      simulateCredit();
+    }
+
+    // Cache du dernier tableau d'echeances pour ne pas re-frapper le backend
+    // a chaque frappe utilisateur (debounce simple).
+    let _simDebounce = null;
 
     function simulateCredit() {
       const product = document.getElementById('creditProduct').value;
@@ -152,19 +190,69 @@
         return;
       }
 
-      const annualRate = rates[product] / 100;
-      const monthlyRate = annualRate / 12;
-      const monthly = amount * monthlyRate * Math.pow(1 + monthlyRate, duration) / (Math.pow(1 + monthlyRate, duration) - 1);
-      const totalPayment = monthly * duration;
-      const totalInterest = totalPayment - amount;
-
-      document.getElementById('monthlyPayment').textContent = Math.round(monthly).toLocaleString('fr-FR') + ' FCFA';
+      const taux = getTauxProduit();
       document.getElementById('simAmount').textContent = amount.toLocaleString('fr-FR') + ' FCFA';
-      document.getElementById('simRate').textContent = rates[product] + '%/an';
+      document.getElementById('simRate').textContent = taux + '%/an';
       document.getElementById('simDuration').textContent = duration + ' mois';
+
+      // Debounce pour eviter de spammer le backend pendant la saisie
+      if (_simDebounce) clearTimeout(_simDebounce);
+      _simDebounce = setTimeout(function () { appelSimulationBackend(amount, taux, duration); }, 250);
+    }
+
+    // Appelle POST /api/v1/credits/simulation et agrege le tableau d'echeances
+    // pour produire mensualite / total interets / cout total. En cas d'erreur
+    // (backend down, taux=0, etc.), fallback sur un calcul local.
+    async function appelSimulationBackend(amount, taux, duration) {
+      try {
+        const res = await Credits.simuler(amount, taux, duration, 'DEGRESSIF');
+        if (!res || !res.ok) throw new Error('Erreur simulation (' + (res ? res.status : 'no res') + ')');
+        const echeances = await res.json();
+        if (!Array.isArray(echeances) || echeances.length === 0) throw new Error('Aucune echeance retournee');
+
+        const totalCapital = echeances.reduce(function (s, e) { return s + Number(e.montantCapital || 0); }, 0);
+        const totalInteret = echeances.reduce(function (s, e) { return s + Number(e.montantInteret || 0); }, 0);
+        const totalPaye = echeances.reduce(function (s, e) { return s + Number(e.montantTotal || 0); }, 0);
+        const mensualite = Number(echeances[0].montantTotal || 0);
+
+        document.getElementById('monthlyPayment').textContent = Math.round(mensualite).toLocaleString('fr-FR') + ' FCFA';
+        document.getElementById('simInterest').textContent = Math.round(totalInteret).toLocaleString('fr-FR') + ' FCFA';
+        document.getElementById('simTotal').textContent = Math.round(totalPaye).toLocaleString('fr-FR') + ' FCFA';
+
+        if (pieChart) pieChart.destroy();
+        pieChart = new Chart(document.getElementById('creditPieChart').getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels: ['Capital', 'Intérêts'],
+            datasets: [{ data: [Math.round(totalCapital), Math.round(totalInteret)], backgroundColor: ['#8cd5fa', '#fab482'], borderWidth: 0 }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false, cutout: '60%',
+            plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } } }
+          }
+        });
+      } catch (e) {
+        // Fallback : calcul local si le backend repond pas / refuse
+        calculSimulationLocal(amount, taux, duration);
+      }
+    }
+
+    function calculSimulationLocal(amount, taux, duration) {
+      const annualRate = taux / 100;
+      const monthlyRate = annualRate / 12;
+      let monthly, totalPayment, totalInterest;
+      if (monthlyRate === 0) {
+        monthly = amount / duration;
+        totalPayment = amount;
+        totalInterest = 0;
+      } else {
+        monthly = amount * monthlyRate * Math.pow(1 + monthlyRate, duration) / (Math.pow(1 + monthlyRate, duration) - 1);
+        totalPayment = monthly * duration;
+        totalInterest = totalPayment - amount;
+      }
+      document.getElementById('monthlyPayment').textContent = Math.round(monthly).toLocaleString('fr-FR') + ' FCFA';
       document.getElementById('simInterest').textContent = Math.round(totalInterest).toLocaleString('fr-FR') + ' FCFA';
       document.getElementById('simTotal').textContent = Math.round(totalPayment).toLocaleString('fr-FR') + ' FCFA';
-
       if (pieChart) pieChart.destroy();
       pieChart = new Chart(document.getElementById('creditPieChart').getContext('2d'), {
         type: 'doughnut',
@@ -179,11 +267,40 @@
       });
     }
 
-    function submitCreditRequest() {
-      const amount = parseInt(document.getElementById('creditAmount').value);
-      if (!amount || amount <= 0) { showToast('Veuillez remplir tous les champs', 'error'); return; }
-      showToast('Dossier de crédit soumis avec succès !', 'success');
+    async function submitCreditRequest() {
+      const idClient = parseInt(document.getElementById('creditClientId').value);
+      const codeProduit = document.getElementById('creditProduct').value;
+      const montant = parseInt(document.getElementById('creditAmount').value);
+      const duree = parseInt(document.getElementById('creditDuration').value);
+      const objet = document.getElementById('creditObjet').value.trim();
+
+      if (!idClient || !codeProduit || !montant || !duree || !objet) {
+        showToast('Veuillez remplir tous les champs obligatoires', 'error');
+        return;
+      }
+
+      const user = SF.getUser();
+      try {
+        const res = await Credits.soumettreDemande({
+          idClient: idClient,
+          codeProduitCredit: codeProduit,
+          montantDemande: montant,
+          dureeSouhaitee: duree,
+          objetCredit: objet,
+          idAgentCredit: user ? user.idUtilisateur : null
+        });
+        if (res && res.ok) {
+          showToast('Demande de crédit soumise avec succès', 'success');
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Erreur lors de la soumission', 'error');
+        }
+      } catch (e) {
+        showToast(e.message || 'Erreur réseau', 'error');
+      }
     }
+
+    chargerProduits();
   </script>
 </body>
 </html>

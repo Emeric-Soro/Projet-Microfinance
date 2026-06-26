@@ -137,39 +137,39 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Code produit *</label>
-            <input type="text" class="form-control" placeholder="Ex: CRD-NOUV">
+            <input type="text" class="form-control" id="prodCode" placeholder="Ex: CRD-NOUV">
           </div>
           <div class="form-group">
             <label class="form-label">Type *</label>
-            <select class="form-control">
-              <option>Crédit</option>
-              <option>Épargne</option>
+            <select class="form-control" id="prodType">
+              <option value="credit">Crédit</option>
+              <option value="epargne">Épargne</option>
             </select>
           </div>
         </div>
         <div class="form-group">
           <label class="form-label">Nom du produit *</label>
-          <input type="text" class="form-control" placeholder="Ex: Crédit Équipement Pro">
+          <input type="text" class="form-control" id="prodName" placeholder="Ex: Crédit Équipement Pro">
         </div>
         <div class="form-row-3">
           <div class="form-group">
             <label class="form-label">Taux d'intérêt *</label>
             <div class="input-group">
-              <input type="number" class="form-control" placeholder="0" step="0.1">
+              <input type="number" class="form-control" id="prodRate" placeholder="0" step="0.1">
               <span class="input-addon">%/an</span>
             </div>
           </div>
           <div class="form-group">
             <label class="form-label">Frais de dossier</label>
             <div class="input-group">
-              <input type="number" class="form-control" placeholder="0" step="0.1">
+              <input type="number" class="form-control" id="prodFrais" placeholder="0" step="0.1">
               <span class="input-addon">%</span>
             </div>
           </div>
           <div class="form-group">
             <label class="form-label">Pénalité retard</label>
             <div class="input-group">
-              <input type="number" class="form-control" placeholder="0" step="0.1">
+              <input type="number" class="form-control" id="prodPenalite" placeholder="0" step="0.1">
               <span class="input-addon">%/jour</span>
             </div>
           </div>
@@ -178,14 +178,14 @@
           <div class="form-group">
             <label class="form-label">Montant minimum</label>
             <div class="input-group">
-              <input type="number" class="form-control" placeholder="0">
+              <input type="number" class="form-control" id="prodMin" placeholder="0">
               <span class="input-addon">FCFA</span>
             </div>
           </div>
           <div class="form-group">
             <label class="form-label">Montant maximum</label>
             <div class="input-group">
-              <input type="number" class="form-control" placeholder="0">
+              <input type="number" class="form-control" id="prodMax" placeholder="0">
               <span class="input-addon">FCFA</span>
             </div>
           </div>
@@ -193,23 +193,133 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Durée minimum (mois)</label>
-            <input type="number" class="form-control" placeholder="6">
+            <input type="number" class="form-control" id="prodDureeMin" placeholder="6">
           </div>
           <div class="form-group">
             <label class="form-label">Durée maximum (mois)</label>
-            <input type="number" class="form-control" placeholder="120">
+            <input type="number" class="form-control" id="prodDureeMax" placeholder="120">
           </div>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline" onclick="closeModal('productModal')">Annuler</button>
-        <button class="btn btn-primary" onclick="closeModal('productModal');showToast('Produit enregistré','success')">Enregistrer le produit</button>
+        <button class="btn btn-primary" onclick="saveProduct()">Enregistrer le produit</button>
       </div>
     </div>
   </div>
 
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
+  <script>
+    let currentType = 'credit';
+
+    async function chargerProduits() {
+      try {
+        const [resCredit, resEpargne] = await Promise.all([ProduitsCredit.lister(), ProduitsEpargne.lister()]);
+        const pageCredit = resCredit.ok ? await resCredit.json() : { content: [] };
+        const pageEpargne = resEpargne.ok ? await resEpargne.json() : { content: [] };
+        const credits = (pageCredit.content || []).map(p => Object.assign({}, p, { type: 'credit' }));
+        const epargnes = (pageEpargne.content || []).map(p => Object.assign({}, p, { type: 'epargne' }));
+        renderProduits(credits.concat(epargnes));
+      } catch (e) {
+        showToast('Impossible de charger les produits', 'error');
+      }
+    }
+
+    function renderProduits(list) {
+      const tbody = document.querySelector('.data-table tbody');
+      tbody.innerHTML = '';
+      list.filter(p => currentType === 'tous' || p.type === currentType).forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="font-family:monospace;font-size:12px;">${p.codeProduit}</td>
+          <td style="font-weight:600;">${p.libelle}</td>
+          <td><span class="badge ${p.type === 'credit' ? 'badge-info' : 'badge-pending'}">${p.type === 'credit' ? 'Crédit' : 'Épargne'}</span></td>
+          <td style="font-weight:700;">${p.tauxInteretAnnuel || 0}%/an</td>
+          <td>${p.fraisDossierPourcentage || p.penaliteRetraitAnticipe || 0}%</td>
+          <td style="font-size:12px;">${(p.montantMin || p.montantMinOuverture || 0).toLocaleString('fr-FR')} - ${(p.montantMax || 0).toLocaleString('fr-FR')}</td>
+          <td>${p.dureeMinMois || p.dureeMinJours || '-'}${p.type === 'credit' ? ' mois' : ' jours'}</td>
+          <td><span class="badge ${p.estActif !== false ? 'badge-active' : 'badge-warning'}">${p.estActif !== false ? 'Actif' : 'Inactif'}</span></td>
+          <td>
+            <div class="action-icons">
+              <button class="action-icon" title="Modifier" onclick="editProduct(${p.idProduitCredit || p.idProduitEpargne}, '${p.type}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="action-icon" title="Désactiver" onclick="deleteProduct(${p.idProduitCredit || p.idProduitEpargne}, '${p.type}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function saveProduct() {
+      const type = document.getElementById('prodType').value;
+      const data = {
+        codeProduit: document.getElementById('prodCode').value.trim(),
+        libelle: document.getElementById('prodName').value.trim(),
+        tauxInteretAnnuel: parseFloat(document.getElementById('prodRate').value),
+        montantMin: parseFloat(document.getElementById('prodMin').value) || 0,
+        montantMax: parseFloat(document.getElementById('prodMax').value) || 0
+      };
+      if (type === 'credit') {
+        data.dureeMinMois = parseInt(document.getElementById('prodDureeMin').value) || 1;
+        data.dureeMaxMois = parseInt(document.getElementById('prodDureeMax').value) || 360;
+        data.fraisDossierPourcentage = parseFloat(document.getElementById('prodFrais').value) || 0;
+        data.penaliteRetardPourcentage = parseFloat(document.getElementById('prodPenalite').value) || 0;
+      } else {
+        data.dureeMinJours = parseInt(document.getElementById('prodDureeMin').value) || 0;
+        data.montantMinOuverture = data.montantMin;
+        data.penaliteRetraitAnticipe = parseFloat(document.getElementById('prodPenalite').value) || 0;
+      }
+      if (!data.codeProduit || !data.libelle) {
+        showToast('Veuillez remplir les champs obligatoires', 'error');
+        return;
+      }
+      try {
+        const res = type === 'credit' ? await ProduitsCredit.creer(data) : await ProduitsEpargne.creer(data);
+        if (res && res.ok) {
+          showToast('Produit enregistré', 'success');
+          closeModal('productModal');
+          chargerProduits();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Erreur', 'error');
+        }
+      } catch (e) {
+        showToast(e.message || 'Erreur réseau', 'error');
+      }
+    }
+
+    async function deleteProduct(id, type) {
+      if (!confirm('Supprimer ce produit ?')) return;
+      try {
+        const res = type === 'credit' ? await ProduitsCredit.supprimer(id) : await ProduitsEpargne.supprimer(id);
+        if (res && res.ok) {
+          showToast('Produit désactivé', 'success');
+          chargerProduits();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Erreur', 'error');
+        }
+      } catch (e) {
+        showToast(e.message || 'Erreur réseau', 'error');
+      }
+    }
+
+    function editProduct(id, type) {
+      showToast('Modification produit ' + id + ' (' + type + ') - à finaliser', 'info');
+    }
+
+    document.querySelectorAll('.filter-tab').forEach((tab, idx) => {
+      tab.onclick = () => {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentType = idx === 0 ? 'credit' : idx === 1 ? 'epargne' : 'tous';
+        chargerProduits();
+      };
+    });
+
+    chargerProduits();
+  </script>
 </body>
 </html>
 

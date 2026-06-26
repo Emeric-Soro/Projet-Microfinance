@@ -521,18 +521,32 @@
       }
       if (!confirm('Marquer toutes les notifications comme lues ?')) return;
 
-      try {
-        const res = await SF.apiFetch('/api/v1/notifications/lire-tout', { method: 'POST' });
-        if (res && res.ok) {
-          allNotifs.forEach(n => n.lu = true);
-          renderNotifs(filteredNotifs);
-          showToast('Toutes les notifications ont ete marquees comme lues.', 'success');
-        } else {
-          showToast('Erreur lors de la mise a jour.', 'error');
+      // Le backend n'expose pas de endpoint "lire-tout" en un seul appel.
+      // Endpoints disponibles : GET /api/v1/notifications/client/{idClient},
+      //   PUT /api/v1/notifications/{id}/lu, PUT /api/v1/notifications/preferences
+      // On itere donc sur les notifications non lues et on appelle PUT /{id}/lu
+      const unread = allNotifs.filter(n => !n.lu);
+      let successCount = 0;
+      let failureCount = 0;
+      for (const n of unread) {
+        try {
+          const res = await SF.apiFetch('/api/v1/notifications/' + encodeURIComponent(n.id) + '/lu', { method: 'PUT' });
+          if (res && res.ok) {
+            n.lu = true;
+            successCount++;
+          } else {
+            failureCount++;
+          }
+        } catch (e) {
+          console.error(e);
+          failureCount++;
         }
-      } catch (e) {
-        console.error(e);
-        showToast('Impossible de joindre le serveur.', 'error');
+      }
+      renderNotifs(filteredNotifs);
+      if (failureCount === 0) {
+        showToast(successCount + ' notification(s) marquee(s) comme lue(s).', 'success');
+      } else {
+        showToast(successCount + ' reussie(s), ' + failureCount + ' echouee(s).', 'warning');
       }
     }
 

@@ -81,5 +81,50 @@
   </div>
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
+  <script>
+    async function chargerNotifications() {
+      const idClient = new URLSearchParams(window.location.search).get('clientId') || '1';
+      try {
+        const res = await Notifications.listerClient(idClient);
+        if (!res || !res.ok) throw new Error('Erreur');
+        const page = await res.json();
+        const notifs = page.content || [];
+        const tbody = document.querySelector('.data-table tbody');
+        tbody.innerHTML = '';
+        notifs.forEach(n => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${n.dateEnvoi ? new Date(n.dateEnvoi).toLocaleString('fr-FR') : '-'}</td>
+            <td>${n.clientNom || '-'}</td>
+            <td><span class="badge badge-info">${n.canal || '-'}</span></td>
+            <td>${n.objet || n.message || '-'}</td>
+            <td><span class="badge ${n.lu ? 'badge-success' : 'badge-pending'}">${n.lu ? 'Envoyé' : 'En attente'}</span></td>
+            <td>${!n.lu ? `<button class="btn btn-outline btn-sm" onclick="marquerLue(${n.id})">Marquer lu</button>` : '-'}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        showToast('Impossible de charger les notifications', 'error');
+      }
+    }
+
+    async function marquerLue(id) {
+      try {
+        const res = await Notifications.marquerLue(id);
+        if (res && res.ok) {
+          showToast('Notification marquée lue', 'success');
+          chargerNotifications();
+        }
+      } catch (e) {
+        showToast('Erreur réseau', 'error');
+      }
+    }
+
+    document.querySelector('.btn-primary').onclick = () => {
+      showToast('Tout marquer lu (à implémenter)', 'info');
+    };
+
+    chargerNotifications();
+  </script>
 </body>
 </html>

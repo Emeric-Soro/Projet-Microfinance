@@ -72,5 +72,67 @@
   </div>
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
+  <script>
+    async function chargerEcheancesRetard() {
+      try {
+        const res = await Credits.echeancesRetard();
+        if (!res || !res.ok) throw new Error('Erreur');
+        const echeances = await res.json();
+        const tbody = document.querySelector('.data-table tbody');
+        tbody.innerHTML = '';
+        echeances.forEach(e => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${e.numeroCredit || e.idCredit}</td>
+            <td>${e.nomClient || '-'}</td>
+            <td>${e.dateEcheance ? new Date(e.dateEcheance).toLocaleDateString('fr-FR') : '-'}</td>
+            <td><span class="badge badge-danger">${e.joursRetard || 0} jours</span></td>
+            <td>${(e.montantEcheance || 0).toLocaleString('fr-FR')} FCFA</td>
+            <td><button class="btn btn-outline btn-sm" onclick="location.href='credit-detail.html?id=${e.idCredit}'">Voir</button></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        showToast('Impossible de charger les échéances en retard', 'error');
+      }
+    }
+
+    async function executerActionCredit() {
+      const idCredit = prompt('ID du crédit ?');
+      if (!idCredit) return;
+      const action = document.querySelector('.grid-2 select').value;
+      try {
+        let res;
+        if (action === 'Instruire') res = await Credits.instruire(idCredit);
+        else if (action === 'Approuver') res = await Credits.approuver(idCredit);
+        else if (action === 'Passation en perte') res = await Credits.passerSouffrance(idCredit);
+        else if (action === 'Restructurer') {
+          const duree = prompt('Nouvelle durée (mois) ?');
+          if (!duree) return;
+          res = await Credits.restructurer(idCredit, parseInt(duree));
+        } else if (action === 'Ajouter garantie') {
+          const type = prompt('Type de garantie ?');
+          const valeur = prompt('Valeur estimée ?');
+          if (!type) return;
+          res = await Credits.ajouterGaranties(idCredit, [{
+            typeGarantie: type,
+            description: type,
+            valeurEstimee: valeur ? parseFloat(valeur) : 0
+          }]);
+        }
+        if (res && res.ok) {
+          showToast('Action ' + action + ' effectuée', 'success');
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Erreur', 'error');
+        }
+      } catch (e) {
+        showToast(e.message || 'Erreur réseau', 'error');
+      }
+    }
+
+    document.querySelector('.grid-2 .btn-primary').onclick = executerActionCredit;
+    chargerEcheancesRetard();
+  </script>
 </body>
 </html>

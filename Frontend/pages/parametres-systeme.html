@@ -26,7 +26,7 @@
             <h1 class="page-title">Référentiels système</h1>
             <p class="page-subtitle">Paramètres globaux, jours fériés et tarification générale.</p>
           </div>
-          <button class="btn btn-primary" onclick="showToast('Paramètres sauvegardés.', 'success')">Enregistrer</button>
+          <button class="btn btn-primary" onclick="saveSystemParams()">Enregistrer</button>
         </div>
 
         <section class="grid-2">
@@ -73,5 +73,45 @@
   </div>
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
+  <script>
+    async function chargerParametres() {
+      try {
+        const res = await ParametrageSysteme.obtenir();
+        if (!res || !res.ok) throw new Error('Erreur');
+        const params = await res.json();
+        const map = {};
+        params.forEach(p => map[p.codeParametre || p.cle] = p.valeur);
+        // Mapping simple si les clés existent
+        if (map.DEVISE_DEFAULT) document.querySelector('select').value = map.DEVISE_DEFAULT;
+        if (map.TIMEZONE) document.querySelector('input[value="Africa/Abidjan"]').value = map.TIMEZONE;
+        if (map.SESSION_TIMEOUT_MIN) document.querySelectorAll('.form-row input')[0].value = map.SESSION_TIMEOUT_MIN;
+        if (map.SESSION_ALERT_MIN) document.querySelectorAll('.form-row input')[1].value = map.SESSION_ALERT_MIN;
+      } catch (e) {
+        showToast('Impossible de charger les paramètres système', 'error');
+      }
+    }
+
+    async function saveSystemParams() {
+      const data = {
+        devise: document.querySelector('select').value,
+        timezone: document.querySelector('input[value="Africa/Abidjan"]').value,
+        sessionTimeout: parseInt(document.querySelectorAll('.form-row input')[0].value),
+        sessionAlert: parseInt(document.querySelectorAll('.form-row input')[1].value)
+      };
+      try {
+        const res = await ParametrageSysteme.mettreAJour(data);
+        if (res && res.ok) {
+          showToast('Paramètres sauvegardés', 'success');
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Erreur', 'error');
+        }
+      } catch (e) {
+        showToast(e.message || 'Erreur réseau', 'error');
+      }
+    }
+
+    chargerParametres();
+  </script>
 </body>
 </html>

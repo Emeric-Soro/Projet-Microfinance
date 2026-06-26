@@ -184,9 +184,39 @@
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
   <script>
+    async function chargerAudit() {
+      try {
+        const res = await AuditLogs.lister();
+        if (!res || !res.ok) throw new Error('Erreur');
+        const page = await res.json();
+        const logs = page.content || [];
+        const tbody = document.querySelector('.data-table tbody');
+        tbody.innerHTML = '';
+        logs.forEach(l => {
+          const tr = document.createElement('tr');
+          const actionClass = l.action === 'INSERT' ? 'green' : l.action === 'DELETE' ? 'orange' : 'red';
+          tr.innerHTML = `
+            <td style="font-size:12px;white-space:nowrap;">${l.horodatage ? new Date(l.horodatage).toLocaleString('fr-FR') : '-'}</td>
+            <td style="font-size:12px;"><span class="badge badge-info">${l.agent || '-'}</span></td>
+            <td><span style="background: ${actionClass === 'green' ? 'rgba(46,125,50,0.12);color:#2E7D32' : actionClass === 'orange' ? 'rgba(250,180,130,0.2);color:#E65100' : 'rgba(217,48,37,0.12);color:#D93025'};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;">${l.action || '-'}</span></td>
+            <td style="font-size:11px;font-family:monospace;">${l.table || l.resource || '-'}</td>
+            <td style="font-size:11px;">${l.reference || l.enregistrement || '-'}</td>
+            <td style="font-size:11px;color:#4A7A8A;">${l.diffAvant || l.ancienneValeur || '—'}</td>
+            <td style="font-size:11px;">${l.diffApres || l.nouvelleValeur || '—'}</td>
+            <td style="font-size:11px;font-family:monospace;">${l.adresseIp || l.ip || '-'}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        showToast('Impossible de charger le journal d\'audit', 'error');
+      }
+    }
+
     function exportAudit() {
       showToast('Export CSV en cours de téléchargement...', 'success');
     }
+
+    chargerAudit();
   </script>
 </body>
 </html>
