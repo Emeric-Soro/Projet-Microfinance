@@ -82,7 +82,7 @@ public class DashboardController {
             @ApiResponse(responseCode = "200", description = "Donnees des graphiques recuperees avec succes")
     })
     @GetMapping("/graphiques")
-    @PreAuthorize("hasAnyAuthority('ADMIN','CHEF_AGENCE','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','CHEF_AGENCE','GUICHETIER','DIRECTEUR')")
     public ResponseEntity<DashboardChartsResponseDTO> getGraphiques(
             @RequestParam(required = false) Long agenceId
     ) {

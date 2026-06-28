@@ -246,7 +246,7 @@ public class TransactionController {
     @Operation(summary = "Lister toutes les transactions", description = "Retourne la liste paginée de toutes les transactions")
     @ApiResponses({ @ApiResponse(responseCode = "200", description = "Liste des transactions") })
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','CHEF_AGENCE','GUICHETIER')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','CHEF_AGENCE','GUICHETIER','DIRECTEUR')")
     public ResponseEntity<Page<TransactionDetailResponseDTO>> listerToutesLesTransactions(@ParameterObject Pageable pageable) {
         Page<Transaction> transactions = transactionService.listerToutes(pageable);
         return ResponseEntity.ok(transactions.map(operationMapper::toDetailResponseDTO));

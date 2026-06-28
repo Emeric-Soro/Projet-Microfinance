@@ -44,11 +44,26 @@
     }
   }
 
+  /**
+   * Retourne la première page autorisée pour un rôle donné.
+   * Ordre de priorité : Dashboard → Clients → Comptes → Opérations → Paramétrage → Sécurité
+   */
+  var ROLE_FIRST_PAGE = {
+    ADMIN:            'dashboard.html',
+    GUICHETIER:       'clients.html',
+    SUPERVISEUR:      'clients.html',
+    AGENT_COMMERCIAL: 'clients.html',
+    AGENT_CREDIT:     'clients.html',
+    CHEF_AGENCE:      'dashboard.html',
+    DIRECTEUR:        'dashboard.html'
+  };
+
   function getHomeDashboardUrl(user) {
     var u = user || getUser();
-    var role = u && Array.isArray(u.roles) && u.roles.length ? u.roles[0] : '';
-    if (role === 'DIRECTEUR') return 'direction.html';
-    if (role === 'SUPERVISEUR') return 'dashboard-superviseur.html';
+    if (u && u.roles) {
+      var role = Array.isArray(u.roles) && u.roles.length ? u.roles[0] : null;
+      if (role && ROLE_FIRST_PAGE[role]) return ROLE_FIRST_PAGE[role];
+    }
     return 'dashboard.html';
   }
 
@@ -796,19 +811,6 @@
 
   function getDashboardNavItems(role) {
     const base = { icon: icons.dashboard };
-    if (role === 'ADMIN') {
-      return [
-        { ...base, href: 'dashboard.html', label: 'Dashboard agence', match: ['dashboard.html'] },
-        { ...base, href: 'direction.html', label: 'Direction', match: ['direction.html'] },
-        { ...base, href: 'dashboard-superviseur.html', label: 'Supervision', match: ['dashboard-superviseur.html'] }
-      ];
-    }
-    if (role === 'DIRECTEUR') {
-      return [{ ...base, href: 'direction.html', label: 'Tableau de bord', match: ['direction.html'] }];
-    }
-    if (role === 'SUPERVISEUR') {
-      return [{ ...base, href: 'dashboard-superviseur.html', label: 'Tableau de bord', match: ['dashboard-superviseur.html'] }];
-    }
     return [{ ...base, href: 'dashboard.html', label: 'Dashboard', match: ['dashboard.html'] }];
   }
 
@@ -868,21 +870,54 @@
     const roles = Array.isArray(user.roles) && user.roles.length ? user.roles[0] : 'Agent';
     const initiales = login.substring(0, 2).toUpperCase();
 
-    // ── Filtrage par rôle ──────────────────────────────────
+    // ── Filtrage par rôle (par ITEM individuel) ────────────
+    // Clé = titre de section, Valeur = liste des href autorisés
+    // 'ALL' = accès complet à toutes les sections
     const ROLE_ACCESS = {
-      GUICHETIER:       ['Opérations'],
-      SUPERVISEUR:      ['Tableau de bord', 'Opérations', 'Clients'],
-      AGENT_COMMERCIAL: ['Clients', 'Comptes'],
-      AGENT_CREDIT:     ['Clients'],
-      CHEF_AGENCE:      ['Tableau de bord', 'Clients', 'Comptes', 'Opérations'],
-      DIRECTEUR:        ['Tableau de bord', 'Clients', 'Comptes', 'Opérations'],
-      ADMIN:            'ALL'
+      ADMIN: 'ALL',
+      GUICHETIER: {
+        'Clients':    ['clients.html'],
+        'Opérations': ['versement.html', 'retrait.html', 'virement.html', 'historique.html']
+      },
+      SUPERVISEUR: {
+        'Clients':    ['clients.html', 'client-detail.html'],
+        'Opérations': ['historique.html']
+      },
+      AGENT_COMMERCIAL: {
+        'Clients':  ['clients.html', 'client-create.html', 'client-detail.html', 'kyc-validation.html'],
+        'Comptes':  ['comptes.html', 'ouverture-compte.html', 'detail-compte.html']
+      },
+      AGENT_CREDIT: {
+        'Clients': ['clients.html', 'client-detail.html']
+      },
+      CHEF_AGENCE: {
+        'Tableau de bord': ['dashboard.html'],
+        'Clients':         ['clients.html', 'client-create.html', 'client-detail.html', 'kyc-validation.html'],
+        'Comptes':         ['comptes.html', 'ouverture-compte.html', 'detail-compte.html'],
+        'Opérations':      ['historique.html']
+      },
+      DIRECTEUR: {
+        'Tableau de bord': ['dashboard.html'],
+        'Clients':         ['clients.html', 'client-detail.html'],
+        'Comptes':         ['comptes.html', 'detail-compte.html'],
+        'Opérations':      ['historique.html']
+      }
     };
 
     const allowedSections = ROLE_ACCESS[roles] || 'ALL';
     const visibleGroups = (allowedSections === 'ALL'
       ? navGroups
-      : navGroups.filter(group => allowedSections.includes(group.title))
+      : navGroups
+          .filter(group => allowedSections[group.title])
+          .map(group => {
+            const allowedItems = allowedSections[group.title];
+            return {
+              ...group,
+              items: group.items.filter(item =>
+                item.match.some(m => allowedItems.includes(m))
+              )
+            };
+          })
     ).map(group => {
       if (group.title === 'Tableau de bord') {
         return { ...group, items: getDashboardNavItems(roles) };

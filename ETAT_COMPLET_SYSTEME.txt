@@ -1,0 +1,1173 @@
+================================================================================
+           ETAT COMPLET DU SYSTEME — SOUTRA MICROFINANCE (Core Banking)
+================================================================================
+Date du rapport: 28 Juin 2026
+Version du code: MVP Demo July 2, 2026
+
+================================================================================
+TABLE DES MATIERES
+================================================================================
+1. VUE D'ENSEMBLE & ARCHITECTURE
+2. STACK TECHNOLOGIQUE
+3. DEPLOYMENT (Docker Compose)
+4. BACKEND SPRING BOOT
+   4.1 Controllers & Endpoints (~200+ endpoints)
+   4.2 Service Layer (57 services)
+   4.3 Entities / Domain Model (40+ entities)
+   4.4 Security Architecture (JWT, RBAC, Filters)
+   4.5 Database (Oracle XE, Flyway migrations)
+   4.6 Configuration
+5. FRONTEND BACKOFFICE (102 pages)
+   5.1 Liste complete des 102 pages HTML
+   5.2 app.js — API Client + UI Kernel (1317 lignes)
+   5.3 CSS Design System
+   5.4 Login Flow
+   5.5 RBAC Sidebar Filtering
+6. CLIENT PORTAL (20 pages)
+   6.1 Liste complete des 20 pages HTML
+   6.2 portal-app.js — Client API Layer
+7. MATRICE RBAC (8 roles)
+8. DOCUMENTATION
+9. IDENTIFIANTS DE TEST
+10. ETAT DE SANTE / NOTES
+================================================================================
+
+================================================================================
+1. VUE D'ENSEMBLE & ARCHITECTURE
+================================================================================
+
+Application de microfinance complete ("Soutra Finance") comportant :
+- Un backend API REST (Spring Boot) sur port 8080
+- Un frontoffice backoffice (HTML/JS vanilla) sur port 3000
+- Un portail client e-banking (HTML/JS vanilla) sur port 3001
+- Une base de donnees Oracle XE sur port 1521
+- Un outil d'admin DB CloudBeaver sur port 8978
+
+Architecture: Monolite modulaire avec separation Backend/Frontend via API REST.
+Authentification: JWT (stateless), 2FA OTP, session guard cote client.
+RBAC: Controle cote backend (@PreAuthorize) + cote frontend (sidebar filtering).
+
+================================================================================
+2. STACK TECHNOLOGIQUE
+================================================================================
+
+BACKEND:
+- Java 21 + Spring Boot 3.5.13
+- Hibernate/JPA + Flyway (20 migrations SQL)
+- JWT (jjwt) — HS256, access tokens (1h) + refresh tokens (7d)
+- BCrypt password hashing
+- Caffeine (dev) / Redis (prod) — JWT blacklist + tarification cache
+- Lombok + MapStruct + Bean Validation
+- SpringDoc OpenAPI / Swagger (dev uniquement)
+- Multi-stage Docker (Maven 3.9 build, JDK 21 runtime)
+
+BASE DE DONNEES:
+- Oracle XE 21 (gvenzl/oracle-xe:21-slim)
+- Schema: CORE_BANKING_USER
+- Tables prefixées: soutra_*
+- 20 scripts Flyway (V0_001 a V20)
+- Donnees de reference: roles, statuts, produits, agences
+
+FRONTEND:
+- HTML5 / CSS3 / JavaScript vanilla (pas de framework)
+- Chart.js (vendored) pour graphiques
+- Design system custom (backoffice.css, 1981 lignes)
+- Portail client: glassmorphism design (portal.css)
+
+DEPLOYMENT:
+- Docker Compose (3 services)
+- Wamp64 local dev
+
+================================================================================
+3. DEPLOYMENT (Docker Compose)
+================================================================================
+
+Service          Image                          Port    Purpose
+----------       ----------                     ----    -------
+oracledb         gvenzl/oracle-xe:21-slim       1521    Oracle DB
+backend          Custom (Dockerfile)            8080    Spring Boot
+cloudbeaver      dbeaver/cloudbeaver:26.0.2     8978    Web DB admin
+
+Volumes: oracle_data, cloudbeaver_workspace, uploads_data
+
+Health checks:
+- Oracle: sqlplus with SELECT 1
+- Backend: Spring Actuator /actuator/health
+
+================================================================================
+4. BACKEND SPRING BOOT
+================================================================================
+
+4.1 CONTROLLERS & ENDPOINTS (~200+ endpoints, 35 controllers)
+─────────────────────────────────────────────────────────────
+
+AUTHENTIFICATION (2 controllers):
+  AuthController (/api/v1/auth):
+    POST   /login                          Public
+    POST   /logout
+    POST   /refresh
+    POST   /2fa/activer
+    POST   /2fa/verifier
+    POST   /mot-de-passe
+    POST   /mot-de-passe/oublie            Public
+    POST   /mot-de-passe/reinitialiser     Public
+    GET    /sessions
+    POST   /sessions/revoguer
+
+  UtilisateurController (/api/v1/utilisateurs):
+    POST   /                               Public (create web account)
+    POST   /login                          Public
+    POST   /login/otp
+    POST   /logout
+
+GESTION CLIENTS (3 controllers):
+  ClientController (/api/v1/clients):
+    POST   /                               Public (self-registration)
+    GET    /                               ADMIN,GUICHETIER,SUPERVISEUR,CHEF_AGENCE,DIRECTEUR,AGENT_COMMERCIAL,AGENT_CREDIT
+    GET    /{id}                           idem
+    GET    /{id}/confidentiel              ADMIN only
+    PUT    /{id}                           ADMIN,AGENT_COMMERCIAL,CHEF_AGENCE
+    PUT    /{id}/statut                    ADMIN,AGENT_COMMERCIAL
+    PUT    /{id}/kyc                       ADMIN,SUPERVISEUR,AGENT_COMMERCIAL
+    PUT    /{id}/kyc/decision              ADMIN,SUPERVISEUR,CHEF_AGENCE,AGENT_COMMERCIAL
+    POST   /{id}/documents                 ADMIN,AGENT_COMMERCIAL
+
+  ClientBlacklistController (/api/v1/clients):
+    GET    /blacklist
+    GET    /blacklist/historique
+    POST   /{idClient}/blacklist
+    DELETE /{idClient}/blacklist
+
+  SecurityAdminController (/api/v1/securite):
+    GET    /roles
+    POST   /roles
+    PUT    /roles/{id}
+    DELETE /roles/{id}
+    GET    /permissions
+    PUT    /permissions
+    GET    /utilisateurs
+    POST   /utilisateurs
+    POST   /utilisateurs/collaborateur
+    PUT    /utilisateurs/{id}
+    PUT    /utilisateurs/{id}/activer-desactiver
+    GET    /sessions
+    POST   /sessions/revoguer
+
+GESTION COMPTES (3 controllers):
+  CompteController (/api/v1/comptes):
+    POST   /                               ADMIN,GUICHETIER,SUPERVISEUR,CHEF_AGENCE,AGENT_COMMERCIAL
+    GET    /                               ADMIN,GUICHETIER,SUPERVISEUR,CHEF_AGENCE,DIRECTEUR,AGENT_COMMERCIAL
+    GET    /{num}/solde
+    GET    /{num}                           idem
+    GET    /client/{idClient}              ADMIN,GUICHETIER,SUPERVISEUR,CHEF_AGENCE,DIRECTEUR,AGENT_COMMERCIAL,AGENT_CREDIT
+    PUT    /decouvert
+    PUT    /{num}/cloture
+    PUT    /{num}/blocage
+    PUT    /{num}/deblocage
+    GET    /{num}/releve                    (PDF/CSV)
+    POST   /{num}/depot-initial
+    GET    /{num}/documents
+    GET    /{num}/documents/{docId}
+    GET    /{num}/historique
+
+  CarteVisaController (/api/v1/cartes-visa):
+    POST   /                               (order card)
+    PUT    /{num}/opposition
+    PUT    /id/{id}/opposition
+    GET    /
+    GET    /{num}
+    PATCH  /{num}
+
+  BeneficiaireController (/api/v1/beneficiaires):
+    GET    /
+    POST   /
+    PUT    /{id}
+    DELETE /{id}
+
+TRANSACTIONS & OPERATIONS (2 controllers):
+  TransactionController (/api/v1/transactions):
+    POST   /depot
+    POST   /retrait
+    POST   /virement
+    PUT    /{ref}/approbation
+    PUT    /{ref}/rejet
+    POST   /paiement-carte
+    GET    /comptes/{num}/historique
+    GET    /                               ADMIN,SUPERVISEUR,CHEF_AGENCE,GUICHETIER,DIRECTEUR
+    GET    /en-attente
+    GET    /{ref}
+    POST   /{ref}/reverser
+    GET    /{ref}/recu
+    GET    /export
+    POST   /mobile-money/depot
+    POST   /mobile-money/retrait
+    GET    /mobile-money
+
+  CaisseController (/api/v1/caisses):
+    POST   /ouverture
+    POST   /fermeture
+    GET    /etat
+
+CREDITS (2 controllers):
+  CreditController (/api/v1/credits):
+    GET    /{id}
+    POST   /{id}/decaissement
+    POST   /{id}/remboursement
+    GET    /{id}/echeancier
+    GET    /client/{idClient}
+    POST   /simulation                     Public
+    GET    /
+    POST   /{id}/instruire
+    POST   /{id}/approuver
+    POST   /{id}/garanties
+    POST   /{id}/restructurer
+    GET    /echeances-retard
+    POST   /{id}/passation
+
+  DemandeCreditController (/api/v1/credits/demandes):
+    POST   /
+    GET    /
+    GET    /{id}
+    PUT    /{id}/decision
+
+PARAMETRAGE (5 controllers):
+  ParametrageSystemeController (/api/v1/parametrages):
+    GET    /systeme                        ADMIN
+    GET    /jours-feries                   ADMIN
+    PUT    /jours-feries                   ADMIN
+
+  ParametrageAgenceController (/api/v1/parametrages/agences):
+    GET    /
+    POST   /
+    PUT    /{id}
+    GET    /{id}
+    GET    /actives
+    PUT    /{id}/desactiver
+
+  ParametrageCreditController (/api/v1/parametrages/produits-credit):
+    GET    /
+    POST   /
+    PUT    /{id}
+    DELETE /{id}
+    GET    /{id}
+    GET    /actives
+
+  ParametrageEpargneController (/api/v1/parametrages/produits-epargne):
+    GET    /
+    POST   /
+    PUT    /{id}
+    DELETE /{id}
+    GET    /actives
+
+  ParametrageTarificationController (/api/v1/parametrages/tarification):
+    GET    /
+    POST   /
+
+CONFORMITE / COMPLIANCE (1 controller):
+  ConformiteController (/api/v1/conformite):
+    POST   /sar                            (SAR declaration)
+    GET    /sar
+    GET    /sar/{id}
+    PUT    /sar/{id}/statut
+    POST   /reclamations
+    GET    /reclamations
+    GET    /reclamations/{id}
+    PUT    /reclamations/{id}
+    POST   /rgpd/consentement              CLIENT only
+    GET    /rgpd/export
+    DELETE /rgpd/donnees
+    GET    /kyc/expires
+    POST   /pep/verifier
+    GET    /pep
+    POST   /alertes-lcbft
+    GET    /alertes-lcbft
+    PUT    /alertes-lcbft/{id}
+
+NOTIFICATIONS (1 controller):
+  NotificationController (/api/v1/notifications):
+    GET    /client/{idClient}
+    PUT    /{id}/lu
+    PUT    /preferences
+
+REPORTING & DASHBOARDS (3 controllers):
+  DashboardController (/api/v1/dashboards):
+    GET    /agence                         ADMIN,CHEF_AGENCE,GUICHETIER
+    GET    /direction                      ADMIN,DIRECTEUR
+    GET    /indicateurs
+    GET    /graphiques                     ADMIN,CHEF_AGENCE,GUICHETIER,DIRECTEUR
+
+  ReportingController (/api/v1/reporting):
+    GET    /operationnel
+    GET    /financier
+    GET    /clients
+    GET    /credits
+    GET    /caisse
+    GET    /bceao
+    GET    /export
+    POST   /personnalise
+
+  StatistiqueController (/api/v1/statistiques):
+    GET    /kpi
+
+TARIFICATION / FEES (2 controllers):
+  AgioController (/api/v1/agios):
+    POST   /frais-tenue/mensuel
+    POST   /penalite-decouvert
+    POST   /prelevements
+
+  TarificationParametreController (/api/v1/tarification/parametres):
+    POST   /cache/refresh
+
+EXCEPTIONS / DEROGATIONS (1 controller):
+  ExceptionController (/api/v1/exceptions):
+    POST   /derogations
+    GET    /derogations
+    PUT    /derogations/{id}/statut
+    POST   /escalades
+    GET    /escalades
+    GET    /escalades/{id}
+    PUT    /escalades/{id}/traiter
+    GET    /regles
+
+AUDIT (1 controller):
+  AuditLogController (/api/v1/audit-logs):
+    GET    /
+
+MOBILE API (10 controllers, /api/v1/mobile/*):
+  MobileAuthController (/api/v1/mobile/auth):
+    POST   /login, /login/otp, /logout, /refresh-token
+    POST   /mot-de-passe/oublie, /mot-de-passe/reinitialiser
+    POST   /pin/creer, /pin/verifier
+    POST   /biometrie/activer, /biometrie/desactiver
+
+  MobileCompteController (/api/v1/mobile/comptes):
+    GET    /, /{id}, /{id}/solde, /{id}/operations, /{id}/releve
+
+  MobileCreditController (/api/v1/mobile/credits):
+    GET    /, /{id}, /{id}/echeancier
+    POST   /simulation (public), /demandes
+    GET    /demandes, /demandes/{id}
+
+  MobileVirementController (/api/v1/mobile/virements):
+    GET    /, /{ref}
+    POST   /, /{ref}/confirmer-otp, /{ref}/annuler
+
+  MobileProfilController (/api/v1/mobile/profil):
+    GET    /, /kyc
+    PUT    /, /kyc
+    POST   /documents
+
+  MobileNotificationController (/api/v1/mobile/notifications):
+    GET    /, /compteur
+    PUT    /{id}/lu, /preferences
+
+  MobileDashboardController (/api/v1/mobile):
+    GET    /dashboard
+
+  MobileOperationController (/api/v1/mobile/operations):
+    GET    /, /{ref}, /{ref}/recu
+
+  MobileReclamationController (/api/v1/mobile/reclamations):
+    GET    /, /{id}
+    POST   /
+
+  MobileBeneficiaireController (/api/v1/mobile/beneficiaires):
+    GET    /, /{id}
+    POST   /
+    PUT    /{id}
+    DELETE /{id}
+
+
+4.2 SERVICE LAYER (57 services)
+─────────────────────────────────
+
+Core:           ClientService, UtilisateurService, SessionService,
+                ClientBlacklistService, DocumentClientService
+
+Comptes:        CompteService, CarteVisaService, BeneficiaireService,
+                ReleveService
+
+Transactions:   TransactionService, CaisseService
+
+Credits:        CreditService, AmortissementService
+
+Conformite:     ConformiteService
+
+Communication:  NotificationService, EmailService
+
+Reporting:      ReportingService, DashboardService, StatistiqueService
+
+Parametrage:    ParametrageSystemeService, AgenceService, ProduitService
+
+Tarification:   TarificationParametreService, AgioService
+
+Comptabilite:   MoteurComptableService, ComptabiliteOperationnelleService
+
+Exceptions:     ExceptionService
+
+Audit:          SystemAuditLogService
+
+Mobile:         MobileAuthService, MobileBeneficiaireService,
+                MobileReclamationService
+
+Mappers (6):    ClientMapper, CompteMapper, OperationMapper,
+                CreditMapper, UtilisateurMapper, TarificationMapper
+
+DTOs (~150):    78 Request DTOs + 72 Response DTOs
+
+
+4.3 ENTITIES / DOMAIN MODEL (40+ entities)
+───────────────────────────────────────────
+
+CORE DOMAIN:
+  Client          (soutra_client)         idClient, codeClient, nom, prenom, dateNaissance,
+                                          telephone, email, typePieceIdentite, numeroPieceIdentite,
+                                          statutKyc, niveauRisque, pep, revenuMensuel,
+                                          secteurActivite, photoIdentiteUrl, photoProfilUrl
+
+  Utilisateur     (soutra_utilisateur)    idUser, login, password (BCrypt), actif,
+                                          secondFacteurActive, otpChallengeId, otpHash,
+                                          resetTokenHash, implements UserDetails
+
+  Compte          (soutra_compte)         idCompte, numCompte, solde, devise (XOF),
+                                          tauxInteret, decouvertAutorise, dateOuverture
+
+  Transaction     (soutra_transaction)    idTransaction, referenceUnique, montantGlobal,
+                                          frais, statutOperation, validationSuperviseurRequise
+
+  Credit          (soutra_credit)         idCredit, referenceCredit, montantAccorde,
+                                          montantRestantDu, tauxInteretAnnuel, dureeMois,
+                                          methodeCalcul, dateDecaissement
+
+  DemandeCredit   (soutra_demande_credit) Demande lifecycle before credit approval
+
+  Echeance        (soutra_echeance)       Amortization schedule entries
+
+  Garantie        (soutra_garantie)       Collateral/guarantee records
+
+  CarteVisa       (soutra_carte_visa)     Card number (masked), expiry, plafondJournalier, statut
+
+  Agence          (soutra_agence)         idAgence, codeAgence, nom, adresse, telephone, estActive
+
+  Caisse          (soutra_caisse)         soldeOuverture, soldeCourant, ecartFermeture, statut
+
+  Beneficiaire    (soutra_beneficiaire)   Transfer beneficiaries
+
+  Notification    (soutra_notification)   message, typeCanal, statutEnvoi, lu
+
+  DocumentClient  (soutra_document_client) File uploads for KYC
+
+  SystemAuditLog  (soutra_system_audit_log) action, ressource, utilisateur, adresseIp
+
+ENUMS/REFERENCES:
+  StatutClient, StatutCompte, StatutCredit, StatutDemande, StatutKycClient,
+  StatutOperation, StatutEnvoi, TypeCompte, TypeTransaction,
+  TypePieceIdentite, TypeCanal, TypeGarantie, TypeAgio,
+  RoleUtilisateur, NiveauRisqueClient, MethodeCalculInteret,
+  SensEcriture, ReleveFormat, ProduitCredit, ProduitEpargne,
+  TarificationParametre, Agio
+
+COMPLIANCE:
+  Reclamation, RapportSarsCentif, AlerteLcbFt,
+  PersonnePolitiquementExposee, ConsentementRgpd
+
+ACCOUNTING:
+  CompteComptable, EcritureComptable, LigneEcriture, TransactionComptable
+
+OTHER:
+  ClientBlacklist, ClientBlacklistHistory, Escalade, Derogation,
+  NotificationPreference, BaseAuditEntity
+
+
+4.4 SECURITY ARCHITECTURE
+──────────────────────────
+
+JWT Auth Flow:
+  1. JwtAuthenticationFilter (OncePerRequestFilter)
+     - extracts Bearer token
+     - validates signature + expiry + blacklist
+     - loads UserDetails
+     - sets SecurityContext
+  2. JwtService — HS256 signing
+     - access tokens (1h default)
+     - refresh tokens (7d)
+     - JTI claim, token_type claim
+  3. JwtTokenBlacklistService
+     - in-memory (dev) or Redis (prod)
+  4. ApplicationConfig
+     - BCryptPasswordEncoder
+     - DaoAuthenticationProvider
+     - UserDetailsService (from UtilisateurRepository)
+
+Filter Chain:
+  1. PublicApiRateLimitingFilter (before JWT filter)
+     - Rate limiting for public endpoints
+  2. JwtAuthenticationFilter (before UsernamePasswordAuthenticationFilter)
+
+Session Management: STATELESS (no server-side sessions)
+
+CORS: Configurable origins via APP_CORS_ALLOWED_ORIGINS
+  - localhost:5173, :80, :3000, :3001 + 127.0.0.1 variants
+  - Methods: GET/POST/PUT/DELETE/PATCH/OPTIONS
+
+Public Endpoints:
+  - POST /api/v1/auth/login, /api/v1/auth/refresh
+  - POST /api/v1/utilisateurs/login, /api/v1/utilisateurs
+  - POST /api/v1/mobile/auth/*
+  - POST /api/v1/credits/simulation, /api/v1/mobile/credits/simulation
+  - POST /api/v1/clients (self-registration)
+  - GET  /api/v1/health, /api/v1/health/db, /api/v1/health/cache
+  - /upload/** (file serving)
+  - /actuator/health/**, /actuator/info
+
+Account Lockout: 5 failed attempts → 15min lockout
+OTP: 6-digit code, 5min validity, 3 max attempts
+Credentials expiry: 90 days
+Password reset: Email token, 30min validity
+
+Cross-cutting:
+  - @AuditLog annotation + AuditLogAspect (AOP)
+  - @accountAccessSecurity SpEL bean (CLIENT role: own accounts only)
+  - @Version on Client, Compte, Credit, Transaction (optimistic locking)
+  - File upload: configurable storage, 5MB max
+  - SMS: Wave, Orange Money, MTN MoMo (configurable)
+  - Email: SMTP (Gmail default), password reset
+
+
+4.5 DATABASE (Oracle XE, Flyway Migrations)
+────────────────────────────────────────────
+
+20 migrations SQL (V0_001 through V20):
+  V0_001: Core tables (client, compte, transaction, etc.)
+  V1-V7:  Tarification, card CVV removal, notification alignment,
+          auth/KYC hardening, agence links, optimistic locking,
+          chart of accounts
+  V8-V14: Table prefixing (soutra_*), audit columns, conformite tables,
+          exception tables, credit status seeding, indexes
+  V15-V20: Password reset columns, document/notification tables,
+           entity indexes, missing columns, client blacklist,
+           photo_profil_url
+
+Reference data (reference-data.sql):
+  - Client statuses: NOUVEAU, ACTIF, BLOQUE, FERME
+  - Account types: COURANT, EPARGNE, DAT
+  - Transaction types: 6 types
+  - Roles: 9 (ADMIN, SUPERVISEUR, CHEF_AGENCE, DIRECTEUR, GUICHETIER,
+              AGENT_COMMERCIAL, AGENT_CREDIT, CLIENT, COMPTABLE)
+  - Credit statuses: 8
+  - Default agency: AG-001
+  - Credit products: MC-COMMERCE, MC-AGRICULTURE, PRET-SALARIE
+  - Savings products: EP-VUE, DAT-6M, DAT-12M
+  - Notification channels, delivery statuses
+
+
+4.6 CONFIGURATION
+──────────────────
+
+application.properties (key settings):
+  - DB: Oracle XE @127.0.0.1:1521/XEPDB1
+  - Flyway: enabled, locations: classpath:db/migration
+  - JWT: HS256, access=1h, refresh=7d
+  - CORS: configurable origins
+  - File upload: 5MB max
+  - Cache: Caffeine (dev), Redis (prod)
+  - Rate limiting: configurable per endpoint
+
+application-dev.properties:
+  - Swagger enabled
+  - DEBUG logging
+
+application-prod.properties:
+  - Redis blacklist
+  - Swagger disabled
+  - INFO logging
+
+.env:
+  - DB_URL: jdbc:oracle:thin:@127.0.0.1:1521/XEPDB1
+  - DB_USERNAME: core_banking_user
+  - ORACLE_PASSWORD: oracle_admin_pass
+  - JWT secret: base64 dev secret
+  - Port: 8080
+  - CORS: localhost:5173, :80, :3000, :3001
+  - Rate limits: signup 3-5 req/min, login 10 req/min
+  - Cache: tarification 1000 entries, 30min TTL
+  - Demo: demo.admin / Demo@12345
+
+================================================================================
+5. FRONTEND BACKOFFICE (102 pages)
+================================================================================
+
+URL: http://localhost:3000
+Fichier d'entree: Frontend/index.html → redirect vers pages/login.html
+API Backend: http://localhost:8080
+
+
+5.1 LISTE COMPLETE DES 102 PAGES HTML
+──────────────────────────────────────
+
+AUTHENTIFICATION & ERREURS:
+  login.html                    Connexion - Soutra Finance Backoffice
+  otp.html                      Verification OTP - MicroFinance
+  mot-de-passe-oublie.html      Mot de passe oublie
+  403.html                      Acces refuse
+  404.html                      Page introuvable
+  500.html                      Erreur serveur
+
+TABLEAU DE BORD:
+  dashboard.html                Tableau de bord (admin/chef_agence/guichetier)
+  dashboard-superviseur.html    Tableau de bord Superviseur
+  direction.html                Tableau de bord Direction
+
+CLIENTS:
+  clients.html                  Liste clients (search/pagination)
+  client-create.html            Nouveau Client (multi-step form)
+  client-detail.html            Fiche Client (profile, comptes, credits)
+  recherche-client.html         Recherche client
+  kyc-validation.html           Validation KYC (document review + approval)
+  blacklist-client.html         Blacklist clients
+  liste-pep.html                Liste PEP (Politically Exposed Persons)
+  verification-pep.html         Verification PEP
+
+COMPTES:
+  comptes.html                  Recherche de comptes
+  detail-compte.html            Detail compte
+  ouverture-compte.html         Ouverture de Compte (multi-step)
+  blocage-compte.html           Blocage / Deblocage de Compte
+  fermeture-compte.html         Fermeture de compte
+  comptes-a-terme.html          Comptes a terme (DAT)
+
+CARTES:
+  cartes.html                   Cartes Visa (list)
+  detail-carte.html             Detail carte
+  demande-carte.html            Demande de carte
+  opposition-carte.html         Opposition carte
+  paiement-carte.html           Paiement Carte
+
+OPERATIONS (TRANSACTIONS):
+  versement.html                Versement (cash deposit)
+  retrait.html                  Retrait (cash withdrawal)
+  retrait-mm.html               Retrait Mobile Money
+  virement.html                 Virement (account-to-account transfer)
+  historique.html               Historique (transaction history)
+  detail-transaction.html       Detail Transaction (with receipt)
+  annulation.html               Annulation Transaction (contre-passation)
+  export-transactions.html      Export Transactions
+  transactions-mm.html          Transactions Mobile Money
+  recu-thermique.html           Recu thermique (thermal receipt printer)
+  beneficiaires.html            Beneficiaires (transfer beneficiaries)
+
+CAISSE:
+  caisse.html                   Gestion de Caisse (cash register management)
+  fermeture-caisse.html         Fermeture de caisse (end-of-day closure)
+  guichet.html                  Guichet (teller/window operations)
+  rapport-caisse.html           Rapport Caisse (cash register report)
+
+CREDITS:
+  credits.html                  Credits (credit portfolio list)
+  credit-simulation.html        Simulation Credit (loan simulator)
+  credit-demandes.html          Demandes de Credit (credit application list)
+  credit-detail.html            Echeancier Credit (detail + amortization)
+  credit-suivi.html             Suivi Credit (monitoring/follow-up)
+  rapport-credits.html          Rapport Credits
+
+PARAMETRAGE:
+  agences.html                  Agences (branch/agency management)
+  produits.html                 Produits (product catalog)
+  parametres-systeme.html       Parametres systeme
+  calendrier-jours-feries.html  Calendrier jours ferie
+  frais-tenue-compte.html       Frais tenue de compte
+  historique-frais.html         Historique des frais
+  parametres-2fa.html           Parametres 2FA
+  commissions.html              Commissions
+  cache.html                    Cache Tarification
+  penalite-decouvert.html       Penalite decouvert
+  regles-escalade.html          Regles d'escalade
+
+SECURITE & ACCES:
+  securite.html                 Roles & Permissions
+  utilisateurs.html             Gestion des acces utilisateurs
+  personnel-create.html         Ajouter Personnel
+  sessions-actives.html         Sessions actives
+  validation.html               Validation Transactions
+
+REPORTING:
+  reporting.html                Reporting (main hub)
+  rapport-financier.html        Rapport Financier
+  rapport-operationnel.html     Rapport Operationnel
+  rapport-clients.html          Rapport Clients
+  rapport-bceao.html            Rapport BCEAO
+  rapport-personnalise.html     Rapport personnalise
+  export-rapport.html           Export de rapport
+  statistiques-kpi.html         Statistiques & KPI
+  indicateurs-temps-reel.html   Indicateurs temps reel
+
+CONFORMITE & LCB-FT:
+  conformite.html               Conformite (compliance dashboard)
+  alertes-lcbft-creer.html      Creer alerte LCB-FT
+  alertes-lcbft-traiter.html    Traiter alerte LCB-FT
+  sar-creer.html                Nouvelle declaration SAR
+  sar-liste.html                Declarations SAR
+  sar-detail.html               Detail SAR
+  sar-traiter.html              Traiter SAR
+  agios.html                    Agios & Prelevements
+  execution-prelevements.html   Execution prelevements
+  interets-courus.html          Interets courus
+
+RGPD:
+  rgpd-consentement.html        Consentement RGPD
+  rgpd-export.html              Export donnees personnelles
+  rgpd-suppression.html         Suppression donnees
+
+EXCEPTIONS & DEROGATIONS:
+  exceptions.html               Derogations & Escalades
+  derogation-creer.html         Nouvelle Derogation
+  derogation-liste.html         Liste des derogations
+  derogation-detail.html        Detail Derogation
+  derogation-decision.html      Decision derogation
+  escalade-creer.html           Nouvelle Escalade
+  escalade-liste.html           Liste des escalades
+  escalade-detail.html          Detail escalade
+  escalade-traiter.html         Traiter escalade
+
+MOBILE MONEY:
+  mobile-money.html             Mobile Money
+
+NOTIFICATIONS:
+  notifications.html            Notifications
+  notifications-gestion.html    Gestion notifications
+  notifications-preferences.html Preferences notifications
+
+AUDIT:
+  audit.html                    Journal d'audit
+
+RECLAMATIONS:
+  reclamations-backoffice.html  Reclamations clients
+
+
+5.2 APP.JS — API CLIENT + UI KERNEL (1317 lignes)
+──────────────────────────────────────────────────
+
+IIFE #1: API Client Layer (lignes 1-735)
+
+  Constantes:
+    API_BASE = 'http://localhost:8080'
+    SF = { API_BASE, getToken, setSession, clearSession, getUser, getHomeDashboardUrl, getChallengeId, apiFetch, downloadFile }
+
+  Session Management:
+    getToken()           → lit sf_token dans localStorage
+    setSession(data)     → stocke token, refreshToken, user
+    clearSession()       → efface toutes les donnees d'auth
+    getUser()            → parse sf_user depuis localStorage
+    getChallengeId()     → lit sf_challenge_id depuis sessionStorage
+
+  Navigation:
+    getHomeDashboardUrl(user) → page d'accueil selon le role
+    ROLE_FIRST_PAGE:
+      ADMIN, CHEF_AGENCE, DIRECTEUR → dashboard.html
+      GUICHETIER, SUPERVISEUR, AGENT_COMMERCIAL, AGENT_CREDIT → clients.html
+
+  apiFetch(path, options) → wrapper fetch authentifie
+    - Ajoute Authorization: Bearer
+    - Cache-buster _t=timestamp sur GET
+    - Gere 401 (clear session + redirect login)
+    - Gere 403 (toast "Acces refuse")
+    - Skip redirect sur pages: login, otp, mot-de-passe-oublie
+
+  Namespaces API (exposes sur window):
+
+    Auth:               login, verifierOtp, logout
+    Clients:            lister, obtenir, obtenirConfidentiel, creer, modifierStatut,
+                        modifier, traiterKyc, mettreAJourKyc, uploadDocument
+    Comptes:            lister, obtenir, ouvrir, bloquer, debloquer, cloturer,
+                        modifierDecouvert, listerClientComptes
+    Cartes:             lister, commander, opposer, obtenir, opposerParId
+    Beneficiaires:      lister, creer, modifier, supprimer
+    Transactions:       depot, retrait, depotInitial, payerCarte, historiqueCompte,
+                        recu, virement, listerEnAttente, approuver, rejeter, listerToutes
+    Caisses:            ouvrir, fermer, etat
+    Dashboards:         agence, direction, indicateurs, graphiques
+    Conformite:         alertesLcbFt, kycExpires
+    Securite:           listerRoles, creerRole, modifierRole, supprimerRole,
+                        listerPermissions, mettreAJourPermissions, listerUtilisateurs,
+                        creerUtilisateur, modifierUtilisateur, activerDesactiverUtilisateur,
+                        listerSessions, revoquerSession
+    Agences:            lister, creer, modifier, obtenir, desactiver
+    Credits:            simuler, soumettreDemande, listerDemandes, obtenirDemande,
+                        deciderDemande, obtenir, echeancier, decaisser, rembourser,
+                        listerParClient, lister, instruire, approuver, ajouterGaranties,
+                        restructurer, echeancesRetard, passerSouffrance
+    ProduitsCredit:     lister, actifs, creer, modifier, supprimer
+    ProduitsEpargne:    lister, actifs, creer, modifier, supprimer
+    AuditLogs:          lister
+    Notifications:      listerClient, marquerLue, preferences, envoyer
+    Tarification:       obtenir, creer, refreshCache
+    ParametrageSysteme: obtenir, mettreAJour, joursFeries
+
+IIFE #2: Shared UI Kernel (lignes 737-1444)
+
+  Icons: SVG inline icons (dashboard, users, card, cash, transfer, credit, settings, audit, logout, menu, bell, eye, eyeOff)
+
+  navGroups: Sidebar navigation structure (6 sections):
+    1. Tableau de bord → dashboard.html
+    2. Clients → clients.html, client-create.html, kyc-validation.html
+    3. Comptes → comptes.html, ouverture-compte.html
+    4. Operations → versement.html, retrait.html, virement.html, historique.html
+    5. Parametrage → agences.html, produits.html
+    6. Securite → securite.html, utilisateurs.html
+
+  Shared UI Functions:
+    renderSidebar()              → construit sidebar dynamiquement selon role
+    enhanceTopbar()              → ajoute toggle mobile, user chips, logout
+    initMobileSidebar()          → hamburger toggle responsive
+    initModalEvents()            → overlay click + Escape pour fermer modals
+    openModal(modalId)           → affiche modal
+    closeModal(modalId)          → masque modal
+    showToast(message, type)     → notifications toast (success/error/warning/info, 4s)
+    initStepper()                → form wizard multi-step (persistance localStorage)
+    initFilterTabs()             → tab switching UI
+    initSortableTables()         → click-to-sort sur .data-table
+    initExportButtons()          → CSV export from tables
+    exportNearestTable(button)   → CSV blob from nearest .data-table
+    initPasswordToggles()        → eye icon toggle
+    initOtp()                    → OTP input (6-digit auto-advance, paste, countdown 272s)
+    initUploadZones()            → drag-and-drop file upload
+    initFormDrafts()             → auto-save form drafts to localStorage
+    initFieldValidation()        → removes .is-invalid on input
+    validateStep(stepContent)    → validates [required] in stepper step
+    initSearchPredictive()       → autocomplete search dropdown
+    formatCurrency(amount)       → XOF Intl.NumberFormat (fr-FR)
+    formatDate(date)             → Intl.DateTimeFormat (fr-FR)
+    sortTable(table, header, columnIndex) → alphabetical/numeric sort
+
+  DOMContentLoaded Bootstrap:
+    renderSidebar → enhanceTopbar → initMobileSidebar → initModalEvents
+    → initStepper → initFilterTabs → initSortableTables → initExportButtons
+    → initPasswordToggles → initOtp → initUploadZones → initFormDrafts
+    → initFieldValidation
+
+  Global Exports:
+    window.showToast, window.openModal, window.closeModal,
+    window.initStepper, window.initFilterTabs,
+    window.formatCurrency, window.formatDate, window.initSearchPredictive
+
+
+5.3 CSS DESIGN SYSTEM
+──────────────────────
+
+Fichier: Frontend/assets/css/backoffice.css (1981 lignes)
+
+  Font: Inter (Google Fonts, weights 400-800)
+  Colors:
+    --color-primary: #084355 (deep teal)
+    --color-secondary: #8cd5fa (light blue)
+    --color-accent: #fab482 (peach/orange)
+  Aliases francais: --azur-fonce, --azur-pastel, --orange-pastel, --blanc, --gris-clair, etc.
+  Layout: --sidebar-width: 240px, --topbar-height: 64px
+  Shadows: sm/md/lg
+  Border radius: sm/md/lg/xl
+
+  Composants:
+    Login forms, sidebar, topbar, data tables, modals, toasts,
+    steppers, form controls, badges, cards, upload zones,
+    skeleton loaders, OTP inputs, pagination, filter tabs,
+    responsive breakpoints
+
+
+5.4 LOGIN FLOW
+───────────────
+
+  index.html (meta refresh)
+      ↓
+  login.html
+      POST /api/v1/utilisateurs/login
+      ↓
+  ├─ Si res.otpRequis === false:
+  │     SF.setSession(data) → stocke token + user
+  │     redirect → getHomeDashboardUrl(user)
+  │
+  └─ Si res.otpRequis === true:
+        SF.setSession(data) → stocke token, user, challengeId
+        sessionStorage.setItem('sf_otp_login', login)
+        redirect → otp.html
+            ↓
+        otp.html (6-digit input, 272s countdown)
+            POST /api/v1/utilisateurs/login/otp
+            (login, challengeId, codeOtp)
+            ↓
+            ├─ Si ok: SF.setSession(data) → JWT final
+            │         clear sf_otp_login + sf_challenge_id
+            │         redirect → getHomeDashboardUrl(user)
+            │
+            └─ Si error: shake animation + toast error
+                         retry ou retour login
+
+  Session Guard (guardSession()):
+    - Execute immediatement au chargement de chaque page
+    - Si pas de sf_token et page pas dans [login, otp, mot-de-passe-oublie]
+      → redirect vers login.html
+
+  Token Injection:
+    - Chaque appel apiFetch() ajoute Authorization: Bearer
+    - Sur reponse 401: clear session + redirect login
+
+
+5.5 RBAC SIDEBAR FILTERING
+────────────────────────────
+
+  ROLE_ACCESS (dans app.js):
+    ADMIN: 'ALL' (acces complet)
+
+    GUICHETIER:
+      'Clients':    ['clients.html']
+      'Operations': ['versement.html', 'retrait.html', 'virement.html', 'historique.html']
+
+    SUPERVISEUR:
+      'Clients':    ['clients.html', 'client-detail.html']
+      'Operations': ['historique.html']
+
+    AGENT_COMMERCIAL:
+      'Clients':  ['clients.html', 'client-create.html', 'client-detail.html', 'kyc-validation.html']
+      'Comptes':  ['comptes.html', 'ouverture-compte.html', 'detail-compte.html']
+
+    AGENT_CREDIT:
+      'Clients': ['clients.html', 'client-detail.html']
+
+    CHEF_AGENCE:
+      'Tableau de bord': ['dashboard.html']
+      'Clients':         ['clients.html', 'client-create.html', 'client-detail.html', 'kyc-validation.html']
+      'Comptes':         ['comptes.html', 'ouverture-compte.html', 'detail-compte.html']
+      'Operations':      ['historique.html']
+
+    DIRECTEUR:
+      'Tableau de bord': ['dashboard.html']
+      'Clients':         ['clients.html', 'client-detail.html']
+      'Comptes':         ['comptes.html', 'detail-compte.html']
+      'Operations':      ['historique.html']
+
+  Algorithme de filtrage (renderSidebar):
+    1. Lit premier role depuis SF.getUser().roles[0]
+    2. Cherche ROLE_ACCESS[role]
+    3. Si 'ALL' → affiche toutes les navGroups
+    4. Sinon:
+       - Filtre navGroups: uniquement les groupes dont le titre existe dans la map
+       - Filtre items: uniquement ceux dont match[] contient un href autorise
+    5. Cas special: "Tableau de bord" utilise toujours getDashboardNavItems(roles)
+
+
+================================================================================
+6. CLIENT PORTAL (20 pages)
+================================================================================
+
+URL: http://localhost:3001
+Fichier d'entree: ClientPortal/index.html (landing page)
+API Backend: http://localhost:8080
+
+
+6.1 LISTE COMPLETE DES 20 PAGES HTML
+──────────────────────────────────────
+
+  index.html                         Landing page (Soutra Finance E-Banking)
+  pages/login.html                   Connexion client
+  pages/login_old.html               [DEPRECATED]
+  pages/register.html                Inscription client (KYC upload)
+  pages/otp.html                     Validation OTP
+  pages/dashboard.html               Tableau de bord client (soldes, mouvements)
+  pages/dashboard_old.html           [DEPRECATED]
+  pages/comptes.html                 Mes comptes (liste)
+  pages/detail-compte.html           Detail compte (solde, historique, releve)
+  pages/historique-transactions.html Historique transactions (pagination)
+  pages/virement.html                Faire un virement (OTP confirme)
+  pages/credits.html                 Mes credits (liste)
+  pages/detail-credit.html           Detail credit (echancier, paiements)
+  pages/simulation-credit.html       Simulation (calculateur de pret)
+  pages/epargne.html                 Mon epargne
+  pages/profil.html                  Mon profil (consulter/modifier)
+  pages/documents.html               Mes documents (upload/view KYC)
+  pages/notifications-client.html    Notifications client
+  pages/reclamations.html            Mes reclamations
+  pages/reclamations-creer.html      Creer une reclamtion
+  pages/cartes-portal.html           Mes cartes (gestion)
+
+
+6.2 PORTAL-APP.JS — CLIENT API LAYER
+─────────────────────────────────────
+
+  SF_Client:
+    getToken()        → lit sf_client_token
+    setSession(data)  → stocke token, refreshToken, user
+    clearSession()    → efface session
+    getUser()         → parse sf_client_user
+    apiFetch(path)    → fetch avec Bearer token
+
+  ClientAuth:         login(), loginOtp(), logout(), signup(), createUserAccess()
+  ClientDashboard:    getOverview()
+  ClientComptes:      lister(), detail(id), operations(id,page,size), releve(id)
+  ClientVirements:    initier(), confirmerOtp(ref,code), annuler(ref),
+                      listerBeneficiaires(), ajouterBeneficiaire()
+  ClientCredits:      lister(), detail(id), echeancier(id), simuler(),
+                      soumettreDemande(), listerDemandes()
+  ClientEpargne:      listerComptes(), detailCompte(id), listerDats(), detailDat(id)
+  ClientReclamations: lister(), creer(), detail(id)
+  ClientProfil:       consulterProfil(), consulterKyc(), mettreAJourKyc(),
+                      enregistrerDocumentKyc()
+
+  unwrapApiData(res):
+    - Decode {status:'success', data:...} envelope
+    - Retourne JSON brut sinon
+
+  Session guard: redirect vers /pages/login si pas de token (pages non-publiques)
+  Logout: #portalLogoutBtn → ClientAuth.logout() + clearSession()
+  User display: #portalUserName, .user-avatar (photoIdentiteUrl)
+  Toast: window.showToast(message, type)
+
+  CSS: portal.css (glassmorphism — blur, translucent cards, blobs)
+
+
+================================================================================
+7. MATRICE RBAC (8 roles)
+================================================================================
+
+Role              Access Level                    Home Page         Screens Cles
+----              -----------                     ---------         -----------
+ADMIN             Full backoffice                 dashboard.html    Tous les 102 ecrans
+GUICHETIER        Cash operations only            clients.html      Caisse, guichet, versement, retrait, virement, historique
+SUPERVISEUR       Cash + validation + clients RO clients.html       validation.html (main), clients (read-only)
+AGENT_COMMERCIAL  Clients + accounts              clients.html      Client CRUD, KYC submit, account opening
+AGENT_CREDIT      Credit operations               clients.html      Simulation, demandes, dossier, suivi
+CHEF_AGENCE       Agency-wide operations          dashboard.html    Dashboard + all agency screens + 4-eyes validation
+DIRECTEUR         Read-only dashboard             dashboard.html    Dashboard KPIs, clients read, comptes read, credits read
+CLIENT            Separate e-banking portal       N/A               18 ClientPortal pages
+
+
+================================================================================
+8. DOCUMENTATION
+================================================================================
+
+docs/directive/role_ecran.md
+  Matrice RBAC spec — 8 roles, ecrans d'acces par role, impl technique via ROLE_ACCESS
+
+docs/directive/ecran_a_garder.md
+  18 pages MVP pour demo 2 juillet 2026
+  GREEN (garder): dashboard, clients, client-create, kyc-validation, comptes,
+                  ouverture-compte, versement, retrait, virement, historique,
+                  agences, produits, securite, utilisateurs
+  YELLOW (cacher sidebar): certaines pages
+  RED (supprimer nav): pages hors-sujet
+  Plan d'action: 6 jours
+
+docs/directive/IMPORTANT.md
+  Status integration backend: 101 pages connectees
+  19 objets API dans app.js
+  Toutes les pages connectees au backend
+
+docs/directive/important_avec_details_a_surveiller_sinon_workflow_casser.md
+  Status integration detaille avec watch-outs
+  Mappings endpoint-par-page
+  Pages historiquement en mock
+
+docs/prompt-redesign-frontoffice.md
+  Spec redesign UI/UX ClientPortal
+  Unification design avec backoffice
+  Token harmonization, emoji->SVG, sidebar restructure
+  Design uniquement, pas de changements JS
+
+docs/demo-postman-professeur.md
+  Script demo Postman 23 etapes
+  Couvre: auth, caisse, clients, KYC, comptes, transactions, credits, KPIs
+  Identifiants demo inclus
+
+docs/UI_UX_Specifications_Backoffice.md
+  Spec complete UI/UX backoffice
+  6 sprints, tous les ecrans avec layout, champs, comportements UX
+  Couvre: auth, cycle client, comptes, cartes, operations, caisse,
+          credits, parametrage, agios, pilotage, audit
+
+docs/Backend_Endpoints_Ecrans_Backoffice.md
+  Mapping endpoint → ecran frontend
+  Quels endpoints ont des ecrans, quels sont mobile-only
+  Nouveaux ecrans ajoutes
+
+docs/Acteurs_Menus_Ecrans_Backoffice.md
+  11 profils acteurs avec menus visibles, ecrans visibles
+  Actions interdites par profil
+  Matrice synthetique en fin de document
+
+Autres docs:
+  Microfinance_Demo_Prof.postman_collection.json
+  Microfinance_Complete_API.postman_collection.json
+  SOUTRA_Ultimate_API.postman_collection.json
+  Dossier Technique MicroFinance.pdf
+  SI_Systeme_Information_Microfinance.pdf
+  all-endpoints.txt
+  ASSESSMENT_CORE_BANKING.txt
+
+
+================================================================================
+9. IDENTIFIANTS DE TEST
+================================================================================
+
+Backend: http://localhost:8080
+Backoffice: http://localhost:3000/pages/login.html
+ClientPortal: http://localhost:3001
+CloudBeaver: http://localhost:8978 (cbadmin / cbadmin_local_2026)
+
+Identifiants backoffice (tous: Demo@12345):
+  demo.admin             → ADMIN          → dashboard.html
+  yao.koffi              → GUICHETIER     → clients.html
+  demo.superviseur2      → SUPERVISEUR    → clients.html
+  agent.commercial       → AGENT_COMMERCIAL → clients.html
+  adjoua.konan           → AGENT_CREDIT   → clients.html
+  serge.nguessan         → CHEF_AGENCE    → dashboard.html
+  mc.kouassi             → DIRECTEUR      → dashboard.html
+
+Structure user (SF.getUser()):
+  { idUser:47, login:"mc.kouassi", idClient:86, roles:["DIRECTEUR"], actif:true, compteNonVerrouille:true }
+  → roles est un ARRAY, pas une string. Utiliser user.roles.includes('ROLE_NAME')
+
+Identifiant client portal: via ClientAuth.signup() ou creation cote backend
+Code client demo: CLI-DEMO-0001
+
+Oracle DB: CORE_BANKING_USER / oracle_admin_pass @ 127.0.0.1:1521/XEPDB1
+Demo data: 17 users, 17 accounts, 8 transactions
+
+
+================================================================================
+10. ETAT DE SANTE / NOTES
+================================================================================
+
+ETAT ACTUEL:
+  ✅ Backend: BUILD SUCCESS, 35 controllers, ~200+ endpoints, 40+ entities
+  ✅ RBAC: 7 roles backoffice + 1 role client, tous fonctionnels
+  ✅ 7 roles testes avec Playwright: tous PASSENT (0 erreurs 403)
+  ✅ Dashboard: DIRECTEUR voit /dashboards/direction
+  ✅ Frontend: 102 pages HTML, app.js complete (1317 lignes)
+  ✅ ClientPortal: 20 pages, portal-app.js fonctionnel
+  ✅ Oracle DB: 20 migrations, donnees de reference chargees
+
+BUGS RECENTEMENT CORRIGES:
+  ✅ DashboardController /graphiques: DIRECTEUR ajoute
+  ✅ dashboard.html: Check user.roles.includes('DIRECTEUR') au lieu de user.role
+  ✅ Backend @PreAuthorize: Tous les endpoints testes et corriges
+
+NOTES IMPORTANTES:
+  ⚠️ api.js (285 lignes) dans Frontend/assets/js/ est ORPHELIN — pas utilise
+     par les pages backoffice. Considerer supprimer ou documenter comme legacy.
+  ⚠️ rec.js dans Frontend/ est un utilitaire Node.js dev, pas partie du frontend.
+  ⚠️ 102 pages mais le sidebar RBAC ne controle que ~13 pages dans navGroups.
+     Les pages credits, reporting, RGPD, escalades, SAR, conformite etc.
+     sont accessibles via URL directe mais PAS liees dans la sidebar.
+  ⚠️ Design unification ClientPortal/backoffice documentee (prompt-redesign-frontoffice.md)
+     mais PAS encore implementee.
+  ⚠️ COMPTABLE role defini mais avec usage limite dans les controllers.
+  ⚠️ Portal CSS (glassmorphism) differencie du backoffice CSS (teal theme).
+
+TAILLE DU CODEBASE:
+  Backend Java: ~57 services, ~35 controllers, ~150 DTOs, ~40 entities
+  Frontend: 102 HTML + 1 JS (1317 lines) + 1 CSS (1981 lines)
+  ClientPortal: 20 HTML + 1 JS (307 lines) + 1 CSS (glassmorphism)
+  Documentation: 9 markdown + 3 JSON + 2 PDF
+  SQL Migrations: 20 scripts
+
+================================================================================
+                          FIN DU RAPPORT
+================================================================================

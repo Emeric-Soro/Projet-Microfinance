@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Tableau de bord - MicroFinance</title>
   <link rel="stylesheet" href="../assets/css/backoffice.css">
   <script src="../assets/js/chart.min.js"></script>
@@ -209,14 +212,17 @@
     // Load Dashboard KPIs
     async function loadDashboardKpis() {
       try {
-        const res = await Dashboards.agence(null, 'JOUR');
+        var user = (window.SF && window.SF.getUser()) || {};
+        var userRoles = user.roles || [];
+        var isDirecteur = userRoles.includes('DIRECTEUR');
+        var res = isDirecteur ? await Dashboards.direction() : await Dashboards.agence(null, 'JOUR');
         if (res && res.ok) {
           const data = await res.json();
           if (data) {
-            document.getElementById('kpiClientsValue').textContent = data.totalClientsJour || 0;
-            document.getElementById('kpiDepotsValue').textContent = fmt(data.totalDepotsJour);
-            document.getElementById('kpiCreditsValue').textContent = fmt(data.encoursCredit);
-            document.getElementById('kpi4Value').textContent = fmt(data.soldeCaisse);
+            document.getElementById('kpiClientsValue').textContent = data.totalClientsJour || data.totalClients || 0;
+            document.getElementById('kpiDepotsValue').textContent = fmt(data.totalDepotsJour || data.totalDepots || 0);
+            document.getElementById('kpiCreditsValue').textContent = fmt(data.encoursCredit || data.encoursCreditsTotal || 0);
+            document.getElementById('kpi4Value').textContent = fmt(data.soldeCaisse || data.totalComptes || 0);
             
             if (data.nbOperationsEnAttente > 0) {
               document.getElementById('kpi4Trend').innerHTML = `<span style="color:#d93025; font-weight:700;">${data.nbOperationsEnAttente} en attente</span>`;

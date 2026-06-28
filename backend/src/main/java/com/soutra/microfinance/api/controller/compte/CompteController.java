@@ -91,7 +91,7 @@ public class CompteController {
 			@ApiResponse(responseCode = "409", description = "Conflit metier")
     })
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR','CHEF_AGENCE','AGENT_COMMERCIAL')")
     @AuditLog(action = "ACCOUNT_OPEN", resource = "COMPTE")
 	public ResponseEntity<CompteResponseDTO> ouvrirCompte(
 			@Valid @RequestBody OuvertureCompteRequestDTO requestDTO
@@ -113,7 +113,7 @@ public class CompteController {
 			@ApiResponse(responseCode = "200", description = "Comptes retournes avec succes")
 	})
 	@GetMapping
-	@PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
+	@PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR','CHEF_AGENCE','DIRECTEUR','AGENT_COMMERCIAL')")
 	public ResponseEntity<Page<CompteResponseDTO>> listerComptes(
 			@RequestParam(required = false) String search,
 			@ParameterObject Pageable pageable
@@ -152,7 +152,7 @@ public class CompteController {
 			@ApiResponse(responseCode = "404", description = "Compte introuvable")
 	})
 	@GetMapping("/{numCompte}")
-	@PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
+	@PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR','CHEF_AGENCE','DIRECTEUR','AGENT_COMMERCIAL')")
 	public ResponseEntity<CompteResponseDTO> obtenirDetailsCompte(@PathVariable String numCompte) {
 		Compte compte = compteService.obtenirCompteParNumero(numCompte);
 		return ResponseEntity.ok(toCompteResponse(compte));
@@ -167,7 +167,7 @@ public class CompteController {
 			@ApiResponse(responseCode = "404", description = "Client introuvable")
 	})
 	@GetMapping("/client/{idClient}")
-	@PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
+	@PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR','CHEF_AGENCE','DIRECTEUR','AGENT_COMMERCIAL','AGENT_CREDIT')")
 	public ResponseEntity<Page<CompteResponseDTO>> listerComptesClient(
 			@PathVariable Long idClient,
 			@ParameterObject Pageable pageable

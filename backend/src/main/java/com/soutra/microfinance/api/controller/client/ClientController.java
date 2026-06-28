@@ -75,7 +75,7 @@ public class ClientController {
             @ApiResponse(responseCode = "400", description = "Parametres de pagination invalides")
     })
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR','CHEF_AGENCE','DIRECTEUR','AGENT_COMMERCIAL','AGENT_CREDIT')")
     public ResponseEntity<Page<ClientResponseDTO>> listerClients(
             @RequestParam(required = false) String recherche,
             @ParameterObject Pageable pageable
@@ -99,7 +99,7 @@ public class ClientController {
             @ApiResponse(responseCode = "404", description = "Client introuvable")
     })
     @GetMapping("/{idClient}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','GUICHETIER','SUPERVISEUR','CHEF_AGENCE','DIRECTEUR','AGENT_COMMERCIAL','AGENT_CREDIT')")
     public ResponseEntity<ClientResponseDTO> obtenirDetailsClient(@PathVariable Long idClient) {
         Client client = clientService.obtenirDetailsClient(idClient);
         return ResponseEntity.ok(clientMapper.toResponseDTO(client));
@@ -193,7 +193,7 @@ public class ClientController {
             @ApiResponse(responseCode = "404", description = "Client introuvable")
     })
     @PutMapping("/{idClient}/kyc/decision")
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR','CHEF_AGENCE','AGENT_COMMERCIAL')")
     @AuditLog(action = "CLIENT_KYC_DECISION", resource = "CLIENT")
     public ResponseEntity<ClientResponseDTO> traiterDossierKyc(
             @PathVariable Long idClient,
