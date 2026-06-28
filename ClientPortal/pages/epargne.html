@@ -424,7 +424,7 @@
       try {
         var res = await window.ClientEpargne.listerComptes();
         if (res.ok) {
-          epargneData.comptes = await res.json();
+          epargneData.comptes = unwrapApiData(await res.json());
         }
       } catch (err) {
         console.warn('API epargne/comptes non disponible, utilisation des donnees de demonstration.', err);
@@ -527,7 +527,7 @@
       try {
         var res = await window.ClientEpargne.listerDats();
         if (res.ok) {
-          var allDats = await res.json();
+          var allDats = unwrapApiData(await res.json());
           epargneData.dats = allDats.filter(function (d) { return d.statut === 'ACTIF' || d.statut === 'EN_COURS'; });
           epargneData.datHistory = allDats.filter(function (d) { return d.statut !== 'ACTIF' && d.statut !== 'EN_COURS'; });
         }

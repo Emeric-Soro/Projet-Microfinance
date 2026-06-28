@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traiter SAR - MicroFinance</title>
+  <link rel="stylesheet" href="../assets/css/backoffice.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar"></aside>
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title">Traiter la déclaration SAR</div>
+            <div class="topbar-breadcrumb">Accueil / Pilotage & Audit / Conformité / SAR / Traiter</div>
+          </div>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <!-- Page header -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title" id="sarTitle">Chargement...</h1>
+            <p class="page-subtitle" id="sarSubtitle">-</p>
+          </div>
+          <button class="btn btn-outline" id="btnBack">&#8592; Retour au détail</button>
+        </div>
+
+        <!-- SAR summary info -->
+        <section class="card" style="margin-bottom:16px;">
+          <div class="card-header">
+            <div class="card-title">Résumé de la déclaration</div>
+          </div>
+          <div style="padding:16px 20px;" id="sarSummary">
+            <p style="color:var(--color-text-secondary);">Chargement...</p>
+          </div>
+        </section>
+
+        <!-- Decision form -->
+        <section class="card" style="margin-top:16px;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Décision du superviseur</div>
+              <div class="card-subtitle">Endpoint : PUT /api/v1/conformite/sar/{id}</div>
+            </div>
+          </div>
+          <div style="padding:0 20px 20px;">
+            <!-- Decision options -->
+            <div class="sar-decision-options" id="sarDecisionOptions">
+              <div class="sar-decision-opt" data-value="TRAITEE" onclick="selectDecision(this)">
+                <div class="sar-decision-opt-label">Traiter</div>
+                <div class="sar-decision-opt-desc">Marquer comme traitée</div>
+              </div>
+              <div class="sar-decision-opt" data-value="REJETEE" onclick="selectDecision(this)">
+                <div class="sar-decision-opt-label">Rejeter</div>
+                <div class="sar-decision-opt-desc">Rejeter la déclaration</div>
+              </div>
+            </div>
+
+            <!-- Motif -->
+            <div class="form-group">
+              <label class="form-label" for="sarDecisionMotif">Motif de la décision *</label>
+              <textarea class="form-control" id="sarDecisionMotif" rows="4" placeholder="Indiquez le motif de votre décision, les observations du superviseur..."></textarea>
+            </div>
+
+            <!-- Recommandations -->
+            <div class="form-group">
+              <label class="form-label" for="sarRecommandations">Recommandations / Actions correctives</label>
+              <textarea class="form-control" id="sarRecommandations" rows="3" placeholder="Mesures correctives recommandées, suivi à prévoir..."></textarea>
+            </div>
+
+            <!-- Transmettre à CENTIF -->
+            <div class="form-group">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--color-primary);">
+                <input type="checkbox" id="sarTransmettreCentif">
+                Transmettre à CENTIF (Cellule Nationale de Traitement des Informations Financières)
+              </label>
+            </div>
+
+            <!-- Error -->
+            <div id="decisionError" style="display:none;background:#FFF3F3;border-left:3px solid var(--color-danger);padding:10px 14px;border-radius:6px;color:var(--color-danger);font-size:13px;margin-bottom:16px;"></div>
+
+            <!-- Action bar -->
+            <div class="sar-action-bar" style="margin-top:20px;">
+              <div class="sar-action-bar-left">
+                <a class="btn btn-outline" id="btnCancel">Annuler</a>
+              </div>
+              <div class="sar-action-bar-right">
+                <button class="btn btn-primary" id="btnDecision" onclick="submitDecision()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span class="btn-text">Soumettre la décision</span>
+                  <div class="login-spinner" style="display:none;width:16px;height:16px;"></div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ==========================================================
+       SAR Traitement Page
+       GET  /api/v1/conformite/sar/{id}
+       PUT  /api/v1/conformite/sar/{id}
+       ========================================================== */
+
+    // Page-loading guard
+    if (!window.SF || !SF.apiFetch) {
+      window.location.href = 'login.html';
+    }
+
+    var sarId = null;
+    var sarData = null;
+    var selectedDecision = null;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      sarId = new URLSearchParams(window.location.search).get('id');
+      if (!sarId) {
+        showToast('Identifiant manquant dans l\'URL.', 'error');
+        return;
+      }
+      loadSAR();
+    });
+
+    /* ── Load SAR ─────────────────────────────────────────── */
+    async function loadSAR() {
+      if (!sarId) return;
+
+      try {
+        var res = await SF.apiFetch('/api/v1/conformite/sar/' + sarId);
+        if (!res) return;
+
+        if (res.ok) {
+          sarData = await res.json();
+          // Only allow BROUILLON or SOUMISE
+          if (sarData.statut !== 'BROUILLON' && sarData.statut !== 'SOUMISE') {
+            showToast('Cette déclaration a déjà été traitée.', 'info');
+            window.location.href = 'sar-detail.html?id=' + sarId;
+            return;
+          }
+          renderAll(sarData);
+        } else if (res.status === 404) {
+          showToast('Déclaration SAR introuvable (ID: ' + sarId + ').', 'error');
+        } else {
+          showToast('Erreur lors du chargement (HTTP ' + res.status + ').', 'error');
+        }
+      } catch (err) {
+        showToast(err.message || 'Impossible de charger la déclaration SAR.', 'error');
+      }
+    }
+
+    /* ── Render ───────────────────────────────────────────── */
+    function renderAll(s) {
+      renderHeader(s);
+      renderSummary(s);
+    }
+
+    function renderHeader(s) {
+      document.getElementById('sarTitle').textContent = 'SAR #' + (s.id || sarId);
+
+      var statutBadge = getStatutBadge(s.statut);
+      var urgenceBadge = getUrgenceBadge(s.urgence);
+      var subtitle = '<span class="badge ' + statutBadge.cls + '">' + statutBadge.label + '</span> ' +
+        '<span class="badge ' + urgenceBadge.cls + '">' + urgenceBadge.label + '</span>';
+      if (s.typesActivite && s.typesActivite.length) {
+        subtitle += ' &nbsp;<span style="color:var(--color-text-secondary);font-size:13px;">' + escapeHtml(s.typesActivite.join(', ')) + '</span>';
+      }
+      document.getElementById('sarSubtitle').innerHTML = subtitle;
+
+      // Back button
+      document.getElementById('btnBack').href = 'sar-detail.html?id=' + sarId;
+      document.getElementById('btnCancel').href = 'sar-detail.html?id=' + sarId;
+    }
+
+    function renderSummary(s) {
+      var html = '' +
+        '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Statut</span>' +
+          '<span class="sar-info-value"><span class="badge ' + getStatutBadge(s.statut).cls + '">' + getStatutBadge(s.statut).label + '</span></span>' +
+        '</div>' +
+        '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Client</span>' +
+          '<span class="sar-info-value">' + escapeHtml(s.clientNom || '-') + '</span>' +
+        '</div>' +
+        '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Types d\'activité</span>' +
+          '<span class="sar-info-value">' + formatTypesActivite(s.typesActivite) + '</span>' +
+        '</div>' +
+        '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Montant concerné</span>' +
+          '<span class="sar-info-value">' + formatMontant(s.montant) + '</span>' +
+        '</div>' +
+        '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Urgence</span>' +
+          '<span class="sar-info-value"><span class="badge ' + getUrgenceBadge(s.urgence).cls + '">' + getUrgenceBadge(s.urgence).label + '</span></span>' +
+        '</div>' +
+        '<div class="sar-info-row">' +
+          '<span class="sar-info-label">Date déclaration</span>' +
+          '<span class="sar-info-value">' + formatDate(s.dateDeclaration || s.createdAt) + '</span>' +
+        '</div>';
+
+      document.getElementById('sarSummary').innerHTML = html;
+    }
+
+    /* ── Decision selection ───────────────────────────────── */
+    function selectDecision(el) {
+      document.querySelectorAll('.sar-decision-opt').forEach(function (opt) {
+        opt.classList.remove('selected');
+      });
+      el.classList.add('selected');
+      selectedDecision = el.getAttribute('data-value');
+    }
+
+    /* ── Submit decision ──────────────────────────────────── */
+    async function submitDecision() {
+      var errBox = document.getElementById('decisionError');
+      errBox.style.display = 'none';
+
+      if (!selectedDecision) {
+        errBox.textContent = 'Veuillez sélectionner une décision.';
+        errBox.style.display = 'block';
+        showToast('Veuillez sélectionner une décision.', 'error');
+        return;
+      }
+
+      var motif = document.getElementById('sarDecisionMotif').value.trim();
+      if (!motif) {
+        errBox.textContent = 'Le motif de la décision est obligatoire.';
+        errBox.style.display = 'block';
+        showToast('Le motif est obligatoire.', 'error');
+        document.getElementById('sarDecisionMotif').focus();
+        return;
+      }
+
+      var btn = document.getElementById('btnDecision');
+      var spinner = btn.querySelector('.login-spinner');
+      var label = btn.querySelector('.btn-text');
+
+      btn.disabled = true;
+      if (label) label.style.display = 'none';
+      if (spinner) spinner.style.display = 'inline-block';
+
+      var payload = {
+        statut: selectedDecision,
+        commentaire: motif,
+        recommandations: document.getElementById('sarRecommandations').value.trim(),
+        transmisCentif: document.getElementById('sarTransmettreCentif').checked
+      };
+
+      try {
+        var res = await SF.apiFetch('/api/v1/conformite/sar/' + sarId, {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        });
+
+        if (!res) return;
+
+        if (res.ok) {
+          showToast('Décision enregistrée avec succès.', 'success');
+          setTimeout(function () {
+            window.location.href = 'sar-detail.html?id=' + sarId;
+          }, 1200);
+        } else if (res.status === 400) {
+          var data = await res.json().catch(function () { return {}; });
+          var msg = data.errors
+            ? data.errors.map(function (e) { return e.defaultMessage || e.message || e; }).join('. ')
+            : (data.message || 'Données invalides.');
+          errBox.textContent = msg;
+          errBox.style.display = 'block';
+          showToast('Données invalides.', 'error');
+        } else {
+          var data2 = await res.json().catch(function () { return {}; });
+          var msg2 = data2.message || 'Erreur serveur. Réessayez.';
+          errBox.textContent = msg2;
+          errBox.style.display = 'block';
+          showToast(msg2, 'error');
+        }
+      } catch (e) {
+        showToast('Impossible de joindre le serveur.', 'error');
+      } finally {
+        btn.disabled = false;
+        if (label) label.style.display = 'inline';
+        if (spinner) spinner.style.display = 'none';
+      }
+    }
+
+    /* ── Badge helpers ────────────────────────────────────── */
+    function getStatutBadge(statut) {
+      var map = {
+        'BROUILLON': { cls: 'badge-info',      label: 'Brouillon' },
+        'SOUMISE':   { cls: 'badge-pending',    label: 'Soumise' },
+        'EN_COURS':  { cls: 'badge-warning',    label: 'En cours' },
+        'TRAITEE':   { cls: 'badge-success',    label: 'Traitée' },
+        'REJETEE':   { cls: 'badge-danger',     label: 'Rejetée' }
+      };
+      return map[(statut || '').toUpperCase()] || { cls: 'badge-info', label: statut || '-' };
+    }
+
+    function getUrgenceBadge(urgence) {
+      var map = {
+        'BASSE':    { cls: 'badge-active',   label: 'Basse' },
+        'MOYENNE':  { cls: 'badge-info',     label: 'Moyenne' },
+        'HAUTE':    { cls: 'badge-warning',  label: 'Haute' },
+        'CRITIQUE': { cls: 'badge-danger',   label: 'Critique' }
+      };
+      return map[(urgence || '').toUpperCase()] || { cls: 'badge-info', label: urgence || '-' };
+    }
+
+    /* ── Format helpers ───────────────────────────────────── */
+    function formatTypesActivite(types) {
+      if (!types || !types.length) return '-';
+      var labelMap = {
+        'BLANCHIMENT': 'Blanchiment',
+        'FINANCEMENT_TERRORISME': 'Financement terrorisme',
+        'FRAUDE': 'Fraude',
+        'TRANSACTION_SUSPECTE': 'Transaction suspecte',
+        'IDENTITE_SUSPECTE': 'Identité suspecte',
+        'AUTRE': 'Autre'
+      };
+      return types.map(function (t) {
+        return '<span class="badge badge-info" style="margin:2px;">' + (labelMap[t] || t) + '</span>';
+      }).join(' ');
+    }
+
+    function formatMontant(montant) {
+      if (montant === null || montant === undefined || montant === 0) return '-';
+      return Number(montant).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function formatDate(d) {
+      if (!d) return '-';
+      try {
+        return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      } catch (e) { return d; }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

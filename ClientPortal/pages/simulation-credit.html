@@ -579,7 +579,7 @@
         try {
           var res = await window.ClientCredits.simuler(principal, rate, months, 'DEGRESSIF');
           if (res.ok) {
-            var apiData = await res.json();
+            var apiData = unwrapApiData(await res.json());
             renderResults(apiData, principal, months);
             return;
           }

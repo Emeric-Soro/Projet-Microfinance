@@ -395,7 +395,7 @@
         // Load Client accounts
         var accountsRes = await window.ClientComptes.lister();
         if (accountsRes.ok) {
-          accountsList = await accountsRes.json();
+          accountsList = unwrapApiData(await accountsRes.json());
           var sourceSelector = document.getElementById('compteSource');
           sourceSelector.innerHTML = '<option value="">-- Choisir un compte source --</option>';
           
@@ -421,7 +421,7 @@
       try {
         var res = await window.ClientVirements.listerBeneficiaires();
         if (res.ok) {
-          benefList = await res.json();
+          benefList = unwrapApiData(await res.json());
           
           // Populate Selector in Tab 1
           var benefSelector = document.getElementById('beneficiarySelector');

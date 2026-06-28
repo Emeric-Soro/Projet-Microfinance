@@ -502,7 +502,7 @@
             showToast('Impossible de charger votre profil.', 'error');
             return;
           }
-          profileData = await res.json();
+          profileData = unwrapApiData(await res.json());
           renderProfile(profileData);
         } catch (err) {
           console.error(err);
@@ -617,7 +617,7 @@
           });
 
           if (res.ok) {
-            profileData = await res.json();
+            profileData = unwrapApiData(await res.json());
             renderProfile(profileData);
             cancelEdit();
             showToast('Profil mis à jour avec succès.', 'success');
@@ -752,7 +752,7 @@
             container.innerHTML = '<div class="no-data">Impossible de charger le statut KYC.</div>';
             return;
           }
-          var kyc = await res.json();
+          var kyc = unwrapApiData(await res.json());
 
           var statusBadge = '';
           var statusText = '';

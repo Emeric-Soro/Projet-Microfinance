@@ -224,30 +224,18 @@
 Le filtrage se fait dans **`app.js`** au moment de la construction de la sidebar :
 
 ```javascript
-// Pseudo-code — à implémenter dans app.js
+// Implémentation actuelle dans app.js (ROLE_ACCESS)
 const user = SF.getUser(); // { roles: ["GUICHETIER"] }
 const role = user.roles[0]; // "GUICHETIER"
 
 // Filtrer navGroups selon le rôle
-const ACCESS = {
-  GUICHETIER: ["Caisse & Opérations"],
-  SUPERVISEUR: ["Caisse & Opérations", "Clients"],
+const ROLE_ACCESS = {
+  GUICHETIER: ["Opérations"],
+  SUPERVISEUR: ["Tableau de bord", "Opérations", "Clients"],
   AGENT_COMMERCIAL: ["Clients", "Comptes"],
-  AGENT_CREDIT: ["Clients", "Crédits"],
-  CHEF_AGENCE: [
-    "Tableau de bord",
-    "Clients",
-    "Comptes",
-    "Caisse & Opérations",
-    "Crédits",
-  ],
-  DIRECTEUR: [
-    "Tableau de bord",
-    "Clients",
-    "Comptes",
-    "Caisse & Opérations",
-    "Crédits",
-  ],
+  AGENT_CREDIT: ["Clients"],
+  CHEF_AGENCE: ["Tableau de bord", "Clients", "Comptes", "Opérations"],
+  DIRECTEUR: ["Tableau de bord", "Clients", "Comptes", "Opérations"],
   ADMIN: "ALL",
 };
 ```

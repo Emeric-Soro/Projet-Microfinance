@@ -696,7 +696,7 @@
           showToast('Impossible de charger les détails du crédit.', 'error');
           return;
         }
-        creditData = await res.json();
+        creditData = unwrapApiData(await res.json());
         populateHero();
         loadEcheancier();
       } catch (err) {
@@ -750,7 +750,7 @@
           showToast('Impossible de charger l\'échéancier.', 'error');
           return;
         }
-        echeances = await res.json();
+        echeances = unwrapApiData(await res.json());
         renderSchedule();
         renderSummary();
         renderNextPaymentAlert();

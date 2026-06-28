@@ -343,7 +343,7 @@
         // Fetch accounts details
         var accountsRes = await window.ClientComptes.lister();
         if (accountsRes.ok) {
-          var accounts = await accountsRes.json();
+          var accounts = unwrapApiData(await accountsRes.json());
           var accountsList = document.getElementById('accountsList');
           accountsList.innerHTML = '';
 

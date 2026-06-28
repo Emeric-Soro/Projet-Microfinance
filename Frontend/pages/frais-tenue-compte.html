@@ -440,7 +440,7 @@
         document.getElementById('progressComptes').textContent =
           totalComptes.toLocaleString('fr-FR') + ' / ' + totalComptes.toLocaleString('fr-FR') + ' comptes traités';
 
-        setTimeout(function() {
+        setTimeout(async function() {
           closeModal('modalProgress');
           if (res && (res.ok || res.status === 200)) {
             showToast('Exécution terminée avec succès.', 'success');

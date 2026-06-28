@@ -443,7 +443,7 @@
       try {
         var res = await window.ClientComptes.lister();
         if (res.ok) {
-          accountsList = await res.json();
+          accountsList = unwrapApiData(await res.json());
           var selector = document.getElementById('accountSelector');
           selector.innerHTML = '<option value="">-- Sélectionner un compte --</option>';
 

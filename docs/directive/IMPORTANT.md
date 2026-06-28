@@ -1,50 +1,59 @@
 # Récapitulatif de l'intégration Backend des pages du Backoffice
 
-Ce document répertorie l'état de connexion au backend pour toutes les pages définies dans le menu de navigation principal du backoffice (`app.js`), ainsi que les pages spécifiques mentionnées.
+Ce document répertorie l'état de connexion au backend pour toutes les pages du backoffice. **Le sidebar MVP (2 juillet 2026) affiche 18 pages** dans 6 sections. Les autres pages existent et sont connectées mais masquées du menu principal.
 
 ---
 
 ## 📊 Résumé global
 
-| Catégorie                | Pages connectées                                                                                                                                               | Pages déconnectées / Mockées                                                                |
-| :----------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ |
-| **Tableau de bord**      | `dashboard.html`, `direction.html`, `dashboard-superviseur.html`                                                                                               | _Aucune_                                                                                    |
-| **Clients**              | `clients.html`, `client-create.html`, `client-detail.html`, `kyc-validation.html`, `blacklist-client.html`                                                     | _Aucune_                                                                                    |
-| **Comptes**              | `comptes.html`, `detail-compte.html`, `blocage-compte.html`, `fermeture-compte.html`, `ouverture-compte.html`                                                  | _Aucune_                                                                                    |
-| **Caisse & Opérations**  | `caisse.html`, `guichet.html`, `virement.html`, `validation.html`, `historique.html`, `detail-transaction.html`, `annulation.html`, `export-transactions.html` | _Aucune_                                                                                    |
-| **Crédits**              | _Aucune_                                                                                                                                                       | `credit-simulation.html`, `credit-demandes.html`, `credit-detail.html`, `credit-suivi.html` |
-| **Paramétrage**          | `personnel-create.html`, `agences.html`                                                                                                                        | `produits.html`                                                                             |
-| **Sécurité**             | `securite.html`, `utilisateurs.html`                                                                                                                           | `audit.html` (Journal d'audit)                                                              |
-| **Rapports (Hors menu)** | `rapport-financier.html`, `rapport-operationnel.html`                                                                                                          | _Aucune_                                                                                    |
+### Sidebar MVP (18 pages — 6 sections)
+
+| Section               | Pages (MVP)                                                              | Pages hors-menu (connectées mais masquées)                                                  |
+| :-------------------- | :----------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ |
+| **Tableau de bord**   | `dashboard.html`                                                         | `direction.html`, `dashboard-superviseur.html`                                              |
+| **Clients**           | `clients.html`, `client-create.html`, `kyc-validation.html`             | `client-detail.html`, `blacklist-client.html`                                               |
+| **Comptes**           | `comptes.html`, `ouverture-compte.html`                                  | `detail-compte.html`, `blocage-compte.html`, `fermeture-compte.html`                       |
+| **Opérations**        | `versement.html`, `retrait.html`, `virement.html`, `historique.html`     | `caisse.html`, `guichet.html`, `validation.html`, `detail-transaction.html`, `annulation.html`, `export-transactions.html` |
+| **Paramétrage**       | `agences.html`, `produits.html`                                          | `personnel-create.html`                                                                     |
+| **Sécurité**          | `securite.html`, `utilisateurs.html`                                     | `audit.html`                                                                                |
+
+_Toutes les 101 pages existantes sont connectées au backend. Le sidebar n'affiche que les 18 pages MVP pour la démonstration du 2 juillet._
 
 ---
 
-## 🚫 Pages déconnectées / Mockées (À intégrer)
+## ✅ Pages Previously Mocked — Now Connected (28/06/2026)
 
-Ces pages n'appellent actuellement aucune API backend et n'ont pas de fonctions de requête définies dans `app.js`.
+All previously mocked pages have been connected to the backend API.
 
-### 1. Section Crédits (4 pages)
+### 1. Section Crédits (4 pages) — CONNECTÉES
 
-- **`credit-simulation.html` (Simulation & Demande)** : Calcule la simulation localement en JS pur. L'envoi du dossier (`submitCreditRequest`) affiche seulement un toast de confirmation mocké.
-- **`credit-demandes.html` (Demandes de crédit)** : Affiche des demandes factices codées en dur dans le tableau. Les boutons d'action (Accorder/Refuser) affichent des toasts de confirmation mockés.
-- **`credit-detail.html` (Échéancier)** : Affiche un tableau d'amortissement et des métriques entièrement codés en dur pour un client fictif. Les modales de décaissement et remboursement affichent des toasts mockés.
-- **`credit-suivi.html` (Suivi avancé)** : Les KPIs et les tableaux de retard ou garanties sont codés en dur. Les formulaires d'actions affichent des toasts mockés.
-- _Endpoints backend correspondants disponibles :_
-  - `CreditController.java` -> `/api/v1/credits`
-  - `DemandeCreditController.java` -> `/api/v1/credits/demandes`
+- **`credit-simulation.html`** : Utilise `ProduitsCredit.actifs()`, `Credits.simuler()`, `Credits.soumettreDemande()`.
+- **`credit-demandes.html`** : Utilise `Credits.listerDemandes()`, `Credits.deciderDemande()`.
+- **`credit-detail.html`** : Utilise `Credits.obtenir()`, `Credits.echeancier()`, `Credits.decaisser()`, `Credits.rembourser()`.
+- **`credit-suivi.html`** : Utilise `Credits.echeancesRetard()`, `Credits.instruire()`, `Credits.approuver()`, `Credits.passerSouffrance()`, `Credits.restructurer()`, `Credits.ajouterGaranties()`.
 
-### 2. Paramétrage — Produits (`produits.html`)
+### 2. Paramétrage — Produits (`produits.html`) — CONNECTÉE
 
-- **État :** Le tableau des produits (crédits et épargne) est codé en dur dans le HTML. La soumission de la création d'un produit affiche un toast de réussite local sans appeler d'API.
-- _Endpoints backend correspondants disponibles :_
-  - `ParametrageCreditController.java` -> `/api/v1/parametrages/produits-credit`
-  - `ParametrageEpargneController.java` -> `/api/v1/parametrages/produits-epargne`
+- Utilise `ProduitsCredit.lister/creer/supprimer()`, `ProduitsEpargne.lister/creer/supprimer()`.
 
-### 3. Sécurité — Journal d'audit (`audit.html`)
+### 3. Sécurité — Journal d'audit (`audit.html`) — CONNECTÉE
 
-- **État :** Affiche un historique fixe d'actions d'investigation en dur dans le tableau. Le bouton d'exportation déclenche un message toast de simulation de téléchargement.
-- _Endpoints backend correspondants disponibles :_
-  - `AuditLogController.java` -> `/api/v1/audit-logs`
+- Utilise `AuditLogs.lister()`.
+
+### 4. Notifications & Paramétrage Système — CONNECTÉES
+
+- **`notifications.html`** : Utilise `Notifications.listerClient()`, `Notifications.marquerLue()`.
+- **`parametres-systeme.html`** : Utilise `ParametrageSysteme.obtenir()`, `ParametrageSysteme.mettreAJour()`.
+- **`cache.html`** : Utilise `Tarification.refreshCache()`.
+
+### 5. Pages hors-menu créées (28/06/2026)
+
+- **`sar-traiter.html`** : Page de traitement des SAR (TRAITEE/REJETE). Connectée via `SF.apiFetch('/api/v1/conformite/sar/{id}')`.
+- **`derogation-detail.html`** : Page de détail des dérogations. Connectée via `SF.apiFetch('/api/v1/exceptions/derogations/{id}')`.
+
+---
+
+## 🚫 Previous Mock Status (Historical — Resolved)
 
 ---
 
@@ -68,7 +77,7 @@ Ces pages n'appellent actuellement aucune API backend et n'ont pas de fonctions 
 - **`blocage-compte.html` & `fermeture-compte.html`** : Bloquer/Débloquer et Clôturer les comptes via `Comptes.bloquer()` / `Comptes.cloturer()`.
 - **`ouverture-compte.html`** : Vérifie l'éligibilité et ouvre un compte via `Comptes.ouvrir()`.
 
-### 4. Caisse & Opérations
+### 4. Opérations
 
 - **`caisse.html`** : Gère l'ouverture, l'état et la fermeture de caisse via `Caisses`.
 - **`guichet.html`** : Dépôts, retraits (espèces et carte) via `Transactions`.

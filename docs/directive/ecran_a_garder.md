@@ -7,7 +7,7 @@
 ## Contexte
 
 Le projet est un **backoffice bancaire complet** (Soutra Finance). Il comporte actuellement
-**98 pages HTML** et **16 modules backend**. Pour une soutenance/démo d'un MVP,
+**101 pages HTML** et **19 objets API** dans `app.js`. Pour une soutenance/démo d'un MVP,
 l'objectif est de montrer un **flux métier crédible et fonctionnel de bout en bout**,
 pas de couvrir 100 % des features.
 
@@ -172,7 +172,7 @@ Ces modules ne correspondent pas au cœur du produit pour une première démo.
     └── Utilisateurs
 ```
 
-**Total : ~18 pages** contre 98 actuellement dans la sidebar.
+**Total : ~18 pages** contre 101 actuellement dans le projet.
 
 ---
 

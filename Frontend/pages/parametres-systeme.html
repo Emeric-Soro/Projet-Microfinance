@@ -80,7 +80,7 @@
         if (!res || !res.ok) throw new Error('Erreur');
         const params = await res.json();
         const map = {};
-        params.forEach(p => map[p.codeParametre || p.cle] = p.valeur);
+        params.forEach(p => map[p.code || p.codeParametre || p.cle] = p.valeur);
         // Mapping simple si les clés existent
         if (map.DEVISE_DEFAULT) document.querySelector('select').value = map.DEVISE_DEFAULT;
         if (map.TIMEZONE) document.querySelector('input[value="Africa/Abidjan"]').value = map.TIMEZONE;

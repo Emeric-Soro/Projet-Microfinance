@@ -453,6 +453,218 @@
     }
   };
 
+  /* ── Endpoints Credits ───────────────────────────── */
+
+  var Credits = {
+    /** POST /api/v1/credits/simulation */
+    simuler: async function (montant, tauxAnnuel, dureeMois, typeAmortissement) {
+      return await apiFetch('/api/v1/credits/simulation', {
+        method: 'POST',
+        body: JSON.stringify({
+          montant: montant,
+          tauxInteretAnnuel: tauxAnnuel,
+          dureeEnMois: dureeMois,
+          typeAmortissement: typeAmortissement || 'DEGRESSIF'
+        })
+      });
+    },
+    /** POST /api/v1/credits/demandes */
+    soumettreDemande: async function (data) {
+      return await apiFetch('/api/v1/credits/demandes', { method: 'POST', body: JSON.stringify(data) });
+    },
+    /** GET /api/v1/credits/demandes */
+    listerDemandes: async function (page = 0, size = 20) {
+      return await apiFetch('/api/v1/credits/demandes?page=' + page + '&size=' + size);
+    },
+    /** GET /api/v1/credits/demandes/{id} */
+    obtenirDemande: async function (idDemande) {
+      return await apiFetch('/api/v1/credits/demandes/' + idDemande);
+    },
+    /** PUT /api/v1/credits/demandes/{id}/decision */
+    deciderDemande: async function (idDemande, decision, motif) {
+      var body = { decision: decision };
+      if (motif) body.motif = motif;
+      return await apiFetch('/api/v1/credits/demandes/' + idDemande + '/decision', {
+        method: 'PUT',
+        body: JSON.stringify(body)
+      });
+    },
+    /** GET /api/v1/credits/{id} */
+    obtenir: async function (idCredit) {
+      return await apiFetch('/api/v1/credits/' + idCredit);
+    },
+    /** GET /api/v1/credits/{id}/echeancier */
+    echeancier: async function (idCredit) {
+      return await apiFetch('/api/v1/credits/' + idCredit + '/echeancier');
+    },
+    /** POST /api/v1/credits/{id}/decaissement */
+    decaisser: async function (idCredit, numCompteDestination) {
+      return await apiFetch('/api/v1/credits/' + idCredit + '/decaissement', {
+        method: 'POST',
+        body: JSON.stringify({ numCompteDestination: numCompteDestination })
+      });
+    },
+    /** POST /api/v1/credits/{id}/remboursement */
+    rembourser: async function (idCredit, montant) {
+      return await apiFetch('/api/v1/credits/' + idCredit + '/remboursement', {
+        method: 'POST',
+        body: JSON.stringify({ montant: montant })
+      });
+    },
+    /** GET /api/v1/credits/client/{idClient} */
+    listerParClient: async function (idClient) {
+      return await apiFetch('/api/v1/credits/client/' + idClient);
+    },
+    /** GET /api/v1/credits */
+    lister: async function (page = 0, size = 20) {
+      return await apiFetch('/api/v1/credits?page=' + page + '&size=' + size);
+    },
+    /** POST /api/v1/credits/{id}/instruire */
+    instruire: async function (idCredit) {
+      return await apiFetch('/api/v1/credits/' + idCredit + '/instruire', { method: 'POST' });
+    },
+    /** POST /api/v1/credits/{id}/approuver */
+    approuver: async function (idCredit) {
+      return await apiFetch('/api/v1/credits/' + idCredit + '/approuver', { method: 'POST' });
+    },
+    /** POST /api/v1/credits/{id}/garanties */
+    ajouterGaranties: async function (idCredit, garanties) {
+      return await apiFetch('/api/v1/credits/' + idCredit + '/garanties', {
+        method: 'POST',
+        body: JSON.stringify({ garanties: garanties })
+      });
+    },
+    /** POST /api/v1/credits/{id}/restructurer */
+    restructurer: async function (idCredit, nouvelleDuree) {
+      return await apiFetch('/api/v1/credits/' + idCredit + '/restructurer', {
+        method: 'POST',
+        body: JSON.stringify({ nouvelleDureeEnMois: nouvelleDuree })
+      });
+    },
+    /** GET /api/v1/credits/echeances-retard */
+    echeancesRetard: async function () {
+      return await apiFetch('/api/v1/credits/echeances-retard');
+    },
+    /** POST /api/v1/credits/{id}/passation */
+    passerSouffrance: async function (idCredit) {
+      return await apiFetch('/api/v1/credits/' + idCredit + '/passation', { method: 'POST' });
+    }
+  };
+
+  /* ── Endpoints Produits Crédit ───────────────────── */
+
+  var ProduitsCredit = {
+    /** GET /api/v1/parametrages/produits-credit */
+    lister: async function (page = 0, size = 50) {
+      return await apiFetch('/api/v1/parametrages/produits-credit?page=' + page + '&size=' + size);
+    },
+    /** GET /api/v1/parametrages/produits-credit/actives */
+    actifs: async function () {
+      return await apiFetch('/api/v1/parametrages/produits-credit/actives');
+    },
+    /** POST /api/v1/parametrages/produits-credit */
+    creer: async function (data) {
+      return await apiFetch('/api/v1/parametrages/produits-credit', { method: 'POST', body: JSON.stringify(data) });
+    },
+    /** PUT /api/v1/parametrages/produits-credit/{id} */
+    modifier: async function (id, data) {
+      return await apiFetch('/api/v1/parametrages/produits-credit/' + id, { method: 'PUT', body: JSON.stringify(data) });
+    },
+    /** DELETE /api/v1/parametrages/produits-credit/{id} */
+    supprimer: async function (id) {
+      return await apiFetch('/api/v1/parametrages/produits-credit/' + id, { method: 'DELETE' });
+    }
+  };
+
+  /* ── Endpoints Produits Épargne ──────────────────── */
+
+  var ProduitsEpargne = {
+    /** GET /api/v1/parametrages/produits-epargne */
+    lister: async function (page = 0, size = 50) {
+      return await apiFetch('/api/v1/parametrages/produits-epargne?page=' + page + '&size=' + size);
+    },
+    /** GET /api/v1/parametrages/produits-epargne/actives */
+    actifs: async function () {
+      return await apiFetch('/api/v1/parametrages/produits-epargne/actives');
+    },
+    /** POST /api/v1/parametrages/produits-epargne */
+    creer: async function (data) {
+      return await apiFetch('/api/v1/parametrages/produits-epargne', { method: 'POST', body: JSON.stringify(data) });
+    },
+    /** PUT /api/v1/parametrages/produits-epargne/{id} */
+    modifier: async function (id, data) {
+      return await apiFetch('/api/v1/parametrages/produits-epargne/' + id, { method: 'PUT', body: JSON.stringify(data) });
+    },
+    /** DELETE /api/v1/parametrages/produits-epargne/{id} */
+    supprimer: async function (id) {
+      return await apiFetch('/api/v1/parametrages/produits-epargne/' + id, { method: 'DELETE' });
+    }
+  };
+
+  /* ── Endpoints Audit Logs ────────────────────────── */
+
+  var AuditLogs = {
+    /** GET /api/v1/audit-logs */
+    lister: async function (page = 0, size = 50) {
+      return await apiFetch('/api/v1/audit-logs?page=' + page + '&size=' + size);
+    }
+  };
+
+  /* ── Endpoints Notifications ────────────────────── */
+
+  var Notifications = {
+    /** GET /api/v1/notifications/client/{idClient} */
+    listerClient: async function (idClient, page = 0, size = 50) {
+      return await apiFetch('/api/v1/notifications/client/' + idClient + '?page=' + page + '&size=' + size);
+    },
+    /** PUT /api/v1/notifications/{id}/lu */
+    marquerLue: async function (id) {
+      return await apiFetch('/api/v1/notifications/' + id + '/lu', { method: 'PUT' });
+    },
+    /** PUT /api/v1/notifications/preferences */
+    preferences: async function (data) {
+      return await apiFetch('/api/v1/notifications/preferences', { method: 'PUT', body: JSON.stringify(data) });
+    },
+    /** POST - envoyer notification (utilisé par blocage-compte) */
+    envoyer: async function (data) {
+      return await apiFetch('/api/v1/notifications/preferences', { method: 'PUT', body: JSON.stringify(data) });
+    }
+  };
+
+  /* ── Endpoints Tarification ────────────────────── */
+
+  var Tarification = {
+    /** GET /api/v1/parametrages/tarification */
+    obtenir: async function () {
+      return await apiFetch('/api/v1/parametrages/tarification');
+    },
+    /** POST /api/v1/parametrages/tarification */
+    creer: async function (data) {
+      return await apiFetch('/api/v1/parametrages/tarification', { method: 'POST', body: JSON.stringify(data) });
+    },
+    /** POST /api/v1/tarification/parametres/cache/refresh */
+    refreshCache: async function () {
+      return await apiFetch('/api/v1/tarification/parametres/cache/refresh', { method: 'POST' });
+    }
+  };
+
+  /* ── Endpoints Parametrage Systeme ─────────────── */
+
+  var ParametrageSysteme = {
+    /** GET /api/v1/parametrages/systeme */
+    obtenir: async function () {
+      return await apiFetch('/api/v1/parametrages/systeme');
+    },
+    /** PUT /api/v1/parametrages/jours-feries */
+    mettreAJour: async function (data) {
+      return await apiFetch('/api/v1/parametrages/jours-feries', { method: 'PUT', body: JSON.stringify(data) });
+    },
+    /** GET /api/v1/parametrages/jours-feries */
+    joursFeries: async function () {
+      return await apiFetch('/api/v1/parametrages/jours-feries');
+    }
+  };
+
   async function downloadFile(path, defaultFilename) {
     try {
       if (typeof window.showToast === 'function') window.showToast('Téléchargement du fichier en cours...', 'info');
@@ -497,6 +709,13 @@
   window.Conformite = Conformite;
   window.Securite = Securite;
   window.Agences = Agences;
+  window.Credits = Credits;
+  window.ProduitsCredit = ProduitsCredit;
+  window.ProduitsEpargne = ProduitsEpargne;
+  window.AuditLogs = AuditLogs;
+  window.Notifications = Notifications;
+  window.Tarification = Tarification;
+  window.ParametrageSysteme = ParametrageSysteme;
 
 }());
 
@@ -535,8 +754,7 @@
       items: [
         { href: 'clients.html', label: 'Liste clients', icon: icons.users, match: ['clients.html', 'client-detail.html'] },
         { href: 'client-create.html', label: 'Nouveau client', icon: icons.users, match: ['client-create.html'] },
-        { href: 'kyc-validation.html', label: 'Validation KYC', icon: icons.audit, match: ['kyc-validation.html'] },
-        { href: 'blacklist-client.html', label: 'Blacklist', icon: icons.audit, match: ['blacklist-client.html'] }
+        { href: 'kyc-validation.html', label: 'Validation KYC', icon: icons.audit, match: ['kyc-validation.html'] }
       ]
     },
     {
@@ -547,28 +765,17 @@
       ]
     },
     {
-      title: 'Caisse & Opérations',
+      title: 'Opérations',
       items: [
-        { href: 'caisse.html', label: 'Caisse', icon: icons.cash, match: ['caisse.html'] },
-        { href: 'guichet.html', label: 'Guichet', icon: icons.cash, match: ['guichet.html'] },
+        { href: 'versement.html', label: 'Versement', icon: icons.cash, match: ['versement.html'] },
+        { href: 'retrait.html', label: 'Retrait', icon: icons.cash, match: ['retrait.html'] },
         { href: 'virement.html', label: 'Virement', icon: icons.transfer, match: ['virement.html'] },
-        { href: 'validation.html', label: 'Validation 4-eyes', icon: icons.audit, match: ['validation.html'] },
         { href: 'historique.html', label: 'Historique', icon: icons.audit, match: ['historique.html', 'detail-transaction.html', 'annulation.html', 'export-transactions.html'] }
-      ]
-    },
-    {
-      title: 'Crédits',
-      items: [
-        { href: 'credit-simulation.html', label: 'Simulation', icon: icons.credit, match: ['credit-simulation.html'] },
-        { href: 'credit-demandes.html', label: 'Demandes', icon: icons.credit, match: ['credit-demandes.html'] },
-        { href: 'credit-detail.html', label: 'Dossier crédit', icon: icons.credit, match: ['credit-detail.html'] },
-        { href: 'credit-suivi.html', label: 'Suivi avancé', icon: icons.credit, match: ['credit-suivi.html'] }
       ]
     },
     {
       title: 'Paramétrage',
       items: [
-        { href: 'personnel-create.html', label: 'Ajouter personnel', icon: icons.users, match: ['personnel-create.html'] },
         { href: 'agences.html', label: 'Agences', icon: icons.settings, match: ['agences.html'] },
         { href: 'produits.html', label: 'Produits', icon: icons.settings, match: ['produits.html'] }
       ]
@@ -577,8 +784,7 @@
       title: 'Sécurité',
       items: [
         { href: 'securite.html', label: 'Rôles & permissions', icon: icons.settings, match: ['securite.html'] },
-        { href: 'utilisateurs.html', label: 'Utilisateurs', icon: icons.users, match: ['utilisateurs.html'] },
-        { href: 'audit.html', label: "Journal d'audit", icon: icons.audit, match: ['audit.html'] }
+        { href: 'utilisateurs.html', label: 'Utilisateurs', icon: icons.users, match: ['utilisateurs.html'] }
       ]
     }
   ];
@@ -664,12 +870,12 @@
 
     // ── Filtrage par rôle ──────────────────────────────────
     const ROLE_ACCESS = {
-      GUICHETIER:       ['Caisse & Opérations'],
-      SUPERVISEUR:      ['Tableau de bord', 'Caisse & Opérations', 'Clients'],
+      GUICHETIER:       ['Opérations'],
+      SUPERVISEUR:      ['Tableau de bord', 'Opérations', 'Clients'],
       AGENT_COMMERCIAL: ['Clients', 'Comptes'],
-      AGENT_CREDIT:     ['Clients', 'Crédits'],
-      CHEF_AGENCE:      ['Tableau de bord', 'Clients', 'Comptes', 'Caisse & Opérations', 'Crédits'],
-      DIRECTEUR:        ['Tableau de bord', 'Clients', 'Comptes', 'Caisse & Opérations', 'Crédits'],
+      AGENT_CREDIT:     ['Clients'],
+      CHEF_AGENCE:      ['Tableau de bord', 'Clients', 'Comptes', 'Opérations'],
+      DIRECTEUR:        ['Tableau de bord', 'Clients', 'Comptes', 'Opérations'],
       ADMIN:            'ALL'
     };
 

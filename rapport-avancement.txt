@@ -1,0 +1,171 @@
+RAPPORT D'AVANCEMENT - Projet Microfinance
+Date : 28/06/2026 (mise à jour après corrections documents.html & profil.html)
+Agent : Sisyphus (Ralph Loop)
+Statut : PAUSE (suite à demande utilisateur)
+
+==========================================
+1. MISSION INITIALE
+==========================================
+Lire la documentation, vérifier l'API Swagger sur localhost:8080, vérifier que le front backoffice + ClientPortal est connecté et fonctionnel, et réparer si cassé.
+
+==========================================
+2. TRAVAIL EFFECTUÉ
+==========================================
+
+2.1 Lecture documentation (docs/)
+---------------------------------
+- Spécifications UI/UX backoffice
+- Matrice RBAC acteurs/menus/écrans
+- Liste endpoints backend (~202 endpoints REST v1)
+- Assessment core banking (état frontend/backend)
+- Collections Postman (Complete, Demo Prof, Ultimate)
+- PDFs techniques (architecture 3 tiers, processus métier)
+- Directives MVP (écrans à garder, rôles, intégration)
+
+2.2 Vérification backend
+------------------------
+- Swagger UI accessible : http://localhost:8080/swagger-ui/index.html#/ → HTTP 200
+- OpenAPI 3.1.0 accessible : /v3/api-docs
+- Backend opérationnel sous Docker (conteneur core_banking_backend)
+- Login backoffice OK : demo.admin / Demo@12345
+- Login mobile OK : fatoumata.bamba / Demo@12345
+
+2.3 Audit frontend backoffice (101 pages HTML)
+-----------------------------------------------
+- Toutes les pages chargent app.js (client API principal à 19 objets)
+- Aucune page ne charge l'ancien api.js (fichier legacy mort)
+- 18 pages MVP identifiées selon directive MVP
+- Scan jsdom : 101 pages OK (seuls faux positifs chart.js/ResizeObserver)
+
+2.4 Corrections backoffice
+--------------------------
+Fichier : Frontend/pages/parametres-systeme.html
+- Problème : mapping `p.codeParametre || p.cle` alors que l'API retourne `code`
+- Correction : `map[p.code || p.codeParametre || p.cle] = p.valeur`
+- Validation : PASS (formulaire rempli avec données réelles)
+
+Fichier : Frontend/pages/audit.html
+- Problème : colonnes attendues différentes des champs API réels
+- Correction : mapping adapté à `dateAction`, `utilisateur`, `resource`, `id`, `statut`, `messageErreur`, `adresseIp`
+- Gestion du cas où `utilisateur` est une string (ex: "anonymousUser") ou un objet
+- Validation : PASS (1 247 logs affichés avec bon mapping)
+
+Fichier : Frontend/pages/frais-tenue-compte.html
+- Problème : `await res.json()` dans un `setTimeout(function(){...})` non-async
+- Correction : `setTimeout(async function(){...})`
+
+Fichier : Frontend/pages/credits.html (créé)
+- Problème : fichier inexistant (lien credits.html cassé)
+- Correction : création avec redirection vers credit-demandes.html
+
+Fichier : Frontend/pages/commissions.html
+- Problème suspect : redirection vers kyc-validation.html
+- Résultat : NON REPRODUIT après correction CORS/backend. Page charge correctement.
+
+2.5 Corrections backend CORS
+----------------------------
+Fichier : backend/src/main/resources/application.properties
+- Ajout de http://localhost:3001 et http://127.0.0.1:3001 dans app.cors.allowed-origins
+
+Fichier : backend/.env
+- Mise à jour de APP_CORS_ALLOWED_ORIGINS incluant localhost:3001 et 127.0.0.1:3001
+
+2.6 Audit ClientPortal (21 pages HTML)
+--------------------------------------
+- Serveur frontoffice sur http://localhost:3001
+- portal-app.js expose 9 services
+- CORS localhost:3001 → localhost:8080 validé
+- Login mobile OK : fatoumata.bamba / Demo@12345
+
+2.7 Corrections ClientPortal (mismatch API {status,data})
+---------------------------------------------------------
+Problème identifié : les endpoints mobiles retournent `{status:'success', data:[...]}` (ApiEnvelope) mais certaines pages attendaient un tableau plat.
+
+Fichier modifié : ClientPortal/assets/js/portal-app.js
+- Ajout de la fonction helper globale `unwrapApiData(data)`
+
+Pages corrigées avec unwrapApiData() :
+- dashboard.html (liste comptes)
+- comptes.html (liste comptes)
+- reclamations.html (liste tickets + détail ticket)
+- virement.html (comptes source + bénéficiaires)
+- historique-transactions.html (liste comptes)
+- epargne.html (comptes épargne + DATs)
+- detail-compte.html (détail compte, relevé, opérations paginées)
+- detail-credit.html (détail crédit + échéancier)
+- simulation-credit.html (résultat simulation)
+- credits.html (simulation, liste crédits, liste demandes, échéancier modal)
+- notifications-client.html (liste notifications + compteur non lues)
+- documents.html (liste documents) - CORRIGÉ APRÈS PAUSE PRÉCÉDENTE
+- profil.html (profil, mise à jour profil, KYC) - CORRIGÉ APRÈS PAUSE PRÉCÉDENTE
+
+Pages déjà robustes (gestion manuelle enveloppe) :
+- cartes-portal.html
+
+==========================================
+3. CORRECTIONS RESTANTES À FAIRE
+==========================================
+
+3.1 Tests ClientPortal post-correction
+--------------------------------------
+Relancer les tests end-to-end sur toutes les pages ClientPortal après correction de documents.html et profil.html pour valider qu'aucune page ne plante plus avec "forEach is not a function".
+
+3.2 Validation finale backoffice
+--------------------------------
+Re-vérifier rapidement que les pages corrigées backoffice restent fonctionnelles après redémarrage backend.
+
+==========================================
+4. ÉCARTS NON BLOQUANTS / À DÉCIDER
+==========================================
+
+4.1 historique-frais.html
+-------------------------
+Endpoint API inexistant (`/api/v1/comptes/{id}/historique-frais` ou similaire non trouvé).
+Cette page n'est pas dans le MVP (à masquer selon docs/directive/ecran_a_garder.md).
+Action recommandée : masquer le lien dans la sidebar ou supprimer la page.
+
+4.2 Pages statiques/mockées
+---------------------------
+Certaines pages ne font pas d'appels API : 403.html, 404.html, 500.html, conformite.html, exceptions.html, mobile-money.html, reporting.html, agios.html.
+C'est acceptable pour des pages d'erreur ou de présentation.
+
+4.3 Backend
+-----------
+- L'image Docker a dû être rebuildée pour prendre en compte application.properties.
+- Le conteneur backend est maintenant opérationnel avec le réseau backend_default.
+- Aucun autre problème backend identifié.
+
+==========================================
+5. COMMANDES / INFOS UTILES
+==========================================
+
+Identifiants test backoffice :
+  login : demo.admin
+  mot de passe : Demo@12345
+
+Identifiants test ClientPortal :
+  login : fatoumata.bamba
+  mot de passe : Demo@12345
+
+Serveurs démarrés :
+  - Backend API : http://localhost:8080
+  - Backoffice : http://localhost:3000 (Frontend/)
+  - ClientPortal : http://localhost:3001 (ClientPortal/)
+  - Oracle : localhost:1521
+  - CloudBeaver : http://localhost:8978
+
+Commandes Docker utiles :
+  docker ps
+  docker logs core_banking_backend --tail 50
+  docker stop core_banking_backend && docker rm core_banking_backend && docker run -d --name core_banking_backend -p 8080:8080 --network backend_default -v backend_uploads_data:/app/uploads/documents backend-backend:latest
+
+==========================================
+6. SYNTHÈSE
+==========================================
+- Backend API : opérationnel
+- Swagger UI : accessible
+- Backoffice MVP : 18 pages fonctionnelles, corrections validées
+- ClientPortal : corrections appliquées sur 13 pages (unwrap API)
+- Reste à faire : tests end-to-end ClientPortal pour validation finale
+
+TRAVAIL EN PAUSE - Corrections ClientPortal terminées, tests finaux en attente.

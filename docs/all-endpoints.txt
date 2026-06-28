@@ -40,6 +40,10 @@ PUT    /api/v1/clients/{{clientId}}/statut?nouveauStatut=ACTIF
 PUT    /api/v1/clients/{{clientId}}/kyc
 PUT    /api/v1/clients/{{clientId}}/kyc/decision
 POST   /api/v1/clients/{{clientId}}/documents
+GET    /api/v1/clients/blacklist
+GET    /api/v1/clients/blacklist/historique
+POST   /api/v1/clients/{{clientId}}/blacklist
+DELETE /api/v1/clients/{{clientId}}/blacklist
 POST   /api/v1/utilisateurs
 POST   /api/v1/comptes
 GET    /api/v1/comptes/{{compteNumero}}/solde

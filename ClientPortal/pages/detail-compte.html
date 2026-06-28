@@ -593,7 +593,7 @@
           showToast('Impossible de charger les détails du compte.', 'error');
           return;
         }
-        accountData = await res.json();
+        accountData = unwrapApiData(await res.json());
 
         // Populate hero
         document.getElementById('heroType').textContent = accountData.libelleType || 'Compte';
@@ -628,7 +628,7 @@
       try {
         var res = await window.ClientComptes.releve(accountId);
         if (res.ok) {
-          var data = await res.json();
+          var data = unwrapApiData(await res.json());
           var btn = document.getElementById('btnDownloadStatement');
           if (data.urlReleve) {
             btn.href = window.SF_Client.API_BASE + data.urlReleve;
@@ -650,7 +650,7 @@
           showToast('Impossible de charger l\'historique des opérations.', 'error');
           return;
         }
-        var pageData = await res.json();
+        var pageData = unwrapApiData(await res.json());
         allOperations = pageData.content || [];
         filteredOperations = allOperations.slice();
         totalElements = filteredOperations.length;

@@ -477,7 +477,7 @@
             '/api/v1/mobile/notifications?page=' + page + '&size=' + pageSize + '&sort=createdAt,desc'
           );
           if (res.ok) {
-            var data = await res.json();
+            var data = unwrapApiData(await res.json());
             allNotifications = data.content || [];
             totalPages = data.totalPages || 1;
             totalElements = data.totalElements || 0;
@@ -497,7 +497,7 @@
         try {
           var res = await window.SF_Client.apiFetch('/api/v1/mobile/notifications/compteur');
           if (res.ok) {
-            var data = await res.json();
+            var data = unwrapApiData(await res.json());
             var count = data.nbNonLues || data.count || 0;
             var badge = document.getElementById('unreadBadge');
             if (count > 0) {

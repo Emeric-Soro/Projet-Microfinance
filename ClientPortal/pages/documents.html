@@ -680,7 +680,7 @@
           var res = await window.SF_Client.apiFetch('/api/v1/mobile/documents');
           if (res.ok) {
             var data = await res.json();
-            allDocuments = Array.isArray(data) ? data : (data.content || []);
+            allDocuments = Array.isArray(data) ? data : unwrapApiData(data);
             renderDocuments();
             updateStats();
           } else {

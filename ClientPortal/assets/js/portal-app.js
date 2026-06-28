@@ -68,6 +68,25 @@
     return res;
   }
 
+  /* ── Helper de dé-wrappe des réponses API ───────────── */
+
+  /**
+   * Dé-enveloppe une réponse API si elle utilise le format
+   * { status: 'success', data: [...] }, sinon retourne l'objet tel quel.
+   * Certains endpoints mobiles (dashboard, profil) retournent du JSON plat,
+   * d'autres (comptes, crédits, réclamations) utilisent l'enveloppe ApiEnvelope.
+   */
+  function unwrapApiData(res) {
+    if (res && typeof res === 'object' && res.status === 'success' && res.hasOwnProperty('data')) {
+      return res.data;
+    }
+    return res;
+  }
+
+  if (typeof window !== 'undefined') {
+    window.unwrapApiData = unwrapApiData;
+  }
+
   /* ── Services E-Banking Client ──────────────────────── */
 
   var ClientAuth = {

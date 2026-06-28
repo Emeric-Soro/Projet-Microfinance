@@ -356,7 +356,7 @@
         try {
           var res = await window.ClientCredits.simuler(montant, taux, duree, methode);
           if (res.ok) {
-            var echeances = await res.json();
+            var echeances = unwrapApiData(await res.json());
             displaySimulationResult(echeances, montant);
           } else {
             showToast('Erreur lors du calcul de la simulation.', 'error');
@@ -467,7 +467,7 @@
         // Load active credits
         var creditsRes = await window.ClientCredits.lister();
         if (creditsRes.ok) {
-          var credPage = await creditsRes.json();
+          var credPage = unwrapApiData(await creditsRes.json());
           var list = credPage.content || [];
           var credListDiv = document.getElementById('activeCreditsList');
           credListDiv.innerHTML = '';
@@ -503,7 +503,7 @@
         // Load demands list
         var demandsRes = await window.ClientCredits.listerDemandes();
         if (demandsRes.ok) {
-          var demPage = await demandsRes.json();
+          var demPage = unwrapApiData(await demandsRes.json());
           var list = demPage.content || [];
           var demListDiv = document.getElementById('demandsList');
           demListDiv.innerHTML = '';
@@ -547,7 +547,7 @@
       try {
         var res = await window.ClientCredits.echeancier(idCredit);
         if (res.ok) {
-          var echeances = await res.json();
+          var echeances = unwrapApiData(await res.json());
           var tbody = document.getElementById('modalTableBody');
           tbody.innerHTML = '';
 
