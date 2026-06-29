@@ -107,6 +107,8 @@ class TransactionServiceImplTest {
 
         when(compteRepository.findByNumCompte("CPT-SRC")).thenReturn(Optional.of(source));
         when(compteRepository.findByNumCompte("CPT-DST")).thenReturn(Optional.of(destination));
+        when(compteRepository.findById(1L)).thenReturn(Optional.of(source));
+        when(compteRepository.findById(2L)).thenReturn(Optional.of(destination));
         when(utilisateurRepository.findById(10L)).thenReturn(Optional.of(guichetier));
         when(typeTransactionRepository.findByCodeTypeTransaction("VIREMENT")).thenReturn(Optional.of(typeTransaction));
         when(transactionFeeCalculator.calculerFrais("VIREMENT", new BigDecimal("600000.00"))).thenReturn(BigDecimal.ZERO);

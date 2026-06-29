@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import com.soutra.microfinance.audit.AuditContext;
 
 @Service
 public class ProduitServiceImpl implements ProduitService {
@@ -85,6 +86,16 @@ public class ProduitServiceImpl implements ProduitService {
 		ProduitCredit produit = produitCreditRepository.findById(idProduit)
 				.orElseThrow(() -> new EntityNotFoundException("Produit de credit introuvable: " + idProduit));
 
+		AuditContext.setIdEntite(String.valueOf(idProduit));
+		java.util.Map<String, Object> avant = new java.util.HashMap<>();
+		avant.put("tauxInteretAnnuel", produit.getTauxInteretAnnuel());
+		avant.put("montantMin", produit.getMontantMin());
+		avant.put("montantMax", produit.getMontantMax());
+		avant.put("dureeMinMois", produit.getDureeMinMois());
+		avant.put("dureeMaxMois", produit.getDureeMaxMois());
+		avant.put("estActif", produit.getEstActif());
+		AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
 		if (modifications.getCodeProduit() != null) produit.setCodeProduit(modifications.getCodeProduit());
 		if (modifications.getLibelle() != null) produit.setLibelle(modifications.getLibelle());
 		if (modifications.getTauxInteretAnnuel() != null) produit.setTauxInteretAnnuel(modifications.getTauxInteretAnnuel());
@@ -97,7 +108,18 @@ public class ProduitServiceImpl implements ProduitService {
 		if (modifications.getPenaliteRetardPourcentage() != null) produit.setPenaliteRetardPourcentage(modifications.getPenaliteRetardPourcentage());
 		if (modifications.getEstActif() != null) produit.setEstActif(modifications.getEstActif());
 
-		return produitCreditRepository.save(produit);
+		ProduitCredit saved = produitCreditRepository.save(produit);
+
+		java.util.Map<String, Object> apres = new java.util.HashMap<>();
+		apres.put("tauxInteretAnnuel", saved.getTauxInteretAnnuel());
+		apres.put("montantMin", saved.getMontantMin());
+		apres.put("montantMax", saved.getMontantMax());
+		apres.put("dureeMinMois", saved.getDureeMinMois());
+		apres.put("dureeMaxMois", saved.getDureeMaxMois());
+		apres.put("estActif", saved.getEstActif());
+		AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+		return saved;
 	}
 
 	@Override
@@ -105,8 +127,18 @@ public class ProduitServiceImpl implements ProduitService {
 	public void supprimerProduitCredit(Long idProduit) {
 		ProduitCredit produit = produitCreditRepository.findById(idProduit)
 				.orElseThrow(() -> new EntityNotFoundException("Produit de credit introuvable: " + idProduit));
+
+		AuditContext.setIdEntite(String.valueOf(idProduit));
+		java.util.Map<String, Object> avant = new java.util.HashMap<>();
+		avant.put("estActif", produit.getEstActif());
+		AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
 		produit.setEstActif(false);
 		produitCreditRepository.save(produit);
+
+		java.util.Map<String, Object> apres = new java.util.HashMap<>();
+		apres.put("estActif", false);
+		AuditContext.setDetailsApres(AuditContext.toJson(apres));
 	}
 
 	@Override
@@ -114,6 +146,14 @@ public class ProduitServiceImpl implements ProduitService {
 	public ProduitEpargne modifierProduitEpargne(Long idProduit, ProduitEpargne modifications) {
 		ProduitEpargne produit = produitEpargneRepository.findById(idProduit)
 				.orElseThrow(() -> new EntityNotFoundException("Produit d'epargne introuvable: " + idProduit));
+
+		AuditContext.setIdEntite(String.valueOf(idProduit));
+		java.util.Map<String, Object> avant = new java.util.HashMap<>();
+		avant.put("tauxInteretAnnuel", produit.getTauxInteretAnnuel());
+		avant.put("montantMinOuverture", produit.getMontantMinOuverture());
+		avant.put("dureeMinJours", produit.getDureeMinJours());
+		avant.put("estActif", produit.getEstActif());
+		AuditContext.setDetailsAvant(AuditContext.toJson(avant));
 
 		if (modifications.getCodeProduit() != null) produit.setCodeProduit(modifications.getCodeProduit());
 		if (modifications.getLibelle() != null) produit.setLibelle(modifications.getLibelle());
@@ -123,7 +163,16 @@ public class ProduitServiceImpl implements ProduitService {
 		if (modifications.getDureeMinJours() != null) produit.setDureeMinJours(modifications.getDureeMinJours());
 		if (modifications.getEstActif() != null) produit.setEstActif(modifications.getEstActif());
 
-		return produitEpargneRepository.save(produit);
+		ProduitEpargne saved = produitEpargneRepository.save(produit);
+
+		java.util.Map<String, Object> apres = new java.util.HashMap<>();
+		apres.put("tauxInteretAnnuel", saved.getTauxInteretAnnuel());
+		apres.put("montantMinOuverture", saved.getMontantMinOuverture());
+		apres.put("dureeMinJours", saved.getDureeMinJours());
+		apres.put("estActif", saved.getEstActif());
+		AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+		return saved;
 	}
 
 	@Override
@@ -131,7 +180,17 @@ public class ProduitServiceImpl implements ProduitService {
 	public void supprimerProduitEpargne(Long idProduit) {
 		ProduitEpargne produit = produitEpargneRepository.findById(idProduit)
 				.orElseThrow(() -> new EntityNotFoundException("Produit d'epargne introuvable: " + idProduit));
+
+		AuditContext.setIdEntite(String.valueOf(idProduit));
+		java.util.Map<String, Object> avant = new java.util.HashMap<>();
+		avant.put("estActif", produit.getEstActif());
+		AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
 		produit.setEstActif(false);
 		produitEpargneRepository.save(produit);
+
+		java.util.Map<String, Object> apres = new java.util.HashMap<>();
+		apres.put("estActif", false);
+		AuditContext.setDetailsApres(AuditContext.toJson(apres));
 	}
 }

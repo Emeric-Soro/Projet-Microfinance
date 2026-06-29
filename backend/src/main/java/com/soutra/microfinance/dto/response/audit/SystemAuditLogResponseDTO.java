@@ -22,4 +22,7 @@ public class SystemAuditLogResponseDTO {
     private String statut;
     private String messageErreur;
     private String methode;
+    private String idEntite;
+    private String detailsAvant;
+    private String detailsApres;
 }

@@ -46,4 +46,19 @@ public class SystemAuditLogService {
     public Page<SystemAuditLog> consulterParPeriode(LocalDateTime debut, LocalDateTime fin, Pageable pageable) {
         return systemAuditLogRepository.findByDateActionBetweenOrderByDateActionDesc(debut, fin, pageable);
     }
+
+    @Transactional(readOnly = true)
+    public Page<SystemAuditLog> rechercherAvecFiltres(
+            String utilisateur, String action, String ressource, String statut,
+            String idEntite, LocalDateTime debut, LocalDateTime fin, Pageable pageable) {
+        // Normalise les chaînes vides en null pour que le JPQL IS NULL fonctionne
+        return systemAuditLogRepository.rechercherAvecFiltres(
+                (utilisateur != null && !utilisateur.isBlank()) ? utilisateur : null,
+                (action      != null && !action.isBlank())      ? action      : null,
+                (ressource   != null && !ressource.isBlank())   ? ressource   : null,
+                (statut      != null && !statut.isBlank())      ? statut      : null,
+                (idEntite    != null && !idEntite.isBlank())    ? idEntite    : null,
+                debut, fin, pageable
+        );
+    }
 }

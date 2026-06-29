@@ -13,6 +13,8 @@ import com.soutra.microfinance.entity.TypeCompte;
 import com.soutra.microfinance.entity.TypeTransaction;
 import com.soutra.microfinance.entity.Utilisateur;
 import com.soutra.microfinance.entity.ProduitEpargne;
+import com.soutra.microfinance.entity.Caisse;
+import com.soutra.microfinance.repository.operation.CaisseRepository;
 import com.soutra.microfinance.config.DemoDataSeeds.DemoUserSeed;
 import com.soutra.microfinance.config.DemoDataSeeds.TransactionSeed;
 import com.soutra.microfinance.repository.compte.CompteRepository;
@@ -62,6 +64,7 @@ public class DemoDataLoader implements ApplicationRunner {
     private final TypeTransactionRepository typeTransactionRepository;
     private final TransactionRepository transactionRepository;
     private final LigneEcritureRepository ligneEcritureRepository;
+    private final CaisseRepository caisseRepository;
     private final PasswordEncoder passwordEncoder;
     private final boolean seedOnStartup;
 
@@ -78,6 +81,7 @@ public class DemoDataLoader implements ApplicationRunner {
             TypeTransactionRepository typeTransactionRepository,
             TransactionRepository transactionRepository,
             LigneEcritureRepository ligneEcritureRepository,
+            CaisseRepository caisseRepository,
             PasswordEncoder passwordEncoder,
             @Value("${app.demo-data.seed-on-startup:true}") boolean seedOnStartup
     ) {
@@ -93,6 +97,7 @@ public class DemoDataLoader implements ApplicationRunner {
         this.typeTransactionRepository = typeTransactionRepository;
         this.transactionRepository = transactionRepository;
         this.ligneEcritureRepository = ligneEcritureRepository;
+        this.caisseRepository = caisseRepository;
         this.passwordEncoder = passwordEncoder;
         this.seedOnStartup = seedOnStartup;
     }
@@ -168,6 +173,7 @@ public class DemoDataLoader implements ApplicationRunner {
         }
 
         int insertedTransactions = seedTransactions(utilisateurs, comptes);
+        seedCaisses(utilisateurs);
 
         log.info(
                 "DemoDataLoader: demo data ready. users={}, accounts={}, transactions={}, password={}",
@@ -268,7 +274,6 @@ public class DemoDataLoader implements ApplicationRunner {
     }
 
     private int seedTransactions(Map<String, Utilisateur> utilisateurs, Map<String, Compte> comptes) {
-        Utilisateur initiateur = utilisateurs.getOrDefault("demo.admin", utilisateurs.values().iterator().next());
         int insertedTransactions = 0;
 
         for (TransactionSeed seed : DemoDataSeeds.TRANSACTIONS) {
@@ -281,6 +286,12 @@ public class DemoDataLoader implements ApplicationRunner {
             Compte compteSource = seed.sourceAccountNumber() == null ? null : comptes.get(seed.sourceAccountNumber());
             Compte compteDestination = seed.destinationAccountNumber() == null ? null : comptes.get(seed.destinationAccountNumber());
 
+            String login = seed.initiatorLogin() != null ? seed.initiatorLogin() : "demo.admin";
+            Utilisateur initiateur = utilisateurs.getOrDefault(login, utilisateurs.get("demo.admin"));
+            if (initiateur == null && !utilisateurs.isEmpty()) {
+                initiateur = utilisateurs.values().iterator().next();
+            }
+
             Transaction savedTransaction = transactionRepository.save(
                     DemoEntityFactory.transaction(seed, initiateur, typeTransaction, compteSource, compteDestination));
             createLignesEcriture(savedTransaction, seed, compteSource, compteDestination);
@@ -288,6 +299,26 @@ public class DemoDataLoader implements ApplicationRunner {
         }
 
         return insertedTransactions;
+    }
+
+    private void seedCaisses(Map<String, Utilisateur> utilisateurs) {
+        for (Utilisateur u : utilisateurs.values()) {
+            boolean isGuichetier = u.getRoles().stream()
+                    .anyMatch(r -> "GUICHETIER".equals(r.getCodeRoleUtilisateur()));
+            if (isGuichetier) {
+                java.util.Optional<Caisse> openCaisseOpt = caisseRepository.findByUtilisateur_IdUserAndStatut(u.getIdUser(), Caisse.StatutCaisse.OUVERTE);
+                if (openCaisseOpt.isEmpty()) {
+                    Caisse caisse = new Caisse();
+                    caisse.setUtilisateur(u);
+                    caisse.setSoldeOuverture(new BigDecimal("1000000.00"));
+                    caisse.setSoldeCourant(new BigDecimal("1000000.00"));
+                    caisse.setStatut(Caisse.StatutCaisse.OUVERTE);
+                    caisse.setDateOuverture(LocalDateTime.now().minusDays(5));
+                    caisseRepository.save(caisse);
+                    log.info("DemoDataLoader: Created and opened caisse for guichetier {}", u.getLogin());
+                }
+            }
+        }
     }
 
     private void createLignesEcriture(
@@ -313,5 +344,4 @@ public class DemoDataLoader implements ApplicationRunner {
 
         ligneEcritureRepository.save(DemoEntityFactory.ligne(transaction, compte, sens, montant));
     }
-
 }

@@ -35,53 +35,67 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
     // Verification rapide de si un client existe avec le meme document d'identite.
     boolean existsByNumeroPieceIdentite(String numeroPieceIdentite);
 
+    @Override
+    @Query("SELECT c FROM Client c WHERE c.utilisateur IS NULL OR EXISTS (SELECT r FROM c.utilisateur.roles r WHERE r.codeRoleUtilisateur = 'CLIENT')")
+    Page<Client> findAll(Pageable pageable);
+
+    @Override
+    @Query("SELECT COUNT(c) FROM Client c WHERE c.utilisateur IS NULL OR EXISTS (SELECT r FROM c.utilisateur.roles r WHERE r.codeRoleUtilisateur = 'CLIENT')")
+    long count();
+
     // Liste paginee des clients par statut.
-    Page<Client> findByStatutClient_IdStatutClient(Long idStatutClient, Pageable pageable);
+    @Query("SELECT c FROM Client c WHERE (c.utilisateur IS NULL OR EXISTS (SELECT r FROM c.utilisateur.roles r WHERE r.codeRoleUtilisateur = 'CLIENT')) AND c.statutClient.idStatutClient = :idStatutClient")
+    Page<Client> findByStatutClient_IdStatutClient(@Param("idStatutClient") Long idStatutClient, Pageable pageable);
 
     // Recherche paginee sur le nom ou le prenom.
+    @Query("SELECT c FROM Client c WHERE (c.utilisateur IS NULL OR EXISTS (SELECT r FROM c.utilisateur.roles r WHERE r.codeRoleUtilisateur = 'CLIENT')) AND (LOWER(c.nom) LIKE LOWER(CONCAT('%', :nom, '%')) OR LOWER(c.prenom) LIKE LOWER(CONCAT('%', :prenom, '%')))")
     Page<Client> findByNomContainingIgnoreCaseOrPrenomContainingIgnoreCase(
-            String nom,
-            String prenom,
+            @Param("nom") String nom,
+            @Param("prenom") String prenom,
             Pageable pageable
     );
 
     @Query("SELECT DISTINCT c FROM Client c " +
            "LEFT JOIN c.comptes co " +
-           "WHERE LOWER(c.nom) LIKE LOWER(CONCAT('%', :query, '%')) " +
+           "WHERE (c.utilisateur IS NULL OR EXISTS (SELECT r FROM c.utilisateur.roles r WHERE r.codeRoleUtilisateur = 'CLIENT')) " +
+           "AND (LOWER(c.nom) LIKE LOWER(CONCAT('%', :query, '%')) " +
            "OR LOWER(c.prenom) LIKE LOWER(CONCAT('%', :query, '%')) " +
            "OR LOWER(c.codeClient) LIKE LOWER(CONCAT('%', :query, '%')) " +
            "OR LOWER(c.telephone) LIKE LOWER(CONCAT('%', :query, '%')) " +
            "OR LOWER(c.email) LIKE LOWER(CONCAT('%', :query, '%')) " +
-           "OR LOWER(co.numCompte) LIKE LOWER(CONCAT('%', :query, '%'))")
+           "OR LOWER(co.numCompte) LIKE LOWER(CONCAT('%', :query, '%')))")
     Page<Client> rechercherClientsGlobale(@Param("query") String query, Pageable pageable);
 
     // Liste paginée des clients inscrits entre deux dates.
-    Page<Client> findByCreatedAtBetween(LocalDateTime dateDebut, LocalDateTime dateFin, Pageable pageable);
+    @Query("SELECT c FROM Client c WHERE (c.utilisateur IS NULL OR EXISTS (SELECT r FROM c.utilisateur.roles r WHERE r.codeRoleUtilisateur = 'CLIENT')) AND c.createdAt BETWEEN :dateDebut AND :dateFin")
+    Page<Client> findByCreatedAtBetween(@Param("dateDebut") LocalDateTime dateDebut, @Param("dateFin") LocalDateTime dateFin, Pageable pageable);
 
     // --- Aggregation queries for reporting ---
 
-    long countByCreatedAtBetween(LocalDateTime dateDebut, LocalDateTime dateFin);
+    @Query("SELECT COUNT(c) FROM Client c WHERE (c.utilisateur IS NULL OR EXISTS (SELECT r FROM c.utilisateur.roles r WHERE r.codeRoleUtilisateur = 'CLIENT')) AND c.createdAt BETWEEN :dateDebut AND :dateFin")
+    long countByCreatedAtBetween(@Param("dateDebut") LocalDateTime dateDebut, @Param("dateFin") LocalDateTime dateFin);
 
-    @Query("SELECT c.statutClient.libelleStatut, COUNT(c) FROM Client c GROUP BY c.statutClient.libelleStatut")
+    @Query("SELECT c.statutClient.libelleStatut, COUNT(c) FROM Client c WHERE c.utilisateur IS NULL OR EXISTS (SELECT r FROM c.utilisateur.roles r WHERE r.codeRoleUtilisateur = 'CLIENT') GROUP BY c.statutClient.libelleStatut")
     List<Object[]> countClientsByStatut();
 
-    @Query("SELECT COUNT(c) FROM Client c WHERE c.agence.idAgence = :agenceId AND c.dateInscription >= :dateDebut")
+    @Query("SELECT COUNT(c) FROM Client c WHERE (c.utilisateur IS NULL OR EXISTS (SELECT r FROM c.utilisateur.roles r WHERE r.codeRoleUtilisateur = 'CLIENT')) AND c.agence.idAgence = :agenceId AND c.dateInscription >= :dateDebut")
     long countByAgenceAndDateInscriptionAfter(@Param("agenceId") Long agenceId, @Param("dateDebut") LocalDate dateDebut);
 
-    @Query("SELECT COUNT(c) FROM Client c WHERE c.agence.idAgence = :agenceId")
+    @Query("SELECT COUNT(c) FROM Client c WHERE (c.utilisateur IS NULL OR EXISTS (SELECT r FROM c.utilisateur.roles r WHERE r.codeRoleUtilisateur = 'CLIENT')) AND c.agence.idAgence = :agenceId")
     long countByAgence(@Param("agenceId") Long agenceId);
 
-    @Query("SELECT COUNT(c) FROM Client c WHERE c.agence.idAgence = :agenceId AND c.statutClient.libelleStatut = :statut")
+    @Query("SELECT COUNT(c) FROM Client c WHERE (c.utilisateur IS NULL OR EXISTS (SELECT r FROM c.utilisateur.roles r WHERE r.codeRoleUtilisateur = 'CLIENT')) AND c.agence.idAgence = :agenceId AND c.statutClient.libelleStatut = :statut")
     long countByAgenceAndStatutLibelle(@Param("agenceId") Long agenceId, @Param("statut") String statut);
 
-    @Query("SELECT COUNT(c) FROM Client c WHERE c.statutClient.libelleStatut = :statut")
+    @Query("SELECT COUNT(c) FROM Client c WHERE (c.utilisateur IS NULL OR EXISTS (SELECT r FROM c.utilisateur.roles r WHERE r.codeRoleUtilisateur = 'CLIENT')) AND c.statutClient.libelleStatut = :statut")
     long countByStatutLibelle(@Param("statut") String statut);
 
-    @Query("SELECT COUNT(c) FROM Client c WHERE c.createdAt >= :dateDebut")
+    @Query("SELECT COUNT(c) FROM Client c WHERE (c.utilisateur IS NULL OR EXISTS (SELECT r FROM c.utilisateur.roles r WHERE r.codeRoleUtilisateur = 'CLIENT')) AND c.createdAt >= :dateDebut")
     long countByCreatedAtAfter(@Param("dateDebut") LocalDateTime dateDebut);
 
-    @Query("SELECT COUNT(c) FROM Client c WHERE c.dateInscription >= :dateDebut")
+    @Query("SELECT COUNT(c) FROM Client c WHERE (c.utilisateur IS NULL OR EXISTS (SELECT r FROM c.utilisateur.roles r WHERE r.codeRoleUtilisateur = 'CLIENT')) AND c.dateInscription >= :dateDebut")
     long countByDateInscriptionAfter(@Param("dateDebut") LocalDate dateDebut);
 
-    List<Client> findByDateSoumissionKycBefore(LocalDate dateLimite);
+    @Query("SELECT c FROM Client c WHERE (c.utilisateur IS NULL OR EXISTS (SELECT r FROM c.utilisateur.roles r WHERE r.codeRoleUtilisateur = 'CLIENT')) AND c.dateSoumissionKyc < :dateLimite")
+    List<Client> findByDateSoumissionKycBefore(@Param("dateLimite") LocalDate dateLimite);
 }

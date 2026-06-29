@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import com.soutra.microfinance.audit.AuditContext;
 
 @Service
 public class AgenceServiceImpl implements AgenceService {
@@ -35,11 +36,26 @@ public class AgenceServiceImpl implements AgenceService {
 		Agence agence = agenceRepository.findById(idAgence)
 				.orElseThrow(() -> new EntityNotFoundException("Agence introuvable: " + idAgence));
 
+		AuditContext.setIdEntite(String.valueOf(idAgence));
+		java.util.Map<String, Object> avant = new java.util.HashMap<>();
+		avant.put("nom", agence.getNom());
+		avant.put("adresse", agence.getAdresse());
+		avant.put("telephone", agence.getTelephone());
+		AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
 		if (modifications.getNom() != null) agence.setNom(modifications.getNom());
 		if (modifications.getAdresse() != null) agence.setAdresse(modifications.getAdresse());
 		if (modifications.getTelephone() != null) agence.setTelephone(modifications.getTelephone());
 
-		return agenceRepository.save(agence);
+		Agence saved = agenceRepository.save(agence);
+
+		java.util.Map<String, Object> apres = new java.util.HashMap<>();
+		apres.put("nom", saved.getNom());
+		apres.put("adresse", saved.getAdresse());
+		apres.put("telephone", saved.getTelephone());
+		AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+		return saved;
 	}
 
 	@Override
@@ -66,7 +82,19 @@ public class AgenceServiceImpl implements AgenceService {
 	public Agence desactiverAgence(Long idAgence) {
 		Agence agence = agenceRepository.findById(idAgence)
 				.orElseThrow(() -> new EntityNotFoundException("Agence introuvable: " + idAgence));
+
+		AuditContext.setIdEntite(String.valueOf(idAgence));
+		java.util.Map<String, Object> avant = new java.util.HashMap<>();
+		avant.put("estActive", agence.getEstActive());
+		AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
 		agence.setEstActive(false);
-		return agenceRepository.save(agence);
+		Agence saved = agenceRepository.save(agence);
+
+		java.util.Map<String, Object> apres = new java.util.HashMap<>();
+		apres.put("estActive", false);
+		AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+		return saved;
 	}
 }

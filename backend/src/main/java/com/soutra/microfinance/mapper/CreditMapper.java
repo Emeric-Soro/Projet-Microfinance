@@ -20,20 +20,29 @@ public interface CreditMapper {
 
 	// --- Demande de Credit ---
 
-	@Mapping(target = "nomClient", expression = "java(demande.getClient().getNom() + \" \" + demande.getClient().getPrenom())")
-	@Mapping(target = "codeProduit", source = "produitCredit.codeProduit")
+	@Mapping(target = "nomClient",    expression = "java(demande.getClient().getNom())")
+	@Mapping(target = "prenomClient", expression = "java(demande.getClient().getPrenom())")
+	@Mapping(target = "codeClient",   expression = "java(demande.getClient().getCodeClient())")
+	@Mapping(target = "telephone",    expression = "java(demande.getClient().getTelephone())")
+	@Mapping(target = "email",        expression = "java(demande.getClient().getEmail())")
+	@Mapping(target = "statutKyc",    expression = "java(demande.getClient().getStatutKyc() != null ? demande.getClient().getStatutKyc().name() : null)")
+	@Mapping(target = "revenuMensuel",expression = "java(demande.getClient().getRevenuMensuel())")
+	@Mapping(target = "codeProduit",  source = "produitCredit.codeProduit")
 	@Mapping(target = "libelleProduit", source = "produitCredit.libelle")
 	@Mapping(target = "statutDemande", expression = "java(demande.getStatutDemande().name())")
-	@Mapping(target = "nomAgentCredit", expression = "java(demande.getAgentCredit() != null ? demande.getAgentCredit().getUsername() : null)")
+	@Mapping(target = "nomAgentCredit", expression = "java(demande.getAgentCredit() != null && demande.getAgentCredit().getClient() != null ? demande.getAgentCredit().getClient().getNom() + \" \" + demande.getAgentCredit().getClient().getPrenom() : (demande.getAgentCredit() != null ? demande.getAgentCredit().getLogin() : null))")
+	@Mapping(target = "agentLogin",   expression = "java(demande.getAgentCredit() != null ? demande.getAgentCredit().getLogin() : null)")
 	DemandeCreditResponseDTO toDemandeCreditResponseDTO(DemandeCredit demande);
+
 
 	// --- Credit ---
 
+	@Mapping(target = "idClient", source = "client.idClient")
 	@Mapping(target = "nomClient", expression = "java(credit.getClient().getNom() + \" \" + credit.getClient().getPrenom())")
 	@Mapping(target = "codeProduit", source = "produitCredit.codeProduit")
 	@Mapping(target = "libelleProduit", source = "produitCredit.libelle")
 	@Mapping(target = "methodeCalcul", expression = "java(credit.getMethodeCalcul().name())")
-	@Mapping(target = "statutCredit", source = "statutCredit.libelle")
+	@Mapping(target = "statutCredit", source = "statutCredit.codeStatut")
 	@Mapping(target = "numCompteDecaissement", expression = "java(credit.getCompteDecaissement() != null ? credit.getCompteDecaissement().getNumCompte() : null)")
 	@Mapping(target = "referenceDemande", expression = "java(credit.getDemandeCredit() != null ? credit.getDemandeCredit().getReferenceDemande() : null)")
 	CreditResponseDTO toCreditResponseDTO(Credit credit);

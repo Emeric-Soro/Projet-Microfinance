@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 
 public interface CompteService {
 
-    Compte ouvrirCompte(Long idClient, String codeTypeCompte, BigDecimal depotInitial);
+    Compte ouvrirCompte(Long idClient, String codeTypeCompte, BigDecimal depotInitial, Long idAgence, BigDecimal decouvertAutorise);
 
     BigDecimal consulterSolde(String numCompte);
 

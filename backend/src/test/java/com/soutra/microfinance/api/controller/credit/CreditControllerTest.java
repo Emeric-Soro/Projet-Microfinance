@@ -32,6 +32,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -83,12 +84,12 @@ class CreditControllerTest {
                 1L, "MC-COMMERCE", new BigDecimal("500000"), 12, "Achat de marchandises", null
         );
         DemandeCredit demande = buildDemandeCredit();
-        DemandeCreditResponseDTO responseDTO = new DemandeCreditResponseDTO(
+        DemandeCreditResponseDTO responseDTO = makeDemandeCreditResponseDTO(
                 demande.getIdDemande(), demande.getReferenceDemande(), "Test Client",
                 "MC-COMMERCE", "Micro Commerce", demande.getMontantDemande(),
                 demande.getDureeSouhaitee(), demande.getObjetCredit(),
                 demande.getDateDemande(), null, demande.getStatutDemande().name(),
-                null, null, null
+                null
         );
 
         when(creditService.soumettreDemandeCredit(anyLong(), anyString(), any(BigDecimal.class), anyInt(), anyString(), any()))
@@ -106,7 +107,7 @@ class CreditControllerTest {
     void shouldApproveCreditRequest() throws Exception {
         DecisionCreditRequestDTO request = new DecisionCreditRequestDTO(1L, "APPROUVEE", null);
         Credit credit = buildCredit();
-        CreditResponseDTO creditResponseDTO = new CreditResponseDTO(
+        CreditResponseDTO creditResponseDTO = makeCreditResponseDTO(
                 credit.getIdCredit(), credit.getReferenceCredit(), "Test Client",
                 "MC-COMMERCE", "Micro Commerce", credit.getMontantAccorde(),
                 credit.getMontantRestantDu(), credit.getTauxInteretAnnuel(),
@@ -134,7 +135,7 @@ class CreditControllerTest {
         DemandeCredit demande = buildDemandeCredit();
         demande.setStatutDemande(StatutDemande.REJETEE);
         demande.setMotifRejet("Risque eleve");
-        DemandeCreditResponseDTO demandeResponseDTO = new DemandeCreditResponseDTO(
+        DemandeCreditResponseDTO demandeResponseDTO = makeDemandeCreditResponseDTO(
                 demande.getIdDemande(),
                 demande.getReferenceDemande(),
                 "Test Client",
@@ -146,9 +147,7 @@ class CreditControllerTest {
                 demande.getDateDemande(),
                 null,
                 "REJETEE",
-                "Risque eleve",
-                null,
-                null
+                "Risque eleve"
         );
         DecisionCreditResponseDTO responseDTO = new DecisionCreditResponseDTO(
                 "REJETEE",
@@ -172,7 +171,7 @@ class CreditControllerTest {
         DecaissementRequestDTO request = new DecaissementRequestDTO("CPT-001");
         Credit credit = buildCredit();
         credit.setDateDecaissement(LocalDate.now());
-        CreditResponseDTO creditResponseDTO = new CreditResponseDTO(
+        CreditResponseDTO creditResponseDTO = makeCreditResponseDTO(
                 credit.getIdCredit(),
                 credit.getReferenceCredit(),
                 "Test Client",
@@ -204,11 +203,11 @@ class CreditControllerTest {
     void shouldListPendingRequests() throws Exception {
         DemandeCredit demande = buildDemandeCredit();
         Page<DemandeCredit> page = new PageImpl<>(List.of(demande));
-        DemandeCreditResponseDTO responseDTO = new DemandeCreditResponseDTO(
+        DemandeCreditResponseDTO responseDTO = makeDemandeCreditResponseDTO(
                 demande.getIdDemande(), demande.getReferenceDemande(), "Test Client",
                 "MC-COMMERCE", "Micro Commerce", demande.getMontantDemande(),
                 demande.getDureeSouhaitee(), demande.getObjetCredit(),
-                demande.getDateDemande(), null, "EN_ATTENTE", null, null, null
+                demande.getDateDemande(), null, "EN_ATTENTE", null
         );
 
         when(creditService.listerDemandesEnAttente(any())).thenReturn(page);
@@ -270,5 +269,28 @@ class CreditControllerTest {
         statut.setLibelle("Approuve");
         credit.setStatutCredit(statut);
         return credit;
+    }
+
+    private DemandeCreditResponseDTO makeDemandeCreditResponseDTO(
+            Long idDemande, String referenceDemande, String nomClient, String codeProduit, String libelleProduit,
+            BigDecimal montantDemande, Integer dureeSouhaitee, String objetCredit, LocalDate dateDemande,
+            LocalDateTime dateDecision, String statutDemande, String motifRejet) {
+        return new DemandeCreditResponseDTO(
+                idDemande, referenceDemande, nomClient, null, null, null, null, null, null,
+                codeProduit, libelleProduit, montantDemande, dureeSouhaitee, objetCredit,
+                dateDemande, dateDecision, statutDemande, motifRejet, null, null, null
+        );
+    }
+
+    private CreditResponseDTO makeCreditResponseDTO(
+            Long idCredit, String referenceCredit, String nomClient, String codeProduit, String libelleProduit,
+            BigDecimal montantAccorde, BigDecimal montantRestantDu, BigDecimal tauxInteretAnnuel, Integer dureeMois,
+            String methodeCalcul, BigDecimal fraisDossier, LocalDate dateDecaissement, LocalDate dateFinPrevue,
+            String statutCredit, String numCompteDecaissement, String referenceDemande) {
+        return new CreditResponseDTO(
+                idCredit, null, referenceCredit, nomClient, codeProduit, libelleProduit,
+                montantAccorde, montantRestantDu, tauxInteretAnnuel, dureeMois, methodeCalcul,
+                fraisDossier, dateDecaissement, dateFinPrevue, statutCredit, numCompteDecaissement, referenceDemande
+        );
     }
 }

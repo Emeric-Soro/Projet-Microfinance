@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import com.soutra.microfinance.audit.AuditContext;
 
 @Service
 public class CreditServiceImpl implements CreditService {
@@ -118,6 +119,17 @@ public class CreditServiceImpl implements CreditService {
 		}
 
 		DemandeCredit saved = demandeCreditRepository.save(demande);
+
+		AuditContext.setIdEntite(String.valueOf(saved.getIdDemande()));
+		java.util.Map<String, Object> avant = new java.util.HashMap<>();
+		AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
+		java.util.Map<String, Object> apres = new java.util.HashMap<>();
+		apres.put("referenceDemande", saved.getReferenceDemande());
+		apres.put("montantDemande", saved.getMontantDemande());
+		apres.put("statutDemande", saved.getStatutDemande().name());
+		AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
 		LOGGER.info("Demande de credit {} soumise pour le client {}", saved.getReferenceDemande(), idClient);
 		return saved;
 	}
@@ -132,6 +144,11 @@ public class CreditServiceImpl implements CreditService {
 				&& demande.getStatutDemande() != StatutDemande.EN_ETUDE) {
 			throw new IllegalStateException("Seule une demande EN_ATTENTE ou EN_ETUDE peut etre approuvee. Statut actuel: " + demande.getStatutDemande());
 		}
+
+		AuditContext.setIdEntite(String.valueOf(idDemande));
+		java.util.Map<String, Object> avant = new java.util.HashMap<>();
+		avant.put("statutDemande", demande.getStatutDemande().name());
+		AuditContext.setDetailsAvant(AuditContext.toJson(avant));
 
 		demande.setStatutDemande(StatutDemande.APPROUVEE);
 		demande.setDateDecision(LocalDateTime.now());
@@ -166,6 +183,12 @@ public class CreditServiceImpl implements CreditService {
 		}
 
 		Credit saved = creditRepository.save(credit);
+
+		java.util.Map<String, Object> apres = new java.util.HashMap<>();
+		apres.put("statutDemande", StatutDemande.APPROUVEE.name());
+		apres.put("referenceCredit", saved.getReferenceCredit());
+		AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
 		LOGGER.info("Demande {} approuvee, credit {} cree", demande.getReferenceDemande(), saved.getReferenceCredit());
 		return saved;
 	}
@@ -185,10 +208,22 @@ public class CreditServiceImpl implements CreditService {
 			throw new IllegalArgumentException("Le motif de rejet est obligatoire.");
 		}
 
+		AuditContext.setIdEntite(String.valueOf(idDemande));
+		java.util.Map<String, Object> avant = new java.util.HashMap<>();
+		avant.put("statutDemande", demande.getStatutDemande().name());
+		AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
 		demande.setStatutDemande(StatutDemande.REJETEE);
 		demande.setMotifRejet(motifRejet);
 		demande.setDateDecision(LocalDateTime.now());
-		return demandeCreditRepository.save(demande);
+		DemandeCredit saved = demandeCreditRepository.save(demande);
+
+		java.util.Map<String, Object> apres = new java.util.HashMap<>();
+		apres.put("statutDemande", StatutDemande.REJETEE.name());
+		apres.put("motifRejet", saved.getMotifRejet());
+		AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+		return saved;
 	}
 
 	@Override
@@ -213,6 +248,12 @@ public class CreditServiceImpl implements CreditService {
 			throw new IllegalArgumentException("Le compte " + numCompteCible
 					+ " n'appartient pas au client du credit.");
 		}
+
+		AuditContext.setIdEntite(String.valueOf(idCredit));
+		java.util.Map<String, Object> avant = new java.util.HashMap<>();
+		avant.put("statutCredit", credit.getStatutCredit().getCodeStatut());
+		avant.put("montantRestantDu", credit.getMontantRestantDu());
+		AuditContext.setDetailsAvant(AuditContext.toJson(avant));
 
 		// Montant net = montant accorde - frais de dossier
 		BigDecimal montantNet = credit.getMontantAccorde().subtract(
@@ -251,12 +292,19 @@ public class CreditServiceImpl implements CreditService {
 			credit.getEcheances().add(echeance);
 		}
 
-		return creditRepository.save(credit);
+		Credit saved = creditRepository.save(credit);
+
+		java.util.Map<String, Object> apres = new java.util.HashMap<>();
+		apres.put("statutCredit", AppConstants.CREDIT_DECAISSE);
+		apres.put("montantRestantDu", saved.getMontantRestantDu());
+		AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+		return saved;
 	}
 
 	@Override
 	@Transactional
-	public Credit enregistrerRemboursement(Long idCredit, BigDecimal montant) {
+	public Credit enregistrerRemboursement(Long idCredit, BigDecimal montant, String numCompteSource) {
 		if (montant == null || montant.compareTo(BigDecimal.ZERO) <= 0) {
 			throw new IllegalArgumentException("Le montant du remboursement doit etre strictement positif.");
 		}
@@ -270,6 +318,12 @@ public class CreditServiceImpl implements CreditService {
 				&& !AppConstants.CREDIT_EN_RETARD.equals(statutCode)) {
 			throw new IllegalStateException("Le credit n'est pas dans un etat permettant le remboursement.");
 		}
+
+		AuditContext.setIdEntite(String.valueOf(idCredit));
+		java.util.Map<String, Object> avant = new java.util.HashMap<>();
+		avant.put("statutCredit", statutCode);
+		avant.put("montantRestantDu", credit.getMontantRestantDu());
+		AuditContext.setDetailsAvant(AuditContext.toJson(avant));
 
 		// Imputation sur les echeances impayees en ordre chronologique
 		List<Echeance> echeancesImpayees = echeanceRepository
@@ -303,6 +357,19 @@ public class CreditServiceImpl implements CreditService {
 		// Mise a jour du montant restant du
 		credit.setMontantRestantDu(credit.getMontantRestantDu().subtract(montant.subtract(montantRestant)));
 
+		// Si un compte source est fourni, on effectue le retrait sur ce compte
+		if (numCompteSource != null && !numCompteSource.isBlank()) {
+			Compte compteSource = compteRepository.findByNumCompte(numCompteSource)
+					.orElseThrow(() -> new EntityNotFoundException("Compte source introuvable: " + numCompteSource));
+			if (!compteSource.getClient().getIdClient().equals(credit.getClient().getIdClient())) {
+				throw new IllegalArgumentException("Le compte " + numCompteSource + " n'appartient pas au client du credit.");
+			}
+			Utilisateur systemUser = utilisateurRepository.findByLogin("demo.admin")
+					.orElseThrow(() -> new IllegalStateException("Utilisateur systeme introuvable."));
+			// numeroCarte = null car remboursement par virement/compte, pas par carte
+			transactionService.faireRetrait(numCompteSource, montant.subtract(montantRestant), systemUser.getIdUser(), null);
+		}
+
 		// Verification si toutes les echeances sont soldees
 		long echeancesRestantes = echeanceRepository.countByCredit_IdCreditAndEstPayeeFalse(idCredit);
 		if (echeancesRestantes == 0) {
@@ -319,7 +386,14 @@ public class CreditServiceImpl implements CreditService {
 			}
 		}
 
-		return creditRepository.save(credit);
+		Credit saved = creditRepository.save(credit);
+
+		java.util.Map<String, Object> apres = new java.util.HashMap<>();
+		apres.put("statutCredit", saved.getStatutCredit().getCodeStatut());
+		apres.put("montantRestantDu", saved.getMontantRestantDu());
+		AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+		return saved;
 	}
 
 	@Override
@@ -390,8 +464,19 @@ public class CreditServiceImpl implements CreditService {
 		StatutCredit statutInstruction = statutCreditRepository.findByCodeStatut(AppConstants.CREDIT_EN_ETUDE)
 				.orElseThrow(() -> new IllegalStateException("Statut EN_ETUDE non configure."));
 
+		AuditContext.setIdEntite(String.valueOf(idCredit));
+		java.util.Map<String, Object> avant = new java.util.HashMap<>();
+		avant.put("statutCredit", credit.getStatutCredit() != null ? credit.getStatutCredit().getCodeStatut() : null);
+		AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
 		credit.setStatutCredit(statutInstruction);
-		return creditRepository.save(credit);
+		Credit saved = creditRepository.save(credit);
+
+		java.util.Map<String, Object> apres = new java.util.HashMap<>();
+		apres.put("statutCredit", AppConstants.CREDIT_EN_ETUDE);
+		AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+		return saved;
 	}
 
 	@Override
@@ -403,8 +488,19 @@ public class CreditServiceImpl implements CreditService {
 		StatutCredit statutApprouve = statutCreditRepository.findByCodeStatut(AppConstants.CREDIT_APPROUVE)
 				.orElseThrow(() -> new IllegalStateException("Statut APPROUVE non configure."));
 
+		AuditContext.setIdEntite(String.valueOf(idCredit));
+		java.util.Map<String, Object> avant = new java.util.HashMap<>();
+		avant.put("statutCredit", credit.getStatutCredit() != null ? credit.getStatutCredit().getCodeStatut() : null);
+		AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
 		credit.setStatutCredit(statutApprouve);
-		return creditRepository.save(credit);
+		Credit saved = creditRepository.save(credit);
+
+		java.util.Map<String, Object> apres = new java.util.HashMap<>();
+		apres.put("statutCredit", AppConstants.CREDIT_APPROUVE);
+		AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+		return saved;
 	}
 
 	@Override
@@ -429,6 +525,13 @@ public class CreditServiceImpl implements CreditService {
 	public Credit restructurerCredit(Long idCredit, Integer nouvelleDureeMois, BigDecimal nouveauTaux) {
 		Credit credit = creditRepository.findById(idCredit)
 				.orElseThrow(() -> new CreditNotFoundException(idCredit));
+
+		AuditContext.setIdEntite(String.valueOf(idCredit));
+		java.util.Map<String, Object> avant = new java.util.HashMap<>();
+		avant.put("dureeMois", credit.getDureeMois());
+		avant.put("tauxInteretAnnuel", credit.getTauxInteretAnnuel());
+		avant.put("statutCredit", credit.getStatutCredit() != null ? credit.getStatutCredit().getCodeStatut() : null);
+		AuditContext.setDetailsAvant(AuditContext.toJson(avant));
 
 		if (nouvelleDureeMois != null && nouvelleDureeMois > 0) {
 			credit.setDureeMois(nouvelleDureeMois);
@@ -456,7 +559,15 @@ public class CreditServiceImpl implements CreditService {
 				.orElseThrow(() -> new IllegalStateException("Statut RESTRUCTURE non configure."));
 		credit.setStatutCredit(statutRestructure);
 
-		return creditRepository.save(credit);
+		Credit saved = creditRepository.save(credit);
+
+		java.util.Map<String, Object> apres = new java.util.HashMap<>();
+		apres.put("dureeMois", saved.getDureeMois());
+		apres.put("tauxInteretAnnuel", saved.getTauxInteretAnnuel());
+		apres.put("statutCredit", AppConstants.CREDIT_RESTRUCTURE);
+		AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+		return saved;
 	}
 
 	@Override
@@ -475,8 +586,19 @@ public class CreditServiceImpl implements CreditService {
 		StatutCredit statutSouffrance = statutCreditRepository.findByCodeStatut(AppConstants.CREDIT_SOUFFRANCE)
 				.orElseThrow(() -> new IllegalStateException("Statut SOUFFRANCE non configure."));
 
+		AuditContext.setIdEntite(String.valueOf(idCredit));
+		java.util.Map<String, Object> avant = new java.util.HashMap<>();
+		avant.put("statutCredit", credit.getStatutCredit() != null ? credit.getStatutCredit().getCodeStatut() : null);
+		AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
 		credit.setStatutCredit(statutSouffrance);
-		return creditRepository.save(credit);
+		Credit saved = creditRepository.save(credit);
+
+		java.util.Map<String, Object> apres = new java.util.HashMap<>();
+		apres.put("statutCredit", AppConstants.CREDIT_SOUFFRANCE);
+		AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+		return saved;
 	}
 
 	// --- METHODES UTILITAIRES PRIVEES ---

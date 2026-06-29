@@ -100,7 +100,9 @@ public class CompteController {
 		Compte compte = compteService.ouvrirCompte(
 				requestDTO.getIdClient(),
 				requestDTO.getCodeTypeCompte(),
-				requestDTO.getDepotInitial()
+				requestDTO.getDepotInitial(),
+				requestDTO.getIdAgence(),
+				requestDTO.getDecouvertAutorise()
 		);
 		return ResponseEntity.status(HttpStatus.CREATED).body(toCompteResponse(compte));
 	}

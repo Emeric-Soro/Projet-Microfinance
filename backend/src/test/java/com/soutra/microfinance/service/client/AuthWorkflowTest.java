@@ -47,6 +47,9 @@ class AuthWorkflowTest {
     private NotificationService notificationService;
 
     @Mock
+    private com.soutra.microfinance.service.communication.EmailService emailService;
+
+    @Mock
     private com.soutra.microfinance.repository.parametrage.AgenceRepository agenceRepository;
 
     @Mock
@@ -64,6 +67,7 @@ class AuthWorkflowTest {
         when(passwordEncoder.matches("Password123!", utilisateur.getPassword())).thenReturn(true);
         when(authSecurityProperties.getOtpValidity()).thenReturn(Duration.ofMinutes(5));
         when(authSecurityProperties.getMaxOtpAttempts()).thenReturn(3);
+        when(authSecurityProperties.getOtpLength()).thenReturn(6);
         when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(i -> i.getArgument(0));
 
         AuthenticationWorkflowResult result = utilisateurService.authentifier("admin@test.com", "Password123!");
@@ -118,7 +122,6 @@ class AuthWorkflowTest {
 
         when(utilisateurRepository.findByLogin("admin@test.com")).thenReturn(Optional.of(utilisateur));
         when(passwordEncoder.matches("000000", utilisateur.getOtpHash())).thenReturn(false);
-        when(authSecurityProperties.getLockDuration()).thenReturn(Duration.ofMinutes(15));
         when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(i -> i.getArgument(0));
 
         assertThatThrownBy(() -> utilisateurService.verifierSecondFacteur("admin@test.com", "challenge-123", "000000"))

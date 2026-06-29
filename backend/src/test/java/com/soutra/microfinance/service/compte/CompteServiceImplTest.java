@@ -39,6 +39,12 @@ class CompteServiceImplTest {
     @Mock
     private StatutCompteRepository statutCompteRepository;
 
+    @Mock
+    private com.soutra.microfinance.repository.parametrage.AgenceRepository agenceRepository;
+
+    @Mock
+    private com.soutra.microfinance.repository.client.UtilisateurRepository utilisateurRepository;
+
     @InjectMocks
     private CompteServiceImpl compteService;
 
@@ -68,7 +74,7 @@ class CompteServiceImplTest {
             return statut;
         });
 
-        Compte compte = compteService.ouvrirCompte(7L, "COURANT", new BigDecimal("10000.00"));
+        Compte compte = compteService.ouvrirCompte(7L, "COURANT", new BigDecimal("10000.00"), null, null);
 
         assertThat(compte.getStatutsCompte()).hasSize(1);
         assertThat(compte.getStatutsCompte().get(0).getLibelleStatut()).isEqualTo("ACTIF");

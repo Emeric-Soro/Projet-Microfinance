@@ -8,9 +8,18 @@ import java.time.LocalDateTime;
 public record DemandeCreditResponseDTO(
 		Long idDemande,
 		String referenceDemande,
+		// Champs client
 		String nomClient,
+		String prenomClient,
+		String codeClient,
+		String telephone,
+		String email,
+		String statutKyc,
+		BigDecimal revenuMensuel,
+		// Champs produit
 		String codeProduit,
 		String libelleProduit,
+		// Champs demande
 		BigDecimal montantDemande,
 		Integer dureeSouhaitee,
 		String objetCredit,
@@ -19,5 +28,7 @@ public record DemandeCreditResponseDTO(
 		String statutDemande,
 		String motifRejet,
 		Integer scoreClient,
-		String nomAgentCredit
+		// Champs agent
+		String nomAgentCredit,
+		String agentLogin
 ) {}

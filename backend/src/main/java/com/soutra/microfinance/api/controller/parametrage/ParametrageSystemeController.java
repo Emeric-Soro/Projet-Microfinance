@@ -60,6 +60,35 @@ public class ParametrageSystemeController {
         return ResponseEntity.ok(dtos);
     }
 
+    @Operation(summary = "Mettre a jour les parametres systeme",
+            description = "Met a jour la configuration generale du systeme (devise, timezone, timeouts)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Parametres systeme mis a jour avec succes")
+    })
+    @PutMapping("/systeme")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @AuditLog(action = "PARAM_UPDATE_SYSTEM", resource = "PARAMETRAGE")
+    public ResponseEntity<List<ParametreSystemeResponseDTO>> mettreAJourParametresSysteme(
+            @RequestBody Map<String, Object> params) {
+
+        params.forEach((key, value) -> {
+            String dbCode = switch (key) {
+                case "devise" -> "DEVISE_DEFAULT";
+                case "timezone" -> "TIMEZONE";
+                case "sessionTimeout" -> "SESSION_TIMEOUT_MIN";
+                case "sessionAlert" -> "SESSION_ALERT_MIN";
+                default -> key;
+            };
+            parametrageSystemeService.mettreAJourParametre(dbCode, String.valueOf(value));
+            if ("devise".equals(key)) {
+                // Also update the general DEVISE parameter to keep them in sync
+                parametrageSystemeService.mettreAJourParametre("DEVISE", String.valueOf(value));
+            }
+        });
+
+        return consulterParametresSysteme();
+    }
+
     @Operation(summary = "Mettre a jour les jours feries",
             description = "Remplace la liste complete des jours feries")
     @ApiResponses({

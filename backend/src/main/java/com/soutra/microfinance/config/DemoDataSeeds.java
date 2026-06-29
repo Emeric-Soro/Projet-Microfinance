@@ -26,19 +26,27 @@ final class DemoDataSeeds {
             new DemoUserSeed("CLI-RDC-0002", "Mbuyi", "Cecile", LocalDate.of(1993, 8, 25), "cecile.mbuyi@demo.microfin.local", "+243823456789", "Lubumbashi, Kampemba", "Enseignante", "Education", "CNI-RDC-2026-0002", "+243823456789", "CLIENT", "COURANT", "CD23MB000100000002", new BigDecimal("350000.00")),
             new DemoUserSeed("CLI-RDC-0003", "Kabongo", "David", LocalDate.of(1985, 12, 3), "david.kabongo@demo.microfin.local", "+243834567890", "Goma, Birere", "Transporteur", "Transport", "CNI-RDC-2026-0003", "+243834567890", "CLIENT", "EPARGNE", "CD23MB000100000003", new BigDecimal("275000.00")),
             new DemoUserSeed("CLI-RDC-0004", "Ngoy", "Marie", LocalDate.of(1991, 3, 17), "marie.ngoy@demo.microfin.local", "+243845678901", "Matadi, Congo", "Restauratrice", "Restauration", "CNI-RDC-2026-0004", "+243845678901", "CLIENT", "COURANT", "CD23MB000100000004", new BigDecimal("180000.00")),
-            new DemoUserSeed("CLI-RDC-0005", "Tshimanga", "Jean", LocalDate.of(1988, 7, 9), "jean.tshimanga@demo.microfin.local", "+243856789012", "Kisangani, Tshopo", "Agriculteur", "Agriculture", "CNI-RDC-2026-0005", "+243856789012", "CLIENT", "EPARGNE", "CD23MB000100000005", new BigDecimal("420000.00"))
+            new DemoUserSeed("CLI-RDC-0005", "Tshimanga", "Jean", LocalDate.of(1988, 7, 9), "jean.tshimanga@demo.microfin.local", "+243856789012", "Kisangani, Tshopo", "Agriculteur", "Agriculture", "CNI-RDC-2026-0005", "+243856789012", "CLIENT", "EPARGNE", "CD23MB000100000005", new BigDecimal("420000.00")),
+
+            // --- Nouveaux Guichetiers ---
+            new DemoUserSeed("CLI-20260527-0031", "Kouame", "Jean-Pierre", LocalDate.of(1989, 4, 12), "jean.kouame@demo.microfin.local", "+225 05 02 10 10 31", "Cocody, Abidjan", "Guichetier", "Finance", "CNI-CI-2026-0031", "jean.kouame", "GUICHETIER", "EPARGNE", "CI23CB000100000031", new BigDecimal("0.00")),
+            new DemoUserSeed("CLI-20260527-0032", "Diallo", "Mamadou", LocalDate.of(1992, 10, 5), "mamadou.diallo@demo.microfin.local", "+225 01 02 10 10 32", "Marcory, Abidjan", "Guichetier", "Finance", "CNI-CI-2026-0032", "mamadou.diallo", "GUICHETIER", "EPARGNE", "CI23CB000100000032", new BigDecimal("0.00"))
     );
     static final List<TransactionSeed> TRANSACTIONS = List.of(
-            new TransactionSeed("TRX-DEMO-20260527-0001", "DEPOT", null, "CI23CB000100000005", new BigDecimal("50000.00"), BigDecimal.ZERO, 6),
-            new TransactionSeed("TRX-DEMO-20260527-0002", "DEPOT", null, "CI23CB000100000008", new BigDecimal("75000.00"), BigDecimal.ZERO, 5),
-            new TransactionSeed("TRX-DEMO-20260527-0003", "RETRAIT", "CI23CB000100000007", null, new BigDecimal("25000.00"), new BigDecimal("250.00"), 4),
-            new TransactionSeed("TRX-DEMO-20260527-0004", "VIREMENT", "CI23CB000100000009", "CI23CB000100000010", new BigDecimal("60000.00"), new BigDecimal("500.00"), 3),
-            new TransactionSeed("TRX-DEMO-20260527-0005", "DEPOT", null, "CI23CB000100000012", new BigDecimal("120000.00"), BigDecimal.ZERO, 2),
+            new TransactionSeed("TRX-DEMO-20260527-0001", "DEPOT", null, "CI23CB000100000005", new BigDecimal("150000.00"), BigDecimal.ZERO, 6, "yao.koffi"),
+            new TransactionSeed("TRX-DEMO-20260527-0002", "DEPOT", null, "CI23CB000100000008", new BigDecimal("75000.00"), BigDecimal.ZERO, 5, "jean.kouame"),
+            new TransactionSeed("TRX-DEMO-20260527-0003", "RETRAIT", "CI23CB000100000007", null, new BigDecimal("25000.00"), new BigDecimal("250.00"), 4, "mamadou.diallo"),
+            new TransactionSeed("TRX-DEMO-20260527-0004", "VIREMENT", "CI23CB000100000009", "CI23CB000100000010", new BigDecimal("60000.00"), new BigDecimal("500.00"), 3, "yao.koffi"),
+            new TransactionSeed("TRX-DEMO-20260527-0005", "DEPOT", null, "CI23CB000100000012", new BigDecimal("220000.00"), BigDecimal.ZERO, 2, "jean.kouame"),
+            new TransactionSeed("TRX-DEMO-20260527-0006", "DEPOT", null, "CI23CB000100000011", new BigDecimal("350000.00"), BigDecimal.ZERO, 1, "mamadou.diallo"),
+            new TransactionSeed("TRX-DEMO-20260527-0007", "RETRAIT", "CI23CB000100000006", null, new BigDecimal("45000.00"), new BigDecimal("450.00"), 1, "yao.koffi"),
+            new TransactionSeed("TRX-DEMO-20260527-0008", "VIREMENT", "CI23CB000100000012", "CI23CB000100000005", new BigDecimal("80000.00"), new BigDecimal("800.00"), 0, "jean.kouame"),
+            new TransactionSeed("TRX-DEMO-20260527-0009", "DEPOT", null, "CI23CB000100000008", new BigDecimal("125000.00"), BigDecimal.ZERO, 0, "mamadou.diallo"),
 
             // --- Transactions DRC pour tests mobile ---
-            new TransactionSeed("TRX-RDC-20260527-0001", "DEPOT", null, "CD23MB000100000001", new BigDecimal("100000.00"), BigDecimal.ZERO, 3),
-            new TransactionSeed("TRX-RDC-20260527-0002", "VIREMENT", "CD23MB000100000001", "CD23MB000100000002", new BigDecimal("50000.00"), BigDecimal.ZERO, 2),
-            new TransactionSeed("TRX-RDC-20260527-0003", "RETRAIT", "CD23MB000100000003", null, new BigDecimal("25000.00"), new BigDecimal("250.00"), 1)
+            new TransactionSeed("TRX-RDC-20260527-0001", "DEPOT", null, "CD23MB000100000001", new BigDecimal("100000.00"), BigDecimal.ZERO, 3, "demo.admin"),
+            new TransactionSeed("TRX-RDC-20260527-0002", "VIREMENT", "CD23MB000100000001", "CD23MB000100000002", new BigDecimal("50000.00"), BigDecimal.ZERO, 2, "demo.admin"),
+            new TransactionSeed("TRX-RDC-20260527-0003", "RETRAIT", "CD23MB000100000003", null, new BigDecimal("25000.00"), new BigDecimal("250.00"), 1, "demo.admin")
     );
 
     private DemoDataSeeds() {
@@ -51,6 +59,7 @@ final class DemoDataSeeds {
     }
 
     record TransactionSeed(String referenceUnique, String typeCode, String sourceAccountNumber,
-                           String destinationAccountNumber, BigDecimal montant, BigDecimal frais, int daysAgo) {
+                           String destinationAccountNumber, BigDecimal montant, BigDecimal frais, int daysAgo,
+                           String initiatorLogin) {
     }
 }

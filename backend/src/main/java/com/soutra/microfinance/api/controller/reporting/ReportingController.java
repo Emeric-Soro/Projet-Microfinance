@@ -54,8 +54,11 @@ public class ReportingController {
     @GetMapping("/financier")
     @PreAuthorize("hasAnyAuthority('ADMIN','DIRECTEUR')")
     @AuditLog(action = "REPORTING_FINANCIER", resource = "REPORTING")
-    public ResponseEntity<RapportFinancierResponseDTO> getRapportFinancier() {
-        return ResponseEntity.ok(reportingService.genererRapportFinancier());
+    public ResponseEntity<RapportFinancierResponseDTO> getRapportFinancier(
+            @RequestParam(required = false) String dateDebut,
+            @RequestParam(required = false) String dateFin
+    ) {
+        return ResponseEntity.ok(reportingService.genererRapportFinancier(dateDebut, dateFin));
     }
 
     @Operation(
@@ -136,9 +139,11 @@ public class ReportingController {
     @AuditLog(action = "REPORTING_EXPORT", resource = "REPORTING")
     public ResponseEntity<RapportExportResponseDTO> exportRapport(
             @RequestParam String type,
-            @RequestParam(defaultValue = "CSV") String format
+            @RequestParam(defaultValue = "CSV") String format,
+            @RequestParam(required = false) String dateDebut,
+            @RequestParam(required = false) String dateFin
     ) {
-        return ResponseEntity.ok(reportingService.exporterRapport(type, format));
+        return ResponseEntity.ok(reportingService.exporterRapport(type, format, dateDebut, dateFin));
     }
 
     @Operation(

@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.soutra.microfinance.audit.AuditLog;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
@@ -83,6 +84,7 @@ public class ClientBlacklistController {
             @ApiResponse(responseCode = "400", description = "Erreur de validation ou client deja blacklistee"),
             @ApiResponse(responseCode = "404", description = "Client introuvable")
     })
+    @AuditLog(action = "CLIENT_BLACKLIST_ADD", resource = "CLIENT")
     @PostMapping("/{idClient}/blacklist")
     @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR')")
     public ResponseEntity<ClientBlacklistResponseDTO> ajouterABlacklist(
@@ -111,6 +113,7 @@ public class ClientBlacklistController {
             @ApiResponse(responseCode = "204", description = "Client retire de la blacklist"),
             @ApiResponse(responseCode = "404", description = "Client introuvable ou non blacklistee")
     })
+    @AuditLog(action = "CLIENT_BLACKLIST_REMOVE", resource = "CLIENT")
     @DeleteMapping("/{idClient}/blacklist")
     @PreAuthorize("hasAnyAuthority('ADMIN','SUPERVISEUR')")
     public ResponseEntity<Void> retirerDeBlacklist(

@@ -9,7 +9,7 @@ public interface ReportingService {
 
     RapportOperationnelResponseDTO genererRapportOperationnel(String dateDebut, String dateFin, Long agenceId);
 
-    RapportFinancierResponseDTO genererRapportFinancier();
+    RapportFinancierResponseDTO genererRapportFinancier(String dateDebut, String dateFin);
 
     RapportClientsResponseDTO genererRapportClients();
 
@@ -19,7 +19,7 @@ public interface ReportingService {
 
     RapportBceaoResponseDTO genererRapportBceao(int trimestre, int annee);
 
-    RapportExportResponseDTO exporterRapport(String type, String format);
+    RapportExportResponseDTO exporterRapport(String type, String format, String dateDebut, String dateFin);
 
     RapportExportResponseDTO genererRapportPersonnalise(RapportPersonnaliseRequestDTO requestDTO);
 }

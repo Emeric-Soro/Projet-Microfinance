@@ -10,6 +10,7 @@ import com.soutra.microfinance.entity.TypeCompte;
 import com.soutra.microfinance.repository.client.ClientRepository;
 import com.soutra.microfinance.repository.client.UtilisateurRepository;
 import com.soutra.microfinance.repository.compte.CompteRepository;
+import com.soutra.microfinance.repository.parametrage.AgenceRepository;
 import com.soutra.microfinance.repository.compte.StatutCompteRepository;
 import com.soutra.microfinance.repository.compte.TypeCompteRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import com.soutra.microfinance.audit.AuditContext;
 
 @Service
 public class CompteServiceImpl implements CompteService {
@@ -36,24 +38,27 @@ public class CompteServiceImpl implements CompteService {
     private final TypeCompteRepository typeCompteRepository;
     private final StatutCompteRepository statutCompteRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final AgenceRepository agenceRepository;
 
     public CompteServiceImpl(
             CompteRepository compteRepository,
             ClientRepository clientRepository,
             TypeCompteRepository typeCompteRepository,
             StatutCompteRepository statutCompteRepository,
-            UtilisateurRepository utilisateurRepository
+            UtilisateurRepository utilisateurRepository,
+            AgenceRepository agenceRepository
     ) {
         this.compteRepository = compteRepository;
         this.clientRepository = clientRepository;
         this.typeCompteRepository = typeCompteRepository;
         this.statutCompteRepository = statutCompteRepository;
         this.utilisateurRepository = utilisateurRepository;
+        this.agenceRepository = agenceRepository;
     }
 
     @Override
     @Transactional
-    public Compte ouvrirCompte(Long idClient, String codeTypeCompte, BigDecimal depotInitial) {
+    public Compte ouvrirCompte(Long idClient, String codeTypeCompte, BigDecimal depotInitial, Long idAgence, BigDecimal decouvertAutorise) {
         Client client = clientRepository.findById(idClient)
                 .orElseThrow(() -> new EntityNotFoundException("Client introuvable: " + idClient));
 
@@ -84,10 +89,15 @@ public class CompteServiceImpl implements CompteService {
         compte.setSolde(BigDecimal.ZERO);
         compte.setDevise(defaultCurrency);
         compte.setTauxInteret(BigDecimal.ZERO);
-        compte.setDecouvertAutorise(BigDecimal.ZERO);
+        compte.setDecouvertAutorise(decouvertAutorise != null && decouvertAutorise.compareTo(BigDecimal.ZERO) >= 0 ? decouvertAutorise : BigDecimal.ZERO);
 
-        // Resolve agence from client, or fallback to connected user
-        compte.setAgence(client.getAgence());
+        // Agence : priorité à la sélection explicite, puis client, puis utilisateur connecté
+        if (idAgence != null) {
+            agenceRepository.findById(idAgence).ifPresent(compte::setAgence);
+        }
+        if (compte.getAgence() == null) {
+            compte.setAgence(client.getAgence());
+        }
         if (compte.getAgence() == null) {
             org.springframework.security.core.Authentication auth =
                     org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
@@ -108,6 +118,18 @@ public class CompteServiceImpl implements CompteService {
         statutActif.setDateStatut(LocalDateTime.now());
         StatutCompte statutActifSauvegarde = statutCompteRepository.save(statutActif);
         compteSauvegarde.getStatutsCompte().add(statutActifSauvegarde);
+
+        AuditContext.setIdEntite(compteSauvegarde.getNumCompte());
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("numCompte", compteSauvegarde.getNumCompte());
+        apres.put("idClient", idClient);
+        apres.put("codeTypeCompte", codeTypeCompte);
+        apres.put("depotInitial", depotInitial);
+        apres.put("decouvertAutorise", compteSauvegarde.getDecouvertAutorise());
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
 
         return compteSauvegarde;
     }
@@ -158,8 +180,19 @@ public class CompteServiceImpl implements CompteService {
         Compte compte = compteRepository.findByNumCompte(numCompte)
                 .orElseThrow(() -> new EntityNotFoundException("Compte introuvable: " + numCompte));
 
+        AuditContext.setIdEntite(numCompte);
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("decouvertAutorise", compte.getDecouvertAutorise());
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         compte.setDecouvertAutorise(nouveauPlafond);
-        return compteRepository.save(compte);
+        Compte saved = compteRepository.save(compte);
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("decouvertAutorise", nouveauPlafond);
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+        return saved;
     }
 
     @Override
@@ -172,12 +205,21 @@ public class CompteServiceImpl implements CompteService {
             throw new IllegalStateException("Impossible de cloturer un compte avec un solde non nul");
         }
 
+        AuditContext.setIdEntite(numCompte);
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("statutCompte", extraireStatutCourant(compte));
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         StatutCompte statutFerme = new StatutCompte();
         statutFerme.setCompte(compte);
         statutFerme.setLibelleStatut(AppConstants.STATUT_COMPTE_FERME);
         statutFerme.setDateStatut(LocalDateTime.now());
         StatutCompte statutFermeSauvegarde = statutCompteRepository.save(statutFerme);
         compte.getStatutsCompte().add(statutFermeSauvegarde);
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("statutCompte", AppConstants.STATUT_COMPTE_FERME);
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
 
         return compte;
     }
@@ -196,12 +238,21 @@ public class CompteServiceImpl implements CompteService {
             throw new IllegalStateException("Le compte est deja bloque");
         }
 
+        AuditContext.setIdEntite(numCompte);
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("statutCompte", statutCourant);
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         StatutCompte statutBloque = new StatutCompte();
         statutBloque.setCompte(compte);
         statutBloque.setLibelleStatut(AppConstants.STATUT_COMPTE_BLOQUE);
         statutBloque.setDateStatut(LocalDateTime.now());
         StatutCompte statutBloqueSauvegarde = statutCompteRepository.save(statutBloque);
         compte.getStatutsCompte().add(statutBloqueSauvegarde);
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("statutCompte", AppConstants.STATUT_COMPTE_BLOQUE);
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
 
         return compte;
     }
@@ -217,12 +268,21 @@ public class CompteServiceImpl implements CompteService {
             throw new IllegalStateException("Le compte n'est pas bloque, statut actuel: " + statutCourant);
         }
 
+        AuditContext.setIdEntite(numCompte);
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("statutCompte", statutCourant);
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         StatutCompte statutActif = new StatutCompte();
         statutActif.setCompte(compte);
         statutActif.setLibelleStatut(AppConstants.STATUT_COMPTE_ACTIF);
         statutActif.setDateStatut(LocalDateTime.now());
         StatutCompte statutActifSauvegarde = statutCompteRepository.save(statutActif);
         compte.getStatutsCompte().add(statutActifSauvegarde);
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("statutCompte", AppConstants.STATUT_COMPTE_ACTIF);
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
 
         return compte;
     }

@@ -6,6 +6,7 @@ import java.time.LocalDate;
 // DTO de reponse pour les details d'un credit actif.
 public record CreditResponseDTO(
 		Long idCredit,
+		Long idClient,
 		String referenceCredit,
 		String nomClient,
 		String codeProduit,

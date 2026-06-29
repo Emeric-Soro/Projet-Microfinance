@@ -1,5 +1,6 @@
 package com.soutra.microfinance.service.client;
 
+import com.soutra.microfinance.audit.AuditContext;
 import com.soutra.microfinance.constant.AppConstants;
 import com.soutra.microfinance.dto.request.client.AddBlacklistRequestDTO;
 import com.soutra.microfinance.dto.request.client.RemoveBlacklistRequestDTO;
@@ -51,6 +52,11 @@ public class ClientBlacklistServiceImpl implements ClientBlacklistService {
             throw new IllegalStateException("Ce client est deja dans la blacklist");
         }
 
+        AuditContext.setIdEntite(String.valueOf(idClient));
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("statutClient", client.getStatutClient() != null ? client.getStatutClient().getLibelleStatut() : null);
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         // Mettre a jour le statut du client a BLOQUE
         StatutClient statutBloque = statutClientRepository.findByLibelleStatutIgnoreCase(AppConstants.STATUT_CLIENT_BLOQUE)
                 .orElseThrow(() -> new IllegalStateException("Statut BLOQUE introuvable"));
@@ -79,6 +85,11 @@ public class ClientBlacklistServiceImpl implements ClientBlacklistService {
         hist.setOperateur(operateur);
         clientBlacklistHistoryRepository.save(hist);
 
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("statutClient", AppConstants.STATUT_CLIENT_BLOQUE);
+        apres.put("motif", requestDTO.getMotif());
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
         return blSaved;
     }
 
@@ -90,6 +101,12 @@ public class ClientBlacklistServiceImpl implements ClientBlacklistService {
 
         ClientBlacklist bl = clientBlacklistRepository.findByClient_IdClient(idClient)
                 .orElseThrow(() -> new EntityNotFoundException("Ce client n'est pas dans la blacklist"));
+
+        AuditContext.setIdEntite(String.valueOf(idClient));
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("statutClient", client.getStatutClient() != null ? client.getStatutClient().getLibelleStatut() : null);
+        avant.put("motifBlacklist", bl.getMotif());
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
 
         // Restaurer le statut du client a ACTIF
         StatutClient statutActif = statutClientRepository.findByLibelleStatutIgnoreCase(AppConstants.STATUT_CLIENT_ACTIF)
@@ -112,5 +129,10 @@ public class ClientBlacklistServiceImpl implements ClientBlacklistService {
         hist.setDateAction(LocalDateTime.now());
         hist.setOperateur(operateur);
         clientBlacklistHistoryRepository.save(hist);
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("statutClient", AppConstants.STATUT_CLIENT_ACTIF);
+        apres.put("motifRetrait", requestDTO != null && requestDTO.getMotif() != null ? requestDTO.getMotif() : "Retrait manuel de la blacklist");
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
     }
 }

@@ -1,6 +1,7 @@
 package com.soutra.microfinance.service.operation;
 
 import com.soutra.microfinance.config.TransactionWorkflowProperties;
+import com.soutra.microfinance.audit.AuditContext;
 import com.soutra.microfinance.constant.AppConstants;
 import com.soutra.microfinance.entity.Caisse;
 import com.soutra.microfinance.entity.CarteVisa;
@@ -97,6 +98,8 @@ public class TransactionServiceImpl implements TransactionService {
                 .orElseThrow(() -> new IllegalStateException("Vous devez ouvrir une caisse avant d'effectuer un depot"));
 
         Compte compte = chargerCompte(numCompte);
+        setAuditAvant((Compte) null, compte, (String) null);
+
         Utilisateur utilisateur = chargerUtilisateur(idUser);
         TypeTransaction typeDepot = chargerTypeStrict(AppConstants.TX_DEPOT);
         BigDecimal frais = transactionFeeCalculator.calculerFrais(typeDepot.getCodeTypeTransaction(), montant);
@@ -116,11 +119,13 @@ public class TransactionServiceImpl implements TransactionService {
         );
 
         if (Boolean.TRUE.equals(transaction.getValidationSuperviseurRequise())) {
+            setAuditApres(transaction.getReferenceUnique(), (Compte) null, rechargerCompteTransaction(compte), transaction.getStatutOperation().name());
             return transaction;
         }
 
         Transaction executed = executerTransaction(transaction);
         mettreAJourCaisse(caisse, montant);
+        setAuditApres(executed.getReferenceUnique(), (Compte) null, rechargerCompteTransaction(compte), executed.getStatutOperation().name());
         return executed;
     }
 
@@ -157,6 +162,8 @@ public class TransactionServiceImpl implements TransactionService {
                 .orElseThrow(() -> new IllegalStateException("Vous devez ouvrir une caisse avant d'effectuer un retrait"));
 
         Compte compte = chargerCompte(numCompte);
+        setAuditAvant(compte, (Compte) null, (String) null);
+
         Utilisateur utilisateur = chargerUtilisateur(idUser);
         TypeTransaction typeRetrait = chargerTypeStrict(AppConstants.TX_RETRAIT);
         BigDecimal frais = transactionFeeCalculator.calculerFrais(typeRetrait.getCodeTypeTransaction(), montant);
@@ -172,11 +179,13 @@ public class TransactionServiceImpl implements TransactionService {
         );
 
         if (Boolean.TRUE.equals(transaction.getValidationSuperviseurRequise())) {
+            setAuditApres(transaction.getReferenceUnique(), rechargerCompteTransaction(compte), (Compte) null, transaction.getStatutOperation().name());
             return transaction;
         }
 
         Transaction executed = executerTransaction(transaction);
         mettreAJourCaisse(caisse, montant.negate());
+        setAuditApres(executed.getReferenceUnique(), rechargerCompteTransaction(compte), (Compte) null, executed.getStatutOperation().name());
         return executed;
     }
 
@@ -190,6 +199,8 @@ public class TransactionServiceImpl implements TransactionService {
 
         Compte source = chargerCompte(compteSource);
         Compte destination = chargerCompte(compteDest);
+        setAuditAvant(source, destination, (String) null);
+
         Utilisateur utilisateur = chargerUtilisateur(idUser);
         TypeTransaction typeVirement = chargerTypeStrict(AppConstants.TX_VIREMENT);
         BigDecimal frais = transactionFeeCalculator.calculerFrais(typeVirement.getCodeTypeTransaction(), montant);
@@ -205,10 +216,13 @@ public class TransactionServiceImpl implements TransactionService {
         );
 
         if (Boolean.TRUE.equals(transaction.getValidationSuperviseurRequise())) {
+            setAuditApres(transaction.getReferenceUnique(), rechargerCompteTransaction(source), rechargerCompteTransaction(destination), transaction.getStatutOperation().name());
             return transaction;
         }
 
-        return executerTransaction(transaction);
+        Transaction executed = executerTransaction(transaction);
+        setAuditApres(executed.getReferenceUnique(), rechargerCompteTransaction(source), rechargerCompteTransaction(destination), executed.getStatutOperation().name());
+        return executed;
     }
 
     @Override
@@ -235,6 +249,8 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         Compte compte = carte.getCompte();
+        setAuditAvant(compte, (Compte) null, (String) null);
+
         Utilisateur utilisateur = chargerUtilisateur(idUser);
         TypeTransaction typePaiementCarte = chargerTypeStrict(AppConstants.TX_PAIEMENT_CARTE);
         BigDecimal frais = transactionFeeCalculator.calculerFrais(typePaiementCarte.getCodeTypeTransaction(), montant);
@@ -250,10 +266,13 @@ public class TransactionServiceImpl implements TransactionService {
         );
 
         if (Boolean.TRUE.equals(transaction.getValidationSuperviseurRequise())) {
+            setAuditApres(transaction.getReferenceUnique(), rechargerCompteTransaction(compte), (Compte) null, transaction.getStatutOperation().name());
             return transaction;
         }
 
-        return executerTransaction(transaction);
+        Transaction executed = executerTransaction(transaction);
+        setAuditApres(executed.getReferenceUnique(), rechargerCompteTransaction(compte), (Compte) null, executed.getStatutOperation().name());
+        return executed;
     }
 
     @Override
@@ -265,9 +284,16 @@ public class TransactionServiceImpl implements TransactionService {
         verifierTransactionEnAttente(transaction);
         verifierSuperviseur(superviseur, transaction.getUtilisateur());
 
+        Compte source = rechargerCompteTransaction(transaction.getCompteSource());
+        Compte dest = rechargerCompteTransaction(transaction.getCompteDestination());
+        setAuditAvant(source, dest, transaction.getStatutOperation().name());
+
         transaction.setUtilisateurValidation(superviseur);
         transaction.setDateValidation(LocalDateTime.now());
-        return executerTransaction(transaction);
+        Transaction executed = executerTransaction(transaction);
+
+        setAuditApres(executed.getReferenceUnique(), rechargerCompteTransaction(source), rechargerCompteTransaction(dest), executed.getStatutOperation().name());
+        return executed;
     }
 
     @Override
@@ -279,11 +305,16 @@ public class TransactionServiceImpl implements TransactionService {
         verifierTransactionEnAttente(transaction);
         verifierSuperviseur(superviseur, transaction.getUtilisateur());
 
+        setAuditAvant((Compte) null, (Compte) null, transaction.getStatutOperation().name());
+
         transaction.setUtilisateurValidation(superviseur);
         transaction.setDateValidation(LocalDateTime.now());
         transaction.setMotifRejet((motif == null || motif.isBlank()) ? "Rejet superviseur" : motif.trim());
         transaction.setStatutOperation(StatutOperation.REJETEE);
-        return transactionRepository.save(transaction);
+        Transaction saved = transactionRepository.save(transaction);
+
+        setAuditApres(saved.getReferenceUnique(), (Compte) null, (Compte) null, saved.getStatutOperation().name());
+        return saved;
     }
 
     @Override
@@ -333,6 +364,8 @@ public class TransactionServiceImpl implements TransactionService {
         Compte sourceOriginal = rechargerCompteTransaction(transaction.getCompteSource());
         Compte destinationOriginal = rechargerCompteTransaction(transaction.getCompteDestination());
 
+        setAuditAvant(sourceOriginal, destinationOriginal, transaction.getStatutOperation().name());
+
         if (AppConstants.TX_DEPOT.equalsIgnoreCase(codeType) && destinationOriginal != null) {
             comptabiliteOperationnelleService.debiterCompte(destinationOriginal, transaction.getMontantGlobal());
         } else if (AppConstants.TX_RETRAIT.equalsIgnoreCase(codeType) && sourceOriginal != null) {
@@ -350,7 +383,10 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setMotifRejet("REVERSEMENT: " + (motif != null ? motif : "Annulation manuelle"));
         transaction.setUtilisateurValidation(utilisateur);
         transaction.setDateValidation(LocalDateTime.now());
-        return transactionRepository.save(transaction);
+        Transaction saved = transactionRepository.save(transaction);
+
+        setAuditApres(saved.getReferenceUnique(), rechargerCompteTransaction(sourceOriginal), rechargerCompteTransaction(destinationOriginal), saved.getStatutOperation().name());
+        return saved;
     }
 
     @Override
@@ -358,12 +394,16 @@ public class TransactionServiceImpl implements TransactionService {
     public Transaction faireDepotMobileMoney(String numCompte, BigDecimal montant, Long idUser, String operateur, String telephone) {
         validerMontantPositif(montant);
         Compte compte = chargerCompte(numCompte);
+        setAuditAvant((Compte) null, compte, (String) null);
+
         Utilisateur utilisateur = chargerUtilisateur(idUser);
         TypeTransaction typeMM = chargerTypeStrict(AppConstants.TX_DEPOT);
         BigDecimal frais = transactionFeeCalculator.calculerFrais(typeMM.getCodeTypeTransaction(), montant);
 
         Transaction transaction = creerTransaction(utilisateur, typeMM, montant, frais, null, compte, false);
         Transaction executed = executerTransaction(transaction);
+
+        setAuditApres(executed.getReferenceUnique(), (Compte) null, rechargerCompteTransaction(compte), executed.getStatutOperation().name());
         return executed;
     }
 
@@ -372,12 +412,16 @@ public class TransactionServiceImpl implements TransactionService {
     public Transaction faireRetraitMobileMoney(String numCompte, BigDecimal montant, Long idUser, String operateur, String telephone) {
         validerMontantPositif(montant);
         Compte compte = chargerCompte(numCompte);
+        setAuditAvant(compte, (Compte) null, (String) null);
+
         Utilisateur utilisateur = chargerUtilisateur(idUser);
         TypeTransaction typeMM = chargerTypeStrict(AppConstants.TX_RETRAIT);
         BigDecimal frais = transactionFeeCalculator.calculerFrais(typeMM.getCodeTypeTransaction(), montant);
 
         Transaction transaction = creerTransaction(utilisateur, typeMM, montant, frais, compte, null, false);
         Transaction executed = executerTransaction(transaction);
+
+        setAuditApres(executed.getReferenceUnique(), rechargerCompteTransaction(compte), (Compte) null, executed.getStatutOperation().name());
         return executed;
     }
 
@@ -637,6 +681,8 @@ public class TransactionServiceImpl implements TransactionService {
         if (compte.getSolde() != null && compte.getSolde().compareTo(BigDecimal.ZERO) != 0) {
             throw new TransactionWorkflowException("Le depot initial n'est autorise que sur un compte dont le solde est nul.");
         }
+        setAuditAvant((Compte) null, compte, (String) null);
+
         Utilisateur utilisateur = chargerUtilisateur(idUser);
         TypeTransaction typeDepot = chargerTypeStrict(AppConstants.TX_DEPOT);
 
@@ -658,9 +704,45 @@ public class TransactionServiceImpl implements TransactionService {
         );
 
         if (Boolean.TRUE.equals(transaction.getValidationSuperviseurRequise())) {
+            setAuditApres(transaction.getReferenceUnique(), (Compte) null, rechargerCompteTransaction(compte), transaction.getStatutOperation().name());
             return transaction;
         }
 
-        return executerTransaction(transaction);
+        Transaction executed = executerTransaction(transaction);
+        setAuditApres(executed.getReferenceUnique(), (Compte) null, rechargerCompteTransaction(compte), executed.getStatutOperation().name());
+        return executed;
+    }
+
+    private void setAuditAvant(Compte source, Compte dest, String statutOriginal) {
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        if (source != null) {
+            avant.put("compteSource", source.getNumCompte());
+            avant.put("soldeSourceAvant", source.getSolde());
+        }
+        if (dest != null) {
+            avant.put("compteDest", dest.getNumCompte());
+            avant.put("soldeDestAvant", dest.getSolde());
+        }
+        if (statutOriginal != null) {
+            avant.put("statutOperation", statutOriginal);
+        }
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+    }
+
+    private void setAuditApres(String refTx, Compte source, Compte dest, String statutApres) {
+        AuditContext.setIdEntite(refTx);
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        if (source != null) {
+            apres.put("compteSource", source.getNumCompte());
+            apres.put("soldeSourceApres", source.getSolde());
+        }
+        if (dest != null) {
+            apres.put("compteDest", dest.getNumCompte());
+            apres.put("soldeDestApres", dest.getSolde());
+        }
+        if (statutApres != null) {
+            apres.put("statutOperation", statutApres);
+        }
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
     }
 }

@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -51,4 +52,15 @@ public class SystemAuditLog {
 
     @Column(name = "message_erreur", length = 500)
     private String messageErreur;
+
+    @Column(name = "id_entite", length = 150)
+    private String idEntite;
+
+    @Lob
+    @Column(name = "details_avant")
+    private String detailsAvant;
+
+    @Lob
+    @Column(name = "details_apres")
+    private String detailsApres;
 }

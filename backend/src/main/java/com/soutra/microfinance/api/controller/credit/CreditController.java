@@ -90,7 +90,7 @@ public class CreditController {
 			@PathVariable Long idCredit,
 			@Valid @RequestBody RemboursementRequestDTO request) {
 
-		Credit credit = creditService.enregistrerRemboursement(idCredit, request.montant());
+		Credit credit = creditService.enregistrerRemboursement(idCredit, request.montant(), request.numCompteSource());
 		return ResponseEntity.ok(creditMapper.toCreditResponseDTO(credit));
 	}
 

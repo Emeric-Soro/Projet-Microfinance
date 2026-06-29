@@ -121,4 +121,30 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                                                                 @Param("dateFin") LocalDateTime dateFin,
                                                                 @Param("statut") StatutOperation statut,
                                                                 @Param("agenceId") Long agenceId);
+
+    @Query("SELECT DISTINCT t FROM Transaction t " +
+           "LEFT JOIN FETCH t.utilisateur u " +
+           "LEFT JOIN FETCH t.typeTransaction tt " +
+           "LEFT JOIN t.compteSource cs " +
+           "LEFT JOIN t.compteDestination cd " +
+           "WHERE t.dateHeureTransaction BETWEEN :dateDebut AND :dateFin " +
+           "AND (:agenceId IS NULL OR cs.agence.idAgence = :agenceId " +
+           "OR cd.agence.idAgence = :agenceId)")
+    List<Transaction> findByDateBetweenAndAgence(
+            @Param("dateDebut") LocalDateTime dateDebut,
+            @Param("dateFin") LocalDateTime dateFin,
+            @Param("agenceId") Long agenceId
+    );
+
+    @Query("SELECT COUNT(t) FROM Transaction t " +
+           "LEFT JOIN t.compteSource cs " +
+           "LEFT JOIN t.compteDestination cd " +
+           "WHERE t.dateHeureTransaction BETWEEN :dateDebut AND :dateFin " +
+           "AND (:agenceId IS NULL OR cs.agence.idAgence = :agenceId " +
+           "OR cd.agence.idAgence = :agenceId)")
+    long countByDateBetweenAndAgence(
+            @Param("dateDebut") LocalDateTime dateDebut,
+            @Param("dateFin") LocalDateTime dateFin,
+            @Param("agenceId") Long agenceId
+    );
 }

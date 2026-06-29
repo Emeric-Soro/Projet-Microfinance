@@ -27,4 +27,10 @@ public class OuvertureCompteRequestDTO {
     @NotNull(message = "Le depot initial est obligatoire")
     @Positive(message = "Le depot initial doit etre strictement positif")
     private BigDecimal depotInitial;
+
+    // Optionnel : agence explicitement choisie (sinon fallback client/user)
+    private Long idAgence;
+
+    // Optionnel : decouvert autorise (0 par defaut)
+    private BigDecimal decouvertAutorise;
 }

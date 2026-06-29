@@ -25,6 +25,7 @@ import java.util.Base64;
 
 import java.time.LocalDate;
 import java.util.concurrent.ThreadLocalRandom;
+import com.soutra.microfinance.audit.AuditContext;
 
 @Service
 public class ClientServiceImpl implements ClientService {
@@ -96,8 +97,19 @@ public class ClientServiceImpl implements ClientService {
         StatutClient statut = statutClientRepository.findByLibelleStatutIgnoreCase(nouveauStatut)
                 .orElseThrow(() -> new IllegalArgumentException("Le statut '" + nouveauStatut + "' n'existe pas dans le système."));
 
+        AuditContext.setIdEntite(String.valueOf(idClient));
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("statutClient", client.getStatutClient() != null ? client.getStatutClient().getLibelleStatut() : null);
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         client.setStatutClient(statut);
-        return clientRepository.save(client);
+        Client saved = clientRepository.save(client);
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("statutClient", nouveauStatut);
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+        return saved;
     }
 
     @Override
@@ -107,6 +119,13 @@ public class ClientServiceImpl implements ClientService {
                 .orElseThrow(() -> new EntityNotFoundException("Client introuvable: " + idClient));
 
         validerUnicitePiece(requestDTO.getNumeroPieceIdentite(), client.getIdClient());
+
+        AuditContext.setIdEntite(String.valueOf(idClient));
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("statutKyc", client.getStatutKyc());
+        avant.put("commentaireKyc", client.getCommentaireKyc());
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         appliquerDonneesKyc(client, requestDTO);
 
         client.setStatutKyc(StatutKycClient.EN_ATTENTE);
@@ -114,7 +133,14 @@ public class ClientServiceImpl implements ClientService {
         client.setDateValidationKyc(null);
         client.setCommentaireKyc(null);
         client.setValidateurKyc(null);
-        return clientRepository.save(client);
+        Client saved = clientRepository.save(client);
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("statutKyc", StatutKycClient.EN_ATTENTE);
+        apres.put("commentaireKyc", null);
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+        return saved;
     }
 
     @Override
@@ -130,6 +156,13 @@ public class ClientServiceImpl implements ClientService {
             throw new IllegalStateException("Le dossier KYC est incomplet et ne peut pas etre valide");
         }
 
+        AuditContext.setIdEntite(String.valueOf(idClient));
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("statutKyc", client.getStatutKyc());
+        avant.put("commentaireKyc", client.getCommentaireKyc());
+        avant.put("statutClient", client.getStatutClient() != null ? client.getStatutClient().getLibelleStatut() : null);
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         client.setStatutKyc(requestDTO.getStatutKyc());
         client.setNiveauRisque(requestDTO.getNiveauRisque());
         client.setCommentaireKyc(requestDTO.getCommentaire());
@@ -142,7 +175,15 @@ public class ClientServiceImpl implements ClientService {
             client.setStatutClient(chargerStatutStrict(AppConstants.STATUT_CLIENT_BLOQUE));
         }
 
-        return clientRepository.save(client);
+        Client saved = clientRepository.save(client);
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("statutKyc", requestDTO.getStatutKyc());
+        apres.put("commentaireKyc", requestDTO.getCommentaire());
+        apres.put("statutClient", requestDTO.getStatutKyc() == StatutKycClient.VALIDE ? AppConstants.STATUT_CLIENT_ACTIF : (requestDTO.getStatutKyc() == StatutKycClient.REJETE ? AppConstants.STATUT_CLIENT_BLOQUE : (client.getStatutClient() != null ? client.getStatutClient().getLibelleStatut() : null)));
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+        return saved;
     }
 
     @Override
@@ -171,6 +212,16 @@ public class ClientServiceImpl implements ClientService {
     @Transactional
     public Client modifierProfilClient(Long idClient, MiseAJourClientRequestDTO requestDTO) {
         Client client = chargerClient(idClient);
+
+        AuditContext.setIdEntite(String.valueOf(idClient));
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("nom", client.getNom());
+        avant.put("prenom", client.getPrenom());
+        avant.put("telephone", client.getTelephone());
+        avant.put("adresse", client.getAdresse());
+        avant.put("email", client.getEmail());
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         client.setNom(requestDTO.getNom());
         client.setPrenom(requestDTO.getPrenom());
         client.setDateNaissance(requestDTO.getDateNaissance());
@@ -189,7 +240,17 @@ public class ClientServiceImpl implements ClientService {
         client.setPaysNationalite(requestDTO.getPaysNationalite());
         client.setPaysResidence(requestDTO.getPaysResidence());
         client.setPep(Boolean.TRUE.equals(requestDTO.getPep()));
-        return clientRepository.save(client);
+        Client saved = clientRepository.save(client);
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("nom", requestDTO.getNom());
+        apres.put("prenom", requestDTO.getPrenom());
+        apres.put("telephone", requestDTO.getTelephone());
+        apres.put("adresse", requestDTO.getAdresse());
+        apres.put("email", requestDTO.getEmail());
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+        return saved;
     }
 
     @Override

@@ -61,20 +61,27 @@ public class AuditLogAspect {
     private void persisterAudit(String user, String action, String resource, String ip,
                                  String method, String statut, String messageErreur, LocalDateTime date) {
         try {
+            AuditContextData ctx = AuditContext.get();
+            String finalAction = (ctx != null && ctx.getAction() != null) ? ctx.getAction() : action;
             SystemAuditLog entry = SystemAuditLog.builder()
                     .dateAction(date)
                     .utilisateur(user)
-                    .action(action)
+                    .action(finalAction)
                     .ressource(resource)
                     .adresseIp(ip)
                     .methode(method)
                     .statut(statut)
                     .messageErreur(messageErreur != null && messageErreur.length() > 500
                             ? messageErreur.substring(0, 500) : messageErreur)
+                    .idEntite(ctx != null ? ctx.getIdEntite() : null)
+                    .detailsAvant(ctx != null ? ctx.getDetailsAvant() : null)
+                    .detailsApres(ctx != null ? ctx.getDetailsApres() : null)
                     .build();
             systemAuditLogRepository.save(entry);
         } catch (Exception e) {
             log.error("Echec de la persistance de l'audit en base", e);
+        } finally {
+            AuditContext.clear(); // Toujours nettoyer le ThreadLocal après persistance
         }
     }
 

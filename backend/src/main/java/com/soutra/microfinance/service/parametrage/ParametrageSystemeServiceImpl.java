@@ -19,6 +19,10 @@ public class ParametrageSystemeServiceImpl implements ParametrageSystemeService 
     private static Map<String, String> initParametres() {
         Map<String, String> params = new LinkedHashMap<>();
         params.put("DEVISE", "XOF");
+        params.put("DEVISE_DEFAULT", "XOF");
+        params.put("TIMEZONE", "Africa/Abidjan");
+        params.put("SESSION_TIMEOUT_MIN", "15");
+        params.put("SESSION_ALERT_MIN", "2");
         params.put("PAYS", "CI");
         params.put("INDICATIF_TELEPHONIQUE", "+225");
         params.put("SEUIL_TAEG_MAX", "24.0");

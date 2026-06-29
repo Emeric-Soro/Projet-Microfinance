@@ -29,7 +29,7 @@ public interface CreditService {
 	Credit decaisserCredit(Long idCredit, String numCompteCible);
 
 	// Enregistre un remboursement sur un credit actif.
-	Credit enregistrerRemboursement(Long idCredit, BigDecimal montant);
+	Credit enregistrerRemboursement(Long idCredit, BigDecimal montant, String numCompteSource);
 
 	// Consulte le tableau d'amortissement d'un credit.
 	List<Echeance> consulterTableauAmortissement(Long idCredit);

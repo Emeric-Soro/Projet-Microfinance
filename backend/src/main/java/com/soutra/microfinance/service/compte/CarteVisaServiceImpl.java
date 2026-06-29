@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.time.LocalDate;
+import com.soutra.microfinance.audit.AuditContext;
 
 @Service
 public class CarteVisaServiceImpl implements CarteVisaService {
@@ -62,9 +63,20 @@ public class CarteVisaServiceImpl implements CarteVisaService {
         CarteVisa carteVisa = carteVisaRepository.findByNumeroCarte(numeroCarte)
                 .orElseThrow(() -> new EntityNotFoundException("Carte introuvable: " + numeroCarte));
 
+        AuditContext.setIdEntite(numeroCarte);
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("statut", carteVisa.getStatut());
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         // Règle métier : On désactive la carte de manière irréversible
         carteVisa.setStatut(Boolean.FALSE);
-        return carteVisaRepository.save(carteVisa);
+        CarteVisa saved = carteVisaRepository.save(carteVisa);
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("statut", Boolean.FALSE);
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+        return saved;
     }
 
     @Override
@@ -88,6 +100,13 @@ public class CarteVisaServiceImpl implements CarteVisaService {
         CarteVisa carte = carteVisaRepository.findByNumeroCarte(numeroCarte)
                 .orElseThrow(() -> new EntityNotFoundException("Carte introuvable: " + numeroCarte));
 
+        AuditContext.setIdEntite(numeroCarte);
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("plafondJournalier", carte.getPlafondJournalier());
+        avant.put("statut", carte.getStatut());
+        avant.put("dateExpiration", carte.getDateExpiration());
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         if (patch.getPlafondJournalier() != null) {
             carte.setPlafondJournalier(patch.getPlafondJournalier());
         }
@@ -97,7 +116,15 @@ public class CarteVisaServiceImpl implements CarteVisaService {
         if (patch.getDateExpiration() != null) {
             carte.setDateExpiration(patch.getDateExpiration());
         }
-        return carteVisaRepository.save(carte);
+        CarteVisa saved = carteVisaRepository.save(carte);
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("plafondJournalier", saved.getPlafondJournalier());
+        apres.put("statut", saved.getStatut());
+        apres.put("dateExpiration", saved.getDateExpiration());
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+        return saved;
     }
 
     @Override
@@ -111,8 +138,20 @@ public class CarteVisaServiceImpl implements CarteVisaService {
     public CarteVisa faireOppositionParId(Long idCarte) {
         CarteVisa carteVisa = carteVisaRepository.findById(idCarte)
                 .orElseThrow(() -> new EntityNotFoundException("Carte introuvable: " + idCarte));
+
+        AuditContext.setIdEntite(carteVisa.getNumeroCarte());
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("statut", carteVisa.getStatut());
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         carteVisa.setStatut(Boolean.FALSE);
-        return carteVisaRepository.save(carteVisa);
+        CarteVisa saved = carteVisaRepository.save(carteVisa);
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("statut", Boolean.FALSE);
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+        return saved;
     }
 
     // --- MÉTHODES UTILITAIRES PRIVÉES ---

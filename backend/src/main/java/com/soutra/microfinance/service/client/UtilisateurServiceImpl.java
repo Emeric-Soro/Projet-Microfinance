@@ -1,5 +1,7 @@
 package com.soutra.microfinance.service.client;
 
+import com.soutra.microfinance.audit.AuditLog;
+import com.soutra.microfinance.audit.AuditContext;
 import com.soutra.microfinance.config.AuthSecurityProperties;
 import com.soutra.microfinance.config.PasswordResetProperties;
 import com.soutra.microfinance.entity.Client;
@@ -322,6 +324,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
 
     @Override
     @Transactional
+    @AuditLog(action = "USER_ROLE_ASSIGN", resource = "SECURITE")
     public Utilisateur assignerRole(Long idUser, String codeRole) {
         Utilisateur utilisateur = utilisateurRepository.findById(idUser)
                 .orElseThrow(() -> new EntityNotFoundException("Utilisateur introuvable: " + idUser));
@@ -333,8 +336,19 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         RoleUtilisateur role = roleUtilisateurRepository.findByCodeRoleUtilisateur(codeRole)
                 .orElseThrow(() -> new IllegalArgumentException("Alerte de sécurité : Le rôle '" + codeRole + "' n'existe pas."));
 
+        AuditContext.setIdEntite(utilisateur.getLogin());
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("roles", utilisateur.getRoles().stream().map(RoleUtilisateur::getCodeRoleUtilisateur).toList());
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         utilisateur.getRoles().add(role);
-        return utilisateurRepository.save(utilisateur);
+        Utilisateur saved = utilisateurRepository.save(utilisateur);
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("roles", saved.getRoles().stream().map(RoleUtilisateur::getCodeRoleUtilisateur).toList());
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+        return saved;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.soutra.microfinance.api.controller.securite;
 
 import com.soutra.microfinance.audit.AuditLog;
+import com.soutra.microfinance.audit.AuditContext;
 import com.soutra.microfinance.dto.request.client.*;
 import com.soutra.microfinance.dto.response.client.*;
 import com.soutra.microfinance.entity.RoleUtilisateur;
@@ -78,7 +79,7 @@ public class SecurityAdminController {
             @ApiResponse(responseCode = "409", description = "Code role deja existant")
     })
     @PostMapping("/roles")
-    @AuditLog(action = "SECURITY_CREATE_ROLE", resource = "SECURITE")
+    @AuditLog(action = "ROLE_CREATE", resource = "SECURITE")
     public ResponseEntity<RoleResponseDTO> creerRole(@Valid @RequestBody CreerRoleRequestDTO requestDTO) {
         if (roleUtilisateurRepository.findByCodeRoleUtilisateur(requestDTO.getCodeRole()).isPresent()) {
             throw new IllegalStateException("Role deja existant: " + requestDTO.getCodeRole());
@@ -87,6 +88,16 @@ public class SecurityAdminController {
         role.setCodeRoleUtilisateur(requestDTO.getCodeRole());
         role.setIntituleRole(requestDTO.getIntitule());
         RoleUtilisateur sauvegarde = roleUtilisateurRepository.save(role);
+
+        AuditContext.setIdEntite(sauvegarde.getCodeRoleUtilisateur());
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("codeRoleUtilisateur", sauvegarde.getCodeRoleUtilisateur());
+        apres.put("intituleRole", sauvegarde.getIntituleRole());
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
         return ResponseEntity.status(HttpStatus.CREATED).body(new RoleResponseDTO(
                 sauvegarde.getIdRole(), sauvegarde.getCodeRoleUtilisateur(),
                 sauvegarde.getIntituleRole(), 0,
@@ -99,16 +110,29 @@ public class SecurityAdminController {
             @ApiResponse(responseCode = "404", description = "Role introuvable")
     })
     @PutMapping("/roles/{id}")
-    @AuditLog(action = "SECURITY_UPDATE_ROLE", resource = "SECURITE")
+    @AuditLog(action = "ROLE_UPDATE", resource = "SECURITE")
     public ResponseEntity<RoleResponseDTO> modifierRole(
             @PathVariable Long id,
             @Valid @RequestBody ModifierRoleRequestDTO requestDTO
     ) {
         RoleUtilisateur role = roleUtilisateurRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Role introuvable: " + id));
+
+        AuditContext.setIdEntite(role.getCodeRoleUtilisateur());
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("codeRoleUtilisateur", role.getCodeRoleUtilisateur());
+        avant.put("intituleRole", role.getIntituleRole());
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         role.setCodeRoleUtilisateur(requestDTO.getCodeRole());
         role.setIntituleRole(requestDTO.getIntitule());
         RoleUtilisateur sauvegarde = roleUtilisateurRepository.save(role);
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("codeRoleUtilisateur", sauvegarde.getCodeRoleUtilisateur());
+        apres.put("intituleRole", sauvegarde.getIntituleRole());
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
         return ResponseEntity.ok(new RoleResponseDTO(
                 sauvegarde.getIdRole(), sauvegarde.getCodeRoleUtilisateur(),
                 sauvegarde.getIntituleRole(),
@@ -122,14 +146,26 @@ public class SecurityAdminController {
             @ApiResponse(responseCode = "409", description = "Role non supprimable (utilisateurs attaches)")
     })
     @DeleteMapping("/roles/{id}")
-    @AuditLog(action = "SECURITY_DELETE_ROLE", resource = "SECURITE")
+    @AuditLog(action = "ROLE_DELETE", resource = "SECURITE")
     public ResponseEntity<Void> supprimerRole(@PathVariable Long id) {
         RoleUtilisateur role = roleUtilisateurRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Role introuvable: " + id));
         if (role.getUtilisateurs() != null && !role.getUtilisateurs().isEmpty()) {
             throw new IllegalStateException("Impossible de supprimer un role avec des utilisateurs attaches");
         }
+
+        AuditContext.setIdEntite(role.getCodeRoleUtilisateur());
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("codeRoleUtilisateur", role.getCodeRoleUtilisateur());
+        avant.put("intituleRole", role.getIntituleRole());
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         roleUtilisateurRepository.delete(role);
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("deleted", true);
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
         return ResponseEntity.noContent().build();
     }
 
@@ -193,7 +229,7 @@ public class SecurityAdminController {
 
     @Operation(summary = "Creer un utilisateur (admin)", description = "Cree un acces web pour un client")
     @PostMapping("/utilisateurs")
-    @AuditLog(action = "SECURITY_CREATE_USER", resource = "SECURITE")
+    @AuditLog(action = "USER_CREATE", resource = "SECURITE")
     public ResponseEntity<UtilisateurResponseDTO> creerUtilisateur(
             @Valid @RequestBody CreationUtilisateurRequestDTO requestDTO
     ) {
@@ -203,42 +239,91 @@ public class SecurityAdminController {
                 requestDTO.getDateNaissance(),
                 requestDTO.getMotDePasseBrut()
         );
+
+        AuditContext.setIdEntite(utilisateur.getLogin());
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("login", utilisateur.getLogin());
+        apres.put("email", utilisateur.getClient() != null ? utilisateur.getClient().getEmail() : null);
+        apres.put("actif", utilisateur.getActif());
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
         return ResponseEntity.status(HttpStatus.CREATED).body(utilisateurMapper.toResponseDTO(utilisateur));
     }
 
     @Operation(summary = "Creer un collaborateur (membre du personnel)", description = "Cree un profil client et un acces web pour un membre du personnel")
     @PostMapping("/utilisateurs/collaborateur")
-    @AuditLog(action = "SECURITY_CREATE_COLLABORATEUR", resource = "SECURITE")
+    @AuditLog(action = "USER_CREATE", resource = "SECURITE")
     public ResponseEntity<UtilisateurResponseDTO> creerCollaborateur(
             @Valid @RequestBody CreationCollaborateurRequestDTO requestDTO
     ) {
         Utilisateur utilisateur = utilisateurService.creerCollaborateur(requestDTO);
+
+        AuditContext.setIdEntite(utilisateur.getLogin());
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("login", utilisateur.getLogin());
+        apres.put("email", utilisateur.getClient() != null ? utilisateur.getClient().getEmail() : null);
+        apres.put("actif", utilisateur.getActif());
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
         return ResponseEntity.status(HttpStatus.CREATED).body(utilisateurMapper.toResponseDTO(utilisateur));
     }
 
     @Operation(summary = "Modifier un utilisateur", description = "Modifie les informations d'un utilisateur existant")
     @PutMapping("/utilisateurs/{id}")
-    @AuditLog(action = "SECURITY_UPDATE_USER", resource = "SECURITE")
+    @AuditLog(action = "USER_UPDATE", resource = "SECURITE")
     public ResponseEntity<UtilisateurResponseDTO> modifierUtilisateur(
             @PathVariable Long id,
             @Valid @RequestBody CreationUtilisateurRequestDTO requestDTO
     ) {
+        Utilisateur ancien = utilisateurRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur introuvable: " + id));
+
+        AuditContext.setIdEntite(ancien.getLogin());
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("email", ancien.getClient() != null ? ancien.getClient().getEmail() : null);
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         Utilisateur utilisateur = utilisateurService.modifierCompteWeb(
                 id,
                 requestDTO.getEmail(),
                 requestDTO.getMotDePasseBrut()
         );
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("email", utilisateur.getClient() != null ? utilisateur.getClient().getEmail() : null);
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
         return ResponseEntity.ok(utilisateurMapper.toResponseDTO(utilisateur));
     }
 
     @Operation(summary = "Activer/desactiver un utilisateur", description = "Active ou desactive l'acces d'un utilisateur")
     @PutMapping("/utilisateurs/{id}/activer-desactiver")
-    @AuditLog(action = "SECURITY_TOGGLE_USER", resource = "SECURITE")
+    @AuditLog(action = "USER_TOGGLE", resource = "SECURITE")
     public ResponseEntity<UtilisateurResponseDTO> activerDesactiver(
             @PathVariable Long id,
             @Valid @RequestBody ActivationUtilisateurRequestDTO requestDTO
     ) {
+        Utilisateur ancien = utilisateurRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur introuvable: " + id));
+
+        AuditContext.setAction(requestDTO.getActif() ? "USER_ACTIVATE" : "USER_DEACTIVATE");
+        AuditContext.setIdEntite(ancien.getLogin());
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("actif", ancien.getActif());
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         Utilisateur utilisateur = utilisateurService.changerActivation(id, requestDTO.getActif());
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("actif", utilisateur.getActif());
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
         return ResponseEntity.ok(utilisateurMapper.toResponseDTO(utilisateur));
     }
 

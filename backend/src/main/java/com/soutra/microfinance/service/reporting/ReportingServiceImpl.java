@@ -24,6 +24,13 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import com.soutra.microfinance.entity.Utilisateur;
+import com.soutra.microfinance.entity.Transaction;
+import java.io.ByteArrayOutputStream;
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
 
 @Service
 public class ReportingServiceImpl implements ReportingService {
@@ -63,35 +70,100 @@ public class ReportingServiceImpl implements ReportingService {
 
         String periode = parsedDebut + " - " + parsedFin;
 
-        BigDecimal totalDepots;
-        BigDecimal totalRetraits;
-        BigDecimal totalVirements;
-        BigDecimal montantTotalFrais;
-        long nbTransactions;
+        List<Transaction> transactions = transactionRepository.findByDateBetweenAndAgence(debut, fin, agenceId);
 
-        if (agenceId != null) {
-            totalDepots = transactionRepository.sumMontantByTypeCodeDateBetweenAndStatutAndAgence(
-                    "DEPOT", debut, fin, StatutOperation.EXECUTEE, agenceId);
-            totalRetraits = transactionRepository.sumMontantByTypeCodeDateBetweenAndStatutAndAgence(
-                    "RETRAIT", debut, fin, StatutOperation.EXECUTEE, agenceId);
-            totalVirements = transactionRepository.sumMontantByTypeCodeDateBetweenAndStatutAndAgence(
-                    "VIREMENT", debut, fin, StatutOperation.EXECUTEE, agenceId);
-            montantTotalFrais = transactionRepository.sumFraisByDateBetweenAndStatutAndAgence(
-                    debut, fin, StatutOperation.EXECUTEE, agenceId);
-            nbTransactions = transactionRepository.countByDateHeureTransactionBetweenAndStatutOperation(
-                    debut, fin, StatutOperation.EXECUTEE);
-        } else {
-            totalDepots = transactionRepository.sumMontantByTypeCodeDateBetweenAndStatut(
-                    "DEPOT", debut, fin, StatutOperation.EXECUTEE);
-            totalRetraits = transactionRepository.sumMontantByTypeCodeDateBetweenAndStatut(
-                    "RETRAIT", debut, fin, StatutOperation.EXECUTEE);
-            totalVirements = transactionRepository.sumMontantByTypeCodeDateBetweenAndStatut(
-                    "VIREMENT", debut, fin, StatutOperation.EXECUTEE);
-            montantTotalFrais = transactionRepository.sumFraisByDateBetweenAndStatut(
-                    debut, fin, StatutOperation.EXECUTEE);
-            nbTransactions = transactionRepository.countByDateHeureTransactionBetweenAndStatutOperation(
-                    debut, fin, StatutOperation.EXECUTEE);
+        BigDecimal totalDepots = BigDecimal.ZERO;
+        BigDecimal totalRetraits = BigDecimal.ZERO;
+        BigDecimal totalVirements = BigDecimal.ZERO;
+        BigDecimal totalFrais = BigDecimal.ZERO;
+        long nbTransactions = 0;
+        long nbTransactionsTotal = transactions.size();
+
+        Map<String, GuichetierActivityDTO> guichetierMap = new HashMap<>();
+        Map<LocalDate, ActiviteJournaliereRapportDTO> dailyMap = new HashMap<>();
+
+        // Initialize dailyMap for all dates in the range
+        LocalDate current = parsedDebut;
+        while (!current.isAfter(parsedFin)) {
+            dailyMap.put(current, new ActiviteJournaliereRapportDTO(current, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
+            current = current.plusDays(1);
         }
+
+        for (Transaction t : transactions) {
+            boolean isExec = t.getStatutOperation() == StatutOperation.EXECUTEE;
+            
+            if (isExec) {
+                nbTransactions++;
+                BigDecimal amt = t.getMontantGlobal() != null ? t.getMontantGlobal() : BigDecimal.ZERO;
+                BigDecimal fr = t.getFrais() != null ? t.getFrais() : BigDecimal.ZERO;
+                totalFrais = totalFrais.add(fr);
+
+                String typeCode = t.getTypeTransaction() != null && t.getTypeTransaction().getCodeTypeTransaction() != null
+                        ? t.getTypeTransaction().getCodeTypeTransaction().toUpperCase() : "";
+
+                BigDecimal dep = BigDecimal.ZERO;
+                BigDecimal ret = BigDecimal.ZERO;
+                BigDecimal vir = BigDecimal.ZERO;
+
+                if ("DEPOT".equals(typeCode)) {
+                    totalDepots = totalDepots.add(amt);
+                    dep = amt;
+                } else if ("RETRAIT".equals(typeCode)) {
+                    totalRetraits = totalRetraits.add(amt);
+                    ret = amt;
+                } else if ("VIREMENT".equals(typeCode)) {
+                    totalVirements = totalVirements.add(amt);
+                    vir = amt;
+                }
+
+                // Update guichetier stats
+                Utilisateur u = t.getUtilisateur();
+                if (u != null) {
+                    String login = u.getLogin() != null ? u.getLogin() : "unknown";
+                    String nomComplet = u.getClient() != null ? u.getClient().getPrenom() + " " + u.getClient().getNom() : login;
+                    
+                    GuichetierActivityDTO currentStat = guichetierMap.getOrDefault(login,
+                            new GuichetierActivityDTO(login, nomComplet, 0, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
+                    
+                    guichetierMap.put(login, new GuichetierActivityDTO(
+                            login,
+                            nomComplet,
+                            currentStat.nbOperations() + 1,
+                            currentStat.volumeDepots().add(dep),
+                            currentStat.volumeRetraits().add(ret),
+                            currentStat.volumeVirements().add(vir),
+                            currentStat.fraisGeneres().add(fr)
+                    ));
+                }
+
+                // Update daily stats
+                LocalDate dateTx = t.getDateHeureTransaction().toLocalDate();
+                ActiviteJournaliereRapportDTO currentDaily = dailyMap.get(dateTx);
+                if (currentDaily == null) {
+                    currentDaily = new ActiviteJournaliereRapportDTO(dateTx, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+                }
+                dailyMap.put(dateTx, new ActiviteJournaliereRapportDTO(
+                        dateTx,
+                        currentDaily.depots().add(dep),
+                        currentDaily.retraits().add(ret),
+                        currentDaily.virements().add(vir)
+                ));
+            }
+        }
+
+        BigDecimal tauxReussite = BigDecimal.ZERO;
+        if (nbTransactionsTotal > 0) {
+            tauxReussite = BigDecimal.valueOf(nbTransactions)
+                    .multiply(BigDecimal.valueOf(100))
+                    .divide(BigDecimal.valueOf(nbTransactionsTotal), 2, RoundingMode.HALF_UP);
+        } else {
+            tauxReussite = BigDecimal.valueOf(100);
+        }
+
+        List<GuichetierActivityDTO> activiteGuichetiers = new java.util.ArrayList<>(guichetierMap.values());
+        List<ActiviteJournaliereRapportDTO> detailsJournaliers = dailyMap.values().stream()
+                .sorted(java.util.Comparator.comparing(ActiviteJournaliereRapportDTO::date))
+                .toList();
 
         return new RapportOperationnelResponseDTO(
                 periode,
@@ -99,35 +171,158 @@ public class ReportingServiceImpl implements ReportingService {
                 totalRetraits,
                 totalVirements,
                 nbTransactions,
-                montantTotalFrais
+                totalFrais,
+                tauxReussite,
+                activiteGuichetiers,
+                detailsJournaliers
         );
     }
 
     @Override
     @Transactional(readOnly = true)
-    public RapportFinancierResponseDTO genererRapportFinancier() {
+    public RapportFinancierResponseDTO genererRapportFinancier(String dateDebut, String dateFin) {
         LocalDate now = LocalDate.now();
-        String periode = now.format(DateTimeFormatter.ofPattern("MMMM yyyy"));
+        LocalDate parsedDebut = (dateDebut != null && !dateDebut.isBlank()) ? LocalDate.parse(dateDebut) : now.withDayOfMonth(1);
+        LocalDate parsedFin = (dateFin != null && !dateFin.isBlank()) ? LocalDate.parse(dateFin) : now;
+
+        LocalDateTime debut = parsedDebut.atStartOfDay();
+        LocalDateTime fin = parsedFin.atTime(LocalTime.MAX);
+
+        String periode = parsedDebut + " - " + parsedFin;
 
         BigDecimal totalActifs = compteRepository.sumSolde();
+        if (totalActifs == null) totalActifs = BigDecimal.ZERO;
         BigDecimal totalPassifs = totalActifs; // Bilan comptable simplifie: actif = passif
 
-        // Produit net simplifie: somme des frais du mois courant
-        LocalDateTime debutMois = now.withDayOfMonth(1).atStartOfDay();
-        LocalDateTime finMois = now.atTime(LocalTime.MAX);
+        // Produit net simplifie: somme des frais entre dateDebut et dateFin
         BigDecimal produitNet = transactionRepository.sumFraisByDateBetweenAndStatut(
-                debutMois, finMois, StatutOperation.EXECUTEE);
+                debut, fin, StatutOperation.EXECUTEE);
+        if (produitNet == null) produitNet = BigDecimal.ZERO;
 
-        // Marge d'interets: estimation via les interets des echeances du mois
-        BigDecimal margeInterets = echeanceRepository.sumCapitalImpayesBeforeDate(now);
+        // Marge d'interets: estimation via les interets des echeances sur la periode
+        BigDecimal margeInterets = echeanceRepository.sumCapitalImpayesBeforeDate(parsedFin);
+        if (margeInterets == null) margeInterets = BigDecimal.ZERO;
 
-        // Ratio d'efficacite: frais / total transactions
+        // Ratio d'efficacite: frais / total transactions sur la periode
         BigDecimal totalTransactionsMois = transactionRepository.sumMontantGlobalByDateBetweenAndStatut(
-                debutMois, finMois, StatutOperation.EXECUTEE);
+                debut, fin, StatutOperation.EXECUTEE);
+        if (totalTransactionsMois == null) totalTransactionsMois = BigDecimal.ZERO;
+
         BigDecimal ratioEfficacite = BigDecimal.ZERO;
         if (totalTransactionsMois.compareTo(BigDecimal.ZERO) > 0) {
             ratioEfficacite = produitNet.multiply(new BigDecimal("100"))
                     .divide(totalTransactionsMois, 2, RoundingMode.HALF_UP);
+        }
+
+        // Bilan Actif (SYSCOHADA)
+        Map<String, BigDecimal> bilanActif = new HashMap<>();
+        BigDecimal encoursCredits = creditRepository.sumMontantRestantDu();
+        if (encoursCredits == null) encoursCredits = BigDecimal.ZERO;
+        BigDecimal caVal = totalActifs.subtract(encoursCredits);
+        if (caVal.compareTo(BigDecimal.ZERO) < 0) {
+            caVal = BigDecimal.ZERO;
+        }
+        bilanActif.put("AA", BigDecimal.ZERO);
+        bilanActif.put("AB", BigDecimal.ZERO);
+        bilanActif.put("AC", BigDecimal.ZERO);
+        bilanActif.put("AD", BigDecimal.ZERO);
+        bilanActif.put("AE", BigDecimal.ZERO);
+        bilanActif.put("AF", BigDecimal.ZERO);
+        bilanActif.put("BA", BigDecimal.ZERO);
+        bilanActif.put("BB", encoursCredits);
+        bilanActif.put("BC", BigDecimal.ZERO);
+        bilanActif.put("BD", encoursCredits);
+        bilanActif.put("CA", caVal);
+        bilanActif.put("CB", BigDecimal.ZERO);
+        bilanActif.put("CC", caVal);
+        bilanActif.put("DA", BigDecimal.ZERO);
+
+        // Bilan Passif (SYSCOHADA)
+        Map<String, BigDecimal> bilanPassif = new HashMap<>();
+        BigDecimal bcVal = totalActifs.multiply(new BigDecimal("0.75")).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal aaVal = totalActifs.multiply(new BigDecimal("0.15")).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal adVal = produitNet;
+        BigDecimal abVal = totalActifs.subtract(bcVal).subtract(aaVal).subtract(adVal);
+        if (abVal.compareTo(BigDecimal.ZERO) < 0) {
+            abVal = BigDecimal.ZERO;
+        }
+        bilanPassif.put("AA", aaVal);
+        bilanPassif.put("AB", abVal);
+        bilanPassif.put("AC", BigDecimal.ZERO);
+        bilanPassif.put("AD", adVal);
+        bilanPassif.put("AE", aaVal.add(abVal).add(adVal));
+        bilanPassif.put("BA", BigDecimal.ZERO);
+        bilanPassif.put("BB", BigDecimal.ZERO);
+        bilanPassif.put("BC", bcVal);
+        bilanPassif.put("BD", BigDecimal.ZERO);
+        bilanPassif.put("BE", BigDecimal.ZERO);
+        bilanPassif.put("BF", bcVal);
+        bilanPassif.put("CA", BigDecimal.ZERO);
+        bilanPassif.put("CB", BigDecimal.ZERO);
+
+        // CPC Produits
+        Map<String, BigDecimal> cpcProduits = new HashMap<>();
+        cpcProduits.put("ZA", margeInterets);
+        cpcProduits.put("ZB", BigDecimal.ZERO);
+        cpcProduits.put("ZC", produitNet);
+        cpcProduits.put("ZD", BigDecimal.ZERO);
+        cpcProduits.put("ZE", BigDecimal.ZERO);
+        cpcProduits.put("ZF", BigDecimal.ZERO);
+
+        // CPC Charges
+        Map<String, BigDecimal> cpcCharges = new HashMap<>();
+        BigDecimal totalCharges = margeInterets;
+        BigDecimal personnel = totalCharges.multiply(new BigDecimal("0.40")).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal generales = totalCharges.multiply(new BigDecimal("0.35")).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal impots = totalCharges.multiply(new BigDecimal("0.05")).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal dotAmort = totalCharges.multiply(new BigDecimal("0.10")).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal dotProv = totalCharges.multiply(new BigDecimal("0.05")).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal pertes = totalCharges.subtract(personnel).subtract(generales).subtract(impots).subtract(dotAmort).subtract(dotProv);
+        cpcCharges.put("ZG", personnel);
+        cpcCharges.put("ZH", generales);
+        cpcCharges.put("ZI", impots);
+        cpcCharges.put("ZJ", dotAmort);
+        cpcCharges.put("ZK", dotProv);
+        cpcCharges.put("ZL", pertes);
+        cpcCharges.put("ZM", BigDecimal.ZERO);
+
+        // Series d'evolution historique (6 derniers mois)
+        java.util.List<String> evolutionLabels = new java.util.ArrayList<>();
+        java.util.List<BigDecimal> evolutionActifs = new java.util.ArrayList<>();
+        java.util.List<BigDecimal> evolutionPassifs = new java.util.ArrayList<>();
+        java.util.List<BigDecimal> evolutionProduits = new java.util.ArrayList<>();
+        java.util.List<BigDecimal> evolutionMarges = new java.util.ArrayList<>();
+
+        for (int i = 5; i >= 0; i--) {
+            LocalDate targetMonth = now.minusMonths(i);
+            String label = targetMonth.format(DateTimeFormatter.ofPattern("MMM yyyy", java.util.Locale.FRENCH));
+            evolutionLabels.add(label);
+
+            LocalDate monthDebut = targetMonth.withDayOfMonth(1);
+            LocalDate monthFin = targetMonth.with(TemporalAdjusters.lastDayOfMonth());
+
+            LocalDateTime monthDebutTime = monthDebut.atStartOfDay();
+            LocalDateTime monthFinTime = monthFin.atTime(LocalTime.MAX);
+
+            BigDecimal monthlyActifs = totalActifs;
+            BigDecimal txAfter = transactionRepository.sumMontantGlobalByDateBetweenAndStatut(
+                    monthFinTime, LocalDateTime.now(), StatutOperation.EXECUTEE);
+            if (txAfter != null) {
+                monthlyActifs = totalActifs.subtract(txAfter.multiply(new BigDecimal("0.1")));
+            }
+            if (monthlyActifs.compareTo(BigDecimal.ZERO) < 0) monthlyActifs = BigDecimal.ZERO;
+
+            BigDecimal monthlyProduits = transactionRepository.sumFraisByDateBetweenAndStatut(
+                    monthDebutTime, monthFinTime, StatutOperation.EXECUTEE);
+            if (monthlyProduits == null) monthlyProduits = BigDecimal.ZERO;
+
+            BigDecimal monthlyMarges = echeanceRepository.sumCapitalImpayesBeforeDate(monthFin);
+            if (monthlyMarges == null) monthlyMarges = BigDecimal.ZERO;
+
+            evolutionActifs.add(monthlyActifs.setScale(2, RoundingMode.HALF_UP));
+            evolutionPassifs.add(monthlyActifs.setScale(2, RoundingMode.HALF_UP));
+            evolutionProduits.add(monthlyProduits.add(monthlyMarges).setScale(2, RoundingMode.HALF_UP));
+            evolutionMarges.add(monthlyMarges.setScale(2, RoundingMode.HALF_UP));
         }
 
         return new RapportFinancierResponseDTO(
@@ -136,7 +331,16 @@ public class ReportingServiceImpl implements ReportingService {
                 totalPassifs,
                 produitNet,
                 margeInterets,
-                ratioEfficacite
+                ratioEfficacite,
+                bilanActif,
+                bilanPassif,
+                cpcProduits,
+                cpcCharges,
+                evolutionLabels,
+                evolutionActifs,
+                evolutionPassifs,
+                evolutionProduits,
+                evolutionMarges
         );
     }
 
@@ -280,42 +484,157 @@ public class ReportingServiceImpl implements ReportingService {
         );
     }
 
+    private byte[] genererPdfExport(String type, String dateDebut, String dateFin) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            Document document = new Document(PageSize.A4, 36, 36, 54, 36);
+            PdfWriter.getInstance(document, baos);
+            document.open();
+
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
+            Font subtitleFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
+            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+            Font bodyFont = FontFactory.getFont(FontFactory.HELVETICA, 9);
+
+            document.add(new Paragraph("Rapport " + type, titleFont));
+            document.add(new Paragraph("Genere le : " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")), subtitleFont));
+            if (dateDebut != null && dateFin != null) {
+                document.add(new Paragraph("Periode : " + dateDebut + " a " + dateFin, subtitleFont));
+            }
+            document.add(new Paragraph(" "));
+
+            if ("FINANCIER".equalsIgnoreCase(type)) {
+                RapportFinancierResponseDTO data = genererRapportFinancier(dateDebut, dateFin);
+                PdfPTable table = new PdfPTable(2);
+                table.setWidthPercentage(100);
+                
+                table.addCell(new Paragraph("Indicateur", headerFont));
+                table.addCell(new Paragraph("Valeur", headerFont));
+
+                table.addCell(new Paragraph("Periode", bodyFont));
+                table.addCell(new Paragraph(data.periode(), bodyFont));
+
+                table.addCell(new Paragraph("Total Actifs", bodyFont));
+                table.addCell(new Paragraph(data.totalActifs() + " FCFA", bodyFont));
+
+                table.addCell(new Paragraph("Total Passifs", bodyFont));
+                table.addCell(new Paragraph(data.totalPassifs() + " FCFA", bodyFont));
+
+                table.addCell(new Paragraph("Produit Net", bodyFont));
+                table.addCell(new Paragraph(data.produitNet() + " FCFA", bodyFont));
+
+                table.addCell(new Paragraph("Marge d'interets", bodyFont));
+                table.addCell(new Paragraph(data.margeInterets() + " FCFA", bodyFont));
+
+                table.addCell(new Paragraph("Ratio d'efficacite", bodyFont));
+                table.addCell(new Paragraph(data.ratioEfficacite() + "%", bodyFont));
+
+                document.add(table);
+            } else if ("OPERATIONNEL".equalsIgnoreCase(type)) {
+                RapportOperationnelResponseDTO data = genererRapportOperationnel(dateDebut, dateFin, null);
+                PdfPTable table = new PdfPTable(2);
+                table.setWidthPercentage(100);
+
+                table.addCell(new Paragraph("Indicateur", headerFont));
+                table.addCell(new Paragraph("Valeur", headerFont));
+
+                table.addCell(new Paragraph("Periode", bodyFont));
+                table.addCell(new Paragraph(data.periode(), bodyFont));
+
+                table.addCell(new Paragraph("Total Depots", bodyFont));
+                table.addCell(new Paragraph(data.totalDepots() + " FCFA", bodyFont));
+
+                table.addCell(new Paragraph("Total Retraits", bodyFont));
+                table.addCell(new Paragraph(data.totalRetraits() + " FCFA", bodyFont));
+
+                table.addCell(new Paragraph("Total Virements", bodyFont));
+                table.addCell(new Paragraph(data.totalVirements() + " FCFA", bodyFont));
+
+                table.addCell(new Paragraph("Nombre Transactions", bodyFont));
+                table.addCell(new Paragraph(String.valueOf(data.nbTransactions()), bodyFont));
+
+                table.addCell(new Paragraph("Total Frais", bodyFont));
+                table.addCell(new Paragraph(data.montantTotalFrais() + " FCFA", bodyFont));
+
+                document.add(table);
+            } else {
+                document.add(new Paragraph("Donnees non disponibles pour ce type de rapport.", bodyFont));
+            }
+
+            document.close();
+            return baos.toByteArray();
+        } catch (Exception e) {
+            LOGGER.error("Erreur generation PDF export", e);
+            return new byte[0];
+        }
+    }
+
     @Override
     @Transactional(readOnly = true)
-    public RapportExportResponseDTO exporterRapport(String type, String format) {
+    public RapportExportResponseDTO exporterRapport(String type, String format, String dateDebut, String dateFin) {
         LOGGER.info("Export rapport {} au format {}", type, format);
-        StringBuilder sb = new StringBuilder();
-        sb.append("Rapport ").append(type).append("\r\n");
-        sb.append("Date generation;").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))).append("\r\n");
-        sb.append("\r\n");
-
-        switch (type.toUpperCase()) {
-            case "OPERATIONNEL":
-                sb.append("Periode;Total Depots;Total Retraits;Total Virements;Nb Transactions;Total Frais\r\n");
-                sb.append("Mois courant;0;0;0;0;0\r\n");
-                break;
-            case "FINANCIER":
-                sb.append("Periode;Total Actifs;Total Passifs;Produit Net;Marge Interets;Ratio Efficacite\r\n");
-                sb.append("Mois courant;0;0;0;0;0\r\n");
-                break;
-            case "CLIENTS":
-                sb.append("Periode;Total Clients;Nouveaux Clients;Clients Actifs\r\n");
-                sb.append("Mois courant;0;0;0\r\n");
-                break;
-            case "CREDITS":
-                sb.append("Periode;Total Credits;Montant Accorde;Encours;PAR 30;PAR 90;Taux Impayes\r\n");
-                sb.append("Mois courant;0;0;0;0;0;0\r\n");
-                break;
-            default:
-                sb.append("Type;Valeur\r\n");
-                sb.append(type).append(";Donnees non disponibles\r\n");
-                break;
-        }
-
-        String contenu = sb.toString();
-        String contenuBase64 = Base64.getEncoder().encodeToString(contenu.getBytes());
+        
+        String contenuBase64;
         String nomFichier = "rapport_" + type.toLowerCase() + "_"
                 + LocalDateTime.now().toLocalDate() + "." + format.toLowerCase();
+
+        if ("PDF".equalsIgnoreCase(format)) {
+            byte[] pdfBytes = genererPdfExport(type, dateDebut, dateFin);
+            contenuBase64 = Base64.getEncoder().encodeToString(pdfBytes);
+        } else {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Rapport ").append(type).append("\r\n");
+            sb.append("Date generation;").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))).append("\r\n");
+            sb.append("\r\n");
+
+            switch (type.toUpperCase()) {
+                case "OPERATIONNEL":
+                    RapportOperationnelResponseDTO opData = genererRapportOperationnel(dateDebut, dateFin, null);
+                    sb.append("Periode;Total Depots;Total Retraits;Total Virements;Nb Transactions;Total Frais\r\n");
+                    sb.append(opData.periode()).append(";")
+                      .append(opData.totalDepots()).append(";")
+                      .append(opData.totalRetraits()).append(";")
+                      .append(opData.totalVirements()).append(";")
+                      .append(opData.nbTransactions()).append(";")
+                      .append(opData.montantTotalFrais()).append("\r\n");
+                    break;
+                case "FINANCIER":
+                    RapportFinancierResponseDTO finData = genererRapportFinancier(dateDebut, dateFin);
+                    sb.append("Periode;Total Actifs;Total Passifs;Produit Net;Marge Interets;Ratio Efficacite\r\n");
+                    sb.append(finData.periode()).append(";")
+                      .append(finData.totalActifs()).append(";")
+                      .append(finData.totalPassifs()).append(";")
+                      .append(finData.produitNet()).append(";")
+                      .append(finData.margeInterets()).append(";")
+                      .append(finData.ratioEfficacite()).append("\r\n");
+                    break;
+                case "CLIENTS":
+                    RapportClientsResponseDTO cltData = genererRapportClients();
+                    sb.append("Periode;Total Clients;Nouveaux Clients;Clients Actifs\r\n");
+                    sb.append(cltData.periode()).append(";")
+                      .append(cltData.totalClients()).append(";")
+                      .append(cltData.nouveauxClients()).append(";")
+                      .append(cltData.clientsActifs()).append("\r\n");
+                    break;
+                case "CREDITS":
+                    RapportCreditsResponseDTO credData = genererRapportCredits();
+                    sb.append("Periode;Total Credits;Montant Accorde;Encours;PAR 30;PAR 90;Taux Impayes\r\n");
+                    sb.append(credData.periode()).append(";")
+                      .append(credData.totalCredits()).append(";")
+                      .append(credData.montantTotalAccorde()).append(";")
+                      .append(credData.encoursTotal()).append(";")
+                      .append(credData.par30()).append(";")
+                      .append(credData.par90()).append(";")
+                      .append(credData.tauxImpayes()).append("\r\n");
+                    break;
+                default:
+                    sb.append("Type;Valeur\r\n");
+                    sb.append(type).append(";Donnees non disponibles\r\n");
+                    break;
+            }
+            String contenu = sb.toString();
+            contenuBase64 = Base64.getEncoder().encodeToString(contenu.getBytes());
+        }
 
         return new RapportExportResponseDTO(
                 type,

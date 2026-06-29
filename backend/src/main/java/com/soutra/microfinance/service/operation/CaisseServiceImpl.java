@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.soutra.microfinance.audit.AuditContext;
 
 @Service
 public class CaisseServiceImpl implements CaisseService {
@@ -42,7 +43,18 @@ public class CaisseServiceImpl implements CaisseService {
         caisse.setSoldeCourant(dto.getSoldeInitial());
         caisse.setStatut(StatutCaisse.OUVERTE);
         caisse.setDateOuverture(LocalDateTime.now());
-        return caisseRepository.save(caisse);
+        Caisse saved = caisseRepository.save(caisse);
+
+        AuditContext.setIdEntite(String.valueOf(saved.getIdCaisse()));
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("soldeOuverture", saved.getSoldeOuverture());
+        apres.put("statut", StatutCaisse.OUVERTE);
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+        return saved;
     }
 
     @Override
@@ -54,10 +66,24 @@ public class CaisseServiceImpl implements CaisseService {
         BigDecimal soldeConstate = dto.getSoldePhysiqueConstate();
         BigDecimal ecart = soldeConstate.subtract(caisse.getSoldeCourant());
 
+        AuditContext.setIdEntite(String.valueOf(caisse.getIdCaisse()));
+        java.util.Map<String, Object> avant = new java.util.HashMap<>();
+        avant.put("soldeCourant", caisse.getSoldeCourant());
+        avant.put("statut", StatutCaisse.OUVERTE);
+        AuditContext.setDetailsAvant(AuditContext.toJson(avant));
+
         caisse.setStatut(StatutCaisse.FERMEE);
         caisse.setDateFermeture(LocalDateTime.now());
         caisse.setEcartFermeture(ecart);
-        return caisseRepository.save(caisse);
+        Caisse saved = caisseRepository.save(caisse);
+
+        java.util.Map<String, Object> apres = new java.util.HashMap<>();
+        apres.put("soldePhysiqueConstate", soldeConstate);
+        apres.put("statut", StatutCaisse.FERMEE);
+        apres.put("ecartFermeture", ecart);
+        AuditContext.setDetailsApres(AuditContext.toJson(apres));
+
+        return saved;
     }
 
     @Override

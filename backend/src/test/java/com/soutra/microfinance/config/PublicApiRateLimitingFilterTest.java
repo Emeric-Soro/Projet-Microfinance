@@ -47,9 +47,9 @@ class PublicApiRateLimitingFilterTest {
                 properties
         );
 
-        MockHttpServletResponse firstClient = executePost(filter, "/api/utilisateurs/login", "198.51.100.1");
-        MockHttpServletResponse blockedFirstClient = executePost(filter, "/api/utilisateurs/login", "198.51.100.1");
-        MockHttpServletResponse secondClient = executePost(filter, "/api/utilisateurs/login", "198.51.100.2");
+        MockHttpServletResponse firstClient = executePost(filter, "/api/v1/utilisateurs/login", "198.51.100.1");
+        MockHttpServletResponse blockedFirstClient = executePost(filter, "/api/v1/utilisateurs/login", "198.51.100.1");
+        MockHttpServletResponse secondClient = executePost(filter, "/api/v1/utilisateurs/login", "198.51.100.2");
 
         assertThat(firstClient.getStatus()).isEqualTo(200);
         assertThat(blockedFirstClient.getStatus()).isEqualTo(429);
