@@ -1,10 +1,38 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Demandes de Crédit - MicroFinance</title>
   <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    .dem-row { cursor: pointer; transition: background .15s; }
+    .dem-row:hover td { background: #F0F6FA !important; }
+    .filter-tab { cursor: pointer; padding: 7px 16px; border-radius: 20px; border: 1px solid #C9DFE8; background: #fff; color: #4A7A8A; font-size: 12px; font-weight: 600; transition: all .2s; user-select: none; }
+    .filter-tab.active { background: #084355; color: #fff; border-color: #084355; }
+    .filter-tab:hover:not(.active) { background: #F0F6FA; }
+    .filter-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+    .detail-field { font-size: 13px; }
+    .detail-field .lbl { font-size: 11px; color: #4A7A8A; margin-bottom: 2px; }
+    .detail-field .val { font-weight: 600; color: #084355; }
+    .info-box { background: #F0F6FA; border-radius: 8px; padding: 14px; margin-bottom: 16px; }
+    .info-box .box-title { font-size: 12px; font-weight: 700; color: #084355; margin-bottom: 10px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; }
+    .info-grid .lbl { color: #4A7A8A; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #4A7A8A; }
+    .empty-state svg { opacity: .3; margin-bottom: 12px; }
+    /* Reject modal */
+    .reject-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 9999; display: none; align-items: center; justify-content: center; }
+    .reject-overlay.open { display: flex; }
+    .reject-box { background: #fff; border-radius: 12px; padding: 28px; width: 420px; max-width: 95vw; }
+    .reject-box h3 { margin: 0 0 16px; font-size: 16px; color: #084355; }
+    .reject-box textarea { width: 100%; min-height: 90px; resize: vertical; }
+    .reject-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+    /* Avatar initials */
+    .avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #084355; flex-shrink: 0; }
+    .montant-cell { font-weight: 700; font-size: 14px; color: #084355; }
+  </style>
 </head>
 <body>
   <div class="app-layout">
@@ -15,7 +43,7 @@
         <div class="topbar-left">
           <div>
             <div class="topbar-title">Demandes de Crédit</div>
-            <div class="topbar-breadcrumb">Crédits / Demandes en attente</div>
+            <div class="topbar-breadcrumb">Crédits / Demandes</div>
           </div>
         </div>
         <div class="topbar-right">
@@ -31,7 +59,8 @@
       </header>
 
       <div class="content-area">
-        <!-- KPI -->
+
+        <!-- KPIs -->
         <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 24px;">
           <div class="kpi-card">
             <div class="kpi-icon orange">
@@ -39,7 +68,7 @@
             </div>
             <div class="kpi-info">
               <div class="kpi-label">En attente</div>
-              <div class="kpi-value">5</div>
+              <div class="kpi-value" id="kpiAttente">—</div>
             </div>
           </div>
           <div class="kpi-card">
@@ -47,168 +76,102 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             </div>
             <div class="kpi-info">
-              <div class="kpi-label">Accordées (mois)</div>
-              <div class="kpi-value">18</div>
+              <div class="kpi-label">Accordées</div>
+              <div class="kpi-value" id="kpiAccordees">—</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon red">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            </div>
+            <div class="kpi-info">
+              <div class="kpi-label">Refusées</div>
+              <div class="kpi-value" id="kpiRefusees">—</div>
             </div>
           </div>
           <div class="kpi-card">
             <div class="kpi-icon blue">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-            </div>
-            <div class="kpi-info">
-              <div class="kpi-label">Refusées (mois)</div>
-              <div class="kpi-value">4</div>
-            </div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-icon orange">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             </div>
             <div class="kpi-info">
-              <div class="kpi-label">Encours total</div>
-              <div class="kpi-value">523M <span style="font-size:13px;font-weight:600;">FCFA</span></div>
+              <div class="kpi-label">Montant total demandé</div>
+              <div class="kpi-value" id="kpiMontant">—</div>
             </div>
           </div>
         </div>
 
-        <!-- FILTER TABS -->
-        <div class="filter-tabs" style="margin-bottom: 20px;">
-          <span class="filter-tab active">En attente (5)</span>
-          <span class="filter-tab">Accordées (18)</span>
-          <span class="filter-tab">Refusées (4)</span>
+        <!-- Onglets filtre -->
+        <div class="filter-tabs" style="margin-bottom: 20px;" id="filterTabs">
+          <span class="filter-tab active" data-statut="EN_ATTENTE" onclick="setTab(this)">En attente</span>
+          <span class="filter-tab" data-statut="APPROUVEE" onclick="setTab(this)">Accordées</span>
+          <span class="filter-tab" data-statut="REJETEE" onclick="setTab(this)">Refusées</span>
+          <span class="filter-tab" data-statut="" onclick="setTab(this)">Toutes</span>
         </div>
 
-        <!-- TABLE -->
+        <!-- Tableau -->
         <div class="card">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Dossier</th>
+                <th>N° Dossier</th>
                 <th>Client</th>
                 <th>Produit</th>
-                <th>Montant</th>
+                <th>Montant demandé</th>
                 <th>Durée</th>
-                <th>Score risque</th>
+                <th>Objet</th>
                 <th>Date demande</th>
+                <th>Statut</th>
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody>
-              <tr style="cursor:pointer;" onclick="openModal('creditDetailModal')">
-                <td style="font-family:monospace;font-size:12px;color:#084355;">CRD-2026-0142</td>
-                <td>
-                  <div style="display:flex;align-items:center;gap:8px;">
-                    <div style="width:28px;height:28px;border-radius:50%;background:#8cd5fa;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#084355;">KA</div>
-                    Kouamé Aya
-                  </div>
-                </td>
-                <td><span class="badge badge-info">Personnel</span></td>
-                <td style="font-weight:700;">3 000 000 FCFA</td>
-                <td>24 mois</td>
-                <td><span class="badge badge-active">A - Faible</span></td>
-                <td style="font-size:12px;">15/05/2026</td>
-                <td>
-                  <div style="display:flex;gap:6px;">
-                    <button class="btn btn-sm" style="background:#2E7D32;color:#fff;" onclick="event.stopPropagation();approveCredit('CRD-2026-0142')">Accorder</button>
-                    <button class="btn btn-sm" style="background:#D93025;color:#fff;" onclick="event.stopPropagation();rejectCredit('CRD-2026-0142')">Refuser</button>
-                  </div>
-                </td>
-              </tr>
-              <tr style="cursor:pointer;" onclick="openModal('creditDetailModal')">
-                <td style="font-family:monospace;font-size:12px;color:#084355;">CRD-2026-0141</td>
-                <td>
-                  <div style="display:flex;align-items:center;gap:8px;">
-                    <div style="width:28px;height:28px;border-radius:50%;background:#fab482;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#084355;">DM</div>
-                    Diallo Moussa
-                  </div>
-                </td>
-                <td><span class="badge badge-info">Immobilier</span></td>
-                <td style="font-weight:700;">25 000 000 FCFA</td>
-                <td>60 mois</td>
-                <td><span class="badge badge-pending">B - Moyen</span></td>
-                <td style="font-size:12px;">14/05/2026</td>
-                <td>
-                  <div style="display:flex;gap:6px;">
-                    <button class="btn btn-sm" style="background:#2E7D32;color:#fff;" onclick="event.stopPropagation();approveCredit('CRD-2026-0141')">Accorder</button>
-                    <button class="btn btn-sm" style="background:#D93025;color:#fff;" onclick="event.stopPropagation();rejectCredit('CRD-2026-0141')">Refuser</button>
-                  </div>
-                </td>
-              </tr>
-              <tr style="cursor:pointer;" onclick="openModal('creditDetailModal')">
-                <td style="font-family:monospace;font-size:12px;color:#084355;">CRD-2026-0140</td>
-                <td>
-                  <div style="display:flex;align-items:center;gap:8px;">
-                    <div style="width:28px;height:28px;border-radius:50%;background:#8cd5fa;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#084355;">TS</div>
-                    Traoré Sékou
-                  </div>
-                </td>
-                <td><span class="badge badge-info">Automobile</span></td>
-                <td style="font-weight:700;">8 500 000 FCFA</td>
-                <td>36 mois</td>
-                <td><span class="badge badge-active">A - Faible</span></td>
-                <td style="font-size:12px;">13/05/2026</td>
-                <td>
-                  <div style="display:flex;gap:6px;">
-                    <button class="btn btn-sm" style="background:#2E7D32;color:#fff;" onclick="event.stopPropagation();approveCredit('CRD-2026-0140')">Accorder</button>
-                    <button class="btn btn-sm" style="background:#D93025;color:#fff;" onclick="event.stopPropagation();rejectCredit('CRD-2026-0140')">Refuser</button>
-                  </div>
-                </td>
-              </tr>
+            <tbody id="demandesBody">
+              <tr><td colspan="9" style="text-align:center;padding:32px;color:#4A7A8A;">Chargement...</td></tr>
             </tbody>
           </table>
+          <div class="empty-state" id="emptyState" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <div style="font-size:16px;font-weight:600;margin-bottom:4px;">Aucune demande trouvée</div>
+            <div>Il n'y a aucune demande de crédit dans cette catégorie.</div>
+            <a href="credit-simulation.html" class="btn btn-primary" style="margin-top:16px;display:inline-flex;">Créer une nouvelle demande</a>
+          </div>
+          <div class="pagination" id="pagination" style="display:none;">
+            <div class="pagination-info" id="paginationInfo"></div>
+            <div class="pagination-buttons" id="paginationBtns"></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal: Détail demande crédit -->
+  <!-- Modal: Détail demande -->
   <div class="modal-overlay" id="creditDetailModal">
-    <div class="modal" style="max-width: 640px;">
+    <div class="modal" style="max-width: 660px;">
       <div class="modal-header">
-        <div class="modal-title">Détail du dossier CRD-2026-0142</div>
+        <div class="modal-title" id="modalTitle">Détail du dossier</div>
         <button class="modal-close" onclick="closeModal('creditDetailModal')"></button>
       </div>
-      <div class="modal-body">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
-          <div>
-            <div style="font-size:12px;color:#4A7A8A;">Client</div>
-            <div style="font-weight:700;">Kouamé Aya</div>
-          </div>
-          <div>
-            <div style="font-size:12px;color:#4A7A8A;">Produit</div>
-            <div style="font-weight:700;">Crédit Personnel</div>
-          </div>
-          <div>
-            <div style="font-size:12px;color:#4A7A8A;">Montant</div>
-            <div style="font-weight:700;font-size:18px;color:#084355;">3 000 000 FCFA</div>
-          </div>
-          <div>
-            <div style="font-size:12px;color:#4A7A8A;">Durée</div>
-            <div style="font-weight:700;">24 mois</div>
-          </div>
-          <div>
-            <div style="font-size:12px;color:#4A7A8A;">Score risque</div>
-            <div><span class="badge badge-active">A - Faible</span></div>
-          </div>
-          <div>
-            <div style="font-size:12px;color:#4A7A8A;">Garantie</div>
-            <div style="font-weight:700;">Domiciliation salaire</div>
-          </div>
-        </div>
-        <div style="background:#F0F6FA;border-radius:8px;padding:14px;margin-bottom:16px;">
-          <div style="font-size:12px;font-weight:700;color:#084355;margin-bottom:8px;">Infos KYC</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
-            <div><span style="color:#4A7A8A;">Pièce:</span> CNI valide</div>
-            <div><span style="color:#4A7A8A;">Revenu:</span> 800 000 FCFA/mois</div>
-            <div><span style="color:#4A7A8A;">Taux d'endettement:</span> 35%</div>
-            <div><span style="color:#4A7A8A;">Ancienneté:</span> 5 ans</div>
-          </div>
-        </div>
+      <div class="modal-body" id="modalBody">
+        <div style="text-align:center;padding:32px;color:#4A7A8A;">Chargement...</div>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer" id="modalFooter">
         <button class="btn btn-outline" onclick="closeModal('creditDetailModal')">Fermer</button>
-        <button class="btn btn-primary" style="background:#D93025;" onclick="closeModal('creditDetailModal');rejectCredit('CRD-2026-0142')">Refuser</button>
-        <button class="btn btn-primary" style="background:#2E7D32;" onclick="closeModal('creditDetailModal');approveCredit('CRD-2026-0142')">Accorder</button>
+        <button class="btn btn-primary" id="modalBtnReject" style="background:#D93025;" onclick="openRejectModal()">Refuser</button>
+        <button class="btn btn-primary" id="modalBtnApprove" style="background:#2E7D32;" onclick="approveFromModal()">Accorder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Refus -->
+  <div class="reject-overlay" id="rejectOverlay">
+    <div class="reject-box">
+      <h3>Motif du refus</h3>
+      <div class="form-group">
+        <label class="form-label">Expliquez le motif de refus *</label>
+        <textarea class="form-control" id="motifRefus" placeholder="Ex: Taux d'endettement trop élevé, garanties insuffisantes..."></textarea>
+      </div>
+      <div class="reject-btns">
+        <button class="btn btn-outline" onclick="closeRejectModal()">Annuler</button>
+        <button class="btn btn-primary" style="background:#D93025;" onclick="confirmReject()">Confirmer le refus</button>
       </div>
     </div>
   </div>
@@ -216,83 +179,328 @@
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
   <script>
-    let demandes = [];
+    /* =====================================================
+       Demandes de Crédit – Connected to backend
+       ===================================================== */
 
-    async function chargerDemandes() {
+    var currentPage = 0;
+    var pageSize = 20;
+    var currentStatut = 'EN_ATTENTE';
+    var allDemandes = [];
+    var currentDemandeId = null;
+
+    var AVATARS_COLORS = ['#8cd5fa','#fab482','#b8e4b8','#f5c4d3','#d4c4f5','#fae8b0'];
+    function avatarColor(name) {
+      var hash = 0;
+      for (var i = 0; i < (name || '').length; i++) hash += name.charCodeAt(i);
+      return AVATARS_COLORS[hash % AVATARS_COLORS.length];
+    }
+    function initials(nom, prenom) {
+      var n = (nom || '').trim();
+      var p = (prenom || '').trim();
+      return ((n[0] || '') + (p[0] || '')).toUpperCase() || '?';
+    }
+    function fmtNum(n) { return Number(n || 0).toLocaleString('fr-FR'); }
+    function fmtDate(d) {
+      if (!d) return '—';
+      return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    function statutBadge(s) {
+      var map = {
+        'EN_ATTENTE': ['badge-pending', 'En attente'],
+        'APPROUVEE':  ['badge-active', 'Accordée'],
+        'REJETEE':    ['badge-error', 'Refusée'],
+        'EN_COURS':   ['badge-info', 'En cours']
+      };
+      var v = map[s] || ['badge-info', s || '—'];
+      return '<span class="badge ' + v[0] + '">' + v[1] + '</span>';
+    }
+
+    // ── Onglet filtre ──────────────────────────────────
+    function setTab(el) {
+      document.querySelectorAll('.filter-tab').forEach(function(t) { t.classList.remove('active'); });
+      el.classList.add('active');
+      currentStatut = el.dataset.statut;
+      currentPage = 0;
+      charger(0);
+    }
+
+    // ── Chargement ─────────────────────────────────────
+    async function charger(page) {
+      currentPage = page;
+      document.getElementById('demandesBody').innerHTML =
+        '<tr><td colspan="9" style="text-align:center;padding:32px;color:#4A7A8A;">Chargement...</td></tr>';
+      document.getElementById('emptyState').style.display = 'none';
+
       try {
-        const res = await Credits.listerDemandes();
-        if (!res || !res.ok) throw new Error('Erreur');
-        const page = await res.json();
-        demandes = page.content || [];
-        renderDemandes();
+        // L'API backend /demandes ne supporte que les "EN_ATTENTE" – on charge tout et filtre côté client
+        var res = await Credits.listerDemandes(page, pageSize);
+        if (!res || !res.ok) throw new Error('HTTP ' + (res ? res.status : 'err'));
+        var data = await res.json();
+        var items = data.content || [];
+        var totalElements = data.totalElements || 0;
+        var totalPages = data.totalPages || 1;
+
+        allDemandes = items;
+        renderTable(items, totalElements, totalPages, page);
+
       } catch (e) {
-        showToast('Impossible de charger les demandes', 'error');
+        document.getElementById('demandesBody').innerHTML =
+          '<tr><td colspan="9" style="text-align:center;padding:32px;color:#D93025;">Erreur : ' + e.message + '</td></tr>';
       }
     }
 
-    function renderDemandes() {
-      const tbody = document.querySelector('.data-table tbody');
-      tbody.innerHTML = '';
-      demandes.forEach(d => {
-        const tr = document.createElement('tr');
-        tr.style.cursor = 'pointer';
-        tr.onclick = () => openModal('creditDetailModal');
-        tr.innerHTML = `
-          <td style="font-family:monospace;font-size:12px;color:#084355;">${'DEM-' + d.idDemande}</td>
-          <td>${d.nomClient || d.idClient}</td>
-          <td><span class="badge badge-info">${d.codeProduitCredit || '-'}</span></td>
-          <td style="font-weight:700;">${(d.montantDemande || 0).toLocaleString('fr-FR')} FCFA</td>
-          <td>${d.dureeSouhaitee || '-'} mois</td>
-          <td><span class="badge badge-pending">En attente</span></td>
-          <td style="font-size:12px;">${d.dateDemande ? new Date(d.dateDemande).toLocaleDateString('fr-FR') : '-'}</td>
-          <td>
-            <div style="display:flex;gap:6px;">
-              <button class="btn btn-sm" style="background:#2E7D32;color:#fff;" onclick="event.stopPropagation();approveCredit(${d.idDemande})">Accorder</button>
-              <button class="btn btn-sm" style="background:#D93025;color:#fff;" onclick="event.stopPropagation();rejectCredit(${d.idDemande})">Refuser</button>
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+    function renderTable(items, totalElements, totalPages, page) {
+      var tbody = document.getElementById('demandesBody');
+
+      if (!items.length) {
+        tbody.innerHTML = '';
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('pagination').style.display = 'none';
+        return;
+      }
+      document.getElementById('emptyState').style.display = 'none';
+
+      tbody.innerHTML = items.map(function(d) {
+        var nom = d.nomClient || '';
+        var prenom = d.prenomClient || '';
+        var fullName = (nom + ' ' + prenom).trim() || 'Client #' + d.idClient;
+        var ini = initials(nom, prenom);
+        var color = avatarColor(fullName);
+        var showActions = !d.statutDemande || d.statutDemande === 'EN_ATTENTE';
+        var actionBtns = showActions
+          ? '<div style="display:flex;gap:6px;">' +
+              '<button class="btn btn-sm" style="background:#2E7D32;color:#fff;font-size:11px;padding:3px 8px;" ' +
+                'onclick="event.stopPropagation();approveCredit(' + d.idDemande + ')">✓ Accorder</button>' +
+              '<button class="btn btn-sm" style="background:#D93025;color:#fff;font-size:11px;padding:3px 8px;" ' +
+                'onclick="event.stopPropagation();openRejectForDemande(' + d.idDemande + ')">✕ Refuser</button>' +
+            '</div>'
+          : '—';
+
+        return '<tr class="dem-row" onclick="voirDetail(' + d.idDemande + ')">' +
+          '<td style="font-family:monospace;font-size:12px;color:#084355;font-weight:600;">DEM-' + d.idDemande + '</td>' +
+          '<td>' +
+            '<div style="display:flex;align-items:center;gap:8px;">' +
+              '<div class="avatar" style="background:' + color + ';">' + ini + '</div>' +
+              '<div><div style="font-weight:600;font-size:13px;">' + fullName + '</div>' +
+                '<div style="font-size:11px;color:#4A7A8A;">' + (d.codeClient || '') + '</div>' +
+              '</div>' +
+            '</div>' +
+          '</td>' +
+          '<td><span class="badge badge-info" style="font-size:11px;">' + (d.codeProduitCredit || d.libelleProduit || '—') + '</span></td>' +
+          '<td class="montant-cell">' + fmtNum(d.montantDemande) + ' <span style="font-size:11px;font-weight:400;">FCFA</span></td>' +
+          '<td>' + (d.dureeSouhaitee || '—') + ' mois</td>' +
+          '<td style="font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (d.objetCredit || '') + '">' + (d.objetCredit || '—') + '</td>' +
+          '<td style="font-size:12px;">' + fmtDate(d.dateDemande || d.createdAt) + '</td>' +
+          '<td>' + statutBadge(d.statutDemande || 'EN_ATTENTE') + '</td>' +
+          '<td>' + actionBtns + '</td>' +
+          '</tr>';
+      }).join('');
+
+      // Pagination
+      var pag = document.getElementById('pagination');
+      if (totalPages > 1) {
+        pag.style.display = 'flex';
+        document.getElementById('paginationInfo').textContent =
+          'Page ' + (page + 1) + ' / ' + totalPages + ' (' + totalElements + ' demandes)';
+        var btns = '';
+        if (page > 0) btns += '<button class="page-btn" onclick="charger(' + (page-1) + ')">‹</button>';
+        for (var i = Math.max(0, page - 2); i < Math.min(totalPages, page + 3); i++) {
+          btns += '<button class="page-btn' + (i === page ? ' active' : '') + '" onclick="charger(' + i + ')">' + (i+1) + '</button>';
+        }
+        if (page < totalPages - 1) btns += '<button class="page-btn" onclick="charger(' + (page+1) + ')">›</button>';
+        document.getElementById('paginationBtns').innerHTML = btns;
+      } else {
+        pag.style.display = 'none';
+      }
     }
 
+    // ── KPIs ───────────────────────────────────────────
+    async function chargerKpis() {
+      try {
+        // Charge toutes les demandes pour comptage (1 seul appel en backend)
+        var res = await Credits.listerDemandes(0, 200);
+        if (!res || !res.ok) return;
+        var data = await res.json();
+        var items = data.content || [];
+
+        var attente = items.filter(function(d) { return !d.statutDemande || d.statutDemande === 'EN_ATTENTE'; }).length;
+        var accordees = items.filter(function(d) { return d.statutDemande === 'APPROUVEE'; }).length;
+        var refusees = items.filter(function(d) { return d.statutDemande === 'REJETEE'; }).length;
+        var montantTotal = items.reduce(function(s, d) { return s + Number(d.montantDemande || 0); }, 0);
+
+        document.getElementById('kpiAttente').textContent = attente;
+        document.getElementById('kpiAccordees').textContent = accordees;
+        document.getElementById('kpiRefusees').textContent = refusees;
+
+        var m = montantTotal;
+        var mLabel = m >= 1000000
+          ? (m / 1000000).toFixed(1).replace('.0', '') + 'M'
+          : (m >= 1000 ? (m / 1000).toFixed(0) + 'k' : m);
+        document.getElementById('kpiMontant').innerHTML = mLabel + ' <span style="font-size:13px;font-weight:600;">FCFA</span>';
+
+        // Update tab labels
+        document.querySelectorAll('.filter-tab').forEach(function(tab) {
+          var s = tab.dataset.statut;
+          if (s === 'EN_ATTENTE') tab.textContent = 'En attente (' + attente + ')';
+          else if (s === 'APPROUVEE') tab.textContent = 'Accordées (' + accordees + ')';
+          else if (s === 'REJETEE') tab.textContent = 'Refusées (' + refusees + ')';
+          else if (s === '') tab.textContent = 'Toutes (' + items.length + ')';
+        });
+      } catch(e) { console.warn('KPIs demandes:', e); }
+    }
+
+    // ── Détail d'une demande ────────────────────────────
+    async function voirDetail(idDemande) {
+      currentDemandeId = idDemande;
+      document.getElementById('modalTitle').textContent = 'Dossier DEM-' + idDemande;
+      document.getElementById('modalBody').innerHTML =
+        '<div style="text-align:center;padding:32px;color:#4A7A8A;">Chargement...</div>';
+      openModal('creditDetailModal');
+
+      try {
+        var res = await Credits.consulterDemande(idDemande);
+        if (!res || !res.ok) throw new Error('HTTP ' + (res ? res.status : 'err'));
+        var d = await res.json();
+
+        var estEnAttente = !d.statutDemande || d.statutDemande === 'EN_ATTENTE';
+        document.getElementById('modalBtnApprove').style.display = estEnAttente ? '' : 'none';
+        document.getElementById('modalBtnReject').style.display  = estEnAttente ? '' : 'none';
+
+        var nom = d.nomClient || '';
+        var prenom = d.prenomClient || '';
+        var fullName = (nom + ' ' + prenom).trim() || 'Client #' + d.idClient;
+        var agentLabel = d.nomAgentCredit || d.agentLogin || '—';
+
+        // Libellés KYC lisibles
+        var kycLabels = {
+          'BROUILLON': 'Brouillon', 'EN_COURS': 'En cours',
+          'VALIDE': 'Validé ✓', 'REJETE': 'Rejeté ✗', 'EXPIRE': 'Expiré'
+        };
+        var kycDisplay = d.statutKyc ? (kycLabels[d.statutKyc] || d.statutKyc) : '—';
+        var kycColor = d.statutKyc === 'VALIDE' ? '#1A7A4A' : (d.statutKyc === 'REJETE' || d.statutKyc === 'EXPIRE' ? '#D93025' : '#4A7A8A');
+
+        // Score couleur
+        var scoreDisplay = d.scoreClient !== null && d.scoreClient !== undefined
+          ? '<span style="font-weight:700;color:' + (d.scoreClient >= 70 ? '#1A7A4A' : d.scoreClient >= 40 ? '#B45309' : '#D93025') + ';">' + d.scoreClient + '/100</span>'
+          : '—';
+
+        document.getElementById('modalBody').innerHTML =
+          '<div class="detail-grid">' +
+            field('Client', '<strong>' + fullName + '</strong>') +
+            field('Code client', d.codeClient || '—') +
+            field('Produit de crédit', d.libelleProduit || d.codeProduit || '—') +
+            field('Montant demandé', fmtNum(d.montantDemande) + ' FCFA', true) +
+            field('Durée souhaitée', (d.dureeSouhaitee || '—') + ' mois') +
+            field('Statut', statutBadge(d.statutDemande || 'EN_ATTENTE')) +
+            field('Date de demande', fmtDate(d.dateDemande || d.createdAt)) +
+            field('Agent crédit', agentLabel) +
+            field('Référence dossier', d.referenceDemande || 'DEM-' + d.idDemande) +
+            field('Score de risque', scoreDisplay) +
+          '</div>' +
+
+          '<div class="info-box">' +
+            '<div class="box-title">Objet du crédit</div>' +
+            '<div style="font-size:13px;color:#1D3A45;">' + (d.objetCredit || 'Non précisé') + '</div>' +
+          '</div>' +
+
+          (d.motifRejet ? '<div class="info-box" style="background:#FFF5F5;border:1px solid #FFCDD2;">' +
+            '<div class="box-title" style="color:#D93025;">Motif de refus</div>' +
+            '<div style="font-size:13px;color:#D93025;">' + d.motifRejet + '</div>' +
+          '</div>' : '') +
+
+          '<div class="info-box">' +
+            '<div class="box-title">Profil financier du client</div>' +
+            '<div class="info-grid">' +
+              '<div><span class="lbl">KYC : </span><span style="color:' + kycColor + ';font-weight:600;">' + kycDisplay + '</span></div>' +
+              '<div><span class="lbl">Revenu déclaré : </span>' + (d.revenuMensuel ? fmtNum(d.revenuMensuel) + ' FCFA/mois' : '—') + '</div>' +
+              '<div><span class="lbl">Téléphone : </span>' + (d.telephone ? '<a href="tel:' + d.telephone + '" style="color:#084355;">' + d.telephone + '</a>' : '—') + '</div>' +
+              '<div><span class="lbl">Email : </span>' + (d.email ? '<a href="mailto:' + d.email + '" style="color:#084355;">' + d.email + '</a>' : '—') + '</div>' +
+            '</div>' +
+          '</div>';
+
+
+      } catch(e) {
+        document.getElementById('modalBody').innerHTML =
+          '<div style="text-align:center;padding:32px;color:#D93025;">Erreur : ' + e.message + '</div>';
+      }
+    }
+
+    function field(label, value, large) {
+      return '<div class="detail-field">' +
+        '<div class="lbl">' + label + '</div>' +
+        '<div class="val"' + (large ? ' style="font-size:17px;"' : '') + '>' + value + '</div>' +
+      '</div>';
+    }
+
+    // ── Approbation ────────────────────────────────────
     async function approveCredit(idDemande) {
-      if (!confirm('Accorder cette demande ?')) return;
+      if (!confirm('Accorder la demande DEM-' + idDemande + ' ?')) return;
       try {
-        const res = await Credits.deciderDemande(idDemande, 'APPROUVEE');
+        var res = await Credits.deciderDemande(idDemande, 'APPROUVEE');
         if (res && res.ok) {
-          showToast('Demande accordée', 'success');
-          chargerDemandes();
+          showToast('✓ Demande DEM-' + idDemande + ' accordée avec succès', 'success');
+          charger(currentPage);
+          chargerKpis();
         } else {
-          const err = await res.json().catch(() => ({}));
-          showToast(err.message || 'Erreur', 'error');
+          var err = await res.json().catch(function() { return {}; });
+          showToast(err.message || 'Erreur lors de la décision', 'error');
         }
-      } catch (e) {
-        showToast(e.message || 'Erreur réseau', 'error');
-      }
+      } catch(e) { showToast(e.message || 'Erreur réseau', 'error'); }
     }
 
-    async function rejectCredit(idDemande) {
-      const motif = prompt('Motif du refus ?');
-      if (motif === null) return;
-      try {
-        const res = await Credits.deciderDemande(idDemande, 'REJETEE', motif);
-        if (res && res.ok) {
-          showToast('Demande refusée', 'warning');
-          chargerDemandes();
-        } else {
-          const err = await res.json().catch(() => ({}));
-          showToast(err.message || 'Erreur', 'error');
-        }
-      } catch (e) {
-        showToast(e.message || 'Erreur réseau', 'error');
-      }
+    function approveFromModal() {
+      if (!currentDemandeId) return;
+      closeModal('creditDetailModal');
+      approveCredit(currentDemandeId);
     }
 
-    chargerDemandes();
+    // ── Refus ──────────────────────────────────────────
+    var pendingRejectId = null;
+
+    function openRejectForDemande(idDemande) {
+      pendingRejectId = idDemande;
+      document.getElementById('motifRefus').value = '';
+      document.getElementById('rejectOverlay').classList.add('open');
+    }
+
+    function openRejectModal() {
+      if (!currentDemandeId) return;
+      closeModal('creditDetailModal');
+      openRejectForDemande(currentDemandeId);
+    }
+
+    function closeRejectModal() {
+      document.getElementById('rejectOverlay').classList.remove('open');
+      pendingRejectId = null;
+    }
+
+    async function confirmReject() {
+      var motif = document.getElementById('motifRefus').value.trim();
+      if (!motif) { showToast('Veuillez saisir un motif de refus', 'error'); return; }
+      if (!pendingRejectId) return;
+      try {
+        var res = await Credits.deciderDemande(pendingRejectId, 'REJETEE', motif);
+        if (res && res.ok) {
+          showToast('Demande DEM-' + pendingRejectId + ' refusée', 'warning');
+          closeRejectModal();
+          charger(currentPage);
+          chargerKpis();
+        } else {
+          var err = await res.json().catch(function() { return {}; });
+          showToast(err.message || 'Erreur lors du refus', 'error');
+        }
+      } catch(e) { showToast(e.message || 'Erreur réseau', 'error'); }
+    }
+
+    // Close reject overlay on outside click
+    document.getElementById('rejectOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closeRejectModal();
+    });
+
+    // ── Init ───────────────────────────────────────────
+    charger(0);
+    chargerKpis();
   </script>
 </body>
 </html>
-
-
-

@@ -1,261 +1,965 @@
-﻿<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Échéancier Crédit - MicroFinance</title>
-  <link rel="stylesheet" href="../assets/css/backoffice.css">
-</head>
-<body>
-  <div class="app-layout">
-    <aside class="sidebar"></aside>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Échéancier Crédit - MicroFinance</title>
+        <link rel="stylesheet" href="../assets/css/backoffice.css" />
+    </head>
+    <body>
+        <div class="app-layout">
+            <aside class="sidebar"></aside>
 
-    <div class="main-content">
-      <header class="topbar">
-        <div class="topbar-left">
-          <div>
-            <div class="topbar-title" id="creditTitle">Échéancier - CRD-2026-0098</div>
-            <div class="topbar-breadcrumb" id="breadcrumbClient">Crédits / Kouamé Aya / Échéancier</div>
-          </div>
-        </div>
-        <div class="topbar-right">
-          <button class="btn btn-outline btn-sm" onclick="openModal('disburseModal')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-            Décaisser
-          </button>
-          <button class="btn btn-primary btn-sm" onclick="openModal('repayModal')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg>
-            Remboursement
-          </button>
-        </div>
-      </header>
+            <div class="main-content">
+                <header class="topbar">
+                    <div class="topbar-left">
+                        <div>
+                            <div class="topbar-title" id="creditTitle">
+                                Dossier Crédit
+                            </div>
+                            <div
+                                class="topbar-breadcrumb"
+                                id="breadcrumbClient"
+                            >
+                                <a
+                                    href="credits.html"
+                                    style="
+                                        color: #4a7a8a;
+                                        text-decoration: none;
+                                    "
+                                    >Crédits actifs</a
+                                >
+                                / Détail
+                            </div>
+                        </div>
+                    </div>
+                    <div class="topbar-right">
+                        <button
+                            id="btnDecaisser"
+                            class="btn btn-outline btn-sm"
+                            onclick="openModal('disburseModal')"
+                            disabled
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                style="width: 14px; height: 14px"
+                            >
+                                <line x1="12" y1="19" x2="12" y2="5" />
+                                <polyline points="5 12 12 5 19 12" />
+                            </svg>
+                            Décaisser
+                        </button>
+                        <button
+                            id="btnRemboursement"
+                            class="btn btn-primary btn-sm"
+                            onclick="ouvrirModalRemboursement()"
+                            disabled
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                style="width: 14px; height: 14px"
+                            >
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                            Remboursement
+                        </button>
+                    </div>
+                </header>
 
-      <div class="content-area">
-        <!-- HEADER METRICS -->
-        <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 24px;">
-          <div class="kpi-card">
-            <div class="kpi-info">
-              <div class="kpi-label">Montant décaissé</div>
-              <div class="kpi-value" id="kpiMontant">3 000 000 <span style="font-size:13px;font-weight:600;">FCFA</span></div>
+                <div class="content-area">
+                    <!-- HEADER METRICS -->
+                    <div
+                        class="kpi-grid"
+                        style="
+                            grid-template-columns: repeat(4, 1fr);
+                            margin-bottom: 24px;
+                        "
+                    >
+                        <div class="kpi-card">
+                            <div class="kpi-info">
+                                <div class="kpi-label" id="labelMontant">
+                                    Montant accordé
+                                </div>
+                                <div class="kpi-value" id="kpiMontant">
+                                    3 000 000
+                                    <span
+                                        style="
+                                            font-size: 13px;
+                                            font-weight: 600;
+                                        "
+                                        >FCFA</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-info">
+                                <div class="kpi-label">Reste à payer</div>
+                                <div class="kpi-value" id="kpiReste">
+                                    2 250 000
+                                    <span
+                                        style="
+                                            font-size: 13px;
+                                            font-weight: 600;
+                                        "
+                                        >FCFA</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-info">
+                                <div class="kpi-label">Prochaine échéance</div>
+                                <div
+                                    class="kpi-value"
+                                    id="kpiProchaine"
+                                    style="font-size: 16px"
+                                >
+                                    01/06/2026
+                                </div>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-info">
+                                <div class="kpi-label">Mensualité</div>
+                                <div class="kpi-value" id="kpiMensualite">
+                                    141 250
+                                    <span
+                                        style="
+                                            font-size: 13px;
+                                            font-weight: 600;
+                                        "
+                                        >FCFA</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AMORTIZATION TABLE -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                Tableau d'amortissement
+                            </div>
+                            <div class="export-buttons">
+                                <button class="export-btn">
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        style="width: 14px; height: 14px"
+                                    >
+                                        <path
+                                            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+                                        />
+                                        <polyline points="7 10 12 15 17 10" />
+                                        <line x1="12" y1="15" x2="12" y2="3" />
+                                    </svg>
+                                    Exporter
+                                </button>
+                            </div>
+                        </div>
+                        <div style="overflow-x: auto">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>N°</th>
+                                        <th>Date</th>
+                                        <th>Capital amorti</th>
+                                        <th>Intérêts</th>
+                                        <th>Total traite</th>
+                                        <th>Capital restant</th>
+                                        <th>Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="echeancierBody"></tbody>
+                            </table>
+                        </div>
+                        <div
+                            class="pagination"
+                            id="echeancierPagination"
+                            style="display: none"
+                        >
+                            <div
+                                class="pagination-info"
+                                id="echeancierInfo"
+                            ></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-info">
-              <div class="kpi-label">Reste à payer</div>
-              <div class="kpi-value" id="kpiReste">2 250 000 <span style="font-size:13px;font-weight:600;">FCFA</span></div>
+        </div>
+
+        <!-- Modal: Décaissement -->
+        <div class="modal-overlay" id="disburseModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <div class="modal-title">Décaissement du crédit</div>
+                    <button
+                        class="modal-close"
+                        onclick="closeModal('disburseModal')"
+                    ></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label"
+                            >Montant net à décaisser</label
+                        >
+                        <div
+                            style="
+                                font-size: 20px;
+                                font-weight: 700;
+                                color: #084355;
+                                padding: 8px 0;
+                            "
+                            id="disburseAmountDisplay"
+                        >
+                            — FCFA
+                        </div>
+                        <div style="font-size: 11px; color: #4a7a8a">
+                            Montant accordé moins frais de dossier. Calculé
+                            automatiquement par le système.
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"
+                            >Compte de destination du client *</label
+                        >
+                        <select class="form-control" id="disburseAccount">
+                            <option value="">
+                                -- Sélectionner un compte --
+                            </option>
+                        </select>
+                        <div
+                            style="
+                                font-size: 11px;
+                                color: #4a7a8a;
+                                margin-top: 4px;
+                            "
+                        >
+                            Le compte doit appartenir au client emprunteur.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button
+                        class="btn btn-outline"
+                        onclick="closeModal('disburseModal')"
+                    >
+                        Annuler
+                    </button>
+                    <button class="btn btn-primary" onclick="doDisburse()">
+                        Décaisser
+                    </button>
+                </div>
             </div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-info">
-              <div class="kpi-label">Prochaine échéance</div>
-              <div class="kpi-value" id="kpiProchaine" style="font-size:16px;">01/06/2026</div>
+        </div>
+
+        <!-- Modal: Remboursement -->
+        <div class="modal-overlay" id="repayModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <div class="modal-title">Enregistrer un remboursement</div>
+                    <button
+                        class="modal-close"
+                        onclick="closeModal('repayModal')"
+                    ></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Contexte crédit -->
+                    <div style="display: flex; gap: 12px; margin-bottom: 20px">
+                        <div
+                            style="
+                                flex: 1;
+                                background: #f0f6fa;
+                                border-radius: 8px;
+                                padding: 12px;
+                                text-align: center;
+                            "
+                        >
+                            <div
+                                style="
+                                    font-size: 11px;
+                                    color: #4a7a8a;
+                                    margin-bottom: 4px;
+                                "
+                            >
+                                Mensualité due
+                            </div>
+                            <div
+                                style="
+                                    font-size: 16px;
+                                    font-weight: 700;
+                                    color: #084355;
+                                "
+                                id="repayMensualite"
+                            >
+                                —
+                            </div>
+                        </div>
+                        <div
+                            style="
+                                flex: 1;
+                                background: #f0f6fa;
+                                border-radius: 8px;
+                                padding: 12px;
+                                text-align: center;
+                            "
+                        >
+                            <div
+                                style="
+                                    font-size: 11px;
+                                    color: #4a7a8a;
+                                    margin-bottom: 4px;
+                                "
+                            >
+                                Solde restant total
+                            </div>
+                            <div
+                                style="
+                                    font-size: 16px;
+                                    font-weight: 700;
+                                    color: #084355;
+                                "
+                                id="repayRestant"
+                            >
+                                —
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Raccourcis -->
+                    <div style="display: flex; gap: 8px; margin-bottom: 16px">
+                        <button
+                            class="btn btn-outline btn-sm"
+                            style="flex: 1"
+                            onclick="setRepayAmount('mensualite')"
+                        >
+                            ✓ Payer la mensualité
+                        </button>
+                        <button
+                            class="btn btn-outline btn-sm"
+                            style="
+                                flex: 1;
+                                color: #d93025;
+                                border-color: #d93025;
+                            "
+                            onclick="setRepayAmount('total')"
+                        >
+                            Solder le crédit
+                        </button>
+                    </div>
+                    <!-- Saisie libre -->
+                    <div class="form-group">
+                        <label class="form-label"
+                            >Montant du remboursement *</label
+                        >
+                        <div class="input-group">
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="repayAmount"
+                                placeholder="Ex : 141 250"
+                                min="1"
+                                oninput="validerMontantRepay(this)"
+                            />
+                            <span class="input-addon">FCFA</span>
+                        </div>
+                        <div
+                            style="
+                                font-size: 11px;
+                                color: #4a7a8a;
+                                margin-top: 4px;
+                            "
+                            id="repayHint"
+                        >
+                            Saisissez un montant entre 1 et le solde restant. Le
+                            système imputera automatiquement sur les échéances
+                            impayées.
+                        </div>
+                        <div
+                            style="
+                                font-size: 11px;
+                                color: #d93025;
+                                margin-top: 4px;
+                                display: none;
+                            "
+                            id="repayError"
+                        ></div>
+                    </div>
+                    <!-- Source -->
+                    <div class="form-group">
+                        <label class="form-label">Mode de règlement</label>
+                        <select
+                            class="form-control"
+                            id="repaySource"
+                            onchange="onRepayModeChange(this.value)"
+                        >
+                            <option value="guichet">
+                                💵 Guichet (espèces)
+                            </option>
+                            <option value="compte">
+                                🏦 Débit compte client
+                            </option>
+                            <option value="virement">
+                                🔄 Virement externe
+                            </option>
+                            <option value="mobile">📱 Mobile Money</option>
+                        </select>
+                    </div>
+                    <!-- Dropdown compte (visible uniquement si mode = compte) -->
+                    <div
+                        class="form-group"
+                        id="repayCompteGroup"
+                        style="display: none"
+                    >
+                        <label class="form-label">Compte à débiter *</label>
+                        <select class="form-control" id="repayCompte">
+                            <option value="">
+                                -- Sélectionner un compte --
+                            </option>
+                        </select>
+                        <div
+                            style="
+                                font-size: 11px;
+                                color: #4a7a8a;
+                                margin-top: 4px;
+                            "
+                        >
+                            Le montant sera débité du solde de ce compte.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button
+                        class="btn btn-outline"
+                        onclick="closeModal('repayModal')"
+                    >
+                        Annuler
+                    </button>
+                    <button
+                        class="btn btn-primary"
+                        id="btnConfirmRepay"
+                        onclick="doRepay()"
+                    >
+                        Confirmer le remboursement
+                    </button>
+                </div>
             </div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-info">
-              <div class="kpi-label">Mensualité</div>
-              <div class="kpi-value" id="kpiMensualite">141 250 <span style="font-size:13px;font-weight:600;">FCFA</span></div>
-            </div>
-          </div>
         </div>
 
-        <!-- AMORTIZATION TABLE -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">Tableau d'amortissement</div>
-            <div class="export-buttons">
-              <button class="export-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Exporter
-              </button>
-            </div>
-          </div>
-          <div style="overflow-x:auto;">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>N°</th>
-                  <th>Date</th>
-                  <th>Capital amorti</th>
-                  <th>Intérêts</th>
-                  <th>Total traite</th>
-                  <th>Capital restant</th>
-                  <th>Statut</th>
-                </tr>
-              </thead>
-              <tbody id="echeancierBody">
-              </tbody>
-            </table>
-          </div>
-          <div class="pagination">
-            <div class="pagination-info">Affichage 1-8 sur 24 échéances</div>
-            <div class="pagination-buttons">
-              <button class="page-btn">‹</button>
-              <button class="page-btn active">1</button>
-              <button class="page-btn">2</button>
-              <button class="page-btn">3</button>
-              <button class="page-btn">›</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+        <div class="toast-container"></div>
+        <script src="../assets/js/app.js"></script>
+        <script>
+            var _creditData = null; // stockage global du crédit chargé
+            var _mensualite = 0; // montant brut de la mensualité (valeur numérique exacte)
+            var _comptesClient = []; // comptes du client pour les deux modals
 
-  <!-- Modal: Décaissement -->
-  <div class="modal-overlay" id="disburseModal">
-    <div class="modal">
-      <div class="modal-header">
-        <div class="modal-title">Décaissement du crédit</div>
-        <button class="modal-close" onclick="closeModal('disburseModal')"></button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label">Montant à décaisser *</label>
-          <div class="input-group">
-            <input type="number" class="form-control" id="disburseAmount" placeholder="0" value="3000000">
-            <span class="input-addon">FCFA</span>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Compte de destination *</label>
-          <input type="text" class="form-control" id="disburseAccount" placeholder="Numéro de compte">
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" onclick="closeModal('disburseModal')">Annuler</button>
-        <button class="btn btn-primary" onclick="doDisburse()">Décaisser</button>
-      </div>
-    </div>
-  </div>
+            function getCreditId() {
+                var params = new URLSearchParams(window.location.search);
+                var id = params.get("id");
+                if (!id) id = sessionStorage.getItem("sf_credit_id");
+                return id || null;
+            }
 
-  <!-- Modal: Remboursement -->
-  <div class="modal-overlay" id="repayModal">
-    <div class="modal">
-      <div class="modal-header">
-        <div class="modal-title">Remboursement anticipé</div>
-        <button class="modal-close" onclick="closeModal('repayModal')"></button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label">Montant du remboursement *</label>
-          <div class="input-group">
-            <input type="number" class="form-control" id="repayAmount" placeholder="0">
-            <span class="input-addon">FCFA</span>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Source du remboursement</label>
-          <select class="form-control" id="repaySource">
-            <option value="guichet">Depuis le guichet (espèces)</option>
-            <option value="compte">Depuis le compte courant</option>
-            <option value="virement">Virement externe</option>
-          </select>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" onclick="closeModal('repayModal')">Annuler</button>
-        <button class="btn btn-primary" onclick="doRepay()">Rembourser</button>
-      </div>
-    </div>
-  </div>
+            function appliquerStatut(statut) {
+                var STATUTS_DECAISSABLES = ["APPROUVE"];
+                var STATUTS_REMBOURSABLES = [
+                    "DECAISSE",
+                    "EN_COURS",
+                    "EN_RETARD",
+                    "EN_SOUFFRANCE",
+                ];
+                var btnD = document.getElementById("btnDecaisser");
+                var btnR = document.getElementById("btnRemboursement");
+                if (STATUTS_DECAISSABLES.includes(statut)) {
+                    btnD.disabled = false;
+                } else {
+                    btnD.disabled = true;
+                    btnD.title =
+                        statut === "DECAISSE"
+                            ? "Déjà décaissé"
+                            : "Statut incompatible";
+                }
+                if (STATUTS_REMBOURSABLES.includes(statut)) {
+                    btnR.disabled = false;
+                } else {
+                    btnR.disabled = true;
+                    btnR.title = "Remboursement non applicable dans ce statut";
+                }
+                // Mettre à jour le libellé Montant
+                var labelMontant = document.getElementById("labelMontant");
+                if (statut === "APPROUVE") {
+                    labelMontant.textContent = "Montant accordé (non décaissé)";
+                } else {
+                    labelMontant.textContent = "Montant décaissé";
+                }
+            }
 
-  <div class="toast-container"></div>
-  <script src="../assets/js/app.js"></script>
-  <script>
-    function getCreditId() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get('id') || '1';
-    }
+            function construireOptionCompte(c) {
+                var num = c.numCompteComplet || c.numCompte || "";
+                var opt = document.createElement("option");
+                opt.value = num;
+                opt.textContent =
+                    num +
+                    (c.typeCompte ? " — " + c.typeCompte : "") +
+                    " | Solde : " +
+                    Number(c.solde || 0).toLocaleString("fr-FR") +
+                    " FCFA" +
+                    (c.statut && c.statut !== "ACTIF"
+                        ? " (⚠ " + c.statut + ")"
+                        : "");
+                return opt;
+            }
 
-    async function chargerCredit() {
-      try {
-        const res = await Credits.obtenir(getCreditId());
-        if (!res || !res.ok) throw new Error('Erreur');
-        const credit = await res.json();
-        document.getElementById('creditTitle').textContent = 'Échéancier - ' + (credit.reference || 'CR-' + credit.idCredit);
-        document.getElementById('breadcrumbClient').textContent = 'Crédits / ' + (credit.nomClient || 'Client') + ' / Échéancier';
-        document.getElementById('kpiMontant').innerHTML = ((credit.montantCredit || 0).toLocaleString('fr-FR')) + ' <span style="font-size:13px;font-weight:600;">FCFA</span>';
-        document.getElementById('kpiReste').innerHTML = ((credit.resteAPayer || 0).toLocaleString('fr-FR')) + ' <span style="font-size:13px;font-weight:600;">FCFA</span>';
-        document.getElementById('kpiMensualite').innerHTML = ((credit.mensualite || 0).toLocaleString('fr-FR')) + ' <span style="font-size:13px;font-weight:600;">FCFA</span>';
-      } catch (e) {
-        showToast('Impossible de charger le crédit', 'error');
-      }
-    }
+            function peuplerDropdownComptes(selectEl, comptes, placeholder) {
+                selectEl.innerHTML =
+                    '<option value="">' +
+                    (placeholder || "-- Sélectionner un compte --") +
+                    "</option>";
+                if (!comptes.length) {
+                    selectEl.innerHTML =
+                        '<option value="">Aucun compte trouvé</option>';
+                    return;
+                }
+                comptes.forEach(function (c) {
+                    selectEl.appendChild(construireOptionCompte(c));
+                });
+            }
 
-    async function chargerEcheancier() {
-      try {
-        const res = await Credits.echeancier(getCreditId());
-        if (!res || !res.ok) throw new Error('Erreur');
-        const data = await res.json();
-        const tbody = document.getElementById('echeancierBody');
-        tbody.innerHTML = '';
-        const echeances = data.echeances || [];
-        echeances.forEach((e, i) => {
-          const tr = document.createElement('tr');
-          let badgeClass = 'badge-info';
-          let statut = 'À venir';
-          if (e.payee) { badgeClass = 'badge-active'; statut = 'Payé'; }
-          else if (e.enRetard) { badgeClass = 'badge-pending'; statut = 'En retard'; }
-          tr.innerHTML = `
-            <td style="font-weight:700;">${i + 1}</td>
-            <td style="font-size:12px;">${e.dateEcheance ? new Date(e.dateEcheance).toLocaleDateString('fr-FR') : '-'}</td>
-            <td>${(e.capitalAmorti || 0).toLocaleString('fr-FR')}</td>
-            <td>${(e.interet || 0).toLocaleString('fr-FR')}</td>
-            <td style="font-weight:700;">${(e.montantEcheance || 0).toLocaleString('fr-FR')}</td>
-            <td>${(e.capitalRestant || 0).toLocaleString('fr-FR')}</td>
-            <td><span class="badge ${badgeClass}">${statut}</span></td>
-          `;
-          tbody.appendChild(tr);
-        });
-      } catch (e) {
-        showToast('Impossible de charger l\'échéancier', 'error');
-      }
-    }
+            async function chargerComptesPourModal(
+                idClient,
+                montantAccorde,
+                fraisDossier,
+            ) {
+                var montantNet =
+                    (Number(montantAccorde) || 0) - (Number(fraisDossier) || 0);
+                document.getElementById("disburseAmountDisplay").textContent =
+                    montantNet.toLocaleString("fr-FR", {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2,
+                    }) + " FCFA";
+                try {
+                    var res = await Comptes.listerClientComptes(idClient);
+                    if (!res || !res.ok) throw new Error("err");
+                    var data = await res.json();
+                    _comptesClient =
+                        data.content || (Array.isArray(data) ? data : []);
+                    // Peupler le dropdown du décaissement
+                    peuplerDropdownComptes(
+                        document.getElementById("disburseAccount"),
+                        _comptesClient,
+                    );
+                    // Peupler aussi le dropdown du remboursement (si déjà présent dans le DOM)
+                    var repayCompte = document.getElementById("repayCompte");
+                    if (repayCompte)
+                        peuplerDropdownComptes(repayCompte, _comptesClient);
+                } catch (e) {
+                    document.getElementById("disburseAccount").innerHTML =
+                        '<option value="">Erreur de chargement</option>';
+                }
+            }
 
-    async function doDisburse() {
-      const montant = parseInt(document.getElementById('disburseAmount').value);
-      const compte = document.getElementById('disburseAccount').value.trim();
-      if (!montant || !compte) { showToast('Veuillez remplir tous les champs', 'error'); return; }
-      try {
-        const res = await Credits.decaisser(getCreditId(), compte);
-        if (res && res.ok) {
-          showToast('Décaissement effectué', 'success');
-          closeModal('disburseModal');
-          chargerCredit();
-        } else {
-          const err = await res.json().catch(() => ({}));
-          showToast(err.message || 'Erreur', 'error');
-        }
-      } catch (e) {
-        showToast(e.message || 'Erreur réseau', 'error');
-      }
-    }
+            async function chargerCredit() {
+                var id = getCreditId();
+                if (!id) {
+                    showToast(
+                        "Aucun identifiant de crédit fourni. Retournez à la liste.",
+                        "error",
+                    );
+                    return;
+                }
+                try {
+                    var res = await Credits.consulter(id);
+                    if (!res || !res.ok)
+                        throw new Error("HTTP " + (res ? res.status : "err"));
+                    var credit = await res.json();
+                    _creditData = credit;
+                    document.getElementById("creditTitle").textContent =
+                        "Dossier \u2013 " +
+                        (credit.referenceCredit || "CR-" + credit.idCredit);
+                    document.getElementById("breadcrumbClient").innerHTML =
+                        '<a href="credits.html" style="color:#4A7A8A;text-decoration:none;">Cr\u00e9dits actifs</a> / ' +
+                        (credit.nomClient || "");
+                    var montant = Number(credit.montantAccorde) || 0;
+                    var encours = Number(credit.montantRestantDu) || 0;
+                    document.getElementById("kpiMontant").innerHTML =
+                        montant.toLocaleString("fr-FR") +
+                        ' <span style="font-size:13px;font-weight:600;">FCFA</span>';
+                    document.getElementById("kpiReste").innerHTML =
+                        encours.toLocaleString("fr-FR") +
+                        ' <span style="font-size:13px;font-weight:600;">FCFA</span>';
+                    document.getElementById("kpiProchaine").textContent =
+                        "\u2014";
+                    document.getElementById("kpiMensualite").innerHTML =
+                        '\u2014 <span style="font-size:13px;font-weight:600;">FCFA</span>';
+                    // Activer/désactiver les boutons selon le statut
+                    appliquerStatut(credit.statutCredit || "");
+                    // Pré-charger les comptes du client pour le modal de décaissement
+                    if (credit.idClient) {
+                        chargerComptesPourModal(
+                            credit.idClient,
+                            credit.montantAccorde,
+                            credit.fraisDossier,
+                        );
+                    }
+                } catch (e) {
+                    showToast(
+                        "Impossible de charger le cr\u00e9dit : " + e.message,
+                        "error",
+                    );
+                }
+            }
 
-    async function doRepay() {
-      const montant = parseInt(document.getElementById('repayAmount').value);
-      if (!montant) { showToast('Veuillez saisir un montant', 'error'); return; }
-      try {
-        const res = await Credits.rembourser(getCreditId(), montant);
-        if (res && res.ok) {
-          showToast('Remboursement enregistré', 'success');
-          closeModal('repayModal');
-          chargerCredit();
-          chargerEcheancier();
-        } else {
-          const err = await res.json().catch(() => ({}));
-          showToast(err.message || 'Erreur', 'error');
-        }
-      } catch (e) {
-        showToast(e.message || 'Erreur réseau', 'error');
-      }
-    }
+            async function chargerEcheancier() {
+                var id = getCreditId();
+                if (!id) return;
+                try {
+                    var res = await Credits.echeancier(id);
+                    if (!res || !res.ok)
+                        throw new Error("HTTP " + (res ? res.status : "err"));
+                    var data = await res.json();
+                    var tbody = document.getElementById("echeancierBody");
+                    tbody.innerHTML = "";
+                    var echeances =
+                        data.echeances || (Array.isArray(data) ? data : []);
+                    if (!echeances.length) {
+                        tbody.innerHTML =
+                            '<tr><td colspan="7" style="text-align:center;padding:32px;color:#4A7A8A;">' +
+                            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32" style="display:block;margin:0 auto 8px;opacity:.4;"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>' +
+                            "<strong>Aucune \u00e9ch\u00e9ance g\u00e9n\u00e9r\u00e9e</strong><br>" +
+                            '<span style="font-size:12px;">Le tableau d\u2019amortissement sera cr\u00e9\u00e9 automatiquement lors du d\u00e9caissement.</span>' +
+                            "</td></tr>";
+                        document.getElementById(
+                            "echeancierPagination",
+                        ).style.display = "none";
+                        return;
+                    }
+                    document.getElementById("echeancierInfo").textContent =
+                        echeances.length +
+                        " \u00e9ch\u00e9ance" +
+                        (echeances.length > 1 ? "s" : "");
+                    document.getElementById(
+                        "echeancierPagination",
+                    ).style.display = "flex";
+                    // Pre-compute cumulative capital restant (sum of future montantCapital)
+                    var capitalTotal = echeances.reduce(function (sum, e) {
+                        return sum + (Number(e.montantCapital) || 0);
+                    }, 0);
+                    var capitalRestantCumulatif = capitalTotal;
+                    echeances.forEach(function (e, i) {
+                        capitalRestantCumulatif -=
+                            Number(e.montantCapital) || 0;
+                        var tr = document.createElement("tr");
+                        var badgeClass = "badge-info";
+                        var statut = "À venir";
+                        if (e.estPayee) {
+                            badgeClass = "badge-active";
+                            statut = "Payé";
+                        } else if (
+                            e.dateEcheance &&
+                            new Date(e.dateEcheance) < new Date()
+                        ) {
+                            badgeClass = "badge-pending";
+                            statut = "En retard";
+                        }
+                        var dateEch = e.dateEcheance
+                            ? new Date(e.dateEcheance).toLocaleDateString(
+                                  "fr-FR",
+                              )
+                            : "-";
+                        var capital = Number(e.montantCapital) || 0;
+                        var interet = Number(e.montantInteret) || 0;
+                        var total = Number(e.montantTotal) || 0;
+                        var restant = capitalRestantCumulatif;
+                        tr.innerHTML =
+                            '<td style="font-weight:700;">' +
+                            (i + 1) +
+                            "</td>" +
+                            '<td style="font-size:12px;">' +
+                            dateEch +
+                            "</td>" +
+                            "<td>" +
+                            capital.toLocaleString("fr-FR") +
+                            "</td>" +
+                            "<td>" +
+                            interet.toLocaleString("fr-FR") +
+                            "</td>" +
+                            '<td style="font-weight:700;">' +
+                            total.toLocaleString("fr-FR") +
+                            "</td>" +
+                            "<td>" +
+                            restant.toLocaleString("fr-FR") +
+                            "</td>" +
+                            '<td><span class="badge ' +
+                            badgeClass +
+                            '">' +
+                            statut +
+                            "</span></td>";
+                        tbody.appendChild(tr);
+                    });
+                    // Compute prochaine échéance and mensualité from schedule
+                    var prochaine = echeances.find(function (e) {
+                        return !e.estPayee;
+                    });
+                    if (prochaine) {
+                        document.getElementById("kpiProchaine").textContent =
+                            prochaine.dateEcheance
+                                ? new Date(
+                                      prochaine.dateEcheance,
+                                  ).toLocaleDateString("fr-FR")
+                                : "—";
+                        if (echeances[0]) {
+                            _mensualite =
+                                Number(echeances[0].montantTotal) || 0;
+                            document.getElementById("kpiMensualite").innerHTML =
+                                _mensualite.toLocaleString("fr-FR", {
+                                    minimumFractionDigits: 0,
+                                    maximumFractionDigits: 2,
+                                }) +
+                                ' <span style="font-size:13px;font-weight:600;">FCFA</span>';
+                        }
+                    }
+                } catch (e) {
+                    showToast(
+                        "Impossible de charger l'\u00e9chéancier : " +
+                            e.message,
+                        "error",
+                    );
+                }
+            }
 
-    chargerCredit();
-    chargerEcheancier();
-  </script>
-</body>
+            async function doDisburse() {
+                var compte = document
+                    .getElementById("disburseAccount")
+                    .value.trim();
+                if (!compte) {
+                    showToast(
+                        "Veuillez sélectionner un compte de destination.",
+                        "error",
+                    );
+                    return;
+                }
+                try {
+                    var res = await SF.apiFetch(
+                        "/api/v1/credits/" + getCreditId() + "/decaissement",
+                        {
+                            method: "POST",
+                            body: JSON.stringify({ numCompteCible: compte }),
+                        },
+                    );
+                    if (res && res.ok) {
+                        showToast(
+                            "D\u00e9caissement effectu\u00e9 avec succ\u00e8s !",
+                            "success",
+                        );
+                        closeModal("disburseModal");
+                        chargerCredit();
+                        setTimeout(chargerEcheancier, 800); // attendre que la BDD soit à jour
+                    } else {
+                        var body = await res.json().catch(function () {
+                            return {};
+                        });
+                        showToast(
+                            body.message || "Erreur HTTP " + res.status,
+                            "error",
+                        );
+                    }
+                } catch (e) {
+                    showToast(e.message || "Erreur r\u00e9seau", "error");
+                }
+            }
+
+            function onRepayModeChange(mode) {
+                var group = document.getElementById("repayCompteGroup");
+                var select = document.getElementById("repayCompte");
+                if (mode === "compte") {
+                    group.style.display = "block";
+                    // Peupler si pas encore fait
+                    if (select.options.length <= 1 && _comptesClient.length) {
+                        peuplerDropdownComptes(select, _comptesClient);
+                    }
+                } else {
+                    group.style.display = "none";
+                }
+            }
+
+            function ouvrirModalRemboursement() {
+                var restant = _creditData
+                    ? Number(_creditData.montantRestantDu) || 0
+                    : 0;
+                // Utilise la valeur brute stockée — pas de parsing de texte affiché
+                var mensualite = _mensualite || 0;
+
+                document.getElementById("repayMensualite").textContent =
+                    mensualite
+                        ? mensualite.toLocaleString("fr-FR", {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 2,
+                          }) + " FCFA"
+                        : "—";
+                document.getElementById("repayRestant").textContent = restant
+                    ? restant.toLocaleString("fr-FR", {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 2,
+                      }) + " FCFA"
+                    : "—";
+                // Pré-remplir avec la mensualité exacte (avec décimales)
+                document.getElementById("repayAmount").value = mensualite || "";
+                document.getElementById("repayAmount").max = restant || "";
+                document.getElementById("repayAmount").step = "0.01";
+                document.getElementById("repayError").style.display = "none";
+                document.getElementById("repayHint").style.display = "block";
+                document.getElementById("btnConfirmRepay").disabled =
+                    !mensualite && !restant;
+                // Réinitialiser le mode et masquer le dropdown compte
+                var modeSelect = document.getElementById("repaySource");
+                modeSelect.value = "guichet";
+                document.getElementById("repayCompteGroup").style.display =
+                    "none";
+                // Peupler le dropdown compte si comptes disponibles
+                if (_comptesClient.length) {
+                    peuplerDropdownComptes(
+                        document.getElementById("repayCompte"),
+                        _comptesClient,
+                    );
+                }
+                openModal("repayModal");
+            }
+
+            function setRepayAmount(type) {
+                var restant = _creditData
+                    ? Number(_creditData.montantRestantDu) || 0
+                    : 0;
+                var input = document.getElementById("repayAmount");
+                // Utilise les valeurs brutes — pas de parsing de texte affiché
+                if (type === "mensualite" && _mensualite) {
+                    input.value = _mensualite;
+                } else if (type === "total" && restant) {
+                    input.value = restant;
+                }
+                validerMontantRepay(input);
+            }
+
+            function validerMontantRepay(input) {
+                var restant = _creditData
+                    ? Number(_creditData.montantRestantDu) || 0
+                    : 0;
+                var val = Number(input.value);
+                var errEl = document.getElementById("repayError");
+                var btn = document.getElementById("btnConfirmRepay");
+                if (!val || val <= 0) {
+                    errEl.textContent = "Veuillez saisir un montant positif.";
+                    errEl.style.display = "block";
+                    btn.disabled = true;
+                } else if (restant && val > restant) {
+                    errEl.textContent =
+                        "Le montant (" +
+                        val.toLocaleString("fr-FR") +
+                        " FCFA) dépasse le solde restant (" +
+                        restant.toLocaleString("fr-FR") +
+                        " FCFA).";
+                    errEl.style.display = "block";
+                    btn.disabled = true;
+                } else {
+                    errEl.style.display = "none";
+                    btn.disabled = false;
+                }
+            }
+
+            async function doRepay() {
+                // parseFloat préserve les centimes (ex: 141250.50)
+                var montant = parseFloat(
+                    document.getElementById("repayAmount").value,
+                );
+                var restant = _creditData
+                    ? Number(_creditData.montantRestantDu) || 0
+                    : 0;
+                var mode = document.getElementById("repaySource").value;
+                if (!montant || montant <= 0) {
+                    showToast("Veuillez saisir un montant valide.", "error");
+                    return;
+                }
+                if (restant && montant > restant) {
+                    showToast(
+                        "Montant supérieur au solde restant (" +
+                            restant.toLocaleString("fr-FR") +
+                            " FCFA).",
+                        "error",
+                    );
+                    return;
+                }
+                // Validation du compte si mode = débit compte
+                var numCompteSource = null;
+                if (mode === "compte") {
+                    numCompteSource = document
+                        .getElementById("repayCompte")
+                        .value.trim();
+                    if (!numCompteSource) {
+                        showToast(
+                            "Veuillez sélectionner le compte à débiter.",
+                            "error",
+                        );
+                        return;
+                    }
+                }
+                var btn = document.getElementById("btnConfirmRepay");
+                btn.disabled = true;
+                btn.textContent = "En cours...";
+                try {
+                    var body = { montant: montant };
+                    if (numCompteSource) body.numCompteSource = numCompteSource;
+                    var res = await SF.apiFetch(
+                        "/api/v1/credits/" + getCreditId() + "/remboursement",
+                        { method: "POST", body: JSON.stringify(body) },
+                    );
+                    if (res && res.ok) {
+                        showToast(
+                            "Remboursement de " +
+                                montant.toLocaleString("fr-FR") +
+                                " FCFA enregistré !",
+                            "success",
+                        );
+                        closeModal("repayModal");
+                        chargerCredit();
+                        setTimeout(chargerEcheancier, 500);
+                    } else {
+                        var body = await res.json().catch(function () {
+                            return {};
+                        });
+                        showToast(
+                            body.message || "Erreur HTTP " + res.status,
+                            "error",
+                        );
+                        btn.disabled = false;
+                        btn.textContent = "Confirmer le remboursement";
+                    }
+                } catch (e) {
+                    showToast(e.message || "Erreur réseau", "error");
+                    btn.disabled = false;
+                    btn.textContent = "Confirmer le remboursement";
+                }
+            }
+
+            var id = getCreditId();
+            if (id) {
+                chargerCredit();
+                chargerEcheancier();
+            } else {
+                document.getElementById("creditTitle").textContent =
+                    "Aucun crédit sélectionné";
+                showToast(
+                    'Aucun crédit sélectionné. <a href="credits.html">Retour à la liste</a>',
+                    "warning",
+                );
+            }
+        </script>
+    </body>
 </html>
-
-
-

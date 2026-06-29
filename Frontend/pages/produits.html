@@ -1,327 +1,1003 @@
-﻿<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Produits - MicroFinance</title>
-  <link rel="stylesheet" href="../assets/css/backoffice.css">
-</head>
-<body>
-  <div class="app-layout">
-    <aside class="sidebar"></aside>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Produits - MicroFinance</title>
+        <link rel="stylesheet" href="../assets/css/backoffice.css" />
+        <style>
+            .type-toggle {
+                display: flex;
+                gap: 0;
+                border: 1px solid #c9dfe8;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            .type-btn {
+                flex: 1;
+                padding: 8px 0;
+                font-size: 13px;
+                font-weight: 600;
+                border: none;
+                background: #fff;
+                color: #4a7a8a;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .type-btn.active {
+                background: #084355;
+                color: #fff;
+            }
+            .epargne-only,
+            .credit-only {
+                display: none;
+            }
+            .form-row-3 {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 12px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app-layout">
+            <aside class="sidebar"></aside>
 
-    <div class="main-content">
-      <header class="topbar">
-        <div class="topbar-left">
-          <div>
-            <div class="topbar-title">Gestion des Produits</div>
-            <div class="topbar-breadcrumb">Paramétrage / Produits</div>
-          </div>
-        </div>
-        <div class="topbar-right">
-          <button class="btn btn-primary btn-sm" onclick="openModal('productModal')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Nouveau produit
-          </button>
-          <button class="topbar-icon-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            <span class="notif-dot"></span>
-          </button>
-        </div>
-      </header>
+            <div class="main-content">
+                <header class="topbar">
+                    <div class="topbar-left">
+                        <div>
+                            <div class="topbar-title">Gestion des Produits</div>
+                            <div class="topbar-breadcrumb">
+                                Paramétrage / Produits
+                            </div>
+                        </div>
+                    </div>
+                    <div class="topbar-right">
+                        <button
+                            class="btn btn-primary btn-sm"
+                            onclick="ouvrirModalCreation()"
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                style="width: 14px; height: 14px"
+                            >
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            Nouveau produit
+                        </button>
+                    </div>
+                </header>
 
-      <div class="content-area">
-        <!-- FILTER TABS -->
-        <div class="filter-tabs" style="margin-bottom: 20px;">
-          <span class="filter-tab active">Crédits (5)</span>
-          <span class="filter-tab">Épargne (3)</span>
-          <span class="filter-tab">Tous (8)</span>
-        </div>
+                <div class="content-area">
+                    <!-- Onglets filtres -->
+                    <div
+                        style="
+                            display: flex;
+                            gap: 8px;
+                            align-items: center;
+                            margin-bottom: 20px;
+                        "
+                    >
+                        <button
+                            class="btn btn-sm filter-tab-btn active"
+                            data-type="credit"
+                            onclick="setFiltreType(this, 'credit')"
+                        >
+                            💳 Crédits
+                            <span
+                                class="badge badge-info"
+                                id="countCredit"
+                                style="margin-left: 4px"
+                                >…</span
+                            >
+                        </button>
+                        <button
+                            class="btn btn-sm filter-tab-btn"
+                            data-type="epargne"
+                            onclick="setFiltreType(this, 'epargne')"
+                        >
+                            💰 Épargne
+                            <span
+                                class="badge badge-pending"
+                                id="countEpargne"
+                                style="margin-left: 4px"
+                                >…</span
+                            >
+                        </button>
+                        <button
+                            class="btn btn-sm filter-tab-btn"
+                            data-type="tous"
+                            onclick="setFiltreType(this, 'tous')"
+                        >
+                            Tous
+                            <span
+                                class="badge"
+                                id="countTous"
+                                style="
+                                    margin-left: 4px;
+                                    background: #e8f1f5;
+                                    color: #084355;
+                                "
+                                >…</span
+                            >
+                        </button>
+                    </div>
 
-        <!-- PRODUCTS TABLE -->
-        <div class="card">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>Nom du produit</th>
-                <th>Type</th>
-                <th>Taux</th>
-                <th>Frais</th>
-                <th>Min / Max</th>
-                <th>Durée</th>
-                <th>Statut</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="font-family:monospace;font-size:12px;">CRD-PERSO</td>
-                <td style="font-weight:600;">Crédit Personnel</td>
-                <td><span class="badge badge-info">Crédit</span></td>
-                <td style="font-weight:700;">12%/an</td>
-                <td>2%</td>
-                <td style="font-size:12px;">100K - 10M</td>
-                <td>6-36 mois</td>
-                <td><span class="badge badge-active">Actif</span></td>
-                <td>
-                  <div class="action-icons">
-                    <button class="action-icon" title="Modifier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                    <button class="action-icon" title="Désactiver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;font-size:12px;">CRD-IMMO</td>
-                <td style="font-weight:600;">Crédit Immobilier</td>
-                <td><span class="badge badge-info">Crédit</span></td>
-                <td style="font-weight:700;">8%/an</td>
-                <td>1.5%</td>
-                <td style="font-size:12px;">5M - 50M</td>
-                <td>60-120 mois</td>
-                <td><span class="badge badge-active">Actif</span></td>
-                <td>
-                  <div class="action-icons">
-                    <button class="action-icon" title="Modifier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                    <button class="action-icon" title="Désactiver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;font-size:12px;">CRD-AUTO</td>
-                <td style="font-weight:600;">Crédit Automobile</td>
-                <td><span class="badge badge-info">Crédit</span></td>
-                <td style="font-weight:700;">10%/an</td>
-                <td>2%</td>
-                <td style="font-size:12px;">2M - 20M</td>
-                <td>24-60 mois</td>
-                <td><span class="badge badge-active">Actif</span></td>
-                <td>
-                  <div class="action-icons">
-                    <button class="action-icon" title="Modifier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                    <button class="action-icon" title="Désactiver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;font-size:12px;">EPG-STD</td>
-                <td style="font-weight:600;">Épargne Standard</td>
-                <td><span class="badge badge-pending">Épargne</span></td>
-                <td style="font-weight:700;">3%/an</td>
-                <td>0%</td>
-                <td style="font-size:12px;">5K - ∞</td>
-                <td>Illimité</td>
-                <td><span class="badge badge-active">Actif</span></td>
-                <td>
-                  <div class="action-icons">
-                    <button class="action-icon" title="Modifier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                    <button class="action-icon" title="Désactiver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Nouveau produit -->
-  <div class="modal-overlay" id="productModal">
-    <div class="modal" style="max-width: 560px;">
-      <div class="modal-header">
-        <div class="modal-title">Créer un produit</div>
-        <button class="modal-close" onclick="closeModal('productModal')"></button>
-      </div>
-      <div class="modal-body">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Code produit *</label>
-            <input type="text" class="form-control" id="prodCode" placeholder="Ex: CRD-NOUV">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Type *</label>
-            <select class="form-control" id="prodType">
-              <option value="credit">Crédit</option>
-              <option value="epargne">Épargne</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Nom du produit *</label>
-          <input type="text" class="form-control" id="prodName" placeholder="Ex: Crédit Équipement Pro">
-        </div>
-        <div class="form-row-3">
-          <div class="form-group">
-            <label class="form-label">Taux d'intérêt *</label>
-            <div class="input-group">
-              <input type="number" class="form-control" id="prodRate" placeholder="0" step="0.1">
-              <span class="input-addon">%/an</span>
+                    <!-- Tableau -->
+                    <div class="card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Nom du produit</th>
+                                    <th>Type</th>
+                                    <th>Taux</th>
+                                    <th>Frais</th>
+                                    <th>Min / Max</th>
+                                    <th>Durée</th>
+                                    <th>Méthode</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="produitsBody">
+                                <tr>
+                                    <td
+                                        colspan="10"
+                                        style="
+                                            text-align: center;
+                                            padding: 32px;
+                                            color: #4a7a8a;
+                                        "
+                                    >
+                                        Chargement…
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Frais de dossier</label>
-            <div class="input-group">
-              <input type="number" class="form-control" id="prodFrais" placeholder="0" step="0.1">
-              <span class="input-addon">%</span>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Pénalité retard</label>
-            <div class="input-group">
-              <input type="number" class="form-control" id="prodPenalite" placeholder="0" step="0.1">
-              <span class="input-addon">%/jour</span>
-            </div>
-          </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Montant minimum</label>
-            <div class="input-group">
-              <input type="number" class="form-control" id="prodMin" placeholder="0">
-              <span class="input-addon">FCFA</span>
+
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- Modal : Créer / Modifier un produit                    -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <div class="modal-overlay" id="productModal">
+            <div class="modal" style="max-width: 580px">
+                <div class="modal-header">
+                    <div class="modal-title" id="modalTitle">
+                        Nouveau produit
+                    </div>
+                    <button
+                        class="modal-close"
+                        onclick="closeModal('productModal')"
+                    ></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Sélecteur de type -->
+                    <div class="form-group" id="typeToggleGroup">
+                        <label class="form-label">Type de produit *</label>
+                        <div class="type-toggle">
+                            <button
+                                class="type-btn active"
+                                id="typeBtnCredit"
+                                onclick="setModalType('credit')"
+                            >
+                                💳 Crédit
+                            </button>
+                            <button
+                                class="type-btn"
+                                id="typeBtnEpargne"
+                                onclick="setModalType('epargne')"
+                            >
+                                💰 Épargne
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Champs communs -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Code produit *</label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="prodCode"
+                                placeholder="Ex : CRD-PERSO"
+                                maxlength="50"
+                            />
+                            <div class="field-error" id="prodCode-error">
+                                Champ obligatoire.
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label"
+                                >Taux d'intérêt annuel (%) *</label
+                            >
+                            <div class="input-group">
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    id="prodTaux"
+                                    placeholder="0.00"
+                                    step="0.01"
+                                    min="0.01"
+                                />
+                                <span class="input-addon">%/an</span>
+                            </div>
+                            <div class="field-error" id="prodTaux-error">
+                                Taux invalide.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"
+                            >Libellé / Nom du produit *</label
+                        >
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="prodLibelle"
+                            placeholder="Ex : Crédit Personnel Standard"
+                            maxlength="150"
+                        />
+                        <div class="field-error" id="prodLibelle-error">
+                            Champ obligatoire.
+                        </div>
+                    </div>
+
+                    <!-- ── Champs CRÉDIT uniquement ── -->
+                    <div class="credit-only" id="creditFields">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label"
+                                    >Montant minimum (FCFA) *</label
+                                >
+                                <div class="input-group">
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        id="prodMontantMin"
+                                        placeholder="100000"
+                                        min="1"
+                                    />
+                                    <span class="input-addon">FCFA</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label"
+                                    >Montant maximum (FCFA) *</label
+                                >
+                                <div class="input-group">
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        id="prodMontantMax"
+                                        placeholder="10000000"
+                                        min="1"
+                                    />
+                                    <span class="input-addon">FCFA</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label"
+                                    >Durée minimum (mois) *</label
+                                >
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    id="prodDureeMin"
+                                    placeholder="6"
+                                    min="1"
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label"
+                                    >Durée maximum (mois) *</label
+                                >
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    id="prodDureeMax"
+                                    placeholder="60"
+                                    min="1"
+                                />
+                            </div>
+                        </div>
+                        <div class="form-row-3">
+                            <div class="form-group">
+                                <label class="form-label"
+                                    >Frais de dossier (%)</label
+                                >
+                                <div class="input-group">
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        id="prodFrais"
+                                        placeholder="0"
+                                        step="0.01"
+                                        min="0"
+                                    />
+                                    <span class="input-addon">%</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label"
+                                    >Pénalité retard (%)</label
+                                >
+                                <div class="input-group">
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        id="prodPenalite"
+                                        placeholder="0"
+                                        step="0.01"
+                                        min="0"
+                                    />
+                                    <span class="input-addon">%</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label"
+                                    >Méthode de calcul</label
+                                >
+                                <select class="form-control" id="prodMethode">
+                                    <option value="">— Défaut —</option>
+                                    <option value="ANNUITE">
+                                        Annuités constantes
+                                    </option>
+                                    <option value="LINEAIRE">
+                                        Amortissement linéaire
+                                    </option>
+                                    <option value="DEGRESSIF">Dégressif</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Champs ÉPARGNE uniquement ── -->
+                    <div class="epargne-only" id="epargneFields">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label"
+                                    >Montant minimum d'ouverture (FCFA)</label
+                                >
+                                <div class="input-group">
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        id="prodMontantMinEpargne"
+                                        placeholder="5000"
+                                        min="0"
+                                    />
+                                    <span class="input-addon">FCFA</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label"
+                                    >Pénalité retrait anticipé (%)</label
+                                >
+                                <div class="input-group">
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        id="prodPenaliteEpargne"
+                                        placeholder="0"
+                                        step="0.01"
+                                        min="0"
+                                    />
+                                    <span class="input-addon">%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label"
+                                >Durée minimum de blocage (jours)</label
+                            >
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="prodDureeJours"
+                                placeholder="0 = pas de durée minimale"
+                                min="0"
+                            />
+                        </div>
+                    </div>
+
+                    <div
+                        style="
+                            background: #fff3e0;
+                            border-radius: 8px;
+                            padding: 10px 14px;
+                            font-size: 12px;
+                            color: #e65100;
+                            margin-top: 4px;
+                        "
+                        id="modalError"
+                        style="display: none"
+                    ></div>
+                </div>
+                <div class="modal-footer">
+                    <button
+                        class="btn btn-outline"
+                        onclick="closeModal('productModal')"
+                    >
+                        Annuler
+                    </button>
+                    <button
+                        class="btn btn-primary"
+                        id="modalSubmitBtn"
+                        onclick="sauvegarderProduit()"
+                    >
+                        Enregistrer
+                    </button>
+                </div>
             </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Montant maximum</label>
-            <div class="input-group">
-              <input type="number" class="form-control" id="prodMax" placeholder="0">
-              <span class="input-addon">FCFA</span>
-            </div>
-          </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Durée minimum (mois)</label>
-            <input type="number" class="form-control" id="prodDureeMin" placeholder="6">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Durée maximum (mois)</label>
-            <input type="number" class="form-control" id="prodDureeMax" placeholder="120">
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" onclick="closeModal('productModal')">Annuler</button>
-        <button class="btn btn-primary" onclick="saveProduct()">Enregistrer le produit</button>
-      </div>
-    </div>
-  </div>
 
-  <div class="toast-container"></div>
-  <script src="../assets/js/app.js"></script>
-  <script>
-    let currentType = 'credit';
+        <div class="toast-container"></div>
+        <script src="../assets/js/app.js"></script>
+        <script>
+            /* ──────────────────────────────────────────────────────────
+       ÉTAT
+    ────────────────────────────────────────────────────────── */
+            var _filtreType = "credit"; // 'credit' | 'epargne' | 'tous'
+            var _modalType = "credit"; // type actuel dans le modal
+            var _editId = null; // null = création, sinon id du produit en cours d'édition
+            var _allCredits = [];
+            var _allEpargnes = [];
 
-    async function chargerProduits() {
-      try {
-        const [resCredit, resEpargne] = await Promise.all([ProduitsCredit.lister(), ProduitsEpargne.lister()]);
-        const pageCredit = resCredit.ok ? await resCredit.json() : { content: [] };
-        const pageEpargne = resEpargne.ok ? await resEpargne.json() : { content: [] };
-        const credits = (pageCredit.content || []).map(p => Object.assign({}, p, { type: 'credit' }));
-        const epargnes = (pageEpargne.content || []).map(p => Object.assign({}, p, { type: 'epargne' }));
-        renderProduits(credits.concat(epargnes));
-      } catch (e) {
-        showToast('Impossible de charger les produits', 'error');
-      }
-    }
+            /* ──────────────────────────────────────────────────────────
+       UTILITAIRES
+    ────────────────────────────────────────────────────────── */
+            function fmt(n) {
+                var v = Number(n || 0);
+                if (v >= 1e6)
+                    return (
+                        (v / 1e6).toLocaleString("fr-FR", {
+                            maximumFractionDigits: 1,
+                        }) + " M"
+                    );
+                if (v >= 1e3)
+                    return (
+                        (v / 1e3).toLocaleString("fr-FR", {
+                            maximumFractionDigits: 0,
+                        }) + " K"
+                    );
+                return v.toLocaleString("fr-FR");
+            }
 
-    function renderProduits(list) {
-      const tbody = document.querySelector('.data-table tbody');
-      tbody.innerHTML = '';
-      list.filter(p => currentType === 'tous' || p.type === currentType).forEach(p => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td style="font-family:monospace;font-size:12px;">${p.codeProduit}</td>
-          <td style="font-weight:600;">${p.libelle}</td>
-          <td><span class="badge ${p.type === 'credit' ? 'badge-info' : 'badge-pending'}">${p.type === 'credit' ? 'Crédit' : 'Épargne'}</span></td>
-          <td style="font-weight:700;">${p.tauxInteretAnnuel || 0}%/an</td>
-          <td>${p.fraisDossierPourcentage || p.penaliteRetraitAnticipe || 0}%</td>
-          <td style="font-size:12px;">${(p.montantMin || p.montantMinOuverture || 0).toLocaleString('fr-FR')} - ${(p.montantMax || 0).toLocaleString('fr-FR')}</td>
-          <td>${p.dureeMinMois || p.dureeMinJours || '-'}${p.type === 'credit' ? ' mois' : ' jours'}</td>
-          <td><span class="badge ${p.estActif !== false ? 'badge-active' : 'badge-warning'}">${p.estActif !== false ? 'Actif' : 'Inactif'}</span></td>
-          <td>
-            <div class="action-icons">
-              <button class="action-icon" title="Modifier" onclick="editProduct(${p.idProduitCredit || p.idProduitEpargne}, '${p.type}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-              <button class="action-icon" title="Désactiver" onclick="deleteProduct(${p.idProduitCredit || p.idProduitEpargne}, '${p.type}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
+            function pct(n) {
+                return n != null
+                    ? Number(n).toLocaleString("fr-FR", {
+                          maximumFractionDigits: 2,
+                      }) + " %"
+                    : "—";
+            }
 
-    async function saveProduct() {
-      const type = document.getElementById('prodType').value;
-      const data = {
-        codeProduit: document.getElementById('prodCode').value.trim(),
-        libelle: document.getElementById('prodName').value.trim(),
-        tauxInteretAnnuel: parseFloat(document.getElementById('prodRate').value),
-        montantMin: parseFloat(document.getElementById('prodMin').value) || 0,
-        montantMax: parseFloat(document.getElementById('prodMax').value) || 0
-      };
-      if (type === 'credit') {
-        data.dureeMinMois = parseInt(document.getElementById('prodDureeMin').value) || 1;
-        data.dureeMaxMois = parseInt(document.getElementById('prodDureeMax').value) || 360;
-        data.fraisDossierPourcentage = parseFloat(document.getElementById('prodFrais').value) || 0;
-        data.penaliteRetardPourcentage = parseFloat(document.getElementById('prodPenalite').value) || 0;
-      } else {
-        data.dureeMinJours = parseInt(document.getElementById('prodDureeMin').value) || 0;
-        data.montantMinOuverture = data.montantMin;
-        data.penaliteRetraitAnticipe = parseFloat(document.getElementById('prodPenalite').value) || 0;
-      }
-      if (!data.codeProduit || !data.libelle) {
-        showToast('Veuillez remplir les champs obligatoires', 'error');
-        return;
-      }
-      try {
-        const res = type === 'credit' ? await ProduitsCredit.creer(data) : await ProduitsEpargne.creer(data);
-        if (res && res.ok) {
-          showToast('Produit enregistré', 'success');
-          closeModal('productModal');
-          chargerProduits();
-        } else {
-          const err = await res.json().catch(() => ({}));
-          showToast(err.message || 'Erreur', 'error');
-        }
-      } catch (e) {
-        showToast(e.message || 'Erreur réseau', 'error');
-      }
-    }
+            /* ──────────────────────────────────────────────────────────
+       CHARGEMENT & AFFICHAGE
+    ────────────────────────────────────────────────────────── */
+            async function chargerProduits() {
+                var tbody = document.getElementById("produitsBody");
+                tbody.innerHTML =
+                    '<tr><td colspan="10" style="text-align:center;padding:32px;color:#4A7A8A;">Chargement…</td></tr>';
+                try {
+                    var [resC, resE] = await Promise.all([
+                        ProduitsCredit.lister(0, 100),
+                        ProduitsEpargne.lister(0, 100),
+                    ]);
+                    _allCredits =
+                        resC && resC.ok
+                            ? (await resC.json()).content || []
+                            : [];
+                    _allEpargnes =
+                        resE && resE.ok
+                            ? (await resE.json()).content || []
+                            : [];
 
-    async function deleteProduct(id, type) {
-      if (!confirm('Supprimer ce produit ?')) return;
-      try {
-        const res = type === 'credit' ? await ProduitsCredit.supprimer(id) : await ProduitsEpargne.supprimer(id);
-        if (res && res.ok) {
-          showToast('Produit désactivé', 'success');
-          chargerProduits();
-        } else {
-          const err = await res.json().catch(() => ({}));
-          showToast(err.message || 'Erreur', 'error');
-        }
-      } catch (e) {
-        showToast(e.message || 'Erreur réseau', 'error');
-      }
-    }
+                    // Mise à jour des compteurs
+                    document.getElementById("countCredit").textContent =
+                        _allCredits.length;
+                    document.getElementById("countEpargne").textContent =
+                        _allEpargnes.length;
+                    document.getElementById("countTous").textContent =
+                        _allCredits.length + _allEpargnes.length;
 
-    function editProduct(id, type) {
-      showToast('Modification produit ' + id + ' (' + type + ') - à finaliser', 'info');
-    }
+                    afficherProduits();
+                } catch (e) {
+                    tbody.innerHTML =
+                        '<tr><td colspan="10" style="text-align:center;padding:32px;color:#D93025;">Erreur : ' +
+                        e.message +
+                        "</td></tr>";
+                }
+            }
 
-    document.querySelectorAll('.filter-tab').forEach((tab, idx) => {
-      tab.onclick = () => {
-        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        currentType = idx === 0 ? 'credit' : idx === 1 ? 'epargne' : 'tous';
-        chargerProduits();
-      };
-    });
+            function afficherProduits() {
+                var tbody = document.getElementById("produitsBody");
+                var rows = [];
 
-    chargerProduits();
-  </script>
-</body>
+                if (_filtreType !== "epargne") {
+                    _allCredits.forEach(function (p) {
+                        rows.push(ligneCredit(p));
+                    });
+                }
+                if (_filtreType !== "credit") {
+                    _allEpargnes.forEach(function (p) {
+                        rows.push(ligneEpargne(p));
+                    });
+                }
+
+                if (!rows.length) {
+                    tbody.innerHTML =
+                        '<tr><td colspan="10" style="text-align:center;padding:32px;color:#4A7A8A;">Aucun produit dans cette catégorie.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = rows.join("");
+            }
+
+            function ligneCredit(p) {
+                var actif = p.estActif !== false;
+                var minMax = fmt(p.montantMin) + " – " + fmt(p.montantMax);
+                var duree =
+                    (p.dureeMinMois || "?") +
+                    " – " +
+                    (p.dureeMaxMois || "?") +
+                    " mois";
+                return (
+                    "<tr>" +
+                    '<td style="font-family:monospace;font-size:12px;color:#084355;">' +
+                    esc(p.codeProduit) +
+                    "</td>" +
+                    '<td style="font-weight:600;">' +
+                    esc(p.libelle) +
+                    "</td>" +
+                    '<td><span class="badge badge-info">Crédit</span></td>' +
+                    '<td style="font-weight:700;">' +
+                    pct(p.tauxInteretAnnuel) +
+                    "</td>" +
+                    "<td>" +
+                    pct(p.fraisDossierPourcentage) +
+                    "</td>" +
+                    '<td style="font-size:12px;">' +
+                    minMax +
+                    "</td>" +
+                    '<td style="font-size:12px;">' +
+                    duree +
+                    "</td>" +
+                    '<td style="font-size:11px;color:#4A7A8A;">' +
+                    (p.typeAmortissement || "—") +
+                    "</td>" +
+                    '<td><span class="badge ' +
+                    (actif ? "badge-active" : "badge-inactive") +
+                    '">' +
+                    (actif ? "Actif" : "Inactif") +
+                    "</span></td>" +
+                    '<td><div class="action-icons">' +
+                    '<button class="action-icon" title="Modifier" onclick="editProduit(' +
+                    p.idProduitCredit +
+                    ",'credit')\">" +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+                    '<button class="action-icon" title="' +
+                    (actif ? "Désactiver" : "Déjà inactif") +
+                    '" onclick="supprimerProduit(' +
+                    p.idProduitCredit +
+                    ",'credit')\" " +
+                    (!actif ? "disabled" : "") +
+                    ">" +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>' +
+                    "</div></td></tr>"
+                );
+            }
+
+            function ligneEpargne(p) {
+                var actif = p.estActif !== false;
+                return (
+                    "<tr>" +
+                    '<td style="font-family:monospace;font-size:12px;color:#084355;">' +
+                    esc(p.codeProduit) +
+                    "</td>" +
+                    '<td style="font-weight:600;">' +
+                    esc(p.libelle) +
+                    "</td>" +
+                    '<td><span class="badge badge-pending">Épargne</span></td>' +
+                    '<td style="font-weight:700;">' +
+                    pct(p.tauxInteretAnnuel) +
+                    "</td>" +
+                    "<td>" +
+                    pct(p.penaliteRetraitAnticipe) +
+                    "</td>" +
+                    '<td style="font-size:12px;">' +
+                    (p.montantMinOuverture
+                        ? fmt(p.montantMinOuverture) + " FCFA min"
+                        : "—") +
+                    "</td>" +
+                    '<td style="font-size:12px;">' +
+                    (p.dureeMinJours
+                        ? p.dureeMinJours + " jours min"
+                        : "Libre") +
+                    "</td>" +
+                    '<td style="font-size:11px;color:#4A7A8A;">—</td>' +
+                    '<td><span class="badge ' +
+                    (actif ? "badge-active" : "badge-inactive") +
+                    '">' +
+                    (actif ? "Actif" : "Inactif") +
+                    "</span></td>" +
+                    '<td><div class="action-icons">' +
+                    '<button class="action-icon" title="Modifier" onclick="editProduit(' +
+                    p.idProduitEpargne +
+                    ",'epargne')\">" +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+                    '<button class="action-icon" title="Désactiver" onclick="supprimerProduit(' +
+                    p.idProduitEpargne +
+                    ",'epargne')\" " +
+                    (!actif ? "disabled" : "") +
+                    ">" +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>' +
+                    "</div></td></tr>"
+                );
+            }
+
+            function esc(s) {
+                return String(s == null ? "" : s)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;");
+            }
+
+            /* ──────────────────────────────────────────────────────────
+       FILTRES
+    ────────────────────────────────────────────────────────── */
+            function setFiltreType(btn, type) {
+                document
+                    .querySelectorAll(".filter-tab-btn")
+                    .forEach(function (b) {
+                        b.classList.remove("active", "btn-primary");
+                        b.classList.add("btn-outline");
+                    });
+                btn.classList.add("active", "btn-primary");
+                btn.classList.remove("btn-outline");
+                _filtreType = type;
+                afficherProduits();
+            }
+
+            /* ──────────────────────────────────────────────────────────
+       MODAL : TYPE TOGGLE
+    ────────────────────────────────────────────────────────── */
+            function setModalType(type) {
+                _modalType = type;
+                document
+                    .getElementById("typeBtnCredit")
+                    .classList.toggle("active", type === "credit");
+                document
+                    .getElementById("typeBtnEpargne")
+                    .classList.toggle("active", type === "epargne");
+                document.getElementById("creditFields").style.display =
+                    type === "credit" ? "block" : "none";
+                document.getElementById("epargneFields").style.display =
+                    type === "epargne" ? "block" : "none";
+            }
+
+            /* ──────────────────────────────────────────────────────────
+       MODAL : CRÉATION
+    ────────────────────────────────────────────────────────── */
+            function ouvrirModalCreation() {
+                _editId = null;
+                document.getElementById("modalTitle").textContent =
+                    "Nouveau produit";
+                document.getElementById("modalSubmitBtn").textContent =
+                    "Enregistrer";
+                document.getElementById("typeToggleGroup").style.display =
+                    "block";
+                viderModal();
+                setModalType("credit");
+                document.getElementById("modalError").style.display = "none";
+                openModal("productModal");
+            }
+
+            function viderModal() {
+                [
+                    "prodCode",
+                    "prodLibelle",
+                    "prodTaux",
+                    "prodMontantMin",
+                    "prodMontantMax",
+                    "prodDureeMin",
+                    "prodDureeMax",
+                    "prodFrais",
+                    "prodPenalite",
+                    "prodMontantMinEpargne",
+                    "prodPenaliteEpargne",
+                    "prodDureeJours",
+                ].forEach(function (id) {
+                    var el = document.getElementById(id);
+                    if (el) el.value = "";
+                });
+                var methode = document.getElementById("prodMethode");
+                if (methode) methode.value = "";
+            }
+
+            /* ──────────────────────────────────────────────────────────
+       MODAL : ÉDITION
+    ────────────────────────────────────────────────────────── */
+            function editProduit(id, type) {
+                _editId = id;
+                _modalType = type;
+                document.getElementById("modalTitle").textContent =
+                    "Modifier le produit";
+                document.getElementById("modalSubmitBtn").textContent =
+                    "Mettre à jour";
+                document.getElementById("typeToggleGroup").style.display =
+                    "none"; // type fixé
+                document.getElementById("modalError").style.display = "none";
+                setModalType(type);
+
+                // Trouver le produit dans le cache local
+                var p =
+                    type === "credit"
+                        ? _allCredits.find(function (c) {
+                              return c.idProduitCredit == id;
+                          })
+                        : _allEpargnes.find(function (e) {
+                              return e.idProduitEpargne == id;
+                          });
+
+                if (!p) {
+                    showToast("Produit introuvable.", "error");
+                    return;
+                }
+
+                document.getElementById("prodCode").value = p.codeProduit || "";
+                document.getElementById("prodLibelle").value = p.libelle || "";
+                document.getElementById("prodTaux").value =
+                    p.tauxInteretAnnuel != null
+                        ? Number(p.tauxInteretAnnuel)
+                        : "";
+
+                if (type === "credit") {
+                    document.getElementById("prodMontantMin").value =
+                        p.montantMin != null ? Number(p.montantMin) : "";
+                    document.getElementById("prodMontantMax").value =
+                        p.montantMax != null ? Number(p.montantMax) : "";
+                    document.getElementById("prodDureeMin").value =
+                        p.dureeMinMois != null ? p.dureeMinMois : "";
+                    document.getElementById("prodDureeMax").value =
+                        p.dureeMaxMois != null ? p.dureeMaxMois : "";
+                    document.getElementById("prodFrais").value =
+                        p.fraisDossierPourcentage != null
+                            ? Number(p.fraisDossierPourcentage)
+                            : "";
+                    // assurancePourcentage contient en réalité penaliteRetardPourcentage (mapping backend)
+                    document.getElementById("prodPenalite").value =
+                        p.assurancePourcentage != null
+                            ? Number(p.assurancePourcentage)
+                            : "";
+                    document.getElementById("prodMethode").value =
+                        p.typeAmortissement || "";
+                } else {
+                    document.getElementById("prodMontantMinEpargne").value =
+                        p.montantMinOuverture != null
+                            ? Number(p.montantMinOuverture)
+                            : "";
+                    document.getElementById("prodPenaliteEpargne").value =
+                        p.penaliteRetraitAnticipe != null
+                            ? Number(p.penaliteRetraitAnticipe)
+                            : "";
+                    document.getElementById("prodDureeJours").value =
+                        p.dureeMinJours != null ? p.dureeMinJours : "";
+                }
+
+                openModal("productModal");
+            }
+
+            /* ──────────────────────────────────────────────────────────
+       VALIDATION & SAUVEGARDE
+    ────────────────────────────────────────────────────────── */
+            function lire(id) {
+                var el = document.getElementById(id);
+                return el ? el.value.trim() : "";
+            }
+            function lireNum(id) {
+                var v = parseFloat(lire(id));
+                return isNaN(v) ? null : v;
+            }
+            function lireInt(id) {
+                var v = parseInt(lire(id));
+                return isNaN(v) ? null : v;
+            }
+
+            function afficherErreurModal(msg) {
+                var el = document.getElementById("modalError");
+                el.textContent = msg;
+                el.style.display = "block";
+            }
+
+            async function sauvegarderProduit() {
+                document.getElementById("modalError").style.display = "none";
+
+                var code = lire("prodCode");
+                var libelle = lire("prodLibelle");
+                var taux = lireNum("prodTaux");
+
+                if (!code) {
+                    afficherErreurModal("Le code produit est obligatoire.");
+                    return;
+                }
+                if (!libelle) {
+                    afficherErreurModal("Le libellé est obligatoire.");
+                    return;
+                }
+                if (!taux || taux <= 0) {
+                    afficherErreurModal("Le taux d'intérêt doit être positif.");
+                    return;
+                }
+
+                var data;
+                var res;
+
+                if (_modalType === "credit") {
+                    var montantMin = lireNum("prodMontantMin");
+                    var montantMax = lireNum("prodMontantMax");
+                    var dureeMin = lireInt("prodDureeMin");
+                    var dureeMax = lireInt("prodDureeMax");
+
+                    if (!montantMin || montantMin <= 0) {
+                        afficherErreurModal("Montant minimum invalide.");
+                        return;
+                    }
+                    if (!montantMax || montantMax <= 0) {
+                        afficherErreurModal("Montant maximum invalide.");
+                        return;
+                    }
+                    if (montantMax <= montantMin) {
+                        afficherErreurModal(
+                            "Le montant max doit être > au montant min.",
+                        );
+                        return;
+                    }
+                    if (!dureeMin || dureeMin < 1) {
+                        afficherErreurModal("Durée minimum invalide.");
+                        return;
+                    }
+                    if (!dureeMax || dureeMax < 1) {
+                        afficherErreurModal("Durée maximum invalide.");
+                        return;
+                    }
+                    if (dureeMax <= dureeMin) {
+                        afficherErreurModal(
+                            "La durée max doit être > à la durée min.",
+                        );
+                        return;
+                    }
+
+                    data = {
+                        codeProduit: code,
+                        libelle: libelle,
+                        tauxInteretAnnuel: taux,
+                        montantMin: montantMin,
+                        montantMax: montantMax,
+                        dureeMinMois: dureeMin,
+                        dureeMaxMois: dureeMax,
+                        fraisDossierPourcentage: lireNum("prodFrais") || 0,
+                        penaliteRetardPourcentage: lireNum("prodPenalite") || 0,
+                        methodeCalcul: lire("prodMethode") || null,
+                    };
+
+                    res = _editId
+                        ? await ProduitsCredit.modifier(_editId, data)
+                        : await ProduitsCredit.creer(data);
+                } else {
+                    data = {
+                        codeProduit: code,
+                        libelle: libelle,
+                        tauxInteretAnnuel: taux,
+                        montantMinOuverture:
+                            lireNum("prodMontantMinEpargne") || 0,
+                        penaliteRetraitAnticipe:
+                            lireNum("prodPenaliteEpargne") || 0,
+                        dureeMinJours: lireInt("prodDureeJours") || 0,
+                    };
+
+                    res = _editId
+                        ? await ProduitsEpargne.modifier(_editId, data)
+                        : await ProduitsEpargne.creer(data);
+                }
+
+                if (res && (res.ok || res.status === 201)) {
+                    showToast(
+                        _editId
+                            ? "Produit mis à jour."
+                            : "Produit créé avec succès.",
+                        "success",
+                    );
+                    closeModal("productModal");
+                    chargerProduits();
+                } else {
+                    var err = res
+                        ? await res.json().catch(function () {
+                              return {};
+                          })
+                        : {};
+                    afficherErreurModal(
+                        err.message ||
+                            "Erreur serveur (" +
+                                (res ? res.status : "?") +
+                                ").",
+                    );
+                }
+            }
+
+            /* ──────────────────────────────────────────────────────────
+       SUPPRESSION (désactivation logique)
+    ────────────────────────────────────────────────────────── */
+            async function supprimerProduit(id, type) {
+                var nom =
+                    type === "credit"
+                        ? (
+                              _allCredits.find(function (p) {
+                                  return p.idProduitCredit == id;
+                              }) || {}
+                          ).libelle
+                        : (
+                              _allEpargnes.find(function (p) {
+                                  return p.idProduitEpargne == id;
+                              }) || {}
+                          ).libelle;
+                if (
+                    !confirm(
+                        "Désactiver le produit « " +
+                            (nom || id) +
+                            " » ?\nIl ne sera plus proposé pour de nouveaux contrats.",
+                    )
+                )
+                    return;
+
+                try {
+                    var res =
+                        type === "credit"
+                            ? await ProduitsCredit.supprimer(id)
+                            : await ProduitsEpargne.supprimer(id);
+
+                    if (res && (res.ok || res.status === 204)) {
+                        showToast("Produit désactivé.", "success");
+                        chargerProduits();
+                    } else {
+                        var err = await res.json().catch(function () {
+                            return {};
+                        });
+                        showToast(
+                            err.message || "Erreur lors de la désactivation.",
+                            "error",
+                        );
+                    }
+                } catch (e) {
+                    showToast(e.message || "Erreur réseau.", "error");
+                }
+            }
+
+            /* ──────────────────────────────────────────────────────────
+       INIT : style des boutons onglets
+    ────────────────────────────────────────────────────────── */
+            document.querySelectorAll(".filter-tab-btn").forEach(function (b) {
+                b.classList.add("btn-outline");
+            });
+            document
+                .querySelector(".filter-tab-btn.active")
+                .classList.remove("btn-outline");
+            document
+                .querySelector(".filter-tab-btn.active")
+                .classList.add("btn-primary");
+
+            chargerProduits();
+        </script>
+    </body>
 </html>
-
-
-

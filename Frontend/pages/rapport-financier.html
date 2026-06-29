@@ -608,12 +608,21 @@
 
     // --- Load financial report ---
     async function loadReport() {
+      var dateDebut = document.getElementById('dateDebut').value;
+      var dateFin = document.getElementById('dateFin').value;
+
+      var params = [];
+      if (dateDebut) params.push('dateDebut=' + dateDebut);
+      if (dateFin) params.push('dateFin=' + dateFin);
+
+      var url = '/api/v1/reporting/financier' + (params.length ? '?' + params.join('&') : '');
+
       try {
         var btn = document.getElementById('btnGenerer');
         btn.disabled = true;
         btn.textContent = 'Chargement...';
 
-        var res = await SF.apiFetch('/api/v1/reporting/financier');
+        var res = await SF.apiFetch(url);
         if (res && res.ok) {
           var data = await res.json();
           currentData = data;
@@ -718,8 +727,18 @@
       var body = document.getElementById('bilanActifBody');
       var totalActifs = Number(data.totalActifs || 0);
 
-      // Distribute totals across SYSCOHADA postes (proportional allocation)
-      var distribution = distributeBilan(totalActifs, bilanActifPostes);
+      var distribution;
+      if (data.bilanActif) {
+        distribution = bilanActifPostes.map(function(p) {
+          return Number(data.bilanActif[p.ref] || 0);
+        });
+        distribution[3] = distribution[0] + distribution[1] + distribution[2];
+        distribution[5] = distribution[3] - distribution[4];
+        distribution[9] = distribution[6] + distribution[7] + distribution[8];
+        distribution[12] = distribution[10] + distribution[11];
+      } else {
+        distribution = distributeBilan(totalActifs, bilanActifPostes);
+      }
 
       body.innerHTML = bilanActifPostes.map(function(p, i) {
         var montant = distribution[i];
@@ -741,7 +760,16 @@
       var totalPassifs = Number(data.totalPassifs || 0);
       var produitNet = Number(data.produitNet || 0);
 
-      var distribution = distributeBilanPassif(totalPassifs, produitNet, bilanPassifPostes);
+      var distribution;
+      if (data.bilanPassif) {
+        distribution = bilanPassifPostes.map(function(p) {
+          return Number(data.bilanPassif[p.ref] || 0);
+        });
+        distribution[4] = distribution[0] + distribution[1] + distribution[2] + distribution[3];
+        distribution[10] = distribution[5] + distribution[6] + distribution[7] + distribution[8] + distribution[9];
+      } else {
+        distribution = distributeBilanPassif(totalPassifs, produitNet, bilanPassifPostes);
+      }
 
       body.innerHTML = bilanPassifPostes.map(function(p, i) {
         var montant = distribution[i];
@@ -834,21 +862,45 @@
       var margeInterets = Number(data.margeInterets || 0);
       var ratioEfficacite = Number(data.ratioEfficacite || 0);
 
-      // Estimate total produits from actifs (typical for microfinance: ~8-12% of actifs)
-      var totalProduits = Math.round(totalActifs * 0.10);
-      if (margeInterets > 0) totalProduits = Math.max(totalProduits, Math.round(margeInterets * 1.5));
+      var produitsDistribution;
+      var chargesDistribution;
+
+      if (data.cpcProduits && data.cpcCharges) {
+        produitsDistribution = cpcProduitsPostes.map(function(p) {
+          return Number(data.cpcProduits[p.ref] || 0);
+        });
+        chargesDistribution = cpcChargesPostes.map(function(p) {
+          return Number(data.cpcCharges[p.ref] || 0);
+        });
+      } else {
+        var totalProduits = Math.round(totalActifs * 0.10);
+        if (margeInterets > 0) totalProduits = Math.max(totalProduits, Math.round(margeInterets * 1.5));
+
+        produitsDistribution = [
+          Math.round(totalProduits * 0.55), // Interets
+          Math.round(totalProduits * 0.05), // Revenus titres
+          Math.round(totalProduits * 0.20), // Commissions
+          Math.round(totalProduits * 0.03), // Participations
+          Math.round(totalProduits * 0.12), // Autres produits
+          Math.round(totalProduits * 0.05)  // Reprises
+        ];
+
+        var totalCharges = totalProduits - produitNet;
+        if (totalCharges <= 0) totalCharges = Math.round(totalProduits * 0.85);
+
+        chargesDistribution = [
+          Math.round(totalCharges * 0.30), // Frais personnel
+          Math.round(totalCharges * 0.25), // Charges generales
+          Math.round(totalCharges * 0.08), // Impots
+          Math.round(totalCharges * 0.10), // Dotations amort
+          Math.round(totalCharges * 0.07), // Dotations provisions
+          Math.round(totalCharges * 0.10), // Pertes creances
+          Math.round(totalCharges * 0.10)  // Autres charges
+        ];
+      }
 
       // CPC Produits
       var produitsBody = document.getElementById('cpcProduitsBody');
-      var produitsDistribution = [
-        Math.round(totalProduits * 0.55), // Interets
-        Math.round(totalProduits * 0.05), // Revenus titres
-        Math.round(totalProduits * 0.20), // Commissions
-        Math.round(totalProduits * 0.03), // Participations
-        Math.round(totalProduits * 0.12), // Autres produits
-        Math.round(totalProduits * 0.05)  // Reprises
-      ];
-
       produitsBody.innerHTML = cpcProduitsPostes.map(function(p, i) {
         return '<tr>' +
           '<td style="padding-left:28px;">' + p.label + '</td>' +
@@ -861,20 +913,7 @@
       document.getElementById('cpcTotalProduits').textContent = fmtNum(sumProduits);
 
       // CPC Charges
-      var totalCharges = sumProduits - produitNet;
-      if (totalCharges <= 0) totalCharges = Math.round(sumProduits * 0.85);
-
       var chargesBody = document.getElementById('cpcChargesBody');
-      var chargesDistribution = [
-        Math.round(totalCharges * 0.30), // Frais personnel
-        Math.round(totalCharges * 0.25), // Charges generales
-        Math.round(totalCharges * 0.08), // Impots
-        Math.round(totalCharges * 0.10), // Dotations amort
-        Math.round(totalCharges * 0.07), // Dotations provisions
-        Math.round(totalCharges * 0.10), // Pertes creances
-        Math.round(totalCharges * 0.10)  // Autres charges
-      ];
-
       chargesBody.innerHTML = cpcChargesPostes.map(function(p, i) {
         return '<tr>' +
           '<td style="padding-left:28px;">' + p.label + '</td>' +
@@ -898,30 +937,47 @@
       var produitNet = Number(data.produitNet || 0);
       var margeInterets = Number(data.margeInterets || 0);
 
-      // Generate monthly labels for current year
-      var months = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec'];
-      var now = new Date();
-      var currentMonth = now.getMonth();
       var labels = [];
-
-      for (var i = 0; i <= currentMonth; i++) {
-        labels.push(months[i] + ' ' + now.getFullYear());
-      }
-
-      var nbMonths = currentMonth + 1;
-
-      // Build progressive data (actifs/passifs grow over year)
       var actifsData = [];
       var passifsData = [];
-      for (var m = 0; m < nbMonths; m++) {
-        var progress = (m + 1) / 12;
-        var variance = 0.85 + Math.random() * 0.3;
-        actifsData.push(Math.round(totalActifs * progress * variance));
-        passifsData.push(Math.round(totalPassifs * progress * variance));
+      var produitData = [];
+      var margeData = [];
+
+      if (data.evolutionLabels && data.evolutionActifs && data.evolutionPassifs && data.evolutionProduits && data.evolutionMarges) {
+        labels = data.evolutionLabels;
+        actifsData = data.evolutionActifs.map(Number);
+        passifsData = data.evolutionPassifs.map(Number);
+        produitData = data.evolutionProduits.map(Number);
+        margeData = data.evolutionMarges.map(Number);
+      } else {
+        var months = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec'];
+        var now = new Date();
+        var currentMonth = now.getMonth();
+
+        for (var i = 0; i <= currentMonth; i++) {
+          labels.push(months[i] + ' ' + now.getFullYear());
+        }
+
+        var nbMonths = currentMonth + 1;
+
+        for (var m = 0; m < nbMonths; m++) {
+          var progress = (m + 1) / 12;
+          var variance = 0.85 + Math.random() * 0.3;
+          actifsData.push(Math.round(totalActifs * progress * variance));
+          passifsData.push(Math.round(totalPassifs * progress * variance));
+        }
+        actifsData[actifsData.length - 1] = totalActifs;
+        passifsData[passifsData.length - 1] = totalPassifs;
+
+        for (var p = 0; p < nbMonths; p++) {
+          var prog = (p + 1) / 12;
+          var varP = 0.8 + Math.random() * 0.4;
+          produitData.push(Math.round(produitNet * prog * varP));
+          margeData.push(Math.round(margeInterets * prog * varP));
+        }
+        produitData[produitData.length - 1] = produitNet;
+        margeData[margeData.length - 1] = margeInterets;
       }
-      // Ensure last month matches actual data
-      actifsData[actifsData.length - 1] = totalActifs;
-      passifsData[passifsData.length - 1] = totalPassifs;
 
       // Evolution Bilan chart
       var ctxBilan = document.getElementById('evolutionBilanChart').getContext('2d');
@@ -994,17 +1050,6 @@
       });
 
       // Evolution Produit chart
-      var produitData = [];
-      var margeData = [];
-      for (var p = 0; p < nbMonths; p++) {
-        var prog = (p + 1) / 12;
-        var varP = 0.8 + Math.random() * 0.4;
-        produitData.push(Math.round(produitNet * prog * varP));
-        margeData.push(Math.round(margeInterets * prog * varP));
-      }
-      produitData[produitData.length - 1] = produitNet;
-      margeData[margeData.length - 1] = margeInterets;
-
       var ctxProduit = document.getElementById('evolutionProduitChart').getContext('2d');
       if (produitChart) produitChart.destroy();
 
@@ -1089,31 +1134,114 @@
         'BILAN ACTIF (SYSCOHADA)'
       ];
 
-      var actifDist = distributeBilan(Number(d.totalActifs || 0), bilanActifPostes);
+      var actifDist;
+      if (d.bilanActif) {
+        actifDist = bilanActifPostes.map(function(p) {
+          return Number(d.bilanActif[p.ref] || 0);
+        });
+        actifDist[3] = actifDist[0] + actifDist[1] + actifDist[2];
+        actifDist[5] = actifDist[3] - actifDist[4];
+        actifDist[9] = actifDist[6] + actifDist[7] + actifDist[8];
+        actifDist[12] = actifDist[10] + actifDist[11];
+      } else {
+        actifDist = distributeBilan(Number(d.totalActifs || 0), bilanActifPostes);
+      }
       bilanActifPostes.forEach(function(p, i) {
         lines.push(p.ref + ' ' + p.label + ',' + actifDist[i] + ' FCFA');
       });
 
       lines.push('');
       lines.push('BILAN PASSIF (SYSCOHADA)');
-      var passifDist = distributeBilanPassif(Number(d.totalPassifs || 0), Number(d.produitNet || 0), bilanPassifPostes);
+      var passifDist;
+      if (d.bilanPassif) {
+        passifDist = bilanPassifPostes.map(function(p) {
+          return Number(d.bilanPassif[p.ref] || 0);
+        });
+        passifDist[4] = passifDist[0] + passifDist[1] + passifDist[2] + passifDist[3];
+        passifDist[10] = passifDist[5] + passifDist[6] + passifDist[7] + passifDist[8] + passifDist[9];
+      } else {
+        passifDist = distributeBilanPassif(Number(d.totalPassifs || 0), Number(d.produitNet || 0), bilanPassifPostes);
+      }
       bilanPassifPostes.forEach(function(p, i) {
         lines.push(p.ref + ' ' + p.label + ',' + passifDist[i] + ' FCFA');
       });
+
+      // CPC
+      lines.push('');
+      lines.push('COMPTE DE PRODUITS ET CHARGES (CPC)');
+      lines.push('PRODUITS D\'EXPLOITATION');
+      var prodDist;
+      if (d.cpcProduits) {
+        prodDist = cpcProduitsPostes.map(function(p) {
+          return Number(d.cpcProduits[p.ref] || 0);
+        });
+      } else {
+        var totalProduits = Math.round(Number(d.totalActifs || 0) * 0.10);
+        if (Number(d.margeInterets || 0) > 0) totalProduits = Math.max(totalProduits, Math.round(Number(d.margeInterets || 0) * 1.5));
+        prodDist = [
+          Math.round(totalProduits * 0.55),
+          Math.round(totalProduits * 0.05),
+          Math.round(totalProduits * 0.20),
+          Math.round(totalProduits * 0.03),
+          Math.round(totalProduits * 0.12),
+          Math.round(totalProduits * 0.05)
+        ];
+      }
+      cpcProduitsPostes.forEach(function(p, i) {
+        lines.push(p.ref + ' ' + p.label + ',' + prodDist[i] + ' FCFA');
+      });
+      var sumProd = prodDist.reduce(function(a, b) { return a + b; }, 0);
+      lines.push('TOTAL PRODUITS,' + sumProd + ' FCFA');
+
+      lines.push('');
+      lines.push('CHARGES D\'EXPLOITATION');
+      var chargDist;
+      if (d.cpcCharges) {
+        chargDist = cpcChargesPostes.map(function(p) {
+          return Number(d.cpcCharges[p.ref] || 0);
+        });
+      } else {
+        var totalCharges = sumProd - Number(d.produitNet || 0);
+        if (totalCharges <= 0) totalCharges = Math.round(sumProd * 0.85);
+        chargDist = [
+          Math.round(totalCharges * 0.30),
+          Math.round(totalCharges * 0.25),
+          Math.round(totalCharges * 0.08),
+          Math.round(totalCharges * 0.10),
+          Math.round(totalCharges * 0.07),
+          Math.round(totalCharges * 0.10),
+          Math.round(totalCharges * 0.10)
+        ];
+      }
+      cpcChargesPostes.forEach(function(p, i) {
+        lines.push(p.ref + ' ' + p.label + ',' + chargDist[i] + ' FCFA');
+      });
+      var sumCharg = chargDist.reduce(function(a, b) { return a + b; }, 0);
+      lines.push('TOTAL CHARGES,' + sumCharg + ' FCFA');
+      lines.push('RESULTAT NET,' + (sumProd - sumCharg) + ' FCFA');
 
       var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
       var link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = 'rapport-financier-syscohada-' + (d.periode || 'export') + '.csv';
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       URL.revokeObjectURL(link.href);
       showToast('Export CSV SYSCOHADA genere.', 'success');
     }
 
     // --- Export PDF ---
     async function exportPDF() {
+      var dateDebut = document.getElementById('dateDebut').value;
+      var dateFin = document.getElementById('dateFin').value;
+
+      var url = '/api/v1/reporting/export?type=financier&format=PDF';
+      if (dateDebut) url += '&dateDebut=' + dateDebut;
+      if (dateFin) url += '&dateFin=' + dateFin;
+
       try {
-        var res = await SF.apiFetch('/api/v1/reporting/export?type=financier&format=PDF');
+        var res = await SF.apiFetch(url);
         if (res && res.ok) {
           var data = await res.json();
           if (data && data.contenuBase64) {
@@ -1126,7 +1254,9 @@
             var link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = 'rapport-financier-syscohada.pdf';
+            document.body.appendChild(link);
             link.click();
+            document.body.removeChild(link);
             URL.revokeObjectURL(link.href);
             showToast('Export PDF telecharge.', 'success');
           } else {

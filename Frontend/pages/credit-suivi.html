@@ -1,138 +1,880 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Suivi Crédit - MicroFinance</title>
-  <link rel="stylesheet" href="../assets/css/backoffice.css">
-</head>
-<body>
-  <div class="app-layout">
-    <aside class="sidebar"></aside>
-    <div class="main-content">
-      <header class="topbar">
-        <div class="topbar-left">
-          <div>
-            <div class="topbar-title">Suivi crédit</div>
-            <div class="topbar-breadcrumb">Accueil / Crédits / Suivi avancé</div>
-          </div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Suivi Avancé des Crédits - MicroFinance</title>
+        <link rel="stylesheet" href="../assets/css/backoffice.css" />
+        <style>
+            .action-fields {
+                display: none;
+                margin-top: 12px;
+            }
+            .credit-search-result {
+                background: #f0f6fa;
+                border-radius: 8px;
+                padding: 12px 16px;
+                margin-top: 8px;
+                display: none;
+            }
+            .statut-chip {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                background: #e8f1f5;
+                border-radius: 20px;
+                padding: 4px 12px;
+                font-size: 12px;
+                font-weight: 600;
+                color: #084355;
+            }
+            .action-btn-group {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-top: 12px;
+            }
+            .empty-row td {
+                text-align: center;
+                padding: 32px;
+                color: #4a7a8a;
+                font-size: 13px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app-layout">
+            <aside class="sidebar"></aside>
+            <div class="main-content">
+                <header class="topbar">
+                    <div class="topbar-left">
+                        <div>
+                            <div class="topbar-title">
+                                Suivi avancé des crédits
+                            </div>
+                            <div class="topbar-breadcrumb">
+                                Crédits / Suivi avancé
+                            </div>
+                        </div>
+                    </div>
+                    <div class="topbar-right"></div>
+                </header>
+
+                <div class="content-area">
+                    <!-- KPIs -->
+                    <div
+                        class="kpi-grid"
+                        style="
+                            grid-template-columns: repeat(4, 1fr);
+                            margin-bottom: 24px;
+                        "
+                    >
+                        <div class="kpi-card">
+                            <div class="kpi-icon orange">
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="8" x2="12" y2="12" />
+                                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                                </svg>
+                            </div>
+                            <div class="kpi-info">
+                                <div class="kpi-label">Crédits en retard</div>
+                                <div class="kpi-value" id="kpiRetard">—</div>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon red">
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="15" y1="9" x2="9" y2="15" />
+                                    <line x1="9" y1="9" x2="15" y2="15" />
+                                </svg>
+                            </div>
+                            <div class="kpi-info">
+                                <div class="kpi-label">En souffrance</div>
+                                <div class="kpi-value" id="kpiSouffrance">
+                                    —
+                                </div>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon blue">
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path d="M12 20h9" />
+                                    <path
+                                        d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+                                    />
+                                </svg>
+                            </div>
+                            <div class="kpi-info">
+                                <div class="kpi-label">En instruction</div>
+                                <div class="kpi-value" id="kpiInstruction">
+                                    —
+                                </div>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon green">
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path
+                                        d="M22 11.08V12a10 10 0 1 1-5.93-9.14"
+                                    />
+                                    <polyline points="22 4 12 14.01 9 11.01" />
+                                </svg>
+                            </div>
+                            <div class="kpi-info">
+                                <div class="kpi-label">En cours</div>
+                                <div class="kpi-value" id="kpiEnCours">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        style="
+                            display: grid;
+                            grid-template-columns: 1fr 380px;
+                            gap: 24px;
+                            align-items: start;
+                        "
+                    >
+                        <!-- COLONNE GAUCHE : tableaux -->
+                        <div>
+                            <!-- Crédits EN_RETARD -->
+                            <div class="card" style="margin-bottom: 20px">
+                                <div class="card-header">
+                                    <div class="card-title">
+                                        Crédits en retard
+                                    </div>
+                                    <span
+                                        class="badge badge-pending"
+                                        id="retardCount"
+                                        >0</span
+                                    >
+                                </div>
+                                <div style="overflow-x: auto">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Référence</th>
+                                                <th>Client</th>
+                                                <th>Montant accordé</th>
+                                                <th>Reste dû</th>
+                                                <th>Statut</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="retardBody">
+                                            <tr>
+                                                <td
+                                                    colspan="6"
+                                                    class="empty-row"
+                                                >
+                                                    Chargement…
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Crédits EN_SOUFFRANCE -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-title">
+                                        Crédits en souffrance
+                                    </div>
+                                    <span
+                                        class="badge badge-error"
+                                        id="souffranceCount"
+                                        >0</span
+                                    >
+                                </div>
+                                <div style="overflow-x: auto">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Référence</th>
+                                                <th>Client</th>
+                                                <th>Montant accordé</th>
+                                                <th>Reste dû</th>
+                                                <th>Statut</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="souffranceBody">
+                                            <tr>
+                                                <td
+                                                    colspan="6"
+                                                    class="empty-row"
+                                                >
+                                                    Chargement…
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- COLONNE DROITE : actions rapides -->
+                        <div class="card" style="position: sticky; top: 20px">
+                            <div class="card-header">
+                                <div class="card-title">Actions crédit</div>
+                            </div>
+
+                            <!-- Recherche du crédit -->
+                            <div class="form-group">
+                                <label class="form-label"
+                                    >Référence du crédit</label
+                                >
+                                <div style="display: flex; gap: 8px">
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="actionCreditRef"
+                                        placeholder="CRD-20260629-1634"
+                                        style="flex: 1"
+                                    />
+                                    <button
+                                        class="btn btn-outline btn-sm"
+                                        onclick="rechercherCreditAction()"
+                                    >
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            style="width: 14px; height: 14px"
+                                        >
+                                            <circle cx="11" cy="11" r="8" />
+                                            <line
+                                                x1="21"
+                                                y1="21"
+                                                x2="16.65"
+                                                y2="16.65"
+                                            />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Résultat recherche -->
+                            <div class="credit-search-result" id="creditFound">
+                                <div
+                                    style="
+                                        font-size: 11px;
+                                        color: #4a7a8a;
+                                        margin-bottom: 4px;
+                                    "
+                                >
+                                    Crédit trouvé
+                                </div>
+                                <div
+                                    style="font-weight: 700; color: #084355"
+                                    id="foundRef"
+                                >
+                                    —
+                                </div>
+                                <div
+                                    style="
+                                        font-size: 12px;
+                                        color: #4a7a8a;
+                                        margin: 2px 0;
+                                    "
+                                    id="foundClient"
+                                >
+                                    —
+                                </div>
+                                <div style="margin-top: 6px">
+                                    <span class="statut-chip" id="foundStatut"
+                                        >—</span
+                                    >
+                                </div>
+                                <!-- Boutons d'action contextuels -->
+                                <div
+                                    class="action-btn-group"
+                                    id="actionBtns"
+                                ></div>
+                            </div>
+
+                            <div
+                                style="
+                                    background: #fff3e0;
+                                    border-radius: 8px;
+                                    padding: 10px 12px;
+                                    margin-top: 12px;
+                                    font-size: 12px;
+                                    color: #e65100;
+                                "
+                                id="actionNotFound"
+                                style="display: none"
+                            >
+                                Aucun crédit trouvé avec cette référence.
+                            </div>
+
+                            <!-- Formulaire Restructuration (conditionnel) -->
+                            <div class="action-fields" id="restructForm">
+                                <div
+                                    style="
+                                        border-top: 1px solid #e8f1f5;
+                                        margin: 12px 0;
+                                    "
+                                ></div>
+                                <div
+                                    style="
+                                        font-size: 13px;
+                                        font-weight: 600;
+                                        color: #084355;
+                                        margin-bottom: 10px;
+                                    "
+                                >
+                                    Restructuration
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label"
+                                        >Nouvelle durée (mois) *</label
+                                    >
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        id="restructDuree"
+                                        placeholder="24"
+                                        min="1"
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label"
+                                        >Nouveau taux annuel (%) —
+                                        optionnel</label
+                                    >
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        id="restructTaux"
+                                        placeholder="Laisser vide pour garder le taux actuel"
+                                        min="0"
+                                        step="0.01"
+                                    />
+                                </div>
+                                <div style="display: flex; gap: 8px">
+                                    <button
+                                        class="btn btn-outline btn-sm"
+                                        onclick="fermerFormulaire()"
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        class="btn btn-primary btn-sm"
+                                        onclick="confirmerRestructuration()"
+                                    >
+                                        Confirmer
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Formulaire Garantie (conditionnel) -->
+                            <div class="action-fields" id="garantieForm">
+                                <div
+                                    style="
+                                        border-top: 1px solid #e8f1f5;
+                                        margin: 12px 0;
+                                    "
+                                ></div>
+                                <div
+                                    style="
+                                        font-size: 13px;
+                                        font-weight: 600;
+                                        color: #084355;
+                                        margin-bottom: 10px;
+                                    "
+                                >
+                                    Ajouter une garantie
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label"
+                                        >Type de garantie *</label
+                                    >
+                                    <select
+                                        class="form-control"
+                                        id="garantieType"
+                                    >
+                                        <option value="CAUTION">
+                                            Caution personnelle
+                                        </option>
+                                        <option value="HYPOTHEQUE">
+                                            Hypothèque
+                                        </option>
+                                        <option value="NANTISSEMENT">
+                                            Nantissement
+                                        </option>
+                                        <option value="SALAIRE">
+                                            Cession sur salaire
+                                        </option>
+                                        <option value="AUTRE">Autre</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label"
+                                        >Valeur estimée (FCFA) *</label
+                                    >
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        id="garantieValeur"
+                                        placeholder="0"
+                                        min="0"
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label"
+                                        >Description</label
+                                    >
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="garantieDesc"
+                                        placeholder="Précisions sur la garantie"
+                                    />
+                                </div>
+                                <div style="display: flex; gap: 8px">
+                                    <button
+                                        class="btn btn-outline btn-sm"
+                                        onclick="fermerFormulaire()"
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        class="btn btn-primary btn-sm"
+                                        onclick="confirmerGarantie()"
+                                    >
+                                        Ajouter
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /content-area -->
+            </div>
+            <!-- /main-content -->
         </div>
-        <div class="topbar-right"></div>
-      </header>
 
-      <main class="content-area">
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">Suivi avancé des crédits</h1>
-            <p class="page-subtitle">Instruction, garanties, restructuration, échéances en retard et passation.</p>
-          </div>
-          <button class="btn btn-primary" onclick="showToast('Dossier crédit ouvert.', 'info')">Ouvrir dossier</button>
-        </div>
+        <div class="toast-container"></div>
+        <script src="../assets/js/app.js"></script>
+        <script>
+            /* ── helpers ─────────────────────────────────────────── */
+            var STATUT_LABELS = {
+                EN_COURS: "En cours",
+                APPROUVE: "Approuvé",
+                DECAISSE: "Décaissé",
+                EN_RETARD: "En retard",
+                SOLDE: "Soldé",
+                EN_SOUFFRANCE: "Souffrance",
+                INSTRUCTION: "Instruction",
+                REJETE: "Rejeté",
+            };
+            var STATUT_CLS = {
+                EN_COURS: "badge-active",
+                APPROUVE: "badge-info",
+                DECAISSE: "badge-active",
+                EN_RETARD: "badge-pending",
+                SOLDE: "badge-inactive",
+                EN_SOUFFRANCE: "badge-error",
+                INSTRUCTION: "badge-info",
+                REJETE: "badge-error",
+            };
 
-        <section class="kpi-grid">
-          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Échéances en retard</div><div class="kpi-value">31</div><div class="kpi-trend down">8 critiques</div></div></div>
-          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Restructurations</div><div class="kpi-value">5</div><div class="kpi-trend up">En cours</div></div></div>
-          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Garanties à compléter</div><div class="kpi-value">12</div><div class="kpi-trend down">Avant décaissement</div></div></div>
-          <div class="kpi-card"><div class="kpi-info"><div class="kpi-label">Passations pertes</div><div class="kpi-value">2</div><div class="kpi-trend down">Validation requise</div></div></div>
-        </section>
+            function badge(s) {
+                return (
+                    '<span class="badge ' +
+                    (STATUT_CLS[s] || "badge-info") +
+                    '">' +
+                    (STATUT_LABELS[s] || s || "—") +
+                    "</span>"
+                );
+            }
+            function fmt(n) {
+                return Number(n || 0).toLocaleString("fr-FR");
+            }
 
-        <section class="grid-2">
-          <div class="card">
-            <div class="card-header"><div><div class="card-title">Échéances en retard</div><div class="card-subtitle">Endpoint : /api/v1/credits/echeances-retard</div></div></div>
-            <table class="data-table">
-              <thead><tr><th>Crédit</th><th>Client</th><th>Échéance</th><th>Retard</th><th>Montant</th><th>Action</th></tr></thead>
-              <tbody>
-                <tr><td>CR-2026-101</td><td>Yao Patricia</td><td>31/05/2026</td><td><span class="badge badge-danger">3 jours</span></td><td>180 000 FCFA</td><td><button class="btn btn-outline btn-sm">Relancer</button></td></tr>
-                <tr><td>CR-2026-087</td><td>Bamba Konan</td><td>28/05/2026</td><td><span class="badge badge-danger">6 jours</span></td><td>240 000 FCFA</td><td><button class="btn btn-outline btn-sm">Restructurer</button></td></tr>
-              </tbody>
-            </table>
-          </div>
+            function renderTableau(tbodyId, items, countId) {
+                var tbody = document.getElementById(tbodyId);
+                var count = document.getElementById(countId);
+                if (count) count.textContent = items.length;
+                if (!items.length) {
+                    tbody.innerHTML =
+                        '<tr><td colspan="6" class="empty-row">Aucun crédit dans cette catégorie.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = items
+                    .map(function (c) {
+                        var montant = Number(c.montantAccorde || 0);
+                        var reste = Number(c.montantRestantDu || 0);
+                        return (
+                            "<tr>" +
+                            '<td><strong style="font-family:monospace;font-size:12px;color:#084355;">' +
+                            (c.referenceCredit || "CR-" + c.idCredit) +
+                            "</strong></td>" +
+                            "<td>" +
+                            (c.nomClient || "—") +
+                            "</td>" +
+                            "<td>" +
+                            fmt(montant) +
+                            ' <span style="font-size:11px;color:#4A7A8A;">FCFA</span></td>' +
+                            '<td style="font-weight:600;color:#D93025;">' +
+                            fmt(reste) +
+                            ' <span style="font-size:11px;color:#4A7A8A;">FCFA</span></td>' +
+                            "<td>" +
+                            badge(c.statutCredit) +
+                            "</td>" +
+                            '<td><button class="btn btn-sm btn-outline" style="font-size:11px;padding:3px 8px;" ' +
+                            'onclick="voirCredit(' +
+                            c.idCredit +
+                            ')">Voir →</button></td>' +
+                            "</tr>"
+                        );
+                    })
+                    .join("");
+            }
 
-          <div class="card">
-            <div class="card-header"><div><div class="card-title">Actions crédit</div><div class="card-subtitle">Endpoints : /instruire, /approuver, /garanties, /restructurer, /passation</div></div></div>
-            <div class="form-group"><label class="form-label">Crédit cible</label><input class="form-control" placeholder="CR-2026-..."></div>
-            <div class="form-group"><label class="form-label">Action</label><select class="form-control"><option>Instruire</option><option>Approuver</option><option>Ajouter garantie</option><option>Restructurer</option><option>Passation en perte</option></select></div>
-            <div class="form-group"><label class="form-label">Commentaire</label><textarea class="form-control" placeholder="Motif et éléments de décision"></textarea></div>
-            <button class="btn btn-primary btn-block" onclick="showToast('Action crédit enregistrée.', 'success')">Soumettre</button>
-          </div>
-        </section>
+            function voirCredit(id) {
+                sessionStorage.setItem("sf_credit_id", String(id));
+                window.location.href = "credit-detail.html?id=" + id;
+            }
 
-        <section class="card">
-          <div class="card-header"><div><div class="card-title">Garanties à régulariser</div><div class="card-subtitle">Endpoint : /api/v1/credits/{idCredit}/garanties</div></div></div>
-          <table class="data-table">
-            <thead><tr><th>Crédit</th><th>Client</th><th>Type garantie</th><th>Valeur estimée</th><th>Document</th><th>Statut</th></tr></thead>
-            <tbody>
-              <tr><td>CR-2026-120</td><td>Diallo Moussa</td><td>Caution</td><td>1 500 000 FCFA</td><td>Manquant</td><td><span class="badge badge-warning">À compléter</span></td></tr>
-              <tr><td>CR-2026-118</td><td>Kouamé Aya</td><td>Salaire</td><td>900 000 FCFA</td><td>Reçu</td><td><span class="badge badge-active">Validée</span></td></tr>
-            </tbody>
-          </table>
-        </section>
-      </main>
-    </div>
-  </div>
-  <div class="toast-container"></div>
-  <script src="../assets/js/app.js"></script>
-  <script>
-    async function chargerEcheancesRetard() {
-      try {
-        const res = await Credits.echeancesRetard();
-        if (!res || !res.ok) throw new Error('Erreur');
-        const echeances = await res.json();
-        const tbody = document.querySelector('.data-table tbody');
-        tbody.innerHTML = '';
-        echeances.forEach(e => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${e.numeroCredit || e.idCredit}</td>
-            <td>${e.nomClient || '-'}</td>
-            <td>${e.dateEcheance ? new Date(e.dateEcheance).toLocaleDateString('fr-FR') : '-'}</td>
-            <td><span class="badge badge-danger">${e.joursRetard || 0} jours</span></td>
-            <td>${(e.montantEcheance || 0).toLocaleString('fr-FR')} FCFA</td>
-            <td><button class="btn btn-outline btn-sm" onclick="location.href='credit-detail.html?id=${e.idCredit}'">Voir</button></td>
-          `;
-          tbody.appendChild(tr);
-        });
-      } catch (e) {
-        showToast('Impossible de charger les échéances en retard', 'error');
-      }
-    }
+            /* ── KPIs ────────────────────────────────────────────── */
+            async function chargerKpis() {
+                try {
+                    var [rRetard, rSouffrance, rInstruction, rEnCours] =
+                        await Promise.all([
+                            Credits.lister("EN_RETARD", null, 0, 1),
+                            Credits.lister("EN_SOUFFRANCE", null, 0, 1),
+                            Credits.lister("INSTRUCTION", null, 0, 1),
+                            Credits.lister("EN_COURS", null, 0, 1),
+                        ]);
+                    var sets = [
+                        [rRetard, "kpiRetard"],
+                        [rSouffrance, "kpiSouffrance"],
+                        [rInstruction, "kpiInstruction"],
+                        [rEnCours, "kpiEnCours"],
+                    ];
+                    for (var i = 0; i < sets.length; i++) {
+                        var res = sets[i][0];
+                        var elId = sets[i][1];
+                        if (res && res.ok) {
+                            var d = await res.json();
+                            document.getElementById(elId).textContent = (
+                                d.totalElements || 0
+                            ).toLocaleString("fr-FR");
+                        }
+                    }
+                } catch (e) {
+                    console.warn("KPIs suivi:", e);
+                }
+            }
 
-    async function executerActionCredit() {
-      const idCredit = prompt('ID du crédit ?');
-      if (!idCredit) return;
-      const action = document.querySelector('.grid-2 select').value;
-      try {
-        let res;
-        if (action === 'Instruire') res = await Credits.instruire(idCredit);
-        else if (action === 'Approuver') res = await Credits.approuver(idCredit);
-        else if (action === 'Passation en perte') res = await Credits.passerSouffrance(idCredit);
-        else if (action === 'Restructurer') {
-          const duree = prompt('Nouvelle durée (mois) ?');
-          if (!duree) return;
-          res = await Credits.restructurer(idCredit, parseInt(duree));
-        } else if (action === 'Ajouter garantie') {
-          const type = prompt('Type de garantie ?');
-          const valeur = prompt('Valeur estimée ?');
-          if (!type) return;
-          res = await Credits.ajouterGaranties(idCredit, [{
-            typeGarantie: type,
-            description: type,
-            valeurEstimee: valeur ? parseFloat(valeur) : 0
-          }]);
-        }
-        if (res && res.ok) {
-          showToast('Action ' + action + ' effectuée', 'success');
-        } else {
-          const err = await res.json().catch(() => ({}));
-          showToast(err.message || 'Erreur', 'error');
-        }
-      } catch (e) {
-        showToast(e.message || 'Erreur réseau', 'error');
-      }
-    }
+            /* ── Tableaux EN_RETARD + EN_SOUFFRANCE ──────────────── */
+            async function chargerListe(statut, tbodyId, countId) {
+                var tbody = document.getElementById(tbodyId);
+                tbody.innerHTML =
+                    '<tr><td colspan="6" class="empty-row">Chargement…</td></tr>';
+                try {
+                    var res = await Credits.lister(statut, null, 0, 50);
+                    if (!res || !res.ok)
+                        throw new Error("HTTP " + (res ? res.status : "err"));
+                    var data = await res.json();
+                    renderTableau(tbodyId, data.content || [], countId);
+                } catch (e) {
+                    document.getElementById(tbodyId).innerHTML =
+                        '<tr><td colspan="6" class="empty-row" style="color:#D93025;">Erreur : ' +
+                        e.message +
+                        "</td></tr>";
+                }
+            }
 
-    document.querySelector('.grid-2 .btn-primary').onclick = executerActionCredit;
-    chargerEcheancesRetard();
-  </script>
-</body>
+            /* ── Recherche & actions ─────────────────────────────── */
+            var _creditAction = null; // crédit chargé pour les actions
+
+            async function rechercherCreditAction() {
+                var ref = document
+                    .getElementById("actionCreditRef")
+                    .value.trim();
+                if (!ref) {
+                    showToast("Saisissez une référence de crédit.", "warning");
+                    return;
+                }
+
+                document.getElementById("creditFound").style.display = "none";
+                document.getElementById("actionNotFound").style.display =
+                    "none";
+                fermerFormulaire();
+
+                try {
+                    // Chercher dans la liste (filtre côté client sur la référence)
+                    var res = await Credits.lister("", null, 0, 200);
+                    if (!res || !res.ok) throw new Error("err");
+                    var data = await res.json();
+                    var items = data.content || [];
+                    var found = items.find(function (c) {
+                        return (
+                            (c.referenceCredit || "").toLowerCase() ===
+                                ref.toLowerCase() || String(c.idCredit) === ref
+                        );
+                    });
+
+                    if (!found) {
+                        document.getElementById(
+                            "actionNotFound",
+                        ).style.display = "block";
+                        return;
+                    }
+
+                    _creditAction = found;
+                    document.getElementById("foundRef").textContent =
+                        found.referenceCredit || "CR-" + found.idCredit;
+                    document.getElementById("foundClient").textContent =
+                        found.nomClient || "—";
+                    document.getElementById("foundStatut").textContent =
+                        STATUT_LABELS[found.statutCredit] || found.statutCredit;
+                    renderActionBtns(found.statutCredit);
+                    document.getElementById("creditFound").style.display =
+                        "block";
+                } catch (e) {
+                    showToast(
+                        "Erreur lors de la recherche : " + e.message,
+                        "error",
+                    );
+                }
+            }
+
+            function renderActionBtns(statut) {
+                var div = document.getElementById("actionBtns");
+                var btns = "";
+
+                if (statut === "INSTRUCTION") {
+                    btns +=
+                        '<button class="btn btn-primary btn-sm" onclick="execAction(\'approuver\')">✓ Approuver</button>';
+                }
+                if (
+                    [
+                        "DECAISSE",
+                        "EN_COURS",
+                        "EN_RETARD",
+                        "EN_SOUFFRANCE",
+                    ].includes(statut)
+                ) {
+                    btns +=
+                        '<button class="btn btn-outline btn-sm" onclick="showForm(\'restructForm\')">↺ Restructurer</button>';
+                    btns +=
+                        '<button class="btn btn-outline btn-sm" onclick="showForm(\'garantieForm\')">+ Garantie</button>';
+                }
+                if (["EN_RETARD", "EN_SOUFFRANCE"].includes(statut)) {
+                    btns +=
+                        '<button class="btn btn-sm" style="background:#D93025;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:12px;" ' +
+                        'onclick="confirmerPassation()">⚠ Passer en souffrance</button>';
+                }
+                if (!btns) {
+                    btns =
+                        '<div style="font-size:12px;color:#4A7A8A;padding:8px 0;">Aucune action disponible pour le statut <strong>' +
+                        (STATUT_LABELS[statut] || statut) +
+                        "</strong>.</div>";
+                }
+                div.innerHTML = btns;
+            }
+
+            async function execAction(action) {
+                if (!_creditAction) return;
+                var id = _creditAction.idCredit;
+                try {
+                    var res;
+                    if (action === "approuver")
+                        res = await Credits.approuver(id);
+                    if (!res || !res.ok) {
+                        var err = await res.json().catch(function () {
+                            return {};
+                        });
+                        throw new Error(
+                            err.message || "Erreur HTTP " + res.status,
+                        );
+                    }
+                    var credit = await res.json();
+                    showToast(
+                        "Action effectuée — nouveau statut : " +
+                            (STATUT_LABELS[credit.statutCredit] ||
+                                credit.statutCredit),
+                        "success",
+                    );
+                    _creditAction = credit;
+                    document.getElementById("foundStatut").textContent =
+                        STATUT_LABELS[credit.statutCredit] ||
+                        credit.statutCredit;
+                    renderActionBtns(credit.statutCredit);
+                    chargerListe("EN_RETARD", "retardBody", "retardCount");
+                    chargerKpis();
+                } catch (e) {
+                    showToast(e.message || "Erreur", "error");
+                }
+            }
+
+            function confirmerPassation() {
+                if (!_creditAction) return;
+                if (
+                    !confirm(
+                        "Confirmer la passation en souffrance du crédit " +
+                            (_creditAction.referenceCredit ||
+                                _creditAction.idCredit) +
+                            " ?",
+                    )
+                )
+                    return;
+                Credits.passerSouffrance(_creditAction.idCredit)
+                    .then(function (res) {
+                        if (res && res.ok) {
+                            showToast("Crédit passé en souffrance.", "success");
+                            res.json().then(function (c) {
+                                _creditAction = c;
+                                document.getElementById(
+                                    "foundStatut",
+                                ).textContent =
+                                    STATUT_LABELS[c.statutCredit] ||
+                                    c.statutCredit;
+                                renderActionBtns(c.statutCredit);
+                                chargerListe(
+                                    "EN_SOUFFRANCE",
+                                    "souffranceBody",
+                                    "souffranceCount",
+                                );
+                                chargerKpis();
+                            });
+                        } else {
+                            res.json()
+                                .catch(function () {
+                                    return {};
+                                })
+                                .then(function (e) {
+                                    showToast(e.message || "Erreur", "error");
+                                });
+                        }
+                    })
+                    .catch(function (e) {
+                        showToast(e.message || "Erreur réseau", "error");
+                    });
+            }
+
+            async function confirmerRestructuration() {
+                if (!_creditAction) return;
+                var duree = parseInt(
+                    document.getElementById("restructDuree").value,
+                );
+                var taux = document.getElementById("restructTaux").value.trim();
+                if (!duree || duree < 1) {
+                    showToast("Durée invalide.", "error");
+                    return;
+                }
+                try {
+                    var res = await Credits.restructurer(
+                        _creditAction.idCredit,
+                        duree,
+                        taux ? parseFloat(taux) : null,
+                    );
+                    if (!res || !res.ok) {
+                        var err = await res.json().catch(function () {
+                            return {};
+                        });
+                        throw new Error(err.message || "Erreur");
+                    }
+                    showToast("Restructuration enregistrée.", "success");
+                    fermerFormulaire();
+                    chargerListe("EN_RETARD", "retardBody", "retardCount");
+                } catch (e) {
+                    showToast(e.message || "Erreur", "error");
+                }
+            }
+
+            async function confirmerGarantie() {
+                if (!_creditAction) return;
+                var type = document.getElementById("garantieType").value;
+                var valeur = parseFloat(
+                    document.getElementById("garantieValeur").value,
+                );
+                var desc = document.getElementById("garantieDesc").value.trim();
+                if (!valeur || valeur <= 0) {
+                    showToast("Valeur estimée invalide.", "error");
+                    return;
+                }
+                try {
+                    var res = await Credits.ajouterGaranties(
+                        _creditAction.idCredit,
+                        [
+                            {
+                                typeGarantie: type,
+                                description: desc || type,
+                                valeurEstimee: valeur,
+                            },
+                        ],
+                    );
+                    if (!res || !res.ok) {
+                        var err = await res.json().catch(function () {
+                            return {};
+                        });
+                        throw new Error(err.message || "Erreur");
+                    }
+                    showToast("Garantie ajoutée avec succès.", "success");
+                    fermerFormulaire();
+                } catch (e) {
+                    showToast(e.message || "Erreur", "error");
+                }
+            }
+
+            function showForm(id) {
+                document
+                    .querySelectorAll(".action-fields")
+                    .forEach(function (el) {
+                        el.style.display = "none";
+                    });
+                var el = document.getElementById(id);
+                if (el) el.style.display = "block";
+            }
+
+            function fermerFormulaire() {
+                document
+                    .querySelectorAll(".action-fields")
+                    .forEach(function (el) {
+                        el.style.display = "none";
+                    });
+            }
+
+            // Rechercher aussi en appuyant sur Entrée
+            document
+                .getElementById("actionCreditRef")
+                .addEventListener("keydown", function (e) {
+                    if (e.key === "Enter") rechercherCreditAction();
+                });
+
+            /* ── Init ────────────────────────────────────────────── */
+            chargerKpis();
+            chargerListe("EN_RETARD", "retardBody", "retardCount");
+            chargerListe("EN_SOUFFRANCE", "souffranceBody", "souffranceCount");
+        </script>
+    </body>
 </html>

@@ -5,6 +5,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Simulation Crédit - MicroFinance</title>
   <link rel="stylesheet" href="../assets/css/backoffice.css">
+  <style>
+    .autocomplete-wrapper { position: relative; }
+    .autocomplete-list {
+      position: absolute; top: 100%; left: 0; right: 0; z-index: 999;
+      background: #fff; border: 1px solid #C9DFE8; border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(8,67,85,.12); max-height: 220px;
+      overflow-y: auto; display: none;
+    }
+    .autocomplete-list.open { display: block; }
+    .autocomplete-item {
+      padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #F0F6FA;
+      font-size: 13px;
+    }
+    .autocomplete-item:hover { background: #F0F6FA; }
+    .autocomplete-item:last-child { border-bottom: none; }
+    .autocomplete-item strong { color: #084355; display: block; font-size: 14px; }
+    .autocomplete-item small { color: #4A7A8A; }
+    .product-limits {
+      display: none; background: #EAF5FB; border: 1px solid #B2DAEC; border-radius: 8px;
+      padding: 10px 14px; font-size: 12px; color: #084355; margin-top: -8px;
+    }
+    .product-limits.visible { display: flex; gap: 16px; flex-wrap: wrap; }
+    .product-limits span { font-weight: 600; }
+    .echancier-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 12px; }
+    .echancier-table th { background: #084355; color: #fff; padding: 8px 10px; text-align: left; font-weight: 600; font-size: 11px; }
+    .echancier-table td { padding: 7px 10px; border-bottom: 1px solid #E8F1F5; }
+    .echancier-table tr:nth-child(even) td { background: #F7FBFD; }
+    .echeancier-card { display: none; }
+    .echeancier-card.visible { display: block; }
+    .tag-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+    }
+    .tag-badge.DEGRESSIF { background: #E8F4F8; color: #084355; }
+    .tag-badge.LINEAIRE { background: #FEF3E2; color: #B45309; }
+    .selected-client-badge {
+      display: none; background: #EAF5FB; border: 1px solid #B2DAEC;
+      border-radius: 8px; padding: 8px 12px; font-size: 13px; color: #084355;
+      align-items: center; gap: 10px; margin-top: 4px;
+    }
+    .selected-client-badge.visible { display: flex; }
+    .selected-client-badge button {
+      background: none; border: none; color: #D93025; cursor: pointer;
+      font-size: 16px; margin-left: auto; padding: 0;
+    }
+  </style>
 </head>
 <body>
   <div class="app-layout">
@@ -14,7 +60,7 @@
       <header class="topbar">
         <div class="topbar-left">
           <div>
-            <div class="topbar-title">Simulation & Demande de Crédit</div>
+            <div class="topbar-title">Simulation &amp; Demande de Crédit</div>
             <div class="topbar-breadcrumb">Crédits / Simulation</div>
           </div>
         </div>
@@ -29,84 +75,102 @@
       <div class="content-area">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
           <!-- LEFT: SAISIE -->
-          <div class="card">
-            <div class="card-title" style="font-size: 18px; margin-bottom: 24px;">Paramètres du crédit</div>
+          <div>
+            <div class="card" style="margin-bottom: 24px;">
+              <div class="card-title" style="font-size: 18px; margin-bottom: 24px;">Paramètres du crédit</div>
 
-            <div class="form-group">
-              <label class="form-label">Client *</label>
-              <input type="text" class="form-control" placeholder="Rechercher un client..." id="creditClientSearch">
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Produit de crédit *</label>
-              <select class="form-control" id="creditProduct" onchange="onProductChange()">
-                <option value="">Sélectionner un produit...</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Montant demandé *</label>
-              <div class="input-group">
-                <input type="number" class="form-control" placeholder="0" id="creditAmount" min="100000" oninput="simulateCredit()">
-                <span class="input-addon">FCFA</span>
+              <!-- Recherche client -->
+              <div class="form-group">
+                <label class="form-label">Client *</label>
+                <div class="autocomplete-wrapper">
+                  <input type="text" class="form-control" placeholder="Rechercher par nom ou code client..." id="creditClientSearch" autocomplete="off" oninput="rechercherClient(this.value)">
+                  <div class="autocomplete-list" id="clientList"></div>
+                </div>
+                <div class="selected-client-badge" id="selectedClientBadge">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <span id="selectedClientName">—</span>
+                  <button onclick="clearClient()" title="Effacer">✕</button>
+                </div>
+                <input type="hidden" id="creditClientId">
               </div>
-              <div style="font-size: 11px; color: #4A7A8A; margin-top: 4px;">Min: 100 000 FCFA - Max: 50 000 000 FCFA</div>
-            </div>
 
-            <div class="form-group">
-              <label class="form-label">Durée (mois) *</label>
-              <input type="range" id="creditDuration" min="6" max="60" value="24" step="6" oninput="simulateCredit()" style="width:100%;accent-color:#084355;">
-              <div style="display:flex;justify-content:space-between;font-size:12px;color:#4A7A8A;">
-                <span>6 mois</span>
-                <span id="durationDisplay" style="font-weight:700;color:#084355;font-size:14px;">24 mois</span>
-                <span>60 mois</span>
+              <!-- Produit de crédit -->
+              <div class="form-group">
+                <label class="form-label">Produit de crédit *</label>
+                <select class="form-control" id="creditProduct" onchange="onProductChange()">
+                  <option value="">Sélectionner un produit...</option>
+                </select>
+                <div class="product-limits" id="productLimits">
+                  Montant : <span id="limitMontant">—</span> &nbsp;|&nbsp;
+                  Durée : <span id="limitDuree">—</span> &nbsp;|&nbsp;
+                  Méthode : <span id="limitMethode">—</span>
+                </div>
               </div>
-            </div>
 
-            <div class="form-group">
-              <label class="form-label">Objet du crédit *</label>
-              <input type="text" class="form-control" id="creditObjet" placeholder="Ex: Achat de matériel">
-            </div>
+              <!-- Montant -->
+              <div class="form-group">
+                <label class="form-label">Montant demandé *</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" placeholder="0" id="creditAmount" min="100000" oninput="simulateCredit()">
+                  <span class="input-addon">FCFA</span>
+                </div>
+                <div style="font-size: 11px; color: #4A7A8A; margin-top: 4px;" id="amountHint">Min: 100 000 FCFA – Max: 50 000 000 FCFA</div>
+              </div>
 
-            <div class="form-group">
-              <label class="form-label">ID Client *</label>
-              <input type="number" class="form-control" id="creditClientId" placeholder="ID client">
-            </div>
+              <!-- Durée -->
+              <div class="form-group">
+                <label class="form-label">Durée (mois) *</label>
+                <input type="range" id="creditDuration" min="6" max="60" value="24" step="6" oninput="simulateCredit()" style="width:100%;accent-color:#084355;">
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:#4A7A8A;">
+                  <span id="rangeMin">6 mois</span>
+                  <span id="durationDisplay" style="font-weight:700;color:#084355;font-size:14px;">24 mois</span>
+                  <span id="rangeMax">60 mois</span>
+                </div>
+              </div>
 
-            <div class="form-group">
-              <label class="form-label">Garantie</label>
-              <select class="form-control" id="creditGarantie">
-                <option value="">Sélectionner...</option>
-                <option value="salaire">Domiciliation de salaire</option>
-                <option value="hypothecaire">Hypothèque immobilière</option>
-                <option value="vehicule">Nantissement véhicule</option>
-                <option value="caution">Caution solidaire</option>
-              </select>
-            </div>
+              <!-- Objet -->
+              <div class="form-group">
+                <label class="form-label">Objet du crédit *</label>
+                <input type="text" class="form-control" id="creditObjet" placeholder="Ex: Achat de matériel, fonds de roulement...">
+              </div>
 
-            <button class="btn btn-primary btn-lg btn-block" onclick="submitCreditRequest()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              Soumettre le dossier
-            </button>
+              <!-- Garantie -->
+              <div class="form-group">
+                <label class="form-label">Garantie</label>
+                <select class="form-control" id="creditGarantie">
+                  <option value="">Sélectionner...</option>
+                  <option value="salaire">Domiciliation de salaire</option>
+                  <option value="hypothecaire">Hypothèque immobilière</option>
+                  <option value="vehicule">Nantissement véhicule</option>
+                  <option value="caution">Caution solidaire</option>
+                </select>
+              </div>
+
+              <button class="btn btn-primary btn-lg btn-block" id="submitBtn" onclick="submitCreditRequest()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Soumettre le dossier
+              </button>
+            </div>
           </div>
 
-          <!-- RIGHT: SIMULATION -->
+          <!-- RIGHT: SIMULATION + ECHEANCIER -->
           <div>
             <div class="card" style="margin-bottom: 16px;">
               <div class="card-title" style="font-size: 18px; margin-bottom: 20px;">Simulation</div>
-              
+
               <div style="text-align: center; padding: 20px 0; border-bottom: 1px solid #C9DFE8; margin-bottom: 16px;">
                 <div style="font-size: 12px; color: #4A7A8A; margin-bottom: 4px;">Mensualité estimée</div>
-                <div style="font-size: 36px; font-weight: 800; color: #084355;" id="monthlyPayment">0 FCFA</div>
+                <div style="font-size: 36px; font-weight: 800; color: #084355;" id="monthlyPayment">— FCFA</div>
+                <div style="font-size: 11px; color: #4A7A8A; margin-top: 4px;" id="simSource"></div>
               </div>
 
               <div class="info-row">
                 <span class="info-label">Montant du crédit</span>
-                <span class="info-value" id="simAmount">0 FCFA</span>
+                <span class="info-value" id="simAmount">— FCFA</span>
               </div>
               <div class="info-row">
-                <span class="info-label">Taux d'intérêt</span>
-                <span class="info-value" id="simRate">-</span>
+                <span class="info-label">Taux d'intérêt annuel</span>
+                <span class="info-value" id="simRate">—</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Durée</span>
@@ -114,18 +178,41 @@
               </div>
               <div class="info-row">
                 <span class="info-label">Total intérêts</span>
-                <span class="info-value" id="simInterest" style="color: #D93025;">0 FCFA</span>
+                <span class="info-value" id="simInterest" style="color: #D93025;">— FCFA</span>
               </div>
               <div class="info-row" style="background: #F0F6FA; border-radius: 8px; padding: 10px 14px; margin-top: 8px;">
                 <span class="info-label" style="font-weight: 700;">Coût total du crédit</span>
-                <span class="info-value" style="font-size: 16px;" id="simTotal">0 FCFA</span>
+                <span class="info-value" style="font-size: 16px;" id="simTotal">— FCFA</span>
               </div>
             </div>
 
-            <div class="card">
-              <div class="card-title" style="margin-bottom: 12px;">Répartition</div>
+            <div class="card" style="margin-bottom: 16px;">
+              <div class="card-title" style="margin-bottom: 12px;">Répartition capital / intérêts</div>
               <div class="chart-container" style="height: 180px;">
                 <canvas id="creditPieChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Tableau d'échéances (affiché après simulation backend) -->
+            <div class="card echeancier-card" id="echeancierCard">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <div class="card-title" style="margin:0;">Tableau d'amortissement</div>
+                <button class="btn btn-sm" style="font-size:12px;padding:4px 10px;" onclick="toggleEcheancier()">Réduire</button>
+              </div>
+              <div style="overflow-x:auto;max-height:300px;overflow-y:auto;">
+                <table class="echancier-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Date</th>
+                      <th>Capital</th>
+                      <th>Intérêts</th>
+                      <th>Mensualité</th>
+                      <th>Capital restant</th>
+                    </tr>
+                  </thead>
+                  <tbody id="echeancierBody"></tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -138,9 +225,75 @@
   <script src="../assets/js/app.js"></script>
   <script src="../assets/js/chart.min.js"></script>
   <script>
-    let produits = [];
-    let pieChart;
+    /* =====================================================
+       Credit Simulation Page – Connected to backend
+       ===================================================== */
 
+    let produits = [];
+    let pieChart = null;
+    let selectedClient = null;
+    let _searchDebounce = null;
+    let _simDebounce = null;
+    let _echeancierVisible = true;
+
+    // ── Format helpers ─────────────────────────────────
+    function fmt(n) {
+      return Number(n || 0).toLocaleString('fr-FR') + ' FCFA';
+    }
+    function fmtDate(dateStr) {
+      if (!dateStr) return '—';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    // ── Client autocomplete ────────────────────────────
+    function rechercherClient(q) {
+      if (_searchDebounce) clearTimeout(_searchDebounce);
+      const list = document.getElementById('clientList');
+      if (!q || q.length < 2) { list.classList.remove('open'); return; }
+      _searchDebounce = setTimeout(async function () {
+        try {
+          const res = await Clients.lister('/api/v1/clients?search=' + encodeURIComponent(q) + '&page=0&size=8');
+          if (!res || !res.ok) return;
+          const data = await res.json();
+          const items = data.content || data || [];
+          if (!items.length) { list.innerHTML = '<div class="autocomplete-item">Aucun client trouvé</div>'; list.classList.add('open'); return; }
+          list.innerHTML = items.map(c =>
+            `<div class="autocomplete-item" onclick="selectClient(${c.idClient || c.id}, '${(c.nom || '') + ' ' + (c.prenom || '')}', '${c.codeClient || ''}')">
+              <strong>${c.nom || ''} ${c.prenom || ''}</strong>
+              <small>${c.codeClient || ''} — ${c.telephone || ''}</small>
+            </div>`
+          ).join('');
+          list.classList.add('open');
+        } catch (e) { console.warn('Erreur recherche client:', e); }
+      }, 300);
+    }
+
+    function selectClient(id, nom, code) {
+      selectedClient = { id, nom: nom.trim(), code };
+      document.getElementById('creditClientId').value = id;
+      document.getElementById('creditClientSearch').value = '';
+      document.getElementById('clientList').classList.remove('open');
+      const badge = document.getElementById('selectedClientBadge');
+      document.getElementById('selectedClientName').textContent = nom.trim() + (code ? ' (' + code + ')' : '');
+      badge.classList.add('visible');
+    }
+
+    function clearClient() {
+      selectedClient = null;
+      document.getElementById('creditClientId').value = '';
+      document.getElementById('creditClientSearch').value = '';
+      document.getElementById('selectedClientBadge').classList.remove('visible');
+    }
+
+    // Close autocomplete on outside click
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.autocomplete-wrapper')) {
+        document.getElementById('clientList').classList.remove('open');
+      }
+    });
+
+    // ── Load credit products ────────────────────────────
     async function chargerProduits() {
       try {
         const res = await ProduitsCredit.actifs();
@@ -151,88 +304,117 @@
         produits.forEach(p => {
           const opt = document.createElement('option');
           opt.value = p.codeProduit;
-          opt.textContent = p.libelle + ' (Taux: ' + (p.tauxInteretAnnuel || 0) + '%/an)';
+          opt.textContent = p.libelle + ' – ' + (p.tauxInteretAnnuel || 0) + '%/an';
           opt.dataset.taux = p.tauxInteretAnnuel;
+          opt.dataset.montantMin = p.montantMin;
+          opt.dataset.montantMax = p.montantMax;
+          opt.dataset.dureeMin = p.dureeMinMois;
+          opt.dataset.dureeMax = p.dureeMaxMois;
+          opt.dataset.methode = p.methodeCalcul || 'DEGRESSIF';
           select.appendChild(opt);
         });
       } catch (e) {
-        showToast('Impossible de charger les produits crédit', 'error');
+        showToast('Impossible de charger les produits crédit. Vérifiez votre connexion.', 'error');
       }
     }
 
-    function getTauxProduit() {
+    function getSelectedProduitData() {
       const select = document.getElementById('creditProduct');
       const opt = select.options[select.selectedIndex];
-      return parseFloat(opt.dataset.taux) || 0;
+      if (!opt || !opt.value) return null;
+      return {
+        codeProduit: opt.value,
+        taux: parseFloat(opt.dataset.taux) || 0,
+        montantMin: parseInt(opt.dataset.montantMin) || 100000,
+        montantMax: parseInt(opt.dataset.montantMax) || 50000000,
+        dureeMin: parseInt(opt.dataset.dureeMin) || 6,
+        dureeMax: parseInt(opt.dataset.dureeMax) || 60,
+        methode: opt.dataset.methode || 'DEGRESSIF'
+      };
     }
 
     function onProductChange() {
+      const p = getSelectedProduitData();
+      const limits = document.getElementById('productLimits');
+      const slider = document.getElementById('creditDuration');
+      const amountInput = document.getElementById('creditAmount');
+
+      if (p) {
+        // Update slider range
+        slider.min = p.dureeMin;
+        slider.max = p.dureeMax;
+        slider.value = Math.min(Math.max(parseInt(slider.value) || 24, p.dureeMin), p.dureeMax);
+        document.getElementById('rangeMin').textContent = p.dureeMin + ' mois';
+        document.getElementById('rangeMax').textContent = p.dureeMax + ' mois';
+        // Update amount hints
+        amountInput.min = p.montantMin;
+        amountInput.max = p.montantMax;
+        document.getElementById('amountHint').textContent =
+          'Min: ' + p.montantMin.toLocaleString('fr-FR') + ' FCFA – Max: ' + p.montantMax.toLocaleString('fr-FR') + ' FCFA';
+        // Show limits bar
+        document.getElementById('limitMontant').textContent =
+          p.montantMin.toLocaleString('fr-FR') + ' – ' + p.montantMax.toLocaleString('fr-FR') + ' FCFA';
+        document.getElementById('limitDuree').textContent = p.dureeMin + ' – ' + p.dureeMax + ' mois';
+        document.getElementById('limitMethode').innerHTML =
+          '<span class="tag-badge ' + p.methode + '">' + p.methode + '</span>';
+        limits.classList.add('visible');
+      } else {
+        limits.classList.remove('visible');
+        slider.min = 6; slider.max = 60;
+        document.getElementById('rangeMin').textContent = '6 mois';
+        document.getElementById('rangeMax').textContent = '60 mois';
+      }
       simulateCredit();
     }
 
-    // Cache du dernier tableau d'echeances pour ne pas re-frapper le backend
-    // a chaque frappe utilisateur (debounce simple).
-    let _simDebounce = null;
-
+    // ── Simulation ──────────────────────────────────────
     function simulateCredit() {
-      const product = document.getElementById('creditProduct').value;
+      const p = getSelectedProduitData();
       const amount = parseInt(document.getElementById('creditAmount').value) || 0;
       const duration = parseInt(document.getElementById('creditDuration').value);
 
       document.getElementById('durationDisplay').textContent = duration + ' mois';
+      document.getElementById('simDuration').textContent = duration + ' mois';
 
-      if (!product || amount <= 0) {
-        document.getElementById('monthlyPayment').textContent = '0 FCFA';
-        document.getElementById('simAmount').textContent = '0 FCFA';
-        document.getElementById('simRate').textContent = '-';
-        document.getElementById('simInterest').textContent = '0 FCFA';
-        document.getElementById('simTotal').textContent = '0 FCFA';
+      if (!p || amount <= 0) {
+        document.getElementById('monthlyPayment').textContent = '— FCFA';
+        document.getElementById('simAmount').textContent = '— FCFA';
+        document.getElementById('simRate').textContent = '—';
+        document.getElementById('simInterest').textContent = '— FCFA';
+        document.getElementById('simTotal').textContent = '— FCFA';
+        document.getElementById('simSource').textContent = '';
+        document.getElementById('echeancierCard').classList.remove('visible');
         return;
       }
 
-      const taux = getTauxProduit();
-      document.getElementById('simAmount').textContent = amount.toLocaleString('fr-FR') + ' FCFA';
-      document.getElementById('simRate').textContent = taux + '%/an';
-      document.getElementById('simDuration').textContent = duration + ' mois';
+      document.getElementById('simAmount').textContent = fmt(amount);
+      document.getElementById('simRate').textContent = p.taux + '%/an';
 
-      // Debounce pour eviter de spammer le backend pendant la saisie
       if (_simDebounce) clearTimeout(_simDebounce);
-      _simDebounce = setTimeout(function () { appelSimulationBackend(amount, taux, duration); }, 250);
+      _simDebounce = setTimeout(() => appelSimulationBackend(amount, p.taux, duration, p.methode), 350);
     }
 
-    // Appelle POST /api/v1/credits/simulation et agrege le tableau d'echeances
-    // pour produire mensualite / total interets / cout total. En cas d'erreur
-    // (backend down, taux=0, etc.), fallback sur un calcul local.
-    async function appelSimulationBackend(amount, taux, duration) {
+    async function appelSimulationBackend(amount, taux, duration, methode) {
       try {
-        const res = await Credits.simuler(amount, taux, duration, 'DEGRESSIF');
-        if (!res || !res.ok) throw new Error('Erreur simulation (' + (res ? res.status : 'no res') + ')');
+        const res = await Credits.simuler(amount, taux, duration, methode || 'DEGRESSIF');
+        if (!res || !res.ok) throw new Error('HTTP ' + (res ? res.status : 'err'));
         const echeances = await res.json();
-        if (!Array.isArray(echeances) || echeances.length === 0) throw new Error('Aucune echeance retournee');
+        if (!Array.isArray(echeances) || !echeances.length) throw new Error('Aucune échéance');
 
-        const totalCapital = echeances.reduce(function (s, e) { return s + Number(e.montantCapital || 0); }, 0);
-        const totalInteret = echeances.reduce(function (s, e) { return s + Number(e.montantInteret || 0); }, 0);
-        const totalPaye = echeances.reduce(function (s, e) { return s + Number(e.montantTotal || 0); }, 0);
+        const totalCapital = echeances.reduce((s, e) => s + Number(e.montantCapital || 0), 0);
+        const totalInteret = echeances.reduce((s, e) => s + Number(e.montantInteret || 0), 0);
+        const totalPaye = echeances.reduce((s, e) => s + Number(e.montantTotal || 0), 0);
         const mensualite = Number(echeances[0].montantTotal || 0);
 
-        document.getElementById('monthlyPayment').textContent = Math.round(mensualite).toLocaleString('fr-FR') + ' FCFA';
-        document.getElementById('simInterest').textContent = Math.round(totalInteret).toLocaleString('fr-FR') + ' FCFA';
-        document.getElementById('simTotal').textContent = Math.round(totalPaye).toLocaleString('fr-FR') + ' FCFA';
+        document.getElementById('monthlyPayment').textContent = fmt(Math.round(mensualite));
+        document.getElementById('simInterest').textContent = fmt(Math.round(totalInteret));
+        document.getElementById('simTotal').textContent = fmt(Math.round(totalPaye));
+        document.getElementById('simSource').textContent = '✓ Calculé par le backend (' + methode + ')';
 
-        if (pieChart) pieChart.destroy();
-        pieChart = new Chart(document.getElementById('creditPieChart').getContext('2d'), {
-          type: 'doughnut',
-          data: {
-            labels: ['Capital', 'Intérêts'],
-            datasets: [{ data: [Math.round(totalCapital), Math.round(totalInteret)], backgroundColor: ['#8cd5fa', '#fab482'], borderWidth: 0 }]
-          },
-          options: {
-            responsive: true, maintainAspectRatio: false, cutout: '60%',
-            plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } } }
-          }
-        });
+        renderPieChart(Math.round(totalCapital), Math.round(totalInteret));
+        renderEcheancier(echeances);
       } catch (e) {
-        // Fallback : calcul local si le backend repond pas / refuse
+        console.warn('Simulation backend échouée, fallback local:', e.message);
         calculSimulationLocal(amount, taux, duration);
       }
     }
@@ -250,23 +432,61 @@
         totalPayment = monthly * duration;
         totalInterest = totalPayment - amount;
       }
-      document.getElementById('monthlyPayment').textContent = Math.round(monthly).toLocaleString('fr-FR') + ' FCFA';
-      document.getElementById('simInterest').textContent = Math.round(totalInterest).toLocaleString('fr-FR') + ' FCFA';
-      document.getElementById('simTotal').textContent = Math.round(totalPayment).toLocaleString('fr-FR') + ' FCFA';
+      document.getElementById('monthlyPayment').textContent = fmt(Math.round(monthly));
+      document.getElementById('simInterest').textContent = fmt(Math.round(totalInterest));
+      document.getElementById('simTotal').textContent = fmt(Math.round(totalPayment));
+      document.getElementById('simSource').textContent = '⚠ Estimation locale (mode hors-ligne)';
+      renderPieChart(amount, Math.round(totalInterest));
+      document.getElementById('echeancierCard').classList.remove('visible');
+    }
+
+    function renderPieChart(capital, interets) {
       if (pieChart) pieChart.destroy();
       pieChart = new Chart(document.getElementById('creditPieChart').getContext('2d'), {
         type: 'doughnut',
         data: {
           labels: ['Capital', 'Intérêts'],
-          datasets: [{ data: [amount, Math.round(totalInterest)], backgroundColor: ['#8cd5fa', '#fab482'], borderWidth: 0 }]
+          datasets: [{ data: [capital, interets], backgroundColor: ['#8cd5fa', '#fab482'], borderWidth: 0 }]
         },
         options: {
-          responsive: true, maintainAspectRatio: false, cutout: '60%',
-          plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } } }
+          responsive: true, maintainAspectRatio: false, cutout: '65%',
+          plugins: {
+            legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } },
+            tooltip: {
+              callbacks: {
+                label: function (ctx) {
+                  return ' ' + ctx.label + ': ' + Number(ctx.raw).toLocaleString('fr-FR') + ' FCFA';
+                }
+              }
+            }
+          }
         }
       });
     }
 
+    function renderEcheancier(echeances) {
+      const tbody = document.getElementById('echeancierBody');
+      tbody.innerHTML = echeances.map((e, i) =>
+        `<tr>
+          <td>${i + 1}</td>
+          <td>${e.dateEcheance ? fmtDate(e.dateEcheance) : '—'}</td>
+          <td>${Number(e.montantCapital || 0).toLocaleString('fr-FR')}</td>
+          <td style="color:#D93025;">${Number(e.montantInteret || 0).toLocaleString('fr-FR')}</td>
+          <td style="font-weight:600;">${Number(e.montantTotal || 0).toLocaleString('fr-FR')}</td>
+          <td>${Number(e.capitalRestantDu || e.encoursDu || 0).toLocaleString('fr-FR')}</td>
+        </tr>`
+      ).join('');
+      document.getElementById('echeancierCard').classList.add('visible');
+    }
+
+    function toggleEcheancier() {
+      const card = document.getElementById('echeancierCard');
+      _echeancierVisible = !_echeancierVisible;
+      card.querySelector('div:last-child').style.display = _echeancierVisible ? '' : 'none';
+      card.querySelector('button').textContent = _echeancierVisible ? 'Réduire' : 'Déployer';
+    }
+
+    // ── Submit demande ──────────────────────────────────
     async function submitCreditRequest() {
       const idClient = parseInt(document.getElementById('creditClientId').value);
       const codeProduit = document.getElementById('creditProduct').value;
@@ -274,12 +494,17 @@
       const duree = parseInt(document.getElementById('creditDuration').value);
       const objet = document.getElementById('creditObjet').value.trim();
 
-      if (!idClient || !codeProduit || !montant || !duree || !objet) {
-        showToast('Veuillez remplir tous les champs obligatoires', 'error');
-        return;
-      }
+      if (!idClient) { showToast('Veuillez sélectionner un client', 'error'); return; }
+      if (!codeProduit) { showToast('Veuillez sélectionner un produit de crédit', 'error'); return; }
+      if (!montant || montant <= 0) { showToast('Veuillez saisir un montant valide', 'error'); return; }
+      if (!duree) { showToast('Veuillez saisir une durée', 'error'); return; }
+      if (!objet) { showToast('Veuillez préciser l\'objet du crédit', 'error'); return; }
 
       const user = SF.getUser();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Envoi en cours...';
+
       try {
         const res = await Credits.soumettreDemande({
           idClient: idClient,
@@ -289,21 +514,32 @@
           objetCredit: objet,
           idAgentCredit: user ? user.idUtilisateur : null
         });
+
         if (res && res.ok) {
-          showToast('Demande de crédit soumise avec succès', 'success');
+          const demande = await res.json().catch(() => ({}));
+          showToast('✓ Demande de crédit #' + (demande.idDemande || '') + ' soumise avec succès', 'success');
+          // Reset form
+          clearClient();
+          document.getElementById('creditProduct').value = '';
+          document.getElementById('creditAmount').value = '';
+          document.getElementById('creditObjet').value = '';
+          document.getElementById('productLimits').classList.remove('visible');
+          document.getElementById('echeancierCard').classList.remove('visible');
+          onProductChange();
         } else {
           const err = await res.json().catch(() => ({}));
-          showToast(err.message || 'Erreur lors de la soumission', 'error');
+          showToast(err.message || 'Erreur lors de la soumission de la demande', 'error');
         }
       } catch (e) {
-        showToast(e.message || 'Erreur réseau', 'error');
+        showToast(e.message || 'Erreur réseau. Vérifiez votre connexion.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Soumettre le dossier';
       }
     }
 
+    // ── Init ───────────────────────────────────────────
     chargerProduits();
   </script>
 </body>
 </html>
-
-
-

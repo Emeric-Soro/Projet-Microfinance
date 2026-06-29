@@ -200,6 +200,12 @@
       return Number(n || 0).toLocaleString('fr-FR');
     }
 
+    function formatChartDate(dateStr) {
+      var d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    }
+
     function getToday() {
       return new Date().toISOString().split('T')[0];
     }
@@ -341,38 +347,47 @@
       var ctx = document.getElementById('dailyVolumesChart').getContext('2d');
 
       // Parse period to generate labels
-      var periode = data.periode || '';
-      var parts = periode.split(' - ');
       var labels = [];
       var depots = [];
       var retraits = [];
       var virements = [];
 
-      if (parts.length === 2) {
-        var start = new Date(parts[0].trim());
-        var end = new Date(parts[1].trim());
-        var diffDays = Math.round((end - start) / (1000 * 60 * 60 * 24));
-        if (diffDays >= 0 && diffDays < 120) {
-          var nbDays = diffDays + 1;
-          var avgDepots = Number(data.totalDepots || 0) / nbDays;
-          var avgRetraits = Number(data.totalRetraits || 0) / nbDays;
-          var avgVirements = Number(data.totalVirements || 0) / nbDays;
+      if (data.detailsJournaliers && data.detailsJournaliers.length) {
+        data.detailsJournaliers.forEach(function(day) {
+          labels.push(formatChartDate(day.date));
+          depots.push(Number(day.depots || 0));
+          retraits.push(Number(day.retraits || 0));
+          virements.push(Number(day.virements || 0));
+        });
+      } else {
+        var periode = data.periode || '';
+        var parts = periode.split(' - ');
+        if (parts.length === 2) {
+          var start = new Date(parts[0].trim());
+          var end = new Date(parts[1].trim());
+          var diffDays = Math.round((end - start) / (1000 * 60 * 60 * 24));
+          if (diffDays >= 0 && diffDays < 120) {
+            var nbDays = diffDays + 1;
+            var avgDepots = Number(data.totalDepots || 0) / nbDays;
+            var avgRetraits = Number(data.totalRetraits || 0) / nbDays;
+            var avgVirements = Number(data.totalVirements || 0) / nbDays;
 
-          for (var i = 0; i < nbDays; i++) {
-            var d = new Date(start);
-            d.setDate(d.getDate() + i);
-            labels.push(d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }));
-            // Distribute with some variance for visual appeal
-            var factor = 0.6 + Math.random() * 0.8;
-            depots.push(Math.round(avgDepots * factor));
-            retraits.push(Math.round(avgRetraits * factor));
-            virements.push(Math.round(avgVirements * factor));
+            for (var i = 0; i < nbDays; i++) {
+              var d = new Date(start);
+              d.setDate(d.getDate() + i);
+              labels.push(d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }));
+              // Distribute with some variance for visual appeal
+              var factor = 0.6 + Math.random() * 0.8;
+              depots.push(Math.round(avgDepots * factor));
+              retraits.push(Math.round(avgRetraits * factor));
+              virements.push(Math.round(avgVirements * factor));
+            }
+          } else {
+            labels = ['Dépôts', 'Retraits', 'Virements'];
+            depots = [Number(data.totalDepots || 0)];
+            retraits = [Number(data.totalRetraits || 0)];
+            virements = [Number(data.totalVirements || 0)];
           }
-        } else {
-          labels = ['Dépôts', 'Retraits', 'Virements'];
-          depots = [Number(data.totalDepots || 0)];
-          retraits = [Number(data.totalRetraits || 0)];
-          virements = [Number(data.totalVirements || 0)];
         }
       }
 
@@ -498,19 +513,48 @@
         'Frais perçus,' + Number(d.montantTotalFrais || 0) + ' FCFA'
       ];
 
+      if (d.activiteGuichetiers && d.activiteGuichetiers.length) {
+        lines.push('');
+        lines.push('ACTIVITE PAR GUICHETIER');
+        lines.push('Utilisateur,Operations,Depots,Retraits,Virements,Frais');
+        d.activiteGuichetiers.forEach(function(g) {
+          lines.push((g.nom || g.login || '—') + ',' + g.nbOperations + ',' + g.volumeDepots + ',' + g.volumeRetraits + ',' + g.volumeVirements + ',' + g.fraisGeneres);
+        });
+      }
+
+      if (d.detailsJournaliers && d.detailsJournaliers.length) {
+        lines.push('');
+        lines.push('DETAILS JOURNALIERS');
+        lines.push('Date,Depots,Retraits,Virements');
+        d.detailsJournaliers.forEach(function(day) {
+          lines.push(day.date + ',' + day.depots + ',' + day.retraits + ',' + day.virements);
+        });
+      }
+
       var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
       var link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = 'rapport-operationnel-' + (d.periode || 'export') + '.csv';
+      link.download = 'rapport-operationnel-' + (d.periode || 'export').replaceAll(' ', '') + '.csv';
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       URL.revokeObjectURL(link.href);
       showToast('Export CSV généré.', 'success');
     }
 
     // --- Export PDF (via backend) ---
     async function exportPDF() {
+      var dateDebut = document.getElementById('dateDebut').value;
+      var dateFin = document.getElementById('dateFin').value;
+      var agenceId = document.getElementById('agenceFilter').value;
+
+      var url = '/api/v1/reporting/export?type=operationnel&format=PDF';
+      if (dateDebut) url += '&dateDebut=' + dateDebut;
+      if (dateFin) url += '&dateFin=' + dateFin;
+      if (agenceId) url += '&agenceId=' + agenceId;
+
       try {
-        var res = await SF.apiFetch('/api/v1/reporting/export?type=operationnel&format=PDF');
+        var res = await SF.apiFetch(url);
         if (res && res.ok) {
           var data = await res.json();
           if (data && data.contenuBase64) {
@@ -523,7 +567,9 @@
             var link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = 'rapport-operationnel.pdf';
+            document.body.appendChild(link);
             link.click();
+            document.body.removeChild(link);
             URL.revokeObjectURL(link.href);
             showToast('Export PDF téléchargé.', 'success');
           } else {

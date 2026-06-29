@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -10,7 +10,7 @@
   <div class="app-layout">
     <aside class="sidebar"></aside>
 
-    <div class="main-content">
+    <div class="main-content" style="min-width: 0; overflow-x: hidden;">
       <header class="topbar">
         <div class="topbar-left">
           <div>
@@ -35,45 +35,56 @@
         <div class="card" style="margin-bottom: 20px; padding: 16px 20px;">
           <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
             <div>
-              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Agent</label>
-              <select class="form-control" style="width: 160px;">
-                <option value="">Tous les agents</option>
-                <option value="AGT-001">AGT-001 (Admin)</option>
-                <option value="AGT-002">AGT-002 (Caissier 1)</option>
-                <option value="AGT-003">AGT-003 (Caissier 2)</option>
+              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Utilisateur</label>
+              <select class="form-control" id="filterUser" style="width: 160px;">
+                <option value="">Tous les utilisateurs</option>
               </select>
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Ressource</label>
+              <select class="form-control" id="filterResource" style="width: 130px;">
+                <option value="">Toutes</option>
+                <option value="SECURITE">SECURITE</option>
+                <option value="CLIENT">CLIENT</option>
+                <option value="COMPTE">COMPTE</option>
+                <option value="CREDIT">CREDIT</option>
+                <option value="TRANSACTION">TRANSACTION</option>
+                <option value="CAISSE">CAISSE</option>
+                <option value="CARTE">CARTE</option>
+                <option value="PARAMETRAGE">PARAMETRAGE</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Action</label>
+              <input type="text" class="form-control" id="filterAction" placeholder="Ex: USER_CREATE" style="width: 140px;">
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">ID Entité</label>
+              <input type="text" class="form-control" id="filterIdEntite" placeholder="Ex: numCompte" style="width: 120px;">
             </div>
             <div>
               <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Date début</label>
-              <input type="date" class="form-control" style="width: 150px;">
+              <input type="date" class="form-control" id="filterDu" style="width: 130px;">
             </div>
             <div>
               <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Date fin</label>
-              <input type="date" class="form-control" style="width: 150px;">
+              <input type="date" class="form-control" id="filterAu" style="width: 130px;">
             </div>
             <div>
-              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Type d'action</label>
-              <select class="form-control" style="width: 130px;">
+              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Statut</label>
+              <select class="form-control" id="filterStatut" style="width: 100px;">
                 <option value="">Tous</option>
-                <option value="INSERT">INSERT</option>
-                <option value="UPDATE">UPDATE</option>
-                <option value="DELETE">DELETE</option>
+                <option value="SUCCESS">SUCCESS</option>
+                <option value="FAILURE">FAILURE</option>
               </select>
             </div>
-            <div>
-              <label style="font-size: 11px; font-weight: 600; color: #4A7A8A; display: block; margin-bottom: 4px;">Table</label>
-              <select class="form-control" style="width: 160px;">
-                <option value="">Toutes les tables</option>
-                <option value="TABLE_CLIENTS">TABLE_CLIENTS</option>
-                <option value="TABLE_COMPTES">TABLE_COMPTES</option>
-                <option value="TABLE_OPERATIONS">TABLE_OPERATIONS</option>
-                <option value="TABLE_AGENTS">TABLE_AGENTS</option>
-              </select>
-            </div>
-            <div style="align-self: flex-end;">
-              <button class="btn btn-secondary btn-sm">
+            <div style="align-self: flex-end; display: flex; gap: 8px;">
+              <button class="btn btn-secondary btn-sm" onclick="appliquerFiltres()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 Filtrer
+              </button>
+              <button class="btn btn-outline btn-sm" onclick="reinitialiserFiltres()">
+                Effacer
               </button>
             </div>
           </div>
@@ -83,9 +94,9 @@
         <div class="card">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <div class="card-title">Journal des modifications</div>
-            <span style="font-size: 12px; color: #4A7A8A;">50 enregistrements max par page</span>
+            <span style="font-size: 12px; color: #4A7A8A;">15 enregistrements max par page</span>
           </div>
-          <div style="overflow-x: auto;">
+          <div style="overflow-x: auto; max-height: 380px; overflow-y: auto; border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 4px;">
             <table class="data-table">
               <thead>
                 <tr>
@@ -165,18 +176,76 @@
           </div>
 
           <div class="pagination">
-            <div class="pagination-info">Affichage 1-6 sur 1 247 entrées d'audit</div>
-            <div class="pagination-buttons">
-              <button class="page-btn">‹</button>
-              <button class="page-btn active">1</button>
-              <button class="page-btn">2</button>
-              <button class="page-btn">3</button>
-              <button class="page-btn">...</button>
-              <button class="page-btn">25</button>
-              <button class="page-btn">›</button>
+            <div class="pagination-info" id="paginationInfo">Affichage...</div>
+            <div class="pagination-buttons" id="paginationButtons"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Détails d'audit -->
+  <div class="modal-overlay" id="auditDetailModal">
+    <div class="modal" style="max-width: 800px; width: 90%;">
+      <div class="modal-header">
+        <div class="modal-title">Détails de l'enregistrement d'audit</div>
+        <button class="modal-close" onclick="closeModal('auditDetailModal')"></button>
+      </div>
+      <div class="modal-body">
+        <div class="audit-details-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <!-- Section gauche: Infos générales -->
+          <div style="display: flex; flex-direction: column; gap: 12px; border-right: 1px solid #E0E8EB; padding-right: 20px;">
+            <h4 style="margin: 0 0 8px 0; color: #4A7A8A; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Informations Générales</h4>
+            
+            <div style="display: flex; justify-content: space-between; font-size: 12px; border-bottom: 1px solid #F4F7F8; padding-bottom: 6px;">
+              <span style="font-weight: 600; color: #4A7A8A;">Horodatage :</span>
+              <span id="modalHorodatage" style="color: #2C3E50;">-</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; border-bottom: 1px solid #F4F7F8; padding-bottom: 6px;">
+              <span style="font-weight: 600; color: #4A7A8A;">Agent :</span>
+              <span id="modalAgent" style="color: #2C3E50;">-</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; border-bottom: 1px solid #F4F7F8; padding-bottom: 6px;">
+              <span style="font-weight: 600; color: #4A7A8A;">Action :</span>
+              <span id="modalAction" style="font-weight: 700;">-</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; border-bottom: 1px solid #F4F7F8; padding-bottom: 6px;">
+              <span style="font-weight: 600; color: #4A7A8A;">Ressource / Table :</span>
+              <span id="modalTable" style="font-family: monospace; color: #2C3E50;">-</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; border-bottom: 1px solid #F4F7F8; padding-bottom: 6px;">
+              <span style="font-weight: 600; color: #4A7A8A;">Enregistrement (ID) :</span>
+              <span id="modalEnregistrement" style="color: #2C3E50;">-</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; border-bottom: 1px solid #F4F7F8; padding-bottom: 6px;">
+              <span style="font-weight: 600; color: #4A7A8A;">Adresse IP :</span>
+              <span id="modalIp" style="font-family: monospace; color: #2C3E50;">-</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; border-bottom: 1px solid #F4F7F8; padding-bottom: 6px;">
+              <span style="font-weight: 600; color: #4A7A8A;">Statut :</span>
+              <span id="modalStatut" style="font-weight: 700;">-</span>
+            </div>
+            <div id="modalErreurContainer" style="display: none; flex-direction: column; gap: 4px; background: rgba(217,48,37,0.08); padding: 8px 12px; border-radius: 4px; border-left: 3px solid #D93025;">
+              <span style="font-weight: 600; color: #D93025; font-size: 11px;">Message d'erreur :</span>
+              <span id="modalErreur" style="font-size: 11px; color: #2C3E50;">-</span>
+            </div>
+          </div>
+
+          <!-- Section droite: Comparaison Avant / Après -->
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div>
+              <h4 style="margin: 0 0 6px 0; color: #4A7A8A; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Valeurs Avant Modification</h4>
+              <pre id="modalAvant" style="margin: 0; background: #F4F7F8; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 11px; color: #2C3E50; max-height: 150px; overflow-y: auto; border: 1px solid #E0E8EB; white-space: pre-wrap; word-break: break-all;">—</pre>
+            </div>
+            <div>
+              <h4 style="margin: 0 0 6px 0; color: #4A7A8A; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Valeurs Après Modification</h4>
+              <pre id="modalApres" style="margin: 0; background: #F4F7F8; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 11px; color: #2C3E50; max-height: 150px; overflow-y: auto; border: 1px solid #E0E8EB; white-space: pre-wrap; word-break: break-all;">—</pre>
             </div>
           </div>
         </div>
+      </div>
+      <div class="modal-footer" style="justify-content: flex-end;">
+        <button class="btn btn-outline" onclick="closeModal('auditDetailModal')">Fermer</button>
       </div>
     </div>
   </div>
@@ -184,39 +253,251 @@
   <div class="toast-container"></div>
   <script src="../assets/js/app.js"></script>
   <script>
-    async function chargerAudit() {
+    window.auditLogsList = [];
+    window.currentPage = 0;
+    window.pageSize = 15;
+
+    async function chargerAudit(pageNumber = 0) {
       try {
-        const res = await AuditLogs.lister();
+        window.currentPage = pageNumber;
+        const filters = obtenirFiltres();
+        const res = await AuditLogs.lister(filters, pageNumber, window.pageSize);
         if (!res || !res.ok) throw new Error('Erreur');
         const page = await res.json();
         const logs = page.content || [];
+        window.auditLogsList = logs;
+        
         const tbody = document.querySelector('.data-table tbody');
         tbody.innerHTML = '';
-        logs.forEach(l => {
-          const tr = document.createElement('tr');
-          const actionClass = l.action === 'INSERT' ? 'green' : l.action === 'DELETE' ? 'orange' : 'red';
-          const agent = l.utilisateur ? (typeof l.utilisateur === 'string' ? l.utilisateur : (l.utilisateur.prenom && l.utilisateur.nom ? `${l.utilisateur.prenom} ${l.utilisateur.nom}` : l.utilisateur.login || '-')) : (l.agent || '-');
-          tr.innerHTML = `
-            <td style="font-size:12px;white-space:nowrap;">${l.dateAction ? new Date(l.dateAction).toLocaleString('fr-FR') : (l.horodatage ? new Date(l.horodatage).toLocaleString('fr-FR') : '-')}</td>
-            <td style="font-size:12px;"><span class="badge badge-info">${agent}</span></td>
-            <td><span style="background: ${actionClass === 'green' ? 'rgba(46,125,50,0.12);color:#2E7D32' : actionClass === 'orange' ? 'rgba(250,180,130,0.2);color:#E65100' : 'rgba(217,48,37,0.12);color:#D93025'};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;">${l.action || '-'}</span></td>
-            <td style="font-size:11px;font-family:monospace;">${l.resource || l.table || '-'}</td>
-            <td style="font-size:11px;">${l.id || l.reference || l.enregistrement || '-'}</td>
-            <td style="font-size:11px;color:#4A7A8A;">${l.statut || l.diffAvant || l.ancienneValeur || '—'}</td>
-            <td style="font-size:11px;">${l.messageErreur || l.diffApres || l.nouvelleValeur || '—'}</td>
-            <td style="font-size:11px;font-family:monospace;">${l.adresseIp || l.ip || '-'}</td>
-          `;
-          tbody.appendChild(tr);
-        });
+        if (logs.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#4A7A8A;padding:24px;">Aucun log d\'audit trouvé</td></tr>';
+        } else {
+          logs.forEach((l, index) => {
+            const tr = document.createElement('tr');
+            tr.style.cursor = 'pointer';
+            tr.onclick = () => ouvrirDetailLog(index);
+            const action = l.action || '';
+            const actionClass = (action.includes('CREATE') || action.includes('ADD') || action.includes('OPEN') || action === 'INSERT') ? 'green' 
+                               : (action.includes('DELETE') || action.includes('REMOVE') || action === 'DELETE') ? 'orange' : 'red';
+            const agent = l.utilisateur || '-';
+            const statusBadge = l.statut === 'FAILURE' ? ' <span style="color:#D93025;font-weight:bold;font-size:10px;">(ÉCHEC)</span>' : '';
+            tr.innerHTML = `
+              <td style="font-size:12px;white-space:nowrap;">${l.dateAction ? new Date(l.dateAction).toLocaleString('fr-FR') : '-'}</td>
+              <td style="font-size:12px;"><span class="badge badge-info">${escapeHtml(agent)}</span></td>
+              <td>
+                <span style="background: ${actionClass === 'green' ? 'rgba(46,125,50,0.12);color:#2E7D32' : actionClass === 'orange' ? 'rgba(250,180,130,0.2);color:#E65100' : 'rgba(217,48,37,0.12);color:#D93025'};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;">
+                  ${escapeHtml(l.action || '-')}
+                </span>
+                ${statusBadge}
+              </td>
+              <td style="font-size:11px;font-family:monospace;">${escapeHtml(l.ressource || '-')}</td>
+              <td style="font-size:11px;">${escapeHtml(l.idEntite || '-')}</td>
+              <td style="font-size:11px;color:#4A7A8A;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(l.detailsAvant || '')}">${escapeHtml(l.detailsAvant || '—')}</td>
+              <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(l.detailsApres || '')}">${escapeHtml(l.detailsApres || '—')}</td>
+              <td style="font-size:11px;font-family:monospace;">${escapeHtml(l.adresseIp || '-')}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+        mettreAJourPagination(page);
       } catch (e) {
         showToast('Impossible de charger le journal d\'audit', 'error');
       }
     }
 
-    function exportAudit() {
-      showToast('Export CSV en cours de téléchargement...', 'success');
+    function obtenirFiltres() {
+      const duVal = document.getElementById('filterDu').value;
+      const auVal = document.getElementById('filterAu').value;
+      const filters = {};
+      const user = document.getElementById('filterUser').value;
+      const resource = document.getElementById('filterResource').value;
+      const action = document.getElementById('filterAction').value.trim();
+      const idEntite = document.getElementById('filterIdEntite').value.trim();
+      const statut = document.getElementById('filterStatut').value;
+
+      if (user) filters.utilisateur = user;
+      if (resource) filters.ressource = resource;
+      if (action) filters.action = action;
+      if (idEntite) filters.idEntite = idEntite;
+      if (statut) filters.statut = statut;
+      if (duVal) filters.du = `${duVal}T00:00:00`;
+      if (auVal) filters.au = `${auVal}T23:59:59`;
+      return filters;
     }
 
+    function appliquerFiltres() {
+      chargerAudit(0);
+    }
+
+    function reinitialiserFiltres() {
+      document.getElementById('filterUser').value = '';
+      document.getElementById('filterResource').value = '';
+      document.getElementById('filterAction').value = '';
+      document.getElementById('filterIdEntite').value = '';
+      document.getElementById('filterDu').value = '';
+      document.getElementById('filterAu').value = '';
+      document.getElementById('filterStatut').value = '';
+      chargerAudit(0);
+    }
+
+    function mettreAJourPagination(page) {
+      const totalElements = page.totalElements || 0;
+      const totalPages = page.totalPages || 0;
+      const current = page.number || 0;
+      
+      const start = totalElements === 0 ? 0 : current * window.pageSize + 1;
+      const end = Math.min((current + 1) * window.pageSize, totalElements);
+      document.getElementById('paginationInfo').textContent = `Affichage ${start}-${end} sur ${totalElements} entrées d'audit`;
+      
+      const buttonsContainer = document.getElementById('paginationButtons');
+      buttonsContainer.innerHTML = '';
+      
+      if (totalPages === 0) {
+        const btn = document.createElement('button');
+        btn.className = 'page-btn active disabled';
+        btn.textContent = '1';
+        buttonsContainer.appendChild(btn);
+        return;
+      }
+
+      const prevBtn = document.createElement('button');
+      prevBtn.className = `page-btn ${current === 0 ? 'disabled' : ''}`;
+      prevBtn.textContent = '‹';
+      if (current > 0) prevBtn.onclick = () => chargerAudit(current - 1);
+      buttonsContainer.appendChild(prevBtn);
+
+      const range = 2;
+      for (let i = 0; i < totalPages; i++) {
+        if (i === 0 || i === totalPages - 1 || (i >= current - range && i <= current + range)) {
+          const btn = document.createElement('button');
+          btn.className = `page-btn ${i === current ? 'active' : ''}`;
+          btn.textContent = i + 1;
+          btn.onclick = () => chargerAudit(i);
+          buttonsContainer.appendChild(btn);
+        } else if (i === current - range - 1 || i === current + range + 1) {
+          const dots = document.createElement('button');
+          dots.className = 'page-btn disabled';
+          dots.textContent = '...';
+          buttonsContainer.appendChild(dots);
+        }
+      }
+
+      const nextBtn = document.createElement('button');
+      nextBtn.className = `page-btn ${current === totalPages - 1 ? 'disabled' : ''}`;
+      nextBtn.textContent = '›';
+      if (current < totalPages - 1) nextBtn.onclick = () => chargerAudit(current + 1);
+      buttonsContainer.appendChild(nextBtn);
+    }
+
+    function ouvrirDetailLog(index) {
+      const l = window.auditLogsList[index];
+      if (!l) return;
+
+      const action = l.action || '';
+      const actionClass = (action.includes('CREATE') || action.includes('ADD') || action.includes('OPEN') || action === 'INSERT') ? '#2E7D32' 
+                         : (action.includes('DELETE') || action.includes('REMOVE') || action === 'DELETE') ? '#E65100' : '#D93025';
+      const agent = l.utilisateur || '-';
+
+      document.getElementById('modalHorodatage').textContent = l.dateAction ? new Date(l.dateAction).toLocaleString('fr-FR') : '-';
+      document.getElementById('modalAgent').textContent = agent;
+      
+      const actionEl = document.getElementById('modalAction');
+      actionEl.textContent = l.action || '-';
+      actionEl.style.color = actionClass;
+
+      document.getElementById('modalTable').textContent = l.ressource || '-';
+      document.getElementById('modalEnregistrement').textContent = l.idEntite || '-';
+      document.getElementById('modalIp').textContent = l.adresseIp || '-';
+      
+      const statutEl = document.getElementById('modalStatut');
+      statutEl.textContent = l.statut || '-';
+      statutEl.style.color = l.statut === 'FAILURE' ? '#D93025' : '#2E7D32';
+
+      const errContainer = document.getElementById('modalErreurContainer');
+      if (l.statut === 'FAILURE' && l.messageErreur) {
+        document.getElementById('modalErreur').textContent = l.messageErreur;
+        errContainer.style.display = 'flex';
+      } else {
+        errContainer.style.display = 'none';
+      }
+
+      document.getElementById('modalAvant').textContent = formaterJsonDetail(l.detailsAvant);
+      document.getElementById('modalApres').textContent = formaterJsonDetail(l.detailsApres);
+
+      openModal('auditDetailModal');
+    }
+
+    function formaterJsonDetail(jsonStr) {
+      if (!jsonStr || jsonStr === '—' || jsonStr === '-') return '—';
+      try {
+        const obj = JSON.parse(jsonStr);
+        return JSON.stringify(obj, null, 2);
+      } catch (e) {
+        return jsonStr;
+      }
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    async function chargerUtilisateurs() {
+      try {
+        const res = await Securite.listerUtilisateurs(0, 100);
+        if (res && res.ok) {
+          const page = await res.json();
+          const list = page.content || [];
+          const select = document.getElementById('filterUser');
+          select.innerHTML = '<option value="">Tous les utilisateurs</option>';
+          list.forEach(u => {
+            select.innerHTML += `<option value="${escapeHtml(u.login)}">${escapeHtml(u.login)}</option>`;
+          });
+        }
+      } catch (e) {
+        console.error('Erreur chargement utilisateurs', e);
+      }
+    }
+
+    function exportAudit() {
+      if (!window.auditLogsList || window.auditLogsList.length === 0) {
+        showToast('Aucune donnée à exporter', 'warning');
+        return;
+      }
+      
+      let csv = '\uFEFFHorodatage;Utilisateur;Action;Ressource;ID Entite;Statut;IP;Details Avant;Details Apres\n';
+      
+      window.auditLogsList.forEach(l => {
+        const dateStr = l.dateAction ? new Date(l.dateAction).toLocaleString('fr-FR') : '-';
+        const agent = l.utilisateur || '-';
+        const action = l.action || '-';
+        const resource = l.ressource || '-';
+        const idEntite = l.idEntite || '-';
+        const statut = l.statut || '-';
+        const ip = l.adresseIp || '-';
+        const detailsAvant = (l.detailsAvant || '').replace(/"/g, '""');
+        const detailsApres = (l.detailsApres || '').replace(/"/g, '""');
+        
+        csv += `"${dateStr}";"${agent}";"${action}";"${resource}";"${idEntite}";"${statut}";"${ip}";"${detailsAvant}";"${detailsApres}"\n`;
+      });
+      
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', `journal_audit_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showToast('Export CSV téléchargé avec succès !', 'success');
+    }
+
+    chargerUtilisateurs();
     chargerAudit();
   </script>
 </body>
