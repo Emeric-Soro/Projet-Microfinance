@@ -22,6 +22,9 @@ public interface EcheanceRepository extends JpaRepository<Echeance, Long> {
 	// Echeances en retard (batch de detection des impayes).
 	List<Echeance> findByDateEcheanceBeforeAndEstPayeeFalse(LocalDate date);
 
+	// Echeances impayees pour une date precise.
+	List<Echeance> findByDateEcheanceAndEstPayeeFalse(LocalDate date);
+
 	// Compte le nombre d'echeances impayees d'un credit.
 	long countByCredit_IdCreditAndEstPayeeFalse(Long idCredit);
 

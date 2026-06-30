@@ -9,6 +9,7 @@ import com.soutra.microfinance.repository.client.UtilisateurRepository;
 import com.soutra.microfinance.repository.compte.CompteRepository;
 import com.soutra.microfinance.repository.credit.*;
 import com.soutra.microfinance.service.operation.TransactionService;
+import com.soutra.microfinance.service.communication.EmailService;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,7 @@ public class CreditServiceImpl implements CreditService {
 	private final GarantieRepository garantieRepository;
 	private final AmortissementService amortissementService;
 	private final TransactionService transactionService;
+	private final EmailService emailService;
 
 	public CreditServiceImpl(
 			DemandeCreditRepository demandeCreditRepository,
@@ -54,7 +56,8 @@ public class CreditServiceImpl implements CreditService {
 			CompteRepository compteRepository,
 			GarantieRepository garantieRepository,
 			AmortissementService amortissementService,
-			TransactionService transactionService
+			TransactionService transactionService,
+			EmailService emailService
 	) {
 		this.demandeCreditRepository = demandeCreditRepository;
 		this.creditRepository = creditRepository;
@@ -67,6 +70,7 @@ public class CreditServiceImpl implements CreditService {
 		this.garantieRepository = garantieRepository;
 		this.amortissementService = amortissementService;
 		this.transactionService = transactionService;
+		this.emailService = emailService;
 	}
 
 	@Override
@@ -131,6 +135,7 @@ public class CreditServiceImpl implements CreditService {
 		AuditContext.setDetailsApres(AuditContext.toJson(apres));
 
 		LOGGER.info("Demande de credit {} soumise pour le client {}", saved.getReferenceDemande(), idClient);
+		emailService.envoyerStatutDemandeCredit(saved, "EN_COURS", null);
 		return saved;
 	}
 
@@ -190,6 +195,23 @@ public class CreditServiceImpl implements CreditService {
 		AuditContext.setDetailsApres(AuditContext.toJson(apres));
 
 		LOGGER.info("Demande {} approuvee, credit {} cree", demande.getReferenceDemande(), saved.getReferenceCredit());
+		
+		BigDecimal estMensualite = BigDecimal.ZERO;
+		try {
+			List<Echeance> estEcheances = amortissementService.genererTableau(
+					saved.getMontantAccorde(),
+					saved.getTauxInteretAnnuel(),
+					saved.getDureeMois(),
+					saved.getMethodeCalcul(),
+					LocalDate.now()
+			);
+			if (!estEcheances.isEmpty()) {
+				estMensualite = estEcheances.get(0).getMontantTotal();
+			}
+		} catch (Exception ex) {
+			LOGGER.error("Erreur calcul mensualité estimée pour email", ex);
+		}
+		emailService.envoyerStatutCredit(saved, "APPROUVEE", estMensualite, null);
 		return saved;
 	}
 
@@ -223,6 +245,7 @@ public class CreditServiceImpl implements CreditService {
 		apres.put("motifRejet", saved.getMotifRejet());
 		AuditContext.setDetailsApres(AuditContext.toJson(apres));
 
+		emailService.envoyerStatutDemandeCredit(saved, "REJETEE", motifRejet);
 		return saved;
 	}
 
@@ -299,6 +322,11 @@ public class CreditServiceImpl implements CreditService {
 		apres.put("montantRestantDu", saved.getMontantRestantDu());
 		AuditContext.setDetailsApres(AuditContext.toJson(apres));
 
+		BigDecimal mensualite = BigDecimal.ZERO;
+		if (saved.getEcheances() != null && !saved.getEcheances().isEmpty()) {
+			mensualite = saved.getEcheances().get(0).getMontantTotal();
+		}
+		emailService.envoyerStatutCredit(saved, "DECAISSEMENT", mensualite, null);
 		return saved;
 	}
 

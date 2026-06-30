@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Votre code de validation OTP</title>
+</head>
+<body style="margin: 0; padding: 0;">
+    <div th:replace="~{email/fragments/header :: header}"></div>
+    
+    <h2 style="color: #0f766e; margin-top: 0; font-size: 22px; font-weight: 600;">Code de sécurité temporaire</h2>
+    
+    <p style="font-size: 16px; color: #374151;">Bonjour <span th:text="${prenom}">Client</span>,</p>
+    
+    <p style="font-size: 16px; color: #374151; margin-bottom: 24px;">
+        Pour finaliser votre authentification sur votre espace client Soutra Core Banking, veuillez saisir le code de sécurité à 6 chiffres ci-dessous :
+    </p>
+    
+    <div style="background-color: #f3f4f6; border-radius: 8px; padding: 24px; text-align: center; margin: 32px 0;">
+        <span th:text="${codeOtp}" style="font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: 800; letter-spacing: 6px; color: #0f766e;">123456</span>
+    </div>
+    
+    <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; border-radius: 4px; margin-bottom: 24px;">
+        <p style="margin: 0; font-size: 14px; color: #b91c1c; font-weight: 600;">
+            Ce code est strictement confidentiel et expire dans quelques minutes. Ne le partagez jamais avec qui que ce soit. Nos conseillers ne vous le demanderont jamais.
+        </p>
+    </div>
+    
+    <p style="font-size: 14px; color: #6b7280; margin-top: 24px;">
+        Si vous n'êtes pas à l'origine de cette demande de connexion, nous vous conseillons de modifier immédiatement votre mot de passe et de contacter notre support technique.
+    </p>
+    
+    <div th:replace="~{email/fragments/header :: footer}"></div>
+</body>
+</html>

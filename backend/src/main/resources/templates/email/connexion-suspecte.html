@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Alerte de sécurité - Connexion suspecte</title>
+</head>
+<body style="margin: 0; padding: 0;">
+    <div th:replace="~{email/fragments/header :: header}"></div>
+    
+    <h2 style="color: #dc2626; margin-top: 0; font-size: 22px; font-weight: 600;">🔒 Alerte de sécurité : Connexion suspecte détectée</h2>
+    
+    <p style="font-size: 16px; color: #374151;">Bonjour <span th:text="${prenom}">Client</span>,</p>
+    
+    <p style="font-size: 16px; color: #374151; margin-bottom: 24px;">
+        Nos systèmes ont détecté des tentatives de connexion suspectes ou infructueuses répétées sur votre espace client.
+    </p>
+    
+    <div style="background-color: #fcf8f8; border: 1px solid #f3e8e8; border-radius: 8px; overflow: hidden; margin-bottom: 24px;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tbody>
+                <tr style="border-bottom: 1px solid #f3f4f6;">
+                    <td style="padding: 12px 16px; font-size: 14px; color: #6b7280; width: 40%;">Date/Heure de l'alerte</td>
+                    <td style="padding: 12px 16px; font-size: 14px; color: #111827;" th:text="${dateTentative}">30/06/2026 15:45:00</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f3f4f6;">
+                    <td style="padding: 12px 16px; font-size: 14px; color: #6b7280;">Adresse IP</td>
+                    <td style="padding: 12px 16px; font-size: 14px; color: #111827; font-family: monospace;" th:text="${ipAddress}">192.168.1.1</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f3f4f6;">
+                    <td style="padding: 12px 16px; font-size: 14px; color: #6b7280;">Localisation approximative</td>
+                    <td style="padding: 12px 16px; font-size: 14px; color: #111827;" th:text="${localisation}">Abidjan, Côte d'Ivoire</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px 16px; font-size: 14px; color: #6b7280;">Tentatives échouées</td>
+                    <td style="padding: 12px 16px; font-size: 14px; color: #dc2626; font-weight: 700;" th:text="${nbTentatives}">5 tentatives</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <p style="font-size: 15px; color: #374151; font-weight: 600;">
+        Par mesure de précaution, votre compte d'accès en ligne a été temporairement verrouillé.
+    </p>
+    
+    <p style="font-size: 14px; color: #4b5563; margin-bottom: 24px;">
+        Si vous êtes à l'origine de ces tentatives ou si vous souhaitez déverrouiller votre compte, veuillez modifier votre mot de passe en cliquant sur le lien ci-dessous :
+    </p>
+    
+    <div style="margin: 32px 0; text-align: center;">
+        <a th:href="${changePasswordUrl}" style="background-color: #dc2626; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.2);">
+            Réinitialiser mon mot de passe
+        </a>
+    </div>
+    
+    <p style="font-size: 14px; color: #6b7280;">
+        Si vous n'êtes pas à l'origine de cette activité, veuillez contacter notre support technique au plus vite afin de vérifier l'intégrité de vos comptes et de vos fonds.
+    </p>
+    
+    <div th:replace="~{email/fragments/header :: footer}"></div>
+</body>
+</html>

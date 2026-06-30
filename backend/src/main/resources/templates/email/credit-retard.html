@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Alerte de retard de paiement de crédit</title>
+</head>
+<body style="margin: 0; padding: 0;">
+    <div th:replace="~{email/fragments/header :: header}"></div>
+    
+    <h2 style="color: #dc2626; margin-top: 0; font-size: 22px; font-weight: 600;">⚠️ Alerte : Retard de paiement de crédit</h2>
+    
+    <p style="font-size: 16px; color: #374151;">Bonjour <span th:text="${prenom}">Client</span>,</p>
+    
+    <p style="font-size: 16px; color: #374151; margin-bottom: 24px;">
+        Nous constatons un défaut ou retard de paiement concernant la mensualité de votre prêt à l'échéance indiquée ci-dessous.
+    </p>
+    
+    <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; border-radius: 4px; padding: 20px; margin-bottom: 24px;">
+        <p style="margin: 0 0 8px 0; font-size: 15px; color: #374151;"><strong>Montant impayé :</strong> <span style="color: #dc2626; font-weight: 700;" th:text="${montantImpaye + ' FCFA'}">90,000 FCFA</span></p>
+        <p style="margin: 0 0 8px 0; font-size: 15px; color: #374151;"><strong>Date d'échéance dépassée :</strong> <span th:text="${dateEcheance}">25/06/2026</span></p>
+        <p style="margin: 0; font-size: 15px; color: #374151;"><strong>Pénalité de retard appliquée :</strong> <span th:text="${penalite + ' FCFA'}">5,000 FCFA</span></p>
+    </div>
+    
+    <p style="font-size: 15px; color: #4b5563; margin-bottom: 24px;">
+        Nous vous invitons instamment à approvisionner votre compte dans les plus brefs délais afin de permettre la régularisation automatique de cet impayé.
+    </p>
+    
+    <p style="font-size: 15px; color: #4b5563; margin-bottom: 24px;">
+        Si vous rencontrez des difficultés passagères, n'hésitez pas à vous rapprocher de votre agent de crédit ou de notre service recouvrement pour envisager un étalement de votre dette.
+    </p>
+    
+    <div th:replace="~{email/fragments/header :: footer}"></div>
+</body>
+</html>

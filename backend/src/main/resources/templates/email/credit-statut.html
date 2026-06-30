@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Suivi de votre demande de crédit</title>
+</head>
+<body style="margin: 0; padding: 0;">
+    <div th:replace="~{email/fragments/header :: header}"></div>
+    
+    <div th:switch="${statut}">
+        
+        <!-- ================= STATUT: EN_COURS ================= -->
+        <div th:case="'EN_COURS'">
+            <h2 style="color: #0f766e; margin-top: 0; font-size: 22px; font-weight: 600;">Demande de crédit en cours de traitement</h2>
+            <p style="font-size: 16px; color: #374151;">Bonjour <span th:text="${prenom}">Client</span>,</p>
+            <p style="font-size: 16px; color: #374151; margin-bottom: 24px;">
+                Votre demande de crédit a bien été reçue et est actuellement en cours d'analyse par notre service crédit.
+            </p>
+            <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+                <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280;">Référence demande : <strong style="color: #111827;" th:text="${reference}">DC-123456</strong></p>
+                <p style="margin: 0; font-size: 14px; color: #6b7280;">Montant demandé : <strong style="color: #0f766e;" th:text="${montant + ' FCFA'}">1,000,000 FCFA</strong></p>
+            </div>
+            <p style="font-size: 15px; color: #4b5563;">
+                Nous vous tiendrons informé dès qu'une décision sera prise concernant votre dossier. Vous pouvez suivre l'état de votre demande en temps réel depuis votre espace client.
+            </p>
+        </div>
+        
+        <!-- ================= STATUT: APPROUVEE ================= -->
+        <div th:case="'APPROUVEE'">
+            <h2 style="color: #0f766e; margin-top: 0; font-size: 22px; font-weight: 600;">Félicitations ! Votre demande de crédit a été approuvée ✅</h2>
+            <p style="font-size: 16px; color: #374151;">Bonjour <span th:text="${prenom}">Client</span>,</p>
+            <p style="font-size: 16px; color: #374151; margin-bottom: 24px;">
+                Bonne nouvelle ! Notre comité de crédit a approuvé votre dossier de financement.
+            </p>
+            <div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 4px; padding: 20px; margin-bottom: 24px;">
+                <p style="margin: 0 0 8px 0; font-size: 15px; color: #374151;"><strong>Montant accordé :</strong> <span th:text="${montant + ' FCFA'}">1,000,000 FCFA</span></p>
+                <p style="margin: 0 0 8px 0; font-size: 15px; color: #374151;"><strong>Taux d'intérêt :</strong> <span th:text="${taux + '%'}">12%</span> annuel</p>
+                <p style="margin: 0 0 8px 0; font-size: 15px; color: #374151;"><strong>Durée :</strong> <span th:text="${duree + ' mois'}">12 mois</span></p>
+                <p style="margin: 0; font-size: 15px; color: #374151;"><strong>Mensualité estimée :</strong> <span th:text="${mensualite + ' FCFA'}">90,000 FCFA</span></p>
+            </div>
+            <p style="font-size: 15px; color: #4b5563;">
+                La prochaine étape consiste à finaliser le contrat pour procéder au décaissement des fonds. Vous pouvez consulter les détails et signer votre contrat depuis votre portail client.
+            </p>
+            <div style="margin: 32px 0; text-align: center;">
+                <a th:href="${creditDetailUrl}" style="background-color: #0f766e; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
+                    Voir les détails de mon crédit
+                </a>
+            </div>
+        </div>
+        
+        <!-- ================= STATUT: REJETEE ================= -->
+        <div th:case="'REJETEE'">
+            <h2 style="color: #dc2626; margin-top: 0; font-size: 22px; font-weight: 600;">Mise à jour concernant votre demande de crédit</h2>
+            <p style="font-size: 16px; color: #374151;">Bonjour <span th:text="${prenom}">Client</span>,</p>
+            <p style="font-size: 16px; color: #374151; margin-bottom: 24px;">
+                Nous avons le regret de vous informer que votre demande de crédit n'a pas pu être retenue lors du comité d'étude des dossiers.
+            </p>
+            <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; border-radius: 4px; padding: 20px; margin-bottom: 24px;">
+                <p style="margin: 0; font-size: 14px; color: #b91c1c; font-weight: 600;">
+                    Motif : <span th:text="${motifRejet}">Votre profil d'endettement actuel dépasse les limites réglementaires.</span>
+                </p>
+            </div>
+            <p style="font-size: 15px; color: #4b5563;">
+                Nos conseillers restent à votre entière disposition pour étudier d'autres alternatives ou planifier un rendez-vous afin de restructurer votre dossier.
+            </p>
+        </div>
+        
+        <!-- ================= STATUT: DECAISSEMENT ================= -->
+        <div th:case="'DECAISSEMENT'">
+            <h2 style="color: #0f766e; margin-top: 0; font-size: 22px; font-weight: 600;">Fonds décaissés et disponibles ✅</h2>
+            <p style="font-size: 16px; color: #374151;">Bonjour <span th:text="${prenom}">Client</span>,</p>
+            <p style="font-size: 16px; color: #374151; margin-bottom: 24px;">
+                Nous vous confirmons que le décaissement de votre crédit a été effectué avec succès. Les fonds ont été versés sur votre compte.
+            </p>
+            <div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 4px; padding: 20px; margin-bottom: 24px;">
+                <p style="margin: 0 0 8px 0; font-size: 15px; color: #374151;"><strong>Montant versé :</strong> <span th:text="${montant + ' FCFA'}">1,000,000 FCFA</span></p>
+                <p style="margin: 0 0 8px 0; font-size: 15px; color: #374151;"><strong>Compte crédité :</strong> <span th:text="${numCompte}">1234567890</span></p>
+                <p style="margin: 0; font-size: 15px; color: #374151;"><strong>Mensualité :</strong> <span th:text="${mensualite + ' FCFA'}">90,000 FCFA</span></p>
+            </div>
+            <p style="font-size: 15px; color: #4b5563;">
+                Le tableau d'amortissement définitif de votre prêt est maintenant disponible dans votre espace client. Nous vous invitons à vous assurer de disposer d'un solde suffisant aux dates de prélèvement.
+            </p>
+            <div style="margin: 32px 0; text-align: center;">
+                <a th:href="${creditDetailUrl}" style="background-color: #0f766e; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
+                    Voir l'échéancier de mon prêt
+                </a>
+            </div>
+        </div>
+        
+    </div>
+    
+    <div th:replace="~{email/fragments/header :: footer}"></div>
+</body>
+</html>

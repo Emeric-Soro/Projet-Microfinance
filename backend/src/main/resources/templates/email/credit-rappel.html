@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Rappel d'échéance de crédit</title>
+</head>
+<body style="margin: 0; padding: 0;">
+    <div th:replace="~{email/fragments/header :: header}"></div>
+    
+    <h2 style="color: #d97706; margin-top: 0; font-size: 22px; font-weight: 600;">⚠️ Rappel : Échéance de crédit à venir</h2>
+    
+    <p style="font-size: 16px; color: #374151;">Bonjour <span th:text="${prenom}">Client</span>,</p>
+    
+    <p style="font-size: 16px; color: #374151; margin-bottom: 24px;">
+        Nous vous rappelons que le remboursement de la prochaine mensualité de votre crédit aura lieu dans 3 jours.
+    </p>
+    
+    <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 4px; padding: 20px; margin-bottom: 24px;">
+        <p style="margin: 0 0 8px 0; font-size: 15px; color: #374151;"><strong>Montant de l'échéance :</strong> <span th:text="${montantDue + ' FCFA'}">90,000 FCFA</span></p>
+        <p style="margin: 0 0 8px 0; font-size: 15px; color: #374151;"><strong>Date limite de prélèvement :</strong> <span th:text="${dateEcheance}">03/07/2026</span></p>
+        <p style="margin: 0; font-size: 15px; color: #374151;"><strong>Compte à créditer/débiter :</strong> <span th:text="${numCompte}">1234567890</span></p>
+    </div>
+    
+    <p style="font-size: 15px; color: #4b5563; margin-bottom: 24px;">
+        Afin d'éviter tout retard ou frais de pénalité de retard de paiement, merci de vérifier que le solde disponible sur votre compte est suffisant pour couvrir cette mensualité.
+    </p>
+    
+    <div style="margin: 32px 0; text-align: center;">
+        <a th:href="${creditDetailUrl}" style="background-color: #0f766e; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
+            Consulter les détails du crédit
+        </a>
+    </div>
+    
+    <div th:replace="~{email/fragments/header :: footer}"></div>
+</body>
+</html>

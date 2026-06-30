@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Alerte carte bancaire</title>
+</head>
+<body style="margin: 0; padding: 0;">
+    <div th:replace="~{email/fragments/header :: header}"></div>
+    
+    <h2 style="color: #d97706; margin-top: 0; font-size: 22px; font-weight: 600;">⚠️ Alerte : Activité ou statut de carte bancaire</h2>
+    
+    <p style="font-size: 16px; color: #374151;">Bonjour <span th:text="${prenom}">Client</span>,</p>
+    
+    <p style="font-size: 16px; color: #374151; margin-bottom: 24px;">
+        Nous attirons votre attention sur une information importante concernant votre carte bancaire Visa associée à votre compte Soutra.
+    </p>
+    
+    <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 4px; padding: 20px; margin-bottom: 24px;">
+        <p style="margin: 0 0 8px 0; font-size: 15px; color: #374151;"><strong>Numéro de carte :</strong> <span th:text="${numeroCarte}">4XXX XXXX XXXX 1234</span></p>
+        <p style="margin: 0 0 8px 0; font-size: 15px; color: #374151;"><strong>Type d'alerte :</strong> <strong th:text="${alerteType}">Expiration imminente</strong></p>
+        <p style="margin: 0; font-size: 14px; color: #4b5563;" th:text="${details}">Votre carte Visa arrive à expiration le 31/07/2026. Une nouvelle carte sera disponible en agence sous peu.</p>
+    </div>
+    
+    <p style="font-size: 15px; color: #4b5563; margin-bottom: 24px;">
+        Si l'alerte concerne une suspicion de fraude ou d'utilisation non autorisée, veuillez immédiatement mettre votre carte en opposition depuis votre application mobile ou contacter le support d'opposition disponible 24h/24.
+    </p>
+    
+    <div th:replace="~{email/fragments/header :: footer}"></div>
+</body>
+</html>

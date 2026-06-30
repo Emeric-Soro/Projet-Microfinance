@@ -25,6 +25,7 @@ import com.soutra.microfinance.repository.operation.TransactionRepository;
 import com.soutra.microfinance.repository.operation.TypeTransactionRepository;
 import com.soutra.microfinance.service.communication.event.VirementEffectueEvent;
 import com.soutra.microfinance.service.comptabilite.ComptabiliteOperationnelleService;
+import com.soutra.microfinance.service.communication.EmailService;
 import com.soutra.microfinance.service.operation.fees.TransactionFeeCalculator;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
@@ -62,6 +63,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final ApplicationEventPublisher eventPublisher;
     private final TransactionWorkflowProperties transactionWorkflowProperties;
     private final ComptabiliteOperationnelleService comptabiliteOperationnelleService;
+    private final EmailService emailService;
 
     public TransactionServiceImpl(
             TransactionRepository transactionRepository,
@@ -74,7 +76,8 @@ public class TransactionServiceImpl implements TransactionService {
             TransactionFeeCalculator transactionFeeCalculator,
             ApplicationEventPublisher eventPublisher,
             TransactionWorkflowProperties transactionWorkflowProperties,
-            ComptabiliteOperationnelleService comptabiliteOperationnelleService
+            ComptabiliteOperationnelleService comptabiliteOperationnelleService,
+            EmailService emailService
     ) {
         this.transactionRepository = transactionRepository;
         this.ligneEcritureRepository = ligneEcritureRepository;
@@ -87,6 +90,7 @@ public class TransactionServiceImpl implements TransactionService {
         this.eventPublisher = eventPublisher;
         this.transactionWorkflowProperties = transactionWorkflowProperties;
         this.comptabiliteOperationnelleService = comptabiliteOperationnelleService;
+        this.emailService = emailService;
     }
 
     @Override
@@ -562,6 +566,8 @@ public class TransactionServiceImpl implements TransactionService {
         if (transaction.getFrais().compareTo(BigDecimal.ZERO) > 0) {
             comptabiliteOperationnelleService.creerLigne(transaction, compte, SensEcriture.DEBIT, transaction.getFrais());
         }
+        Compte finalCompte = rechargerCompteTransaction(compte);
+        emailService.envoyerConfirmationDepot(finalCompte, transaction.getMontantGlobal(), finalCompte.getSolde());
     }
 
     private void executerRetrait(Transaction transaction) {
@@ -579,6 +585,8 @@ public class TransactionServiceImpl implements TransactionService {
         if (transaction.getFrais().compareTo(BigDecimal.ZERO) > 0) {
             comptabiliteOperationnelleService.creerLigne(transaction, compte, SensEcriture.DEBIT, transaction.getFrais());
         }
+        Compte finalCompte = rechargerCompteTransaction(compte);
+        emailService.envoyerConfirmationRetrait(finalCompte, transaction.getMontantGlobal(), finalCompte.getSolde());
     }
 
     private void executerVirement(Transaction transaction) {
@@ -599,7 +607,16 @@ public class TransactionServiceImpl implements TransactionService {
             comptabiliteOperationnelleService.creerLigne(transaction, source, SensEcriture.DEBIT, transaction.getFrais());
         }
         comptabiliteOperationnelleService.creerLigne(transaction, destination, SensEcriture.CREDIT, transaction.getMontantGlobal());
-        eventPublisher.publishEvent(new VirementEffectueEvent(destination.getNumCompte(), transaction.getMontantGlobal()));
+        String nomExpediteur = source.getClient().getPrenom() != null 
+                ? source.getClient().getPrenom() + " " + source.getClient().getNom()
+                : source.getClient().getNom();
+        eventPublisher.publishEvent(new VirementEffectueEvent(destination.getNumCompte(), transaction.getMontantGlobal(), nomExpediteur));
+
+        Compte finalSource = rechargerCompteTransaction(source);
+        String nomBeneficiaire = destination.getClient().getPrenom() != null 
+                ? destination.getClient().getPrenom() + " " + destination.getClient().getNom()
+                : destination.getClient().getNom();
+        emailService.envoyerConfirmationVirement(finalSource, nomBeneficiaire, finalSource.getNumCompte(), transaction.getReferenceUnique(), transaction.getMontantGlobal());
     }
 
     private Compte rechargerCompteTransaction(Compte compte) {

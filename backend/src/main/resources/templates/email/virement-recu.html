@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Alerte virement reçu</title>
+</head>
+<body style="margin: 0; padding: 0;">
+    <div th:replace="~{email/fragments/header :: header}"></div>
+    
+    <h2 style="color: #0f766e; margin-top: 0; font-size: 22px; font-weight: 600;">Vous avez reçu un virement !</h2>
+    
+    <p style="font-size: 16px; color: #374151;">Bonjour <span th:text="${prenom}">Client</span>,</p>
+    
+    <p style="font-size: 16px; color: #374151; margin-bottom: 24px;">
+        Un crédit vient d'être enregistré sur votre compte bancaire.
+    </p>
+    
+    <div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 4px; padding: 20px; margin-bottom: 24px; text-align: center;">
+        <p style="margin: 0; font-size: 14px; color: #16a34a; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Montant crédité</p>
+        <p style="margin: 4px 0 0 0; font-size: 32px; font-weight: 800; color: #16a34a;" th:text="${'+' + montant + ' FCFA'}">+10,000 FCFA</p>
+    </div>
+    
+    <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; margin-bottom: 24px;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tbody>
+                <tr style="border-bottom: 1px solid #f3f4f6;">
+                    <td style="padding: 12px 16px; font-size: 14px; color: #6b7280; width: 40%;">Expéditeur</td>
+                    <td style="padding: 12px 16px; font-size: 14px; color: #111827; font-weight: 600;" th:text="${nomExpediteur}">Jean Dupont</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f3f4f6;">
+                    <td style="padding: 12px 16px; font-size: 14px; color: #6b7280;">Compte destinataire</td>
+                    <td style="padding: 12px 16px; font-size: 14px; color: #111827; font-family: monospace;" th:text="${numCompte}">1234567890</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px 16px; font-size: 14px; color: #6b7280;">Nouveau solde disponible</td>
+                    <td style="padding: 12px 16px; font-size: 15px; color: #0f766e; font-weight: 700;" th:text="${nouveauSolde + ' FCFA'}">50,000 FCFA</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <p style="font-size: 14px; color: #6b7280; margin-top: 24px;">
+        Vous pouvez vous connecter à votre espace client à tout moment pour consulter votre solde actualisé et vos relevés d'opérations.
+    </p>
+    
+    <div th:replace="~{email/fragments/header :: footer}"></div>
+</body>
+</html>

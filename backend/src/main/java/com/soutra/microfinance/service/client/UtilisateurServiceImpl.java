@@ -143,7 +143,9 @@ public class UtilisateurServiceImpl implements UtilisateurService {
                 .orElseThrow(() -> new IllegalStateException("Le rôle 'CLIENT' n'est pas configuré en base de données"));
         utilisateur.getRoles().add(roleClient);
 
-        return utilisateurRepository.save(utilisateur);
+        Utilisateur saved = utilisateurRepository.save(utilisateur);
+        emailService.envoyerBienvenue(client);
+        return saved;
     }
 
     @Override
@@ -441,6 +443,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         utilisateur.setMotDePasseModifieLe(LocalDateTime.now());
         utilisateur.setIdentifiantsExpirentLe(LocalDateTime.now().plusDays(authSecurityProperties.getCredentialsValidityDays()));
         utilisateurRepository.save(utilisateur);
+        emailService.envoyerConfirmationChangementMotDePasse(utilisateur);
     }
 
     @Override
@@ -538,6 +541,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         utilisateurTrouve.setNombreEchecsConnexion(0);
         utilisateurTrouve.setCompteVerrouilleJusquAu(null);
         utilisateurRepository.save(utilisateurTrouve);
+        emailService.envoyerConfirmationChangementMotDePasse(utilisateurTrouve);
     }
 
     private Optional<Utilisateur> trouverUtilisateurParLoginOuEmail(String identifiant) {
@@ -581,6 +585,8 @@ public class UtilisateurServiceImpl implements UtilisateurService {
             utilisateur.setNombreEchecsConnexion(0);
             LOGGER.warn("Compte utilisateur {} verrouille apres echecs de connexion", utilisateur.getLogin());
             notificationService.envoyerAlerteConnexionSuspecte(utilisateur.getClient().getIdClient());
+            String ip = getClientIp();
+            emailService.envoyerAlerteConnexionSuspecte(utilisateur, ip, "Localisation indéterminée (Côte d'Ivoire)", authSecurityProperties.getMaxFailedAttempts());
         }
 
         utilisateurRepository.save(utilisateur);
@@ -638,5 +644,22 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         int borne = (int) Math.pow(10, authSecurityProperties.getOtpLength());
         int minimum = borne / 10;
         return String.format("%0" + authSecurityProperties.getOtpLength() + "d", secureRandom.nextInt(minimum, borne));
+    }
+
+    private String getClientIp() {
+        try {
+            org.springframework.web.context.request.RequestAttributes attributes = org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            if (attributes instanceof org.springframework.web.context.request.ServletRequestAttributes) {
+                jakarta.servlet.http.HttpServletRequest request = ((org.springframework.web.context.request.ServletRequestAttributes) attributes).getRequest();
+                String xfHeader = request.getHeader("X-Forwarded-For");
+                if (xfHeader != null && !xfHeader.isBlank()) {
+                    return xfHeader.split(",")[0].trim();
+                }
+                return request.getRemoteAddr();
+            }
+        } catch (Exception e) {
+            // Ignored
+        }
+        return "Adresse IP indéterminée";
     }
 }

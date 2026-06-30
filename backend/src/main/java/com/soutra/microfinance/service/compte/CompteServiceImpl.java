@@ -13,6 +13,7 @@ import com.soutra.microfinance.repository.compte.CompteRepository;
 import com.soutra.microfinance.repository.parametrage.AgenceRepository;
 import com.soutra.microfinance.repository.compte.StatutCompteRepository;
 import com.soutra.microfinance.repository.compte.TypeCompteRepository;
+import com.soutra.microfinance.service.communication.EmailService;
 import org.springframework.beans.factory.annotation.Value;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
@@ -39,6 +40,7 @@ public class CompteServiceImpl implements CompteService {
     private final StatutCompteRepository statutCompteRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final AgenceRepository agenceRepository;
+    private final EmailService emailService;
 
     public CompteServiceImpl(
             CompteRepository compteRepository,
@@ -46,7 +48,8 @@ public class CompteServiceImpl implements CompteService {
             TypeCompteRepository typeCompteRepository,
             StatutCompteRepository statutCompteRepository,
             UtilisateurRepository utilisateurRepository,
-            AgenceRepository agenceRepository
+            AgenceRepository agenceRepository,
+            EmailService emailService
     ) {
         this.compteRepository = compteRepository;
         this.clientRepository = clientRepository;
@@ -54,6 +57,7 @@ public class CompteServiceImpl implements CompteService {
         this.statutCompteRepository = statutCompteRepository;
         this.utilisateurRepository = utilisateurRepository;
         this.agenceRepository = agenceRepository;
+        this.emailService = emailService;
     }
 
     @Override
@@ -254,6 +258,7 @@ public class CompteServiceImpl implements CompteService {
         apres.put("statutCompte", AppConstants.STATUT_COMPTE_BLOQUE);
         AuditContext.setDetailsApres(AuditContext.toJson(apres));
 
+        emailService.envoyerNotificationBlocage(compte, motif);
         return compte;
     }
 

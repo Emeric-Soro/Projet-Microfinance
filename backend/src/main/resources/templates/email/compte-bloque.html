@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Notification de blocage de compte</title>
+</head>
+<body style="margin: 0; padding: 0;">
+    <div th:replace="~{email/fragments/header :: header}"></div>
+    
+    <h2 style="color: #dc2626; margin-top: 0; font-size: 22px; font-weight: 600;">🔒 Notification de blocage de compte</h2>
+    
+    <p style="font-size: 16px; color: #374151;">Bonjour <span th:text="${prenom}">Client</span>,</p>
+    
+    <p style="font-size: 16px; color: #374151; margin-bottom: 24px;">
+        Nous vous informons qu'un blocage administratif a été temporairement appliqué sur votre compte.
+    </p>
+    
+    <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; border-radius: 4px; padding: 20px; margin-bottom: 24px;">
+        <p style="margin: 0 0 8px 0; font-size: 15px; color: #374151;"><strong>Compte bloqué :</strong> <span th:text="${numCompte}">1234567890</span></p>
+        <p style="margin: 0; font-size: 15px; color: #374151;"><strong>Motif administratif :</strong> <span th:text="${motif}">Vérification de conformité réglementaire</span></p>
+    </div>
+    
+    <p style="font-size: 15px; color: #4b5563; margin-bottom: 24px;">
+        Pendant la durée de ce blocage, les opérations de débit (retraits, virements émis, paiements par carte) sont suspendues sur ce compte. Les opérations de crédit restent toutefois autorisées.
+    </p>
+    
+    <p style="font-size: 15px; color: #4b5563; margin-bottom: 24px;">
+        Pour toute demande d'explication ou pour régulariser votre situation, veuillez contacter immédiatement votre conseiller de clientèle ou vous présenter dans l'agence Soutra la plus proche, muni d'une pièce d'identité en cours de validité.
+    </p>
+    
+    <div th:replace="~{email/fragments/header :: footer}"></div>
+</body>
+</html>
