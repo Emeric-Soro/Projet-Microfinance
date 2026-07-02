@@ -776,7 +776,7 @@
 
       // Confirm before submitting
       var decisionLabel = decisionRadio.value === 'APPROUVE' ? 'approuver' : 'rejeter';
-      if (!confirm('Confirmer la décision de ' + decisionLabel + ' cette dérogation ? Cette action est irréversible.')) {
+      if (!(await showConfirm('Décision Dérogation', 'Confirmer la décision de ' + decisionLabel + ' cette dérogation ? Cette action est irréversible.', { icon: 'danger', confirmText: 'Confirmer', confirmClass: 'btn-danger' }))) {
         return;
       }
 

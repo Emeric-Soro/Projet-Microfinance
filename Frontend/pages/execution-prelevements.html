@@ -637,7 +637,7 @@
         return;
       }
 
-      if (!confirm('Relancer le prélèvement pour ' + _failedAccounts.length + ' compte(s) en échec ?')) return;
+      if (!(await showConfirm('Relance Prélèvements', 'Relancer le prélèvement pour ' + _failedAccounts.length + ' compte(s) en échec ?', { icon: 'warning', confirmText: 'Relancer', confirmClass: 'btn-primary' }))) return;
 
       var btnRetry = document.getElementById('btnRetry');
       btnRetry.disabled = true;

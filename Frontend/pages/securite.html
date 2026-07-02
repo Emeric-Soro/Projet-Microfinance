@@ -319,7 +319,7 @@
 
     /* ── Supprimer un rôle ──────────────────────────────── */
     async function supprimerRole(id, code) {
-      if (!confirm(`Voulez-vous vraiment supprimer le rôle "${code}" ?\nCette action est irréversible.`)) return;
+      if (!(await showConfirm('Suppression de rôle', `Voulez-vous vraiment supprimer le rôle "${code}" ?<br>Cette action est irréversible.`, { icon: 'danger', confirmText: 'Supprimer', confirmClass: 'btn-danger' }))) return;
       try {
         const res = await Securite.supprimerRole(id);
         if (res && res.ok) {
@@ -371,7 +371,7 @@
     }
 
     async function revoquerSession(sessionId) {
-      if (!confirm("Voulez-vous vraiment révoquer cette session ?\nL'utilisateur sera immédiatement déconnecté.")) return;
+      if (!(await showConfirm('Révocation de session', "Voulez-vous vraiment révoquer cette session ?<br>L'utilisateur sera immédiatement déconnecté.", { icon: 'danger', confirmText: 'Révoquer', confirmClass: 'btn-danger' }))) return;
       try {
         const res = await Securite.revoquerSession(sessionId);
         if (res && res.ok) {

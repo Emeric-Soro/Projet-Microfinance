@@ -754,7 +754,7 @@
       }
 
       async function deleteDocument(docId) {
-        if (!confirm('Voulez-vous vraiment supprimer ce document ?')) return;
+        if (!(await showConfirm('Suppression Document', 'Voulez-vous vraiment supprimer ce document ?', { icon: 'danger', confirmText: 'Supprimer', confirmClass: 'btn-danger' }))) return;
 
         try {
           var res = await window.SF_Client.apiFetch('/api/v1/mobile/documents/' + docId, {

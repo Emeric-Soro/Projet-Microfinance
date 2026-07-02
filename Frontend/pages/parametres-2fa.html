@@ -455,7 +455,7 @@
         return;
       }
 
-      if (!confirm('Êtes-vous sûr de vouloir désactiver la 2FA ?')) return;
+      if (!(await showConfirm('Désactivation de la 2FA', 'Êtes-vous sûr de vouloir désactiver la 2FA ?', { icon: 'danger', confirmText: 'Désactiver', confirmClass: 'btn-danger' }))) return;
 
       var btn = document.getElementById('btnDeactivate');
       btn.disabled = true;

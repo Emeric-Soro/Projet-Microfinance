@@ -709,7 +709,7 @@
     /* ── Cloture DAT ────────────────────────────────── */
 
     async function cloturerDAT(ref) {
-      if (!confirm('Voulez-vous vraiment cloturer le DAT ' + ref + ' ?\nCette action est irreversible.')) return;
+      if (!(await showConfirm('Clôture DAT', 'Voulez-vous vraiment cloturer le DAT ' + ref + ' ?<br>Cette action est irreversible.', { icon: 'danger', confirmText: 'Clôturer', confirmClass: 'btn-danger' }))) return;
 
       try {
         const res = await SF.apiFetch('/api/v1/epargne/dat/' + encodeURIComponent(ref) + '/cloture', {
@@ -735,7 +735,7 @@
       if (!dat) { showToast('DAT introuvable.', 'error'); return; }
 
       const montant = (dat.montantDepot || dat.montant || 0).toLocaleString('fr-FR');
-      if (!confirm('Renouveler le DAT ' + ref + ' de ' + montant + ' FCFA aux memes conditions ?')) return;
+      if (!(await showConfirm('Renouvellement DAT', 'Renouveler le DAT ' + ref + ' de ' + montant + ' FCFA aux mêmes conditions ?', { icon: 'warning', confirmText: 'Renouveler', confirmClass: 'btn-primary' }))) return;
 
       try {
         const res = await SF.apiFetch('/api/v1/epargne/dat/' + encodeURIComponent(ref) + '/renouvellement', {

@@ -399,7 +399,7 @@
         return;
       }
 
-      if (!confirm('Voulez-vous vraiment approuver la transaction ' + ref + ' ?')) return;
+      if (!(await showConfirm('Approbation Transaction', 'Voulez-vous vraiment approuver la transaction ' + ref + ' ?', { icon: 'success', confirmText: 'Approuver', confirmClass: 'btn-primary' }))) return;
 
       try {
         const res = await Transactions.approuver(ref, user.idUser);

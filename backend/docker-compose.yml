@@ -32,7 +32,7 @@ services:
       oracledb:
         condition: service_healthy
     environment:
-      - DB_URL=jdbc:oracle:thin:@oracledb:1521/XEPDB1
+      - DB_URL=${DB_URL}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
@@ -56,6 +56,15 @@ services:
       - MANAGEMENT_HEALTH_REDIS_ENABLED=false
       - MANAGEMENT_HEALTH_MAIL_ENABLED=false
       - APP_FILE_STORAGE_PATH=/app/uploads/documents
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_AUTH=${SMTP_AUTH:-true}
+      - SMTP_STARTTLS=${SMTP_STARTTLS:-true}
+      - SMTP_STARTTLS_REQUIRED=${SMTP_STARTTLS_REQUIRED:-true}
+      - APP_MAIL_FROM=${APP_MAIL_FROM:-no-reply@soutra-core-banking.local}
+      - APP_MAIL_DELIVERY_MODE=${APP_MAIL_DELIVERY_MODE:-logging}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     volumes:
@@ -88,10 +97,18 @@ services:
       - "1025:1025"
       - "8025:8025"
     environment:
-      - MH_STORAGE=maildir
-      - MH_MAILDIR_PATH=/maildir
+      - MH_STORAGE=memory
+    restart: unless-stopped
+
+  frontend:
+    image: nginx:alpine
+    container_name: core_banking_frontend
+    ports:
+      - "5173:80"
     volumes:
-      - mailhog-data:/maildir
+      - ../Frontend:/usr/share/nginx/html/Frontend:ro
+      - ../ClientPortal:/usr/share/nginx/html/ClientPortal:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped
 
 volumes:

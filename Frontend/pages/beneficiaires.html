@@ -362,7 +362,7 @@
     }
 
     async function deleteBeneficiaire(id, clientId) {
-      if (!confirm("Êtes-vous sûr de vouloir supprimer ce bénéficiaire ?")) {
+      if (!(await showConfirm("Suppression de bénéficiaire", "Êtes-vous sûr de vouloir supprimer ce bénéficiaire ?", { icon: "danger", confirmText: "Supprimer", confirmClass: "btn-danger" }))) {
         return;
       }
       try {

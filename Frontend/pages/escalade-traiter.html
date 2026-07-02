@@ -690,7 +690,7 @@
         ? 'Confirmer la fermeture de cette escalade ?'
         : 'Confirmer le traitement de cette escalade ?';
 
-      if (!confirm(confirmMsg)) return;
+      if (!(await showConfirm('Traitement Escalade', confirmMsg, { icon: 'warning', confirmText: 'Confirmer', confirmClass: 'btn-primary' }))) return;
 
       // Loading state
       var btn = document.getElementById('btnSubmit');

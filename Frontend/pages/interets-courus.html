@@ -434,7 +434,7 @@
     async function validerInterets() {
       var periode = document.getElementById('icPeriode').value;
       var periodeLabel = document.getElementById('icPeriode').options[document.getElementById('icPeriode').selectedIndex].textContent;
-      if (!confirm('Confirmer la validation des interets courus pour la periode ' + periodeLabel + ' ?\n\nCette action est irreversible.')) return;
+      if (!(await showConfirm('Validation Intérêts Courus', 'Confirmer la validation des intérêts courus pour la période ' + periodeLabel + ' ?<br><br>Cette action est irréversible.', { icon: 'danger', confirmText: 'Valider', confirmClass: 'btn-danger' }))) return;
 
       var btn = document.getElementById('btnValider');
       btn.disabled = true;

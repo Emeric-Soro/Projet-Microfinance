@@ -519,7 +519,7 @@
         showToast('Toutes les notifications sont deja lues.', 'info');
         return;
       }
-      if (!confirm('Marquer toutes les notifications comme lues ?')) return;
+      if (!(await showConfirm('Marquer tout comme lu', 'Marquer toutes les notifications comme lues ?', { icon: 'info', confirmText: 'Marquer lues', confirmClass: 'btn-primary' }))) return;
 
       // Le backend n'expose pas de endpoint "lire-tout" en un seul appel.
       // Endpoints disponibles : GET /api/v1/notifications/client/{idClient},

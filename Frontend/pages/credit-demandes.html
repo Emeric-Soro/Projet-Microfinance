@@ -435,7 +435,7 @@
 
     // ── Approbation ────────────────────────────────────
     async function approveCredit(idDemande) {
-      if (!confirm('Accorder la demande DEM-' + idDemande + ' ?')) return;
+      if (!(await showConfirm('Accord de crédit', 'Accorder la demande DEM-' + idDemande + ' ?', { icon: 'success', confirmText: 'Accorder', confirmClass: 'btn-primary' }))) return;
       try {
         var res = await Credits.deciderDemande(idDemande, 'APPROUVEE');
         if (res && res.ok) {

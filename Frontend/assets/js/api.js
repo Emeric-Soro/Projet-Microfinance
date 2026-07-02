@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  var API_BASE = 'http://localhost:8080';
+  var API_BASE = 'http://192.168.195.25:8080';
 
   /* ── Gestion du token & session ─────────────────────── */
 
@@ -329,3 +329,9 @@
   window.Transactions = Transactions;
 
 }());
+
+
+
+
+
+

@@ -469,7 +469,7 @@
     }
 
     async function deleteBeneficiary(idBenef) {
-      if (!confirm('Voulez-vous vraiment supprimer ce bénéficiaire ?')) return;
+      if (!(await showConfirm('Suppression Bénéficiaire', 'Voulez-vous vraiment supprimer ce bénéficiaire ?', { icon: 'danger', confirmText: 'Supprimer', confirmClass: 'btn-danger' }))) return;
 
       try {
         var token = window.SF_Client.getToken();

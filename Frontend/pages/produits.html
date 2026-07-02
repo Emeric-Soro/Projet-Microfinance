@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="fr">
     <head>
         <meta charset="UTF-8" />
@@ -953,11 +953,7 @@
                               }) || {}
                           ).libelle;
                 if (
-                    !confirm(
-                        "Désactiver le produit « " +
-                            (nom || id) +
-                            " » ?\nIl ne sera plus proposé pour de nouveaux contrats.",
-                    )
+                    !(await showConfirm("Désactivation de produit", "Désactiver le produit « " + (nom || id) + " » ?<br>Il ne sera plus proposé pour de nouveaux contrats.", { icon: "danger", confirmText: "Désactiver", confirmClass: "btn-danger" }))
                 )
                     return;
 

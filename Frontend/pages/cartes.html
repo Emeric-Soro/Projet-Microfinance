@@ -129,7 +129,7 @@
         showToast("Cette carte est déjà inactive", "warning");
         return;
       }
-      if (!confirm("Voulez-vous vraiment faire opposition sur la carte " + numMasque + " ? Cette action est irréversible.")) {
+      if (!(await showConfirm("Opposition carte", "Voulez-vous vraiment faire opposition sur la carte " + numMasque + " ? Cette action est irréversible.", { icon: "danger", confirmText: "Faire opposition", confirmClass: "btn-danger" }))) {
         return;
       }
       try {

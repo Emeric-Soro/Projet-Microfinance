@@ -300,10 +300,10 @@
     }
 
     /* -- Export CSV -------------------------------------------- */
-    function exportSAR() {
+    async function exportSAR() {
       var items = allSAR;
       if (!items.length) {
-        alert('Aucune donnée à exporter.');
+        await showAlert('Export', 'Aucune donnée à exporter.', { icon: 'info' });
         return;
       }
 

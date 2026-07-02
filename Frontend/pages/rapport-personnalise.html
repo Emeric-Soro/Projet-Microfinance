@@ -1089,13 +1089,16 @@
         });
       }
 
-      window.saveTemplate = function () {
-        var name = prompt('Nom du modele :');
-        if (!name || !name.trim()) return;
+      window.saveTemplate = async function () {
+        var name = await showPrompt('Enregistrement du modèle', 'Nom du modèle :', {
+          placeholder: 'Mon modèle',
+          validate: (val) => val.trim().length > 0 ? true : 'Le nom ne peut pas être vide'
+        });
+        if (!name) return;
         name = name.trim();
         var templates = getTemplates();
         if (templates[name]) {
-          if (!confirm('Un modele "' + name + '" existe deja. Remplacer ?')) return;
+          if (!(await showConfirm('Modèle existant', 'Un modèle "' + name + '" existe déjà. Remplacer ?', { icon: 'warning', confirmText: 'Remplacer', confirmClass: 'btn-danger' }))) return;
         }
         templates[name] = {
           fields: selectedFields.map(function (f) { return { field: f.field, label: f.label }; }),
@@ -1106,7 +1109,7 @@
         saveTemplates(templates);
         refreshTemplateSelect();
         document.getElementById('templateSelect').value = name;
-        showToast('Modele "' + name + '" enregistre.', 'success');
+        showToast('Modèle "' + name + '" enregistré.', 'success');
       };
 
       window.loadTemplate = function () {
@@ -1147,15 +1150,15 @@
         showToast('Modele "' + name + '" charge.', 'success');
       };
 
-      window.deleteTemplate = function () {
+      window.deleteTemplate = async function () {
         var name = document.getElementById('templateSelect').value;
-        if (!name) { showToast('Selectionnez un modele a supprimer.', 'warning'); return; }
-        if (!confirm('Supprimer le modele "' + name + '" ?')) return;
+        if (!name) { showToast('Sélectionnez un modèle à supprimer.', 'warning'); return; }
+        if (!(await showConfirm('Suppression de modèle', 'Supprimer le modèle "' + name + '" ?', { icon: 'danger', confirmText: 'Supprimer', confirmClass: 'btn-danger' }))) return;
         var templates = getTemplates();
         delete templates[name];
         saveTemplates(templates);
         refreshTemplateSelect();
-        showToast('Modele "' + name + '" supprime.', 'success');
+        showToast('Modèle "' + name + '" supprimé.', 'success');
       };
 
       // ---- Date change handlers ----

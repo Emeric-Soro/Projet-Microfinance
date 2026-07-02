@@ -502,7 +502,7 @@
        RESET TO DEFAULTS
        ================================================== */
     async function resetToDefaults() {
-      if (!confirm('Restaurer les preferences par defaut ? Les modifications non enregistrees seront perdues.')) return;
+      if (!(await showConfirm('Restauration Préférences', 'Restaurer les préférences par défaut ? Les modifications non enregistrées seront perdues.', { icon: 'warning', confirmText: 'Restaurer', confirmClass: 'btn-danger' }))) return;
 
       preferences = JSON.parse(JSON.stringify(DEFAULT_PREFS));
       document.getElementById('prefGlobalActive').checked = true;

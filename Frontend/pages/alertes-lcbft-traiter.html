@@ -758,7 +758,7 @@
 
       // Confirm action
       var decisionLabel = { FONDEE: 'Fondee', NON_FONDEE: 'Non fondee', ESCALADEE: 'Escaladee' }[decision] || decision;
-      if (!confirm('Confirmer le traitement de l\'alerte avec la decision : ' + decisionLabel + ' ?')) return;
+      if (!(await showConfirm('Traitement Alerte LCB-FT', 'Confirmer le traitement de l\'alerte avec la decision : ' + decisionLabel + ' ?', { icon: 'warning', confirmText: 'Confirmer', confirmClass: 'btn-primary' }))) return;
 
       // Loading state
       var btn = document.getElementById('btnSubmit');

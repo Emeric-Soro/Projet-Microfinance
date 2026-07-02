@@ -735,50 +735,29 @@
                     showToast(e.message || "Erreur", "error");
                 }
             }
-
-            function confirmerPassation() {
+            async function confirmerPassation() {
                 if (!_creditAction) return;
-                if (
-                    !confirm(
-                        "Confirmer la passation en souffrance du crédit " +
-                            (_creditAction.referenceCredit ||
-                                _creditAction.idCredit) +
-                            " ?",
-                    )
-                )
+                var ref = _creditAction.referenceCredit || _creditAction.idCredit;
+                if (!(await showConfirm("Passation en souffrance", "Confirmer la passation en souffrance du crédit " + ref + " ?", { icon: "warning", confirmText: "Confirmer", confirmClass: "btn-danger" }))) {
                     return;
-                Credits.passerSouffrance(_creditAction.idCredit)
-                    .then(function (res) {
-                        if (res && res.ok) {
-                            showToast("Crédit passé en souffrance.", "success");
-                            res.json().then(function (c) {
-                                _creditAction = c;
-                                document.getElementById(
-                                    "foundStatut",
-                                ).textContent =
-                                    STATUT_LABELS[c.statutCredit] ||
-                                    c.statutCredit;
-                                renderActionBtns(c.statutCredit);
-                                chargerListe(
-                                    "EN_SOUFFRANCE",
-                                    "souffranceBody",
-                                    "souffranceCount",
-                                );
-                                chargerKpis();
-                            });
-                        } else {
-                            res.json()
-                                .catch(function () {
-                                    return {};
-                                })
-                                .then(function (e) {
-                                    showToast(e.message || "Erreur", "error");
-                                });
-                        }
-                    })
-                    .catch(function (e) {
-                        showToast(e.message || "Erreur réseau", "error");
-                    });
+                }
+                try {
+                    var res = await Credits.passerSouffrance(_creditAction.idCredit);
+                    if (res && res.ok) {
+                        showToast("Crédit passé en souffrance.", "success");
+                        var c = await res.json();
+                        _creditAction = c;
+                        document.getElementById("foundStatut").textContent = STATUT_LABELS[c.statutCredit] || c.statutCredit;
+                        renderActionBtns(c.statutCredit);
+                        chargerListe("EN_SOUFFRANCE", "souffranceBody", "souffranceCount");
+                        chargerKpis();
+                    } else {
+                        var e = await res.json().catch(function () { return {}; });
+                        showToast(e.message || "Erreur", "error");
+                    }
+                } catch (err) {
+                    showToast(err.message || "Erreur", "error");
+                }
             }
 
             async function confirmerRestructuration() {

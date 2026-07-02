@@ -261,7 +261,7 @@
         showToast('Session expirée.', 'error');
         return;
       }
-      if (!confirm('Approuver la transaction ' + ref + ' ?')) return;
+      if (!(await showConfirm('Approbation Transaction', 'Approuver la transaction ' + ref + ' ?', { icon: 'success', confirmText: 'Approuver', confirmClass: 'btn-primary' }))) return;
 
       try {
         var res = await Transactions.approuver(ref, user.idUser);
